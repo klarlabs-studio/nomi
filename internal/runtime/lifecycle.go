@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -14,12 +15,15 @@ import (
 
 // executeRun manages the run lifecycle: plan → plan_review → execute
 func (r *Runtime) executeRun(ctx context.Context, run *domain.Run, assistant *domain.AssistantDefinition) {
+	slog.Info("executeRun: start", "run_id", run.ID, "status", run.Status, "assistant_id", assistant.ID)
 	// Phase 1: Planning (blocks until plan is approved)
 	steps, err := r.executePlanningPhase(ctx, run, assistant)
 	if err != nil {
+		slog.Error("executeRun: planning failed", "run_id", run.ID, "error", err)
 		r.failRun(ctx, run, err)
 		return
 	}
+	slog.Info("executeRun: planning succeeded", "run_id", run.ID, "steps", len(steps))
 
 	// Phase 2: Execution (after plan approval)
 	// Refresh run state before execution since it may have been updated
@@ -38,14 +42,17 @@ func (r *Runtime) executeRun(ctx context.Context, run *domain.Run, assistant *do
 // Blocks until the plan is approved (status changes from plan_review to executing).
 // Returns the created steps for later execution.
 func (r *Runtime) executePlanningPhase(ctx context.Context, run *domain.Run, assistant *domain.AssistantDefinition) ([]*domain.Step, error) {
+	slog.Info("planning phase: start", "run_id", run.ID)
 	// Transition to planning
 	if err := r.transitionRun(ctx, run, domain.RunPlanning); err != nil {
+		slog.Error("planning transition failed", "run_id", run.ID, "error", err)
 		return nil, fmt.Errorf("planning transition failed: %w", err)
 	}
 
 	// Load folder contexts if assistant has any
 	contextData, err := r.loadFolderContexts(ctx, assistant)
 	if err != nil {
+		slog.Warn("failed to load folder contexts", "run_id", run.ID, "error", err)
 		return nil, fmt.Errorf("failed to load folder contexts: %w", err)
 	}
 
@@ -71,8 +78,11 @@ func (r *Runtime) executePlanningPhase(ctx context.Context, run *domain.Run, ass
 	// Planning phase: create plan with step definitions
 	plan, steps, err := r.planSteps(run, assistant, contextData)
 	if err != nil {
+		slog.Error("planning failed", "run_id", run.ID, "error", err)
 		return nil, fmt.Errorf("planning failed: %w", err)
 	}
+	slog.Info("plan created", "run_id", run.ID, "plan_id", plan.ID, "step_count", len(steps))
+	slog.Info("planning phase: plan created", "run_id", run.ID, "plan_id", plan.ID, "step_count", len(steps))
 
 	// Update run with plan version
 	run.PlanVersion = plan.Version
@@ -89,8 +99,10 @@ func (r *Runtime) executePlanningPhase(ctx context.Context, run *domain.Run, ass
 
 	// Transition to plan_review — wait for user approval
 	if err := r.transitionRun(ctx, run, domain.RunPlanReview); err != nil {
+		slog.Error("plan review transition failed", "run_id", run.ID, "error", err)
 		return nil, fmt.Errorf("plan review transition failed: %w", err)
 	}
+	slog.Info("plan review: waiting for approval", "run_id", run.ID, "plan_id", plan.ID)
 
 	approvalSignal := r.registerPlanApproval(run.ID)
 	defer r.unregisterPlanApproval(run.ID, approvalSignal)

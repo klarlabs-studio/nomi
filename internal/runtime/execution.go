@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -25,6 +26,7 @@ type rememberedApproval struct {
 
 // executeStep executes a single step
 func (r *Runtime) executeStep(ctx context.Context, run *domain.Run, step *domain.Step, assistant *domain.AssistantDefinition) error {
+	slog.Info("step: start execution", "run_id", run.ID, "step_id", step.ID, "title", step.Title, "status", step.Status)
 	// Step start transitions differ for fresh vs resumed execution.
 	switch step.Status {
 	case domain.StepPending:
@@ -75,6 +77,7 @@ func (r *Runtime) executeStep(ctx context.Context, run *domain.Run, step *domain
 	// message: a missing declared-capability is fixed in the assistant
 	// builder ("tick the Command box"), not in the permission policy.
 	if !declaredCapabilityCeiling(assistant.Capabilities, capability) {
+		slog.Warn("ceiling violation", "run_id", run.ID, "step_id", step.ID, "capability", capability)
 		step.Status = domain.StepFailed
 		family := permissions.SystemCapabilityFamilies[capability]
 		msg := fmt.Sprintf(
@@ -100,9 +103,11 @@ func (r *Runtime) executeStep(ctx context.Context, run *domain.Run, step *domain
 
 	// Evaluate permission
 	mode := r.effectivePermissionMode(run, assistant, capability)
+	slog.Info("permission check", "run_id", run.ID, "step_id", step.ID, "capability", capability, "mode", mode)
 
 	switch mode {
 	case domain.PermissionDeny:
+		slog.Warn("permission denied", "run_id", run.ID, "step_id", step.ID, "capability", capability)
 		step.Status = domain.StepFailed
 		msg := fmt.Sprintf("This action (%s) is blocked by the assistant's permission policy. Open the assistant builder and change the rule to Allow or Confirm.", capability)
 		step.Error = strPtr(msg)
@@ -124,6 +129,7 @@ func (r *Runtime) executeStep(ctx context.Context, run *domain.Run, step *domain
 	case domain.PermissionConfirm:
 		if approved, remembered := r.rememberedDecision(assistant.ID, capability, inputSig); remembered {
 			if !approved {
+				slog.Info("approval remembered as denied", "run_id", run.ID, "step_id", step.ID, "capability", capability)
 				msg := "This action was previously denied and Nomi remembered your choice. You can change this in the Approvals tab."
 				step.Error = strPtr(msg)
 				if err := r.transitionStepAtomic(ctx, step, domain.StepFailed,
@@ -147,8 +153,10 @@ func (r *Runtime) executeStep(ctx context.Context, run *domain.Run, step *domain
 
 		// Transition run to awaiting approval
 		if err := r.transitionRun(ctx, run, domain.RunAwaitingApproval); err != nil {
+			slog.Warn("approval transition failed", "run_id", run.ID, "step_id", step.ID, "error", err)
 			return fmt.Errorf("failed to transition run to awaiting approval: %w", err)
 		}
+		slog.Info("approval required", "run_id", run.ID, "step_id", step.ID, "capability", capability)
 
 		// Transition step to blocked
 		if err := r.transitionStep(ctx, step, domain.StepBlocked); err != nil {

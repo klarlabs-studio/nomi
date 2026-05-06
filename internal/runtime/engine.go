@@ -27,6 +27,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -356,6 +357,7 @@ func (r *Runtime) createRun(ctx context.Context, goal, assistantID string, sourc
 		return nil, fmt.Errorf("failed to create run: %w", err)
 	}
 
+	slog.Info("run created", "run_id", run.ID, "assistant_id", assistantID, "goal", goal, "source", source)
 	payload := map[string]interface{}{
 		"goal":         goal,
 		"assistant_id": assistantID,

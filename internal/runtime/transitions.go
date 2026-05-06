@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -16,8 +17,10 @@ import (
 func (r *Runtime) transitionRun(_ context.Context, run *domain.Run, to domain.RunStatus) error {
 	current, err := r.runRepo.GetByID(run.ID)
 	if err != nil {
+		slog.Error("transitionRun: failed to load run", "run_id", run.ID, "error", err)
 		return fmt.Errorf("failed to load run for transition: %w", err)
 	}
+	slog.Info("transitionRun", "run_id", run.ID, "from", current.Status, "to", to)
 
 	sm := statekit.NewRunStateMachine()
 	sm.SetCurrent(current.Status)
@@ -44,11 +47,13 @@ func (r *Runtime) transitionStep(_ context.Context, step *domain.Step, to domain
 	sm := statekit.NewStepStateMachine()
 	sm.SetCurrent(step.Status)
 	if err := sm.Transition(to, nil); err != nil {
+		slog.Warn("step transition failed", "step_id", step.ID, "from", step.Status, "to", to, "error", err)
 		return err
 	}
 
 	step.Status = to
 	step.UpdatedAt = time.Now().UTC()
+	slog.Info("step transitioned", "step_id", step.ID, "run_id", step.RunID, "from", step.Status, "to", to)
 	return r.stepRepo.Update(step)
 }
 
@@ -103,10 +108,12 @@ func (r *Runtime) transitionStepAtomic(
 
 // failRun marks a run as failed and updates the current step. Transitions go
 // through the state machine so invariants (e.g. "failed only from an active
-// state") are enforced; if the current state has no valid edge to RunFailed
+// state") are enforced; if the current state has no valid edge to RunFailed,
 // we write the raw status as a last-resort fallback and log the anomaly.
 func (r *Runtime) failRun(ctx context.Context, run *domain.Run, runErr error) {
+	slog.Error("run failed", "run_id", run.ID, "status", run.Status, "error", runErr)
 	if err := r.transitionRun(ctx, run, domain.RunFailed); err != nil {
+		slog.Error("failRun: state machine rejected transition", "run_id", run.ID, "error", err)
 		// State machine rejected the transition. This indicates a logic
 		// error (e.g. failing an already-terminal run); persist the status
 		// anyway so the user sees the failure.
