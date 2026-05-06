@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -34,7 +35,7 @@ type PreviewFolderContextRequest struct {
 func (s *ToolsServer) PreviewFolderContext(c *gin.Context) {
 	var req PreviewFolderContextRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 
@@ -48,7 +49,7 @@ func (s *ToolsServer) PreviewFolderContext(c *gin.Context) {
 	})
 
 	if !result.Success {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error})
+		respondInternal(c, "failed to preview folder context", fmt.Errorf("%s", result.Error))
 		return
 	}
 

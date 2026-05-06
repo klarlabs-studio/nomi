@@ -31,7 +31,7 @@ type CreateMemoryRequest struct {
 func (s *MemoryServer) CreateMemory(c *gin.Context) {
 	var req CreateMemoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 
@@ -47,7 +47,7 @@ func (s *MemoryServer) CreateMemory(c *gin.Context) {
 	}
 
 	if err := s.manager.Save(entry); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to create memory", err)
 		return
 	}
 
@@ -62,7 +62,7 @@ func (s *MemoryServer) ListMemory(c *gin.Context) {
 
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid limit"})
+		respondValidationError(c, "invalid limit")
 		return
 	}
 
@@ -82,7 +82,7 @@ func (s *MemoryServer) ListMemory(c *gin.Context) {
 	}
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to list memories", err)
 		return
 	}
 
@@ -93,13 +93,13 @@ func (s *MemoryServer) ListMemory(c *gin.Context) {
 func (s *MemoryServer) GetMemory(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		respondValidationError(c, "id is required")
 		return
 	}
 
 	entry, err := s.manager.GetByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		respondNotFound(c, err.Error())
 		return
 	}
 
@@ -110,12 +110,12 @@ func (s *MemoryServer) GetMemory(c *gin.Context) {
 func (s *MemoryServer) DeleteMemory(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		respondValidationError(c, "id is required")
 		return
 	}
 
 	if err := s.manager.Delete(id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to delete memory", err)
 		return
 	}
 

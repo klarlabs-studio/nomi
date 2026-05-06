@@ -37,7 +37,7 @@ func respondCeilingValidationError(c *gin.Context, err error) {
 		cve = e
 	}
 	if cve == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 	c.JSON(http.StatusBadRequest, gin.H{
@@ -71,7 +71,7 @@ type CreateAssistantRequest struct {
 func (s *AssistantServer) ListTemplates(c *gin.Context) {
 	tpls, err := assistanttemplates.BuiltIn()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to load templates", err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"templates": tpls})
@@ -81,7 +81,7 @@ func (s *AssistantServer) ListTemplates(c *gin.Context) {
 func (s *AssistantServer) CreateAssistant(c *gin.Context) {
 	var req CreateAssistantRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 
@@ -123,7 +123,7 @@ func (s *AssistantServer) CreateAssistant(c *gin.Context) {
 	}
 
 	if err := s.repo.Create(assistant); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to create assistant", err)
 		return
 	}
 
@@ -134,13 +134,13 @@ func (s *AssistantServer) CreateAssistant(c *gin.Context) {
 func (s *AssistantServer) GetAssistant(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		respondValidationError(c, "id is required")
 		return
 	}
 
 	assistant, err := s.repo.GetByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		respondNotFound(c, err.Error())
 		return
 	}
 
@@ -151,7 +151,7 @@ func (s *AssistantServer) GetAssistant(c *gin.Context) {
 func (s *AssistantServer) ListAssistants(c *gin.Context) {
 	assistants, err := s.repo.List(100, 0)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to list assistants", err)
 		return
 	}
 
@@ -162,19 +162,19 @@ func (s *AssistantServer) ListAssistants(c *gin.Context) {
 func (s *AssistantServer) UpdateAssistant(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		respondValidationError(c, "id is required")
 		return
 	}
 
 	var req CreateAssistantRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 
 	assistant, err := s.repo.GetByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		respondNotFound(c, err.Error())
 		return
 	}
 
@@ -200,7 +200,7 @@ func (s *AssistantServer) UpdateAssistant(c *gin.Context) {
 	assistant.ModelPolicy = req.ModelPolicy
 
 	if err := s.repo.Update(assistant); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to update assistant", err)
 		return
 	}
 
@@ -211,12 +211,12 @@ func (s *AssistantServer) UpdateAssistant(c *gin.Context) {
 func (s *AssistantServer) DeleteAssistant(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		respondValidationError(c, "id is required")
 		return
 	}
 
 	if err := s.repo.Delete(id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to delete assistant", err)
 		return
 	}
 
@@ -228,13 +228,13 @@ func (s *AssistantServer) DeleteAssistant(c *gin.Context) {
 func (s *AssistantServer) ApplySafetyProfileToAssistant(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		respondValidationError(c, "id is required")
 		return
 	}
 
 	assistant, err := s.repo.GetByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		respondNotFound(c, err.Error())
 		return
 	}
 
@@ -242,7 +242,7 @@ func (s *AssistantServer) ApplySafetyProfileToAssistant(c *gin.Context) {
 	assistant.PermissionPolicy = permissions.BuildSafetyProfilePolicy(profile)
 
 	if err := s.repo.Update(assistant); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to apply safety profile", err)
 		return
 	}
 

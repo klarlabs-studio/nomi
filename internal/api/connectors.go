@@ -45,13 +45,13 @@ func (s *ConnectorServer) ListConnectors(c *gin.Context) {
 func (s *ConnectorServer) GetConnectorStatus(c *gin.Context) {
 	name := c.Param("name")
 	if name == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "name is required"})
+		respondValidationError(c, "name is required")
 		return
 	}
 
 	status, err := s.registry.Status(name)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		respondNotFound(c, err.Error())
 		return
 	}
 
@@ -152,31 +152,31 @@ type UpdateConnectorConfigRequest struct {
 func (s *ConnectorServer) UpdateConnectorConfig(c *gin.Context) {
 	name := c.Param("name")
 	if name == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "name is required"})
+		respondValidationError(c, "name is required")
 		return
 	}
 
 	var req UpdateConnectorConfigRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 
 	if name == "telegram" && s.secrets != nil {
 		if err := stashTelegramSecrets(s.secrets, req.Config); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to stash secrets: " + err.Error()})
+			respondInternal(c, "failed to stash secrets", err)
 			return
 		}
 	}
 
 	configJSON, err := json.Marshal(req.Config)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid config"})
+		respondValidationError(c, "invalid config")
 		return
 	}
 
 	if err := s.configRepo.Upsert(name, configJSON, req.Enabled); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to upsert connector config", err)
 		return
 	}
 
@@ -323,12 +323,12 @@ type RestartConnectorRequest struct {
 func (s *ConnectorServer) RestartConnector(c *gin.Context) {
 	name := c.Param("name")
 	if name == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "name is required"})
+		respondValidationError(c, "name is required")
 		return
 	}
 
 	if err := s.registry.Restart(c.Request.Context(), name); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to restart connector", err)
 		return
 	}
 

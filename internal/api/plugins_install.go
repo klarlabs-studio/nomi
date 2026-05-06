@@ -101,37 +101,37 @@ func (s *PluginServer) InstallPlugin(c *gin.Context) {
 
 	bundleBytes, source, err := s.sourceBundle(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 
 	b, err := bundle.Open(strings.NewReader(string(bundleBytes)))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("invalid bundle: %v", err)})
+		respondValidationError(c, fmt.Sprintf("invalid bundle: %v", err))
 		return
 	}
 
 	if err := s.install.Verifier.Verify(b); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("signature verification failed: %v", err)})
+		respondValidationError(c, fmt.Sprintf("signature verification failed: %v", err))
 		return
 	}
 
 	// Refuse reinstall over an existing plugin (system or marketplace).
 	if _, err := s.registry.Get(b.Manifest.ID); err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": fmt.Sprintf("plugin %q already installed", b.Manifest.ID)})
+		respondError(c, http.StatusConflict, &domain.UserError{Code: "already_installed", Title: "Already Installed", Message: fmt.Sprintf("plugin %q already installed", b.Manifest.ID)})
 		return
 	}
 
 	mod, err := s.install.Loader.Load(c.Request.Context(), b.Manifest.ID, b.WASM)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("wasm load failed: %v", err)})
+		respondValidationError(c, fmt.Sprintf("wasm load failed: %v", err))
 		return
 	}
 	rollback := func() { _ = mod.Close(c.Request.Context()) }
 
 	if err := s.install.Store.Install(b); err != nil {
 		rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("store: %v", err)})
+		respondInternal(c, "store install failed", err)
 		return
 	}
 	rollback = func() {
@@ -142,7 +142,7 @@ func (s *PluginServer) InstallPlugin(c *gin.Context) {
 	plug := wasmplugin.New(b.Manifest, mod, nil)
 	if err := s.registry.Register(plug); err != nil {
 		rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("register: %v", err)})
+		respondInternal(c, "plugin registration failed", err)
 		return
 	}
 	rollback = func() {
@@ -164,7 +164,7 @@ func (s *PluginServer) InstallPlugin(c *gin.Context) {
 	if s.state != nil {
 		if err := s.state.Upsert(st); err != nil {
 			rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("state upsert: %v", err)})
+			respondInternal(c, "failed to persist plugin state", err)
 			return
 		}
 	}
@@ -192,7 +192,7 @@ func (s *PluginServer) UninstallPlugin(c *gin.Context) {
 	if s.state != nil {
 		st, err := s.state.Get(id)
 		if err == nil && st.Distribution == domain.PluginDistributionSystem {
-			c.JSON(http.StatusConflict, gin.H{"error": "system plugins cannot be uninstalled"})
+			respondError(c, http.StatusConflict, &domain.UserError{Code: "system_plugin_refused", Title: "Uninstall Refused", Message: "system plugins cannot be uninstalled"})
 			return
 		}
 	}
@@ -208,7 +208,7 @@ func (s *PluginServer) UninstallPlugin(c *gin.Context) {
 	}
 
 	if err := s.install.Store.Remove(id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("store remove: %v", err)})
+		respondInternal(c, "failed to remove plugin from store", err)
 		return
 	}
 
@@ -219,13 +219,13 @@ func (s *PluginServer) UninstallPlugin(c *gin.Context) {
 		// enough on the binding side.
 		conns, err := s.connections.ListByPlugin(id)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("list connections: %v", err)})
+			respondInternal(c, "failed to list plugin connections", err)
 			return
 		}
 		for _, conn := range conns {
 			s.deleteConnectionSecrets(id, conn.ID, conn.CredentialRefs)
 			if err := s.connections.Delete(conn.ID); err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("delete connection %s: %v", conn.ID, err)})
+				respondInternal(c, fmt.Sprintf("failed to delete connection %s", conn.ID), err)
 				return
 			}
 		}
@@ -255,7 +255,7 @@ func (s *PluginServer) UninstallPlugin(c *gin.Context) {
 // and UninstallPlugin share the same error shape.
 func (s *PluginServer) installReady(c *gin.Context) bool {
 	if s.install == nil || s.install.Store == nil || s.install.Verifier == nil || s.install.Loader == nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "install/uninstall not configured"})
+		respondError(c, http.StatusServiceUnavailable, &domain.UserError{Code: "service_unavailable", Title: "Service Unavailable", Message: "install/uninstall not configured"})
 		return false
 	}
 	return true
@@ -267,12 +267,12 @@ func (s *PluginServer) installReady(c *gin.Context) bool {
 // (which itself only fires up when NOMI_MARKETPLACE_ROOT_KEY is set).
 func (s *PluginServer) MarketplaceCatalog(c *gin.Context) {
 	if s.install == nil || s.install.CatalogProvider == nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "marketplace catalog not configured"})
+		respondError(c, http.StatusServiceUnavailable, &domain.UserError{Code: "service_unavailable", Title: "Service Unavailable", Message: "marketplace catalog not configured"})
 		return
 	}
 	cat, err := s.install.CatalogProvider(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
+		respondError(c, http.StatusBadGateway, err)
 		return
 	}
 	c.JSON(http.StatusOK, cat)
@@ -287,13 +287,13 @@ func (s *PluginServer) MarketplaceCatalog(c *gin.Context) {
 // 500 for anything else.
 func (s *PluginServer) UpdatePlugin(c *gin.Context) {
 	if s.install == nil || s.install.Updater == nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "updates not configured"})
+		respondError(c, http.StatusServiceUnavailable, &domain.UserError{Code: "service_unavailable", Title: "Service Unavailable", Message: "updates not configured"})
 		return
 	}
 	id := c.Param("id")
 	st, err := s.install.Updater(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(updateErrorStatus(err), gin.H{"error": err.Error()})
+		respondError(c, updateErrorStatus(err), err)
 		return
 	}
 	c.JSON(http.StatusOK, st)

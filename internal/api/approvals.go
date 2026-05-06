@@ -28,7 +28,7 @@ func NewApprovalServer(manager *permissions.Manager, database *db.DB) *ApprovalS
 func (s *ApprovalServer) ListApprovals(c *gin.Context) {
 	approvals, err := s.manager.GetPending()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to list approvals", err)
 		return
 	}
 
@@ -39,13 +39,13 @@ func (s *ApprovalServer) ListApprovals(c *gin.Context) {
 func (s *ApprovalServer) GetApproval(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		respondValidationError(c, "id is required")
 		return
 	}
 
 	approval, err := s.manager.GetByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		respondNotFound(c, err.Error())
 		return
 	}
 
@@ -67,24 +67,24 @@ type rememberedApprovalDecision struct {
 func (s *ApprovalServer) ResolveApproval(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		respondValidationError(c, "id is required")
 		return
 	}
 
 	var req ResolveApprovalRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 
 	approval, err := s.manager.GetByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		respondNotFound(c, err.Error())
 		return
 	}
 
 	if err := s.manager.Resolve(c.Request.Context(), id, req.Approved); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to resolve approval", err)
 		return
 	}
 

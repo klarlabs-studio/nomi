@@ -65,20 +65,20 @@ type CreateProviderProfileRequest struct {
 func (s *ProviderServer) CreateProviderProfile(c *gin.Context) {
 	var req CreateProviderProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 
 	endpoint, err := llm.NormalizeEndpoint(req.Endpoint)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 
 	id := uuid.New().String()
 	secretRef, err := s.stashProviderSecret(id, req.SecretRef)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to stash secret: " + err.Error()})
+		respondInternal(c, "failed to stash secret", err)
 		return
 	}
 
@@ -95,7 +95,7 @@ func (s *ProviderServer) CreateProviderProfile(c *gin.Context) {
 	}
 
 	if err := s.profileRepo.Create(profile); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to create provider profile", err)
 		return
 	}
 
@@ -135,13 +135,13 @@ func toProviderView(p *domain.ProviderProfile) providerView {
 func (s *ProviderServer) GetProviderProfile(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		respondValidationError(c, "id is required")
 		return
 	}
 
 	profile, err := s.profileRepo.GetByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		respondNotFound(c, err.Error())
 		return
 	}
 
@@ -152,7 +152,7 @@ func (s *ProviderServer) GetProviderProfile(c *gin.Context) {
 func (s *ProviderServer) ListProviderProfiles(c *gin.Context) {
 	profiles, err := s.profileRepo.List()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to list provider profiles", err)
 		return
 	}
 
@@ -167,19 +167,19 @@ func (s *ProviderServer) ListProviderProfiles(c *gin.Context) {
 func (s *ProviderServer) UpdateProviderProfile(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		respondValidationError(c, "id is required")
 		return
 	}
 
 	var req CreateProviderProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 
 	profile, err := s.profileRepo.GetByID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		respondNotFound(c, err.Error())
 		return
 	}
 
@@ -191,7 +191,7 @@ func (s *ProviderServer) UpdateProviderProfile(c *gin.Context) {
 	if req.SecretRef != "" {
 		secretRef, err := s.stashProviderSecret(profile.ID, req.SecretRef)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to stash secret: " + err.Error()})
+respondInternal(c, "failed to stash secret", err)
 			return
 		}
 		profile.SecretRef = secretRef
@@ -199,7 +199,7 @@ func (s *ProviderServer) UpdateProviderProfile(c *gin.Context) {
 
 	endpoint, err := llm.NormalizeEndpoint(req.Endpoint)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 
@@ -210,7 +210,7 @@ func (s *ProviderServer) UpdateProviderProfile(c *gin.Context) {
 	profile.Enabled = req.Enabled
 
 	if err := s.profileRepo.Update(profile); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to update provider profile", err)
 		return
 	}
 
@@ -245,12 +245,12 @@ type ProbeProviderResponse struct {
 func (s *ProviderServer) ProbeProvider(c *gin.Context) {
 	var req ProbeProviderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 	endpoint, err := llm.NormalizeEndpoint(req.Endpoint)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 	resp := llm.Probe(c.Request.Context(), endpoint, req.APIKey, req.ModelIDs)
@@ -272,7 +272,7 @@ func (s *ProviderServer) DeleteProviderProfile(c *gin.Context) {
 	}
 
 	if err := s.profileRepo.Delete(id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to delete provider profile", err)
 		return
 	}
 
@@ -298,12 +298,12 @@ type SetLLMDefaultSettingsRequest struct {
 func (s *ProviderServer) SetLLMDefaultSettings(c *gin.Context) {
 	var req SetLLMDefaultSettingsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 
 	if err := s.settingsRepo.SetLLMDefault(req.ProviderID, req.ModelID); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to set LLM default", err)
 		return
 	}
 
@@ -338,12 +338,12 @@ func (s *ProviderServer) GetOnboardingComplete(c *gin.Context) {
 
 	assistants, err := s.assistantRepo.List(1, 0)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to list assistants for onboarding check", err)
 		return
 	}
 	profiles, err := s.profileRepo.List()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to list provider profiles for onboarding check", err)
 		return
 	}
 
@@ -355,7 +355,7 @@ func (s *ProviderServer) GetOnboardingComplete(c *gin.Context) {
 func (s *ProviderServer) SetOnboardingComplete(c *gin.Context) {
 	var req setOnboardingCompleteRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 
@@ -364,7 +364,7 @@ func (s *ProviderServer) SetOnboardingComplete(c *gin.Context) {
 		value = "true"
 	}
 	if err := s.appSettingsRepo.Set("onboarding.complete", value); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to set onboarding complete", err)
 		return
 	}
 
@@ -381,7 +381,7 @@ func (s *ProviderServer) GetSafetyProfile(c *gin.Context) {
 func (s *ProviderServer) SetSafetyProfile(c *gin.Context) {
 	var req setSafetyProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 
@@ -393,7 +393,7 @@ func (s *ProviderServer) SetSafetyProfile(c *gin.Context) {
 	}
 
 	if err := s.appSettingsRepo.Set("safety_profile", req.Profile); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to set safety profile", err)
 		return
 	}
 

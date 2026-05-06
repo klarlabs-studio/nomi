@@ -55,29 +55,29 @@ type auditEnvelope struct {
 func (s *AuditServer) Export(c *gin.Context) {
 	from, err := time.Parse(time.RFC3339, c.Query("from"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid from; use RFC3339"})
+		respondValidationError(c, "invalid from; use RFC3339")
 		return
 	}
 	to, err := time.Parse(time.RFC3339, c.Query("to"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid to; use RFC3339"})
+		respondValidationError(c, "invalid to; use RFC3339")
 		return
 	}
 	format := strings.ToLower(strings.TrimSpace(c.DefaultQuery("format", "json")))
 	if format != "json" && format != "ndjson" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid format; use json|ndjson"})
+		respondValidationError(c, "invalid format; use json|ndjson")
 		return
 	}
 	redacted := c.DefaultQuery("redact", "false") == "true"
 
 	eventsList, err := s.events.ListByTimeRange(from, to)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "audit operation failed", err)
 		return
 	}
 	approvals, err := s.approvals.ListByTimeRange(from, to)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "audit operation failed", err)
 		return
 	}
 
@@ -105,7 +105,7 @@ func (s *AuditServer) Export(c *gin.Context) {
 	if format == "json" {
 		payload, err := json.Marshal(env)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			respondInternal(c, "audit operation failed", err)
 			return
 		}
 		env.Signature = base64.StdEncoding.EncodeToString(ed25519.Sign(s.privKey, payload))
@@ -115,7 +115,7 @@ func (s *AuditServer) Export(c *gin.Context) {
 
 	ndjson, sig, err := s.buildNDJSON(env)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "audit operation failed", err)
 		return
 	}
 	c.Header("Content-Type", "application/x-ndjson")
@@ -131,7 +131,11 @@ type pruneAuditRequest struct {
 func (s *AuditServer) Prune(c *gin.Context) {
 	var req pruneAuditRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
+		return
+	}
+	if req.Days <= 0 {
+		respondValidationError(c, "days must be >0")
 		return
 	}
 	if req.Days <= 0 {
@@ -141,7 +145,7 @@ func (s *AuditServer) Prune(c *gin.Context) {
 	cutoff := time.Now().UTC().Add(-time.Duration(req.Days) * 24 * time.Hour)
 	deleted, err := s.events.DeleteOlderThan(cutoff)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "audit operation failed", err)
 		return
 	}
 	_ = s.settings.Set("audit_retention_days", strconv.Itoa(req.Days))

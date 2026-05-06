@@ -84,7 +84,7 @@ func (s *PluginServer) ListPlugins(c *gin.Context) {
 		manifest := p.Manifest()
 		conns, err := s.connections.ListByPlugin(manifest.ID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			respondInternal(c, "failed to list plugin connections", err)
 			return
 		}
 		var state *domain.PluginState
@@ -129,13 +129,13 @@ func (s *PluginServer) GetPlugin(c *gin.Context) {
 	id := c.Param("id")
 	p, err := s.registry.Get(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		respondNotFound(c, err.Error())
 		return
 	}
 	manifest := p.Manifest()
 	conns, err := s.connections.ListByPlugin(manifest.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to list plugin connections", err)
 		return
 	}
 	var state *domain.PluginState
@@ -156,12 +156,12 @@ func (s *PluginServer) GetPlugin(c *gin.Context) {
 func (s *PluginServer) GetPluginState(c *gin.Context) {
 	id := c.Param("id")
 	if s.state == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "plugin state not configured"})
+		respondNotFound(c, "plugin state not configured")
 		return
 	}
 	st, err := s.state.Get(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		respondNotFound(c, err.Error())
 		return
 	}
 	c.JSON(http.StatusOK, st)
@@ -188,23 +188,23 @@ type UpdatePluginStateRequest struct {
 func (s *PluginServer) PatchPluginState(c *gin.Context) {
 	id := c.Param("id")
 	if s.state == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "plugin state not configured"})
+		respondInternal(c, "plugin state not configured", nil)
 		return
 	}
 	plug, err := s.registry.Get(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		respondNotFound(c, err.Error())
 		return
 	}
 	var req UpdatePluginStateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 	if req.Enabled != nil {
 		previous, _ := s.state.IsEnabled(id)
 		if err := s.state.SetEnabled(id, *req.Enabled); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			respondInternal(c, "failed to update plugin enabled state", err)
 			return
 		}
 		// Reconcile the live plugin instance with the new state. We
@@ -230,13 +230,13 @@ func (s *PluginServer) PatchPluginState(c *gin.Context) {
 	}
 	if req.EnabledRoles != nil {
 		if err := s.state.SetEnabledRoles(id, req.EnabledRoles); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			respondInternal(c, "failed to update plugin roles state", err)
 			return
 		}
 	}
 	st, err := s.state.Get(id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to read plugin state", err)
 		return
 	}
 	c.JSON(http.StatusOK, st)
@@ -260,18 +260,18 @@ func (s *PluginServer) CreateConnection(c *gin.Context) {
 	pluginID := c.Param("id")
 	p, err := s.registry.Get(pluginID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		respondNotFound(c, err.Error())
 		return
 	}
 	manifest := p.Manifest()
 
 	var req CreateConnectionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 	if req.Name == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "name is required"})
+		respondValidationError(c, "name is required")
 		return
 	}
 
@@ -281,7 +281,7 @@ func (s *PluginServer) CreateConnection(c *gin.Context) {
 			continue
 		}
 		if req.Credentials[cred.Key] == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("credential %q is required", cred.Key)})
+			respondValidationError(c, fmt.Sprintf("credential %q is required", cred.Key))
 			return
 		}
 	}
@@ -289,7 +289,7 @@ func (s *PluginServer) CreateConnection(c *gin.Context) {
 	connID := uuid.New().String()
 	credRefs, err := s.stashCredentials(pluginID, connID, req.Credentials)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "stash credentials: " + err.Error()})
+		respondInternal(c, "failed to stash credentials", err)
 		return
 	}
 
@@ -304,7 +304,7 @@ func (s *PluginServer) CreateConnection(c *gin.Context) {
 		CredentialRefs: credRefs,
 		Enabled:        req.Enabled,
 	}); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to create plugin connection", err)
 		return
 	}
 
@@ -336,17 +336,17 @@ func (s *PluginServer) UpdateConnection(c *gin.Context) {
 
 	existing, err := s.connections.GetByID(connID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		respondNotFound(c, err.Error())
 		return
 	}
 	if existing.PluginID != pluginID {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "connection does not belong to this plugin"})
+		respondValidationError(c, "connection does not belong to this plugin")
 		return
 	}
 
 	var req UpdateConnectionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 
@@ -368,7 +368,7 @@ func (s *PluginServer) UpdateConnection(c *gin.Context) {
 	if len(req.Credentials) > 0 {
 		updates, err := s.stashCredentials(pluginID, connID, req.Credentials)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			respondInternal(c, "failed to stash credentials", err)
 			return
 		}
 		if existing.CredentialRefs == nil {
@@ -380,7 +380,7 @@ func (s *PluginServer) UpdateConnection(c *gin.Context) {
 	}
 
 	if err := s.connections.Update(existing); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to update plugin connection", err)
 		return
 	}
 
@@ -401,15 +401,15 @@ func (s *PluginServer) DeleteConnection(c *gin.Context) {
 
 	existing, err := s.connections.GetByID(connID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		respondNotFound(c, err.Error())
 		return
 	}
 	if existing.PluginID != pluginID {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "connection does not belong to this plugin"})
+		respondValidationError(c, "connection does not belong to this plugin")
 		return
 	}
 	if err := s.connections.Delete(connID); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to delete plugin connection", err)
 		return
 	}
 	// Restart plugin so it stops polling the deleted connection.
@@ -426,7 +426,7 @@ func (s *PluginServer) ListAssistantBindings(c *gin.Context) {
 	assistantID := c.Param("id")
 	list, err := s.bindings.ListByAssistant(assistantID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to list assistant bindings", err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"bindings": list})
@@ -448,11 +448,11 @@ func (s *PluginServer) UpsertAssistantBinding(c *gin.Context) {
 	assistantID := c.Param("id")
 	var req UpsertBindingRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondValidationError(c, err.Error())
 		return
 	}
 	if !req.Role.IsValid() {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid role"})
+		respondValidationError(c, "invalid role")
 		return
 	}
 	if err := s.bindings.Upsert(&domain.AssistantConnectionBinding{
@@ -463,7 +463,7 @@ func (s *PluginServer) UpsertAssistantBinding(c *gin.Context) {
 		IsPrimary:    req.IsPrimary,
 		Priority:     req.Priority,
 	}); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to upsert assistant binding", err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "upserted"})
@@ -475,11 +475,11 @@ func (s *PluginServer) DeleteAssistantBinding(c *gin.Context) {
 	connectionID := c.Param("conn_id")
 	role := domain.BindingRole(c.Param("role"))
 	if !role.IsValid() {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid role"})
+		respondValidationError(c, "invalid role")
 		return
 	}
 	if err := s.bindings.Delete(assistantID, connectionID, role); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		respondInternal(c, "failed to delete assistant binding", err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"status": "deleted"})
