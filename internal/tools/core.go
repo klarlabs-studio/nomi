@@ -62,7 +62,7 @@ func (t *FileReadTool) Execute(ctx context.Context, input map[string]interface{}
 
 	content, err := os.ReadFile(resolved)
 	if err != nil {
-		return nil, fmt.Errorf("Couldn't read the file: %w", err)
+		return nil, fmt.Errorf("couldn't read the file: %w", err)
 	}
 
 	return map[string]interface{}{
@@ -131,10 +131,10 @@ func (t *FileWriteTool) Execute(ctx context.Context, input map[string]interface{
 	}
 
 	if err := os.MkdirAll(filepath.Dir(resolved), 0o755); err != nil {
-		return nil, fmt.Errorf("Couldn't create the folder: %w", err)
+		return nil, fmt.Errorf("couldn't create the folder: %w", err)
 	}
 	if err := os.WriteFile(resolved, []byte(content), 0o644); err != nil {
-		return nil, fmt.Errorf("Couldn't write the file: %w", err)
+		return nil, fmt.Errorf("couldn't write the file: %w", err)
 	}
 
 	return map[string]interface{}{

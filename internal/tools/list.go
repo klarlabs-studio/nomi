@@ -66,7 +66,7 @@ func (t *FileListTool) Execute(ctx context.Context, input map[string]interface{}
 
 	info, err := os.Stat(resolved)
 	if err != nil {
-		return nil, fmt.Errorf("Couldn't read the folder: %w", err)
+		return nil, fmt.Errorf("couldn't read the folder: %w", err)
 	}
 	if !info.IsDir() {
 		return nil, &domain.UserError{
@@ -84,7 +84,7 @@ func (t *FileListTool) Execute(ctx context.Context, input map[string]interface{}
 
 	entries, truncated, err := walkDir(resolved, recursive, maxEntries)
 	if err != nil {
-		return nil, fmt.Errorf("Couldn't walk the folder: %w", err)
+		return nil, fmt.Errorf("couldn't walk the folder: %w", err)
 	}
 
 	tree := renderTree(resolved, entries, truncated)

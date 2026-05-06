@@ -127,7 +127,7 @@ func (db *DB) Config() Config {
 // couple state-machine row updates with their corresponding event inserts so
 // a crash between the two can't produce a silent state-transition gap.
 func (db *DB) WithTx(fn func(tx *sql.Tx) error) (err error) {
-	tx, beginErr := db.DB.Begin()
+	tx, beginErr := db.Begin()
 	if beginErr != nil {
 		return fmt.Errorf("failed to begin transaction: %w", beginErr)
 	}
