@@ -1,0 +1,86 @@
+version: 1
+language: go
+policy:
+  default:
+    min: 80
+  domains:
+    - name: cmd
+      match:
+        - ./cmd/...
+      min: null
+    - name: api
+      match:
+        - ./internal/api/...
+      min: null
+    - name: buildinfo
+      match:
+        - ./internal/buildinfo/...
+      min: null
+    - name: configio
+      match:
+        - ./internal/configio/...
+      min: null
+    - name: connectors
+      match:
+        - ./internal/connectors/...
+      min: null
+    - name: domain
+      match:
+        - ./internal/domain/...
+      min: null
+    - name: events
+      match:
+        - ./internal/events/...
+      min: null
+    - name: integrations
+      match:
+        - ./internal/integrations/...
+      min: null
+    - name: llm
+      match:
+        - ./internal/llm/...
+      min: null
+    - name: memory
+      match:
+        - ./internal/memory/...
+      min: null
+    - name: permissions
+      match:
+        - ./internal/permissions/...
+      min: null
+    - name: plugins
+      match:
+        - ./internal/plugins/...
+      min: null
+    - name: runtime
+      match:
+        - ./internal/runtime/...
+      min: null
+    - name: secrets
+      match:
+        - ./internal/secrets/...
+      min: null
+    - name: seed
+      match:
+        - ./internal/seed/...
+      min: null
+    - name: storage
+      match:
+        - ./internal/storage/...
+      min: null
+    - name: tools
+      match:
+        - ./internal/tools/...
+      min: null
+    - name: tunnel
+      match:
+        - ./internal/tunnel/...
+      min: null
+    - name: webhooks
+      match:
+        - ./internal/webhooks/...
+      min: null
+    - name: pkg
+      match:
+        - ./pkg/...
+      min: null

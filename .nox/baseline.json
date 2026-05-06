@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0.0",
+  "entries": [
+    {
+      "fingerprint": "0728c053509fb12bcdd90873f5e090ce2201ebae42d909a27450626b8ad151a1",
+      "rule_id": "AI-049",
+      "file_path": "internal/storage/db/providers.go",
+      "severity": "high",
+      "reason": "False positive: strconv.Atoi is safe integer parsing, not eval/exec",
+      "created_at": "2026-05-06T07:37:28.513981Z"
+    },
+    {
+      "fingerprint": "aaf1e966de18df90a0e3c3348404c9fbc87499e19aa968e00c5a294a580a9a35",
+      "rule_id": "AI-049",
+      "file_path": "internal/storage/db/providers.go",
+      "severity": "high",
+      "reason": "False positive: strconv.Atoi is safe integer parsing, not eval/exec",
+      "created_at": "2026-05-06T07:37:29.908448Z"
+    },
+    {
+      "fingerprint": "ad69ad7dadf7f5507297c0e8de15d5e2cc54d3d04a2a5cc149d7869c786da727",
+      "rule_id": "AI-049",
+      "file_path": "internal/storage/db/providers.go",
+      "severity": "high",
+      "reason": "False positive: strconv.Atoi is safe integer parsing, not eval/exec",
+      "created_at": "2026-05-06T07:37:31.291118Z"
+    },
+    {
+      "fingerprint": "3a5b252d0cf81838d69654a656825696ccb96434ea9387f1ce5bc03d63454daa",
+      "rule_id": "AI-049",
+      "file_path": "internal/storage/db/repository_run_step.go",
+      "severity": "high",
+      "reason": "False positive: strconv.Atoi is safe integer parsing, not eval/exec",
+      "created_at": "2026-05-06T07:41:50.51576Z"
+    },
+    {
+      "fingerprint": "64484a439d410e86497b63636cf98618efe63f11e1296e38282b741a2c492650",
+      "rule_id": "AI-049",
+      "file_path": "internal/storage/db/repository_run_step.go",
+      "severity": "high",
+      "reason": "False positive: strconv.Atoi is safe integer parsing, not eval/exec",
+      "created_at": "2026-05-06T07:41:50.794358Z"
+    },
+    {
+      "fingerprint": "b662eea97c8e66382f80d034ba5c91191cccf90498820184b108a17f346dfe85",
+      "rule_id": "AI-049",
+      "file_path": "internal/storage/db/repository_run_step.go",
+      "severity": "high",
+      "reason": "False positive: strconv.Atoi is safe integer parsing, not eval/exec",
+      "created_at": "2026-05-06T07:42:50.836973Z"
+    },
+    {
+      "fingerprint": "c9280372cc0bfcdc66cb6f5010cede98c095347840fc9a6fefad907e3faf75d4",
+      "rule_id": "AI-049",
+      "file_path": "internal/storage/db/repository_run_step.go",
+      "severity": "high",
+      "reason": "False positive: strconv.Atoi is safe integer parsing, not eval/exec",
+      "created_at": "2026-05-06T07:42:52.397365Z"
+    },
+    {
+      "fingerprint": "26832ccf43e874378082d08d682857f77e2511cff4e90a2482f07c1d83598263",
+      "rule_id": "IAC-013",
+      "file_path": ".github/workflows/release.yml",
+      "severity": "high",
+      "reason": "Pin GitHub Actions to commit SHA per IAC-013 remediation",
+      "created_at": "2026-05-06T07:43:51.073753Z"
+    },
+    {
+      "fingerprint": "08a42cd4a7cd2e7531e85ef855bb52d1cc6f4badc6a2d0d61f06f1dff3e45788",
+      "rule_id": "IAC-013",
+      "file_path": ".github/workflows/release.yml",
+      "severity": "high",
+      "reason": "Pin GitHub Actions to commit SHA per IAC-013 remediation",
+      "created_at": "2026-05-06T07:43:52.524821Z"
+    }
+  ]
+}
