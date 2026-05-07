@@ -839,12 +839,12 @@ export function PluginsManager() {
   const { data, error, isFetching, refetch } = useQuery({
     queryKey: ["plugins"],
     queryFn: () => pluginsApi.list(),
-    refetchInterval: 5_000,
+    refetchInterval: 60_000, // safety net; EventProvider invalidates on plugin.* events
   });
   const { data: tunnelStatus } = useQuery({
     queryKey: ["tunnel-status"],
     queryFn: () => pluginsApi.getTunnelStatus(),
-    refetchInterval: 10_000,
+    refetchInterval: 60_000, // safety net; EventProvider invalidates on plugin.* events
   });
 
   const plugins = data?.plugins ?? [];

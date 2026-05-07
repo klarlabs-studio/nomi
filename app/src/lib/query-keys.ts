@@ -46,4 +46,9 @@ export const queryKeys = {
     all: ["health"] as const,
     check: () => ["health", "check"] as const,
   },
+  plugins: {
+    all: ["plugins"] as const,
+    list: () => ["plugins", "list"] as const,
+    configs: () => ["plugins", "configs"] as const,
+  },
 };

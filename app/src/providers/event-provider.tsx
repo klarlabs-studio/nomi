@@ -149,4 +149,9 @@ function handleEventInvalidations(
     qc.invalidateQueries({ queryKey: queryKeys.connectors.all });
     return;
   }
+
+  if (ev.type.startsWith("plugin.")) {
+    qc.invalidateQueries({ queryKey: queryKeys.plugins.all });
+    return;
+  }
 }
