@@ -77,9 +77,11 @@ func (t *LLMChatTool) Execute(ctx context.Context, input map[string]interface{})
 
 	var client llm.Client
 	var model string
+	var providerID string
 	var err error
 
-	if providerID, ok := input["provider_id"].(string); ok && providerID != "" {
+	if pid, ok := input["provider_id"].(string); ok && pid != "" {
+		providerID = pid
 		client, err = t.resolver.ClientForProfile(providerID)
 		if err != nil {
 			return nil, err
@@ -149,6 +151,13 @@ func (t *LLMChatTool) Execute(ctx context.Context, input map[string]interface{})
 			return nil
 		})
 		if err != nil {
+			// Invalidate cache on auth error
+			if providerID != "" {
+				t.resolver.InvalidateCacheIfAuthError(providerID, err)
+			} else {
+				// For default client, we need to invalidate the default profile
+				// This is handled by the resolver's DefaultClient path
+			}
 			return nil, err
 		}
 		return map[string]interface{}{
@@ -161,6 +170,10 @@ func (t *LLMChatTool) Execute(ctx context.Context, input map[string]interface{})
 
 	resp, err := client.Chat(ctx, chatReq)
 	if err != nil {
+		// Invalidate cache on auth error
+		if providerID != "" {
+			t.resolver.InvalidateCacheIfAuthError(providerID, err)
+		}
 		return nil, err
 	}
 

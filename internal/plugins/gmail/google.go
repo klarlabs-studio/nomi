@@ -74,6 +74,11 @@ func (g *GoogleProvider) doJSON(req *http.Request, out interface{}) error {
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024*1024))
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		// Check for 401 Unauthorized - invalidate the account's auth
+		if resp.StatusCode == http.StatusUnauthorized && g.oauth != nil {
+			// Invalidate the account's refresh token so next call triggers re-auth
+			_ = g.oauth.InvalidateAccount(g.accountID)
+		}
 		return fmt.Errorf("gmail: %s %s -> %d: %s", req.Method, req.URL.Path, resp.StatusCode, string(body))
 	}
 	if out == nil || len(body) == 0 {

@@ -1,6 +1,7 @@
 package llm
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -129,6 +130,18 @@ func (r *Resolver) ClientForProfile(id string) (Client, error) {
 	r.cache[id] = cachedClient{client: client, modelHint: modelHint}
 	r.mu.Unlock()
 	return client, nil
+}
+
+// InvalidateCacheIfAuthError checks if err is an AuthError (401)
+// and clears the cached client for the profile so the next request
+// obtains a fresh client with a new token.
+func (r *Resolver) InvalidateCacheIfAuthError(id string, err error) bool {
+	var authErr *AuthError
+	if errors.As(err, &authErr) {
+		r.InvalidateCache(id)
+		return true
+	}
+	return false
 }
 
 // InvalidateCache clears the cached client for a profile. Called when the

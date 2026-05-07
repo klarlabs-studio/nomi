@@ -44,6 +44,17 @@ type ChatRequest struct {
 	Stop []string `json:"stop,omitempty"`
 }
 
+// AuthError is returned when an LLM provider responds with 401 Unauthorized.
+// Callers can type-assert to detect auth failures and trigger cache invalidation.
+type AuthError struct {
+	Provider string
+	Message  string
+}
+
+func (e *AuthError) Error() string {
+	return fmt.Sprintf("llm auth error (%s): %s", e.Provider, e.Message)
+}
+
 // ChatResponse captures just what callers need. Token counts let callers
 // record usage in events; the rest of the OpenAI response schema is
 // discarded.
@@ -201,7 +212,15 @@ func (c *openaiClient) Chat(ctx context.Context, req ChatRequest) (ChatResponse,
 		// Surface structured errors when present, fall back to the raw body.
 		var structured openaiChatResponse
 		if json.Unmarshal(raw, &structured) == nil && structured.Error != nil {
+			// Check for 401 Unauthorized - return AuthError for cache invalidation
+			if resp.StatusCode == http.StatusUnauthorized {
+				return ChatResponse{}, &AuthError{Provider: "openai", Message: structured.Error.Message}
+			}
 			return ChatResponse{}, fmt.Errorf("llm: %s: %s", resp.Status, structured.Error.Message)
+		}
+		// Check for 401 even without structured error
+		if resp.StatusCode == http.StatusUnauthorized {
+			return ChatResponse{}, &AuthError{Provider: "openai", Message: string(raw)}
 		}
 		return ChatResponse{}, fmt.Errorf("llm: %s: %s", resp.Status, string(raw))
 	}
@@ -419,7 +438,15 @@ func (c *anthropicClient) Chat(ctx context.Context, req ChatRequest) (ChatRespon
 	if resp.StatusCode >= 400 {
 		var structured anthropicResponse
 		if json.Unmarshal(raw, &structured) == nil && structured.Error != nil {
+			// Check for 401 Unauthorized - return AuthError for cache invalidation
+			if resp.StatusCode == http.StatusUnauthorized {
+				return ChatResponse{}, &AuthError{Provider: "anthropic", Message: structured.Error.Message}
+			}
 			return ChatResponse{}, fmt.Errorf("llm: %s: %s", resp.Status, structured.Error.Message)
+		}
+		// Check for 401 even without structured error
+		if resp.StatusCode == http.StatusUnauthorized {
+			return ChatResponse{}, &AuthError{Provider: "anthropic", Message: string(raw)}
 		}
 		return ChatResponse{}, fmt.Errorf("llm: %s: %s", resp.Status, string(raw))
 	}

@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 444,
+  "version": 446,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1302,8 +1302,10 @@
       "elapsed_minutes": 7
     },
     "task-auth-+-endpoint-cache-invalidation-on-401,-daemon-restart-resilience": {
-      "status": "pending",
+      "status": "in_progress",
       "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-06T21:49:01.861313+02:00",
       "elapsed_minutes": 0
     },
     "task-backend-core-test-coverage": {
@@ -1356,8 +1358,10 @@
       "elapsed_minutes": 3
     },
     "task-chat-input-ux:-textarea,-ime-composition,-multiline-send-semantics,-scroll-race": {
-      "status": "pending",
+      "status": "in_progress",
       "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-06T21:48:55.490505+02:00",
       "elapsed_minutes": 0
     },
     "task-cognitive-stack-library-fit-assessment:-olymp-/-mnemos-/-chronos": {
@@ -2245,5 +2249,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-05T19:41:05.419661+02:00"
+  "updated_at": "2026-05-06T21:49:01.861313+02:00"
 }

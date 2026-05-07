@@ -279,6 +279,15 @@ func (m *OAuthManager) GetToken(ctx context.Context, accountID, clientID string)
 	return m.refreshToken(ctx, clientID, refreshToken)
 }
 
+// InvalidateAccount clears the stored refresh token for an account.
+// Call this when receiving 401 Unauthorized responses to force re-auth.
+func (m *OAuthManager) InvalidateAccount(accountID string) error {
+	if m.secrets == nil {
+		return nil
+	}
+	return m.secrets.Delete(refreshTokenKey(accountID))
+}
+
 // RefreshTokenForAccount refreshes the access token using the stored refresh token.
 func (m *OAuthManager) RefreshTokenForAccount(ctx context.Context, accountID, clientID string) (*TokenSet, error) {
 	return m.GetToken(ctx, accountID, clientID)

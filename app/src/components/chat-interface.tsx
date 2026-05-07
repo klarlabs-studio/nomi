@@ -16,7 +16,7 @@ import { useStepStream } from "@/lib/streaming";
 import { OutcomeConnectorPicker } from "@/components/onboarding/outcome-connectors";
 import { queryKeys } from "@/lib/query-keys";
 import { errorMessage } from "@/lib/utils";
-import { Send, Plus, Bot, Loader2, RefreshCw, Trash2, Pause, Play, Plug } from "lucide-react";
+import { Send, Plus, Bot, Loader2, RefreshCw, Trash2, Pause, Play, Plug, ArrowDown } from "lucide-react";
 
 interface ChatItem {
   id: string;
@@ -180,9 +180,38 @@ export function ChatInterface({ resetToken = 0 }: { resetToken?: number }) {
   // Scroll management: we need refs (not state) so recalculating doesn't
   // re-render; and the ref values survive across query refetches.
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const prevStepCountRef = useRef(0);
   const prevStatusRef = useRef<string>("");
   const scrollFrameRef = useRef<number | null>(null);
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+
+  // Track scroll position to detect if user scrolled up
+  const handleScroll = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    const threshold = 100; // px from bottom to consider "at bottom"
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    setIsAtBottom(distanceFromBottom < threshold);
+  };
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    setIsAtBottom(true);
+  };
+
+  // Debounced auto-scroll to prevent scroll race conditions
+  const debouncedScrollToBottom = useCallback(() => {
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    scrollTimeoutRef.current = setTimeout(() => {
+      if (isAtBottom) {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }
+    }, 100); // 100ms debounce
+  }, [isAtBottom]);
 
   // --- server state via React Query ---
 
@@ -324,6 +353,7 @@ export function ChatInterface({ resetToken = 0 }: { resetToken?: number }) {
   // Smart scroll: only scroll when new content is added or a terminal
   // transition happens, not on every refetch. refs gate so the effect is
   // idempotent when the query data hasn't meaningfully changed.
+  // Only auto-scroll if user is near the bottom (respects user's scroll position).
   useEffect(() => {
     if (!chatData) return;
 
@@ -331,11 +361,12 @@ export function ChatInterface({ resetToken = 0 }: { resetToken?: number }) {
     const currentStatus = chatData.run.status;
 
     const shouldScroll =
-      currentStepCount > prevStepCountRef.current ||
-      (currentStatus !== prevStatusRef.current &&
-        (currentStatus === "completed" ||
-          currentStatus === "failed" ||
-          prevStatusRef.current === "created"));
+      (currentStepCount > prevStepCountRef.current ||
+        (currentStatus !== prevStatusRef.current &&
+          (currentStatus === "completed" ||
+            currentStatus === "failed" ||
+            prevStatusRef.current === "created"))) &&
+      isAtBottom; // Only auto-scroll if user hasn't scrolled up
 
     if (shouldScroll) {
       if (scrollFrameRef.current !== null) {
@@ -343,18 +374,21 @@ export function ChatInterface({ resetToken = 0 }: { resetToken?: number }) {
       }
       scrollFrameRef.current = requestAnimationFrame(() => {
         scrollFrameRef.current = null;
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        debouncedScrollToBottom();
       });
     }
 
     prevStepCountRef.current = currentStepCount;
     prevStatusRef.current = currentStatus;
-  }, [chatData]);
+  }, [chatData, isAtBottom, debouncedScrollToBottom]);
 
   useEffect(() => {
     return () => {
       if (scrollFrameRef.current !== null) {
         cancelAnimationFrame(scrollFrameRef.current);
+      }
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
       }
     };
   }, []);
@@ -802,9 +836,11 @@ export function ChatInterface({ resetToken = 0 }: { resetToken?: number }) {
 
             {/* Messages - scrollable area */}
             <div
-              className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0"
+              ref={messagesContainerRef}
+              className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0 relative"
               role="log"
               aria-live="polite"
+              onScroll={handleScroll}
             >
               {/* User Message */}
               <div className="flex justify-end">
@@ -845,7 +881,7 @@ export function ChatInterface({ resetToken = 0 }: { resetToken?: number }) {
 
               {/* Thinking / Status Block. Hidden during plan_review so the
                   PlanReviewCard is the only actionable surface. */}
-              {chatData && chatData.run.status !== "created" && chatData.run.status !== "plan_review" && (
+              {chatData && chatData.run.status !== "created" && chatData.run.status !== "plan_review" && !getResponseText() && (
                 <div className="flex justify-start">
                   <div className="max-w-[80%] space-y-2">
                     <div className="flex items-center gap-2">
@@ -940,6 +976,18 @@ export function ChatInterface({ resetToken = 0 }: { resetToken?: number }) {
               )}
 
               <div ref={messagesEndRef} />
+              
+              {/* Scroll to bottom button - appears when user scrolls up */}
+              {!isAtBottom && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="absolute bottom-4 right-4 rounded-full shadow-lg z-10"
+                  onClick={scrollToBottom}
+                >
+                  <ArrowDown className="w-4 h-4" />
+                </Button>
+              )}
             </div>
 
             {/* Input - fixed at bottom. Disabled while the plan is under
