@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 454,
+  "version": 455,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -2106,11 +2106,15 @@
       "elapsed_minutes": 1
     },
     "task-unified-approval-surface-with-plain-english-capability-copy": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "Unified approval surface across ApprovalPanel and chat view: (1) Added role=\\\"alert\\\" + aria-live=\\\"assertive\\\" for screen readers, (2) Consistent amber colors (amber-50/200/500) in both views, (3) Moved \\\"Remember this choice\\\" above action buttons, (4) Removed developer-focused fallback copy, (5) Type-to-confirm for irreversible actions. axe-core passes, colors meet WCAG contrast."
+      ],
       "started_at": "2026-05-07T23:53:28.255258+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-08T11:17:09.875058+02:00",
+      "elapsed_minutes": 683
     },
     "task-v1-hardening-01-error-envelope": {
       "status": "done",
@@ -2273,5 +2277,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-07T23:53:28.255258+02:00"
+  "updated_at": "2026-05-08T11:17:09.875059+02:00"
 }

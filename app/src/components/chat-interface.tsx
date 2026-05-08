@@ -17,6 +17,7 @@ import { OutcomeConnectorPicker } from "@/components/onboarding/outcome-connecto
 import { queryKeys } from "@/lib/query-keys";
 import { errorMessage } from "@/lib/utils";
 import { Send, Plus, Bot, Loader2, RefreshCw, Trash2, Pause, Play, Plug, ArrowDown } from "lucide-react";
+import { Select, SelectItem } from "@/components/ui/select";
 
 interface ChatItem {
   id: string;
@@ -701,19 +702,20 @@ export function ChatInterface({ resetToken = 0 }: { resetToken?: number }) {
                   Loading assistants...
                 </div>
               ) : (
-                <>
-                  <select
-                    className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                   <>
+                  <Select
                     value={selectedAssistant}
-                    onChange={(e) => setSelectedAssistant(e.target.value)}
-                    aria-label="Select an assistant"
+                    onValueChange={setSelectedAssistant}
+                    placeholder="Select an assistant"
+                    disabled={assistants.length === 0}
+                    className="w-full max-w-md"
                   >
                     {assistants.map((a) => (
-                      <option key={a.id} value={a.id}>
+                      <SelectItem key={a.id} value={a.id}>
                         {a.name} — {a.role}
-                      </option>
+                      </SelectItem>
                     ))}
-                  </select>
+                  </Select>
 
                   <div className="flex flex-wrap gap-2">
                     {[
