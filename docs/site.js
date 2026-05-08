@@ -37,11 +37,27 @@ document.querySelectorAll('button.copy').forEach(btn => {
   };
 
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
+  const syncMotionPreference = () => {
+    if (reduce && reduce.matches) {
+      video.pause();
+      setPressed(false);
+      return;
+    }
+    video.play().catch(() => {});
+    setPressed(!video.paused);
+  };
+
   if (reduce && reduce.matches) {
     video.pause();
     setPressed(false);
   } else {
+    // Autoplay only when reduced-motion is not requested.
+    video.play().catch(() => {});
     setPressed(!video.paused);
+  }
+
+  if (reduce && typeof reduce.addEventListener === 'function') {
+    reduce.addEventListener('change', syncMotionPreference);
   }
 
   toggle.addEventListener('click', () => {

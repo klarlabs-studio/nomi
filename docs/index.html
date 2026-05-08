@@ -67,11 +67,10 @@
 
   <section class="screenshot">
     <div class="hero-video-wrap">
-      <video class="hero-video" id="hero-video" autoplay loop muted playsinline preload="metadata"
+      <video class="hero-video" id="hero-video" loop muted playsinline preload="metadata"
              width="1280" height="720"
              poster="media/hero-poster.jpg"
              aria-label="Demo: typing a goal, reviewing the agent's plan, approving it, and watching the run execute">
-        <source src="media/hero.webm" type="video/webm" />
         <source src="media/hero.mp4" type="video/mp4" />
         <img src="media/hero-poster.jpg" alt="Plan review screen with approve/edit controls" width="1280" height="720" />
       </video>
@@ -80,6 +79,12 @@
       </button>
     </div>
     <p class="caption">Type a goal. Review the plan. Approve. Run. <strong>This is the actual product, recorded against a local Ollama.</strong></p>
+    <div class="video-cues" aria-label="Demo chapters">
+      <span>0:00 Plan</span>
+      <span>0:22 Approve</span>
+      <span>0:49 Run</span>
+    </div>
+    <p class="video-fallback"><a href="media/hero.mp4" rel="noopener">Watch 90s demo file →</a></p>
   </section>
 
   <section class="problem" id="problem">
@@ -157,27 +162,27 @@
 
   <section class="screenshot-grid">
     <figure>
-      <img src="images/01-chats.png" alt="Chat tab with assistant conversations" loading="lazy" />
+      <img src="images/01-chats.png" alt="Chat tab with assistant conversations" loading="lazy" decoding="async" width="1280" height="800" />
       <figcaption>Chats — multi-turn dialogue with any assistant</figcaption>
     </figure>
     <figure>
-      <img src="images/03-assistants.png" alt="Assistant configuration" loading="lazy" />
+      <img src="images/03-assistants.png" alt="Assistant configuration" loading="lazy" decoding="async" width="1280" height="800" />
       <figcaption>Assistants — per-role personas with permission scopes</figcaption>
     </figure>
     <figure>
-      <img src="images/04-memory.png" alt="Memory inspector" loading="lazy" />
+      <img src="images/04-memory.png" alt="Memory inspector" loading="lazy" decoding="async" width="1280" height="800" />
       <figcaption>Memory — workspace-scoped, queryable, exportable</figcaption>
     </figure>
     <figure>
-      <img src="images/06-plugins.png" alt="Plugin management" loading="lazy" />
+      <img src="images/06-plugins.png" alt="Plugin management" loading="lazy" decoding="async" width="1280" height="800" />
       <figcaption>Plugins — WASM sandbox, install or build your own</figcaption>
     </figure>
     <figure>
-      <img src="images/07-providers.png" alt="LLM provider profiles" loading="lazy" />
+      <img src="images/07-providers.png" alt="LLM provider profiles" loading="lazy" decoding="async" width="1280" height="800" />
       <figcaption>Providers — Ollama, OpenAI, Anthropic, anything compatible</figcaption>
     </figure>
     <figure>
-      <img src="images/08-safety.png" alt="Safety profile configuration" loading="lazy" />
+      <img src="images/08-safety.png" alt="Safety profile configuration" loading="lazy" decoding="async" width="1280" height="800" />
       <figcaption>Safety profiles — strict, balanced, permissive</figcaption>
     </figure>
   </section>

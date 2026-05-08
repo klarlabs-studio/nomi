@@ -361,6 +361,26 @@ button.copy code { background: transparent; border: 0; padding: 0; }
   margin-top: 14px;
   font-style: italic;
 }
+.video-cues {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.video-cues span {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-dim);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 9px;
+  background: var(--bg-elev);
+}
+.video-fallback {
+  margin-top: 10px;
+  font-size: 13px;
+}
 
 /* problem */
 .problem h2 { max-width: 720px; }
