@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 446,
+  "version": 454,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1302,11 +1302,15 @@
       "elapsed_minutes": 7
     },
     "task-auth-+-endpoint-cache-invalidation-on-401,-daemon-restart-resilience": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "Implemented auth cache invalidation: (1) Added AuthError type in internal/llm/client.go with 401 detection for OpenAI/Anthropic clients, (2) Added InvalidateCacheIfAuthError() in internal/llm/resolver.go to clear cached clients on auth failures, (3) Updated internal/tools/llm_chat.go to invalidate resolver cache on auth errors, (4) Added InvalidateAccount() to Google OAuth manager (internal/integrations/google/oauth.go), (5) Updated Gmail provider to call InvalidateAccount on 401 responses. Daemon restart resilience was already complete via ResumeOrphanedRuns() in internal/runtime/engine.go (called at startup in cmd/nomid/main.go)."
+      ],
       "started_at": "2026-05-06T21:49:01.861313+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-07T22:11:31.261289+02:00",
+      "elapsed_minutes": 1462
     },
     "task-backend-core-test-coverage": {
       "status": "done",
@@ -1358,11 +1362,15 @@
       "elapsed_minutes": 3
     },
     "task-chat-input-ux:-textarea,-ime-composition,-multiline-send-semantics,-scroll-race": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "Implemented chat-input UX fixes in app/src/components/chat-interface.tsx: (1) IME composition guard (isComposing check + keyCode 229), (2) Multiline send semantics (Shift+Enter for newline, Enter to send), (3) Scroll position tracking with isAtBottom state, (4) \"Scroll to bottom\" button that appears when user scrolls up, (5) Debounced auto-scroll (100ms) to prevent scroll race conditions, (6) Smart scroll logic respects user scroll position. All changes lint-clean."
+      ],
       "started_at": "2026-05-06T21:48:55.490505+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-07T22:11:34.134529+02:00",
+      "elapsed_minutes": 1462
     },
     "task-cognitive-stack-library-fit-assessment:-olymp-/-mnemos-/-chronos": {
       "status": "pending",
@@ -1523,8 +1531,14 @@
       "elapsed_minutes": 5
     },
     "task-final-llm-conclusion-must-render-as-chat-bubble,-not-be-hidden-in-thinkingblock": {
-      "status": "pending",
+      "status": "done",
       "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "LLM conclusion now renders as chat bubble: (1) chat-interface.tsx conditionally renders ThinkingBlock only when getResponseText() is empty, (2) response-text.ts selects latest llm.chat step output for final bubble rendering. ThinkingBlock shows while LLM is still thinking; final conclusion appears as a proper chat message."
+      ],
+      "started_at": "2026-05-07T22:11:46.190854+02:00",
+      "completed_at": "2026-05-07T22:11:55.070367+02:00",
       "elapsed_minutes": 0
     },
     "task-first-run-wizard": {
@@ -1840,8 +1854,10 @@
       "elapsed_minutes": 13
     },
     "task-plugins-manager:-drop-5s/10s-polling,-wire-to-plugin-events": {
-      "status": "pending",
+      "status": "in_progress",
       "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-07T23:51:05.064069+02:00",
       "elapsed_minutes": 0
     },
     "task-plugins-tab-implementation": {
@@ -2090,8 +2106,10 @@
       "elapsed_minutes": 1
     },
     "task-unified-approval-surface-with-plain-english-capability-copy": {
-      "status": "pending",
+      "status": "in_progress",
       "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-07T23:53:28.255258+02:00",
       "elapsed_minutes": 0
     },
     "task-v1-hardening-01-error-envelope": {
@@ -2172,9 +2190,15 @@
       "elapsed_minutes": 0
     },
     "task-verify-and-pin-lucide-react-package-version": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "Verified lucide-react@1.14.0 is the real package (not a fork). Pinned to exact version \"1.14.0\" (removed ^ caret) in package.json. npm install updated the lockfile. Added missing useCallback import to chat-interface.tsx. Frontend builds successfully."
+      ],
+      "started_at": "2026-05-07T23:49:01.326284+02:00",
+      "completed_at": "2026-05-07T23:50:37.609167+02:00",
+      "elapsed_minutes": 1
     },
     "tauri-init": {
       "status": "done",
@@ -2249,5 +2273,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-06T21:49:01.861313+02:00"
+  "updated_at": "2026-05-07T23:53:28.255258+02:00"
 }

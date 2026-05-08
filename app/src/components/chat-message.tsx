@@ -160,8 +160,11 @@ export function ApprovalCard({ approval, onResolve, processing, agentName }: App
     }
   }, [approval.status]);
 
-  return (
-    <div className={`rounded-lg p-4 my-2 ${dangerous ? "bg-red-50 border border-red-300" : "bg-amber-50 border border-amber-200"}`}>
+    return (
+    <div className={`rounded-lg p-4 my-2 ${dangerous ? "bg-red-50 border border-red-300" : "bg-amber-50 border border-amber-200"}`}
+      role={approval.status === "pending" ? "alert" : undefined}
+      aria-live={approval.status === "pending" ? "assertive" : undefined}
+    >
       <div className="flex items-start gap-3">
         <AlertCircle className={`w-5 h-5 mt-0.5 ${dangerous ? "text-red-600" : "text-amber-600"}`} />
         <div className="flex-1 space-y-2">

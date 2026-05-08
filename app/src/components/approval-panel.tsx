@@ -122,18 +122,20 @@ export function ApprovalPanel() {
               const dangerous = copy.dangerSignal === "irreversible";
               const armed = isArmed(approval.id, dangerous);
               return (
-            <Card
-              key={approval.id}
-              className={`border-l-4 ${
-                dangerous && approval.status === "pending"
-                  ? "border-l-red-600"
-                  : approval.status === "pending"
-                  ? "border-l-yellow-500"
-                  : approval.status === "approved"
+              <Card
+                key={approval.id}
+                className={`border-l-4 ${
+                  dangerous && approval.status === "pending"
+                    ? "border-l-red-600"
+                    : approval.status === "pending"
+                    ? "border-l-amber-500"
+                    : approval.status === "approved"
                     ? "border-l-green-500"
                     : "border-l-red-500"
-              }`}
-            >
+                }`}
+                role={approval.status === "pending" ? "alert" : undefined}
+                aria-live={approval.status === "pending" ? "assertive" : undefined}
+              >
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-medium">{copy.summary}</div>
@@ -167,6 +169,16 @@ export function ApprovalPanel() {
 
                 {approval.status === "pending" && (
                   <div className="space-y-2">
+                    <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={rememberChoice[approval.id] || false}
+                        onChange={(e) =>
+                          setRememberChoice((prev) => ({ ...prev, [approval.id]: e.target.checked }))
+                        }
+                      />
+                      Remember this choice for 24 hours
+                    </label>
                     {dangerous && (
                       <div className="space-y-1">
                         <label
@@ -191,16 +203,6 @@ export function ApprovalPanel() {
                         </p>
                       </div>
                     )}
-                    <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-                      <input
-                        type="checkbox"
-                        checked={rememberChoice[approval.id] || false}
-                        onChange={(e) =>
-                          setRememberChoice((prev) => ({ ...prev, [approval.id]: e.target.checked }))
-                        }
-                      />
-                      Remember this choice for 24 hours
-                    </label>
                     <div className="flex gap-2">
                     <Button
                       variant="destructive"
