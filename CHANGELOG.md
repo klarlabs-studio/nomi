@@ -66,4 +66,39 @@ First public beta. Local-first, state-driven agent platform.
 - WASM host imports gate every call through the assistant's policy
   before forwarding to the tool executor.
 
+## [0.1.1] - 2026-05-08
+
+Quality and UX hardening release focused on approvals, chat ergonomics,
+auth resilience, and UI consistency.
+
+### Added
+- **Approval UX hardening** with plain-English summaries, pending approval
+  screen-reader announcements (`role="alert"`, `aria-live="assertive"`),
+  and unified approval visual treatment between chat-inline approvals and
+  the approvals panel.
+- **New shadcn Select primitive** (`app/src/components/ui/select.tsx`) and
+  migration of key assistant-selection/model-selection controls off native
+  `<select>` to align focus/keyboard behavior with the rest of the design
+  system.
+
+### Changed
+- **Chat input ergonomics**: IME-safe enter handling, multiline semantics,
+  scroll-position awareness, debounced auto-scroll, and "Scroll to bottom"
+  affordance for long-running conversations.
+- **Plugin UI refresh behavior**: moved from aggressive 5s/10s polling to
+  event-driven invalidation with 60s safety-net intervals.
+- **Dependency stability**: pinned `lucide-react` to exact version `1.14.0`
+  to avoid drift from unreviewed minor updates.
+
+### Fixed
+- **Final response rendering bug**: final LLM conclusion is now rendered as
+  the chat bubble output instead of being obscured by the thinking block.
+- **Auth cache invalidation on 401**:
+  - LLM clients now surface typed auth failures (`AuthError`),
+  - resolver cache invalidates on auth errors,
+  - tool path invalidates provider cache on auth failures,
+  - Google OAuth/Gmail paths invalidate account auth state on 401.
+
+[0.1.1]: https://github.com/felixgeelhaar/nomi/releases/tag/v0.1.1
+
 [0.1.0]: https://github.com/felixgeelhaar/nomi/releases/tag/v0.1.0
