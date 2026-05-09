@@ -257,11 +257,14 @@ export function OnboardingWizard({
         goal: "Help me get started: ask what I want to accomplish and propose a first plan.",
       });
 
-      await settingsApi.setOnboardingComplete(true);
-
-      // Don't call onComplete yet — advance to step 4 and poll the run so
-      // we can show the user a real "ready / failed / still warming up"
-      // signal instead of dropping them into a maybe-broken app.
+      // Don't mark onboarding complete yet — that happens only on a
+      // verified-good first run (handled in pollVerification) or when
+      // the user takes an explicit Continue-anyway / Skip path. Setting
+      // it here would land users with broken provider/model setups in a
+      // state where the wizard never re-opens.
+      //
+      // Advance to step 4 and poll the run so we can show the user a
+      // real "ready / failed / still warming up" signal.
       setVerifyAssistantName(createdAssistant.name);
       setVerifyState("running");
       setVerifyMessage("Asking " + createdAssistant.name + " to introduce themselves…");
@@ -291,6 +294,8 @@ export function OnboardingWizard({
         if (status === "completed") {
           setVerifyState("success");
           setVerifyMessage(verifyAssistantName + " replied. You're all set.");
+          // Verified-good first run: it's now safe to mark onboarding complete.
+          void settingsApi.setOnboardingComplete(true).catch(() => {});
           return;
         }
         if (status === "plan_review" || status === "awaiting_approval") {
@@ -301,6 +306,7 @@ export function OnboardingWizard({
             verifyAssistantName +
               " prepared a first step that needs your review. Continue to Nomi to approve it.",
           );
+          void settingsApi.setOnboardingComplete(true).catch(() => {});
           return;
         }
         if (status === "failed" || status === "cancelled") {
@@ -333,11 +339,21 @@ export function OnboardingWizard({
 
   const cancelVerificationAndExit = () => {
     verifyCancelled.current = true;
+    // Continue-anyway is an explicit user choice — record the intent
+    // even though verification didn't pass, so the wizard doesn't
+    // re-open on next launch. Without this we'd punish the user for
+    // making a deliberate decision.
+    void settingsApi.setOnboardingComplete(true).catch(() => {});
     onComplete();
   };
 
   const advanceToConnectors = () => {
     verifyCancelled.current = true;
+    // Reaching the connector picker means verification produced an
+    // actionable state (success/stuck) and the user opted in. Lock
+    // onboarding-complete here so a refresh mid-step-5 doesn't reopen
+    // the wizard.
+    void settingsApi.setOnboardingComplete(true).catch(() => {});
     setStep(5);
     setPluginsLoading(true);
     pluginsApi
@@ -348,6 +364,9 @@ export function OnboardingWizard({
   };
 
   const reconfigureFromStep4 = () => {
+    // Reconfigure must NOT mark onboarding complete: user is rolling
+    // back to fix a broken setup. Leaving the flag unset means a fresh
+    // app launch reopens the wizard at the same place.
     verifyCancelled.current = true;
     setVerifyState("idle");
     setVerifyMessage("");
