@@ -444,6 +444,37 @@ verbatim if you're scripting against the API.
 
 ---
 
+## Metrics
+
+`nomid` exposes a Prometheus-format scrape endpoint at `/metrics`. It
+is **public** (the scraper doesn't carry a bearer token); restrict
+access at your reverse proxy or firewall if the daemon is reachable
+from outside your trusted network.
+
+Series shipped today:
+
+| Series | Type | Labels |
+|---|---|---|
+| `nomi_runs_created_total` | counter | — |
+| `nomi_runs_completed_total` | counter | `status` |
+| `nomi_run_duration_seconds` | histogram | `status` |
+| `nomi_step_duration_seconds` | histogram | `tool` |
+| `nomi_step_failed_total` | counter | `tool`, `reason` |
+| `nomi_step_retry_total` | counter | `tool` |
+| `nomi_planner_calls_total` | counter | `provider`, `outcome` |
+| `nomi_planner_latency_seconds` | histogram | `provider` |
+| `nomi_approval_wait_seconds` | histogram | `outcome` |
+
+Sample scrape config:
+
+```yaml
+scrape_configs:
+  - job_name: nomi
+    static_configs:
+      - targets: ['nomid.internal:8080']
+    metrics_path: /metrics
+```
+
 ## What headless can't do
 
 - **Tauri menu-bar tray** is desktop-only.

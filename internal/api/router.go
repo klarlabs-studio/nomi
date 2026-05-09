@@ -5,11 +5,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/felixgeelhaar/nomi/internal/buildinfo"
 	"github.com/felixgeelhaar/nomi/internal/connectors"
 	"github.com/felixgeelhaar/nomi/internal/domain"
 	"github.com/felixgeelhaar/nomi/internal/events"
 	"github.com/felixgeelhaar/nomi/internal/memory"
+	"github.com/felixgeelhaar/nomi/internal/metrics"
 	"github.com/felixgeelhaar/nomi/internal/permissions"
 	"github.com/felixgeelhaar/nomi/internal/plugins"
 	"github.com/felixgeelhaar/nomi/internal/plugins/hub"
@@ -92,6 +94,9 @@ func NewRouter(cfg RouterConfig) *gin.Engine {
 	r.GET("/version", func(c *gin.Context) {
 		c.JSON(http.StatusOK, buildinfo.Current())
 	})
+
+	// Prometheus scrape endpoint (public — see auth.go publicPaths).
+	r.GET("/metrics", gin.WrapH(promhttp.HandlerFor(metrics.Registry, promhttp.HandlerOpts{})))
 
 	// Config export / import. Snapshot the user-configured surface as
 	// YAML, restore it on another machine. Secrets are exported as

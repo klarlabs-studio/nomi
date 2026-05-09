@@ -138,6 +138,11 @@ func LoadOrGenerateAuthToken(dataDir string) (string, string, error) {
 var publicPaths = map[string]bool{
 	"/health":  true,
 	"/version": true,
+	// /metrics is the Prometheus scrape endpoint. Public so a scraper
+	// (which doesn't carry a bearer token) can pull it; operators with
+	// stricter requirements should restrict access at the reverse-proxy
+	// or firewall layer.
+	"/metrics": true,
 }
 
 // RequireAuthToken returns middleware that rejects any request without a

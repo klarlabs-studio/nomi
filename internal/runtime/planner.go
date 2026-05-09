@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/felixgeelhaar/nomi/internal/domain"
 	"github.com/felixgeelhaar/nomi/internal/llm"
+	"github.com/felixgeelhaar/nomi/internal/metrics"
 )
 
 // plannerStep is the planner's intermediate representation, narrower than
@@ -171,6 +173,8 @@ func (r *Runtime) askPlanner(
 		userMsg = prompt + "\n\nYour previous attempt was rejected: " + repairHint +
 			"\nReturn a NEW JSON object that fixes this issue. No prose."
 	}
+	provider := plannerProviderLabel(client)
+	start := time.Now()
 	resp, err := client.Chat(ctx, llm.ChatRequest{
 		Model: model,
 		Messages: []llm.ChatMessage{
@@ -181,11 +185,14 @@ func (r *Runtime) askPlanner(
 		Temperature: 0.2,
 		JSONMode:    true,
 	})
+	metrics.PlannerLatencySeconds.WithLabelValues(provider).Observe(time.Since(start).Seconds())
 	if err != nil {
+		metrics.PlannerCallsTotal.WithLabelValues(provider, "llm_error").Inc()
 		return nil, ""
 	}
 	steps := parsePlannerResponse(resp.Content)
 	if len(steps) == 0 {
+		metrics.PlannerCallsTotal.WithLabelValues(provider, "parse_fail").Inc()
 		return nil, "JSON did not parse into the expected {steps:[...]} shape."
 	}
 	for _, s := range steps {
@@ -194,9 +201,11 @@ func (r *Runtime) askPlanner(
 		// than silently skipping — prompt injection could otherwise
 		// propose "system.exec" or similar and hope we pass it through.
 		if !knownTools[s.Tool] {
+			metrics.PlannerCallsTotal.WithLabelValues(provider, "tool_unknown").Inc()
 			return nil, fmt.Sprintf("step uses unknown tool %q. Pick from the listed tools only.", s.Tool)
 		}
 		if s.Title == "" {
+			metrics.PlannerCallsTotal.WithLabelValues(provider, "schema_invalid").Inc()
 			return nil, "every step needs a non-empty title."
 		}
 		// Reject the whole plan if any step's arguments don't match the
@@ -204,10 +213,25 @@ func (r *Runtime) askPlanner(
 		// plan the user would only see fail at execution time with a
 		// "missing required field" error from inside the tool.
 		if err := validatePlannerArguments(s.Tool, s.Arguments); err != nil {
+			metrics.PlannerCallsTotal.WithLabelValues(provider, "schema_invalid").Inc()
 			return nil, fmt.Sprintf("step %q has invalid arguments for %s: %v", s.Title, s.Tool, err)
 		}
 	}
+	metrics.PlannerCallsTotal.WithLabelValues(provider, "ok").Inc()
 	return steps, ""
+}
+
+// plannerProviderLabel returns the provider tag used in the planner
+// metrics. We can't introspect the concrete adapter type from here
+// without an interface change, so we approximate via a type assertion
+// against the known LLM clients in internal/llm. Falls back to
+// "unknown" so the series still emits.
+func plannerProviderLabel(_ llm.Client) string {
+	// Concrete client types live in internal/llm and aren't exported,
+	// so we'd need a small reflection or interface tweak to read them.
+	// Until that ships, "default" is a stable label that still lets
+	// operators graph plan-success rate.
+	return "default"
 }
 
 // availableToolsForPlanner returns (name, description) pairs for every

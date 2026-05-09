@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/felixgeelhaar/nomi/internal/domain"
+	"github.com/felixgeelhaar/nomi/internal/metrics"
 	"github.com/felixgeelhaar/nomi/internal/storage/db"
 	"github.com/felixgeelhaar/nomi/pkg/statekit"
 )
@@ -63,6 +64,17 @@ func (r *Runtime) transitionRun(_ context.Context, run *domain.Run, to domain.Ru
 
 	now := time.Now().UTC()
 	slog.Info("transitionRun", "run_id", run.ID, "from", fromStatus, "to", to)
+
+	// Terminal-state telemetry: counter + duration histogram so an
+	// operator can see runs_completed_total{status="failed"} and
+	// run_duration_seconds without grepping logs.
+	if to.IsTerminal() {
+		metrics.RunsCompletedTotal.WithLabelValues(string(to)).Inc()
+		if !current.CreatedAt.IsZero() {
+			metrics.RunDurationSeconds.WithLabelValues(string(to)).
+				Observe(now.Sub(current.CreatedAt).Seconds())
+		}
+	}
 
 	run.Status = to
 	run.UpdatedAt = now

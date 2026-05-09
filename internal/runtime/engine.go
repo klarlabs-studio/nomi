@@ -36,6 +36,7 @@ import (
 	"github.com/felixgeelhaar/nomi/internal/events"
 	"github.com/felixgeelhaar/nomi/internal/llm"
 	"github.com/felixgeelhaar/nomi/internal/memory"
+	"github.com/felixgeelhaar/nomi/internal/metrics"
 	"github.com/felixgeelhaar/nomi/internal/permissions"
 	"github.com/felixgeelhaar/nomi/internal/storage/db"
 	"github.com/felixgeelhaar/nomi/internal/tools"
@@ -357,6 +358,7 @@ func (r *Runtime) createRun(ctx context.Context, goal, assistantID string, sourc
 		return nil, fmt.Errorf("failed to create run: %w", err)
 	}
 
+	metrics.RunsCreatedTotal.Inc()
 	slog.Info("run created", "run_id", run.ID, "assistant_id", assistantID, "goal", goal, "source", source)
 	payload := map[string]interface{}{
 		"goal":         goal,

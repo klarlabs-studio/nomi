@@ -172,6 +172,27 @@ func TestHealthIsPublic(t *testing.T) {
 	}
 }
 
+func TestMetricsIsPublicAndExposesNomiSeries(t *testing.T) {
+	h := newHarness(t)
+	req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	w := httptest.NewRecorder()
+	h.router.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("/metrics unauthed should 200, got %d", w.Code)
+	}
+	body := w.Body.String()
+	// nomi_runs_created_total is a plain Counter, so it emits HELP +
+	// TYPE + a sample even with zero increments. Vec metrics
+	// (Histograms / Counters) only emit once a label combination has
+	// been observed; we don't drive runs in this smoke test, so we
+	// assert only the registered baseline. A regression in the
+	// metrics registry shows up here as a 404 or a body without the
+	// nomi_ prefix.
+	if !strings.Contains(body, "nomi_runs_created_total") {
+		t.Errorf("/metrics output missing nomi_runs_created_total; body was:\n%s", body)
+	}
+}
+
 func TestVersionIsPublic(t *testing.T) {
 	h := newHarness(t)
 	req := httptest.NewRequest(http.MethodGet, "/version", nil)
