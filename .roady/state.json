@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 526,
+  "version": 528,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1550,9 +1550,15 @@
       "elapsed_minutes": 10
     },
     "task-diff-preview-parity-(shiki-highlight,-per-hunk-skip/refine,-side-by-side-toggle)": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "52d37d4 feat(diff-preview): per-hunk skip + side-by-side toggle + structured parser"
+      ],
+      "started_at": "2026-05-09T17:33:52.642576+02:00",
+      "completed_at": "2026-05-09T17:35:33.465075+02:00",
+      "elapsed_minutes": 1
     },
     "task-discord-plugin-(channel-+-tool)": {
       "status": "done",
@@ -2585,5 +2591,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-09T17:33:38.617796+02:00"
+  "updated_at": "2026-05-09T17:35:33.465077+02:00"
 }
