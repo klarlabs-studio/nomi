@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 503,
+  "version": 505,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1396,9 +1396,15 @@
       "elapsed_minutes": 1462
     },
     "task-coding-agent-flagship-recipe-+-filesystem.patch-tool": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "68df278 feat(tools): filesystem.patch + coding-agent flagship recipe"
+      ],
+      "started_at": "2026-05-09T13:29:06.670869+02:00",
+      "completed_at": "2026-05-09T15:04:58.033815+02:00",
+      "elapsed_minutes": 95
     },
     "task-cognitive-stack-library-fit-assessment:-olymp-/-mnemos-/-chronos": {
       "status": "done",
@@ -2474,5 +2480,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-09T13:28:51.716949+02:00"
+  "updated_at": "2026-05-09T15:04:58.033816+02:00"
 }
