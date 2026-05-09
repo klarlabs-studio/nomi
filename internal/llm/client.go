@@ -78,6 +78,12 @@ type ChatResponse struct {
 // caller just wants the final answer.
 type Client interface {
 	Chat(ctx context.Context, req ChatRequest) (ChatResponse, error)
+	// Provider returns a stable label identifying the provider family
+	// ("openai", "anthropic", "ollama", etc.). Used by the planner
+	// metrics to attribute success/failure to a specific backend so
+	// an Ollama regression doesn't get masked by OpenAI's success
+	// rate on the same Grafana panel.
+	Provider() string
 }
 
 // StreamingClient is implemented by adapters that can emit deltas as the
@@ -150,6 +156,24 @@ type openaiClient struct {
 	apiKey  string
 	http    *http.Client
 	ua      string
+}
+
+// Provider returns a label for the metrics. The openai-compat schema
+// covers several real backends; we discriminate by URL because the
+// adapter is the same code path. Local 11434 is the Ollama default;
+// api.openai.com is OpenAI proper; everything else is collapsed to
+// "openai-compat" (Together, Groq, vLLM, LM Studio, etc.) — fine
+// because operators usually run one of those at a time and the goal
+// is just to separate the bucket, not enumerate every fork.
+func (c *openaiClient) Provider() string {
+	switch {
+	case strings.Contains(c.baseURL, "127.0.0.1:11434") || strings.Contains(c.baseURL, "localhost:11434"):
+		return "ollama"
+	case strings.Contains(c.baseURL, "api.openai.com"):
+		return "openai"
+	default:
+		return "openai-compat"
+	}
 }
 
 type openaiChatRequest struct {
@@ -370,6 +394,10 @@ type anthropicClient struct {
 	http    *http.Client
 	ua      string
 }
+
+// Provider returns the metrics label. Always "anthropic" — there's
+// only one wire format wired here.
+func (c *anthropicClient) Provider() string { return "anthropic" }
 
 type anthropicRequest struct {
 	Model     string        `json:"model"`

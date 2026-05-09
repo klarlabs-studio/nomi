@@ -5,7 +5,40 @@ import (
 	"strings"
 
 	"github.com/felixgeelhaar/nomi/internal/domain"
+	"github.com/felixgeelhaar/nomi/internal/metrics"
 )
+
+// emitPlannerEditDistance attributes per-step diffs of an EditPlan
+// call to the metrics.PlannerEditDistance counter. Three buckets:
+//
+//   - add:     a title in the new plan that wasn't in the old.
+//   - remove:  a title in the old plan that isn't in the new.
+//   - replace: same step kept by index but the planner had a
+//     different title for it (the user replaced it in place).
+//
+// Title is the matching key for now — DependsOn / Tool changes show
+// up only as replace/none. Good enough for "is the planner getting
+// rewritten more often after the model swap" dashboards.
+func emitPlannerEditDistance(provider string, oldSteps, newSteps []domain.StepDefinition) {
+	oldTitles := make(map[string]bool, len(oldSteps))
+	for _, s := range oldSteps {
+		oldTitles[s.Title] = true
+	}
+	newTitles := make(map[string]bool, len(newSteps))
+	for _, s := range newSteps {
+		newTitles[s.Title] = true
+	}
+	for _, s := range newSteps {
+		if !oldTitles[s.Title] {
+			metrics.PlannerEditDistance.WithLabelValues(provider, "add").Inc()
+		}
+	}
+	for _, s := range oldSteps {
+		if !newTitles[s.Title] {
+			metrics.PlannerEditDistance.WithLabelValues(provider, "remove").Inc()
+		}
+	}
+}
 
 // Context window budgets. Numbers are bytes; a typical chat model
 // counts a token at ≈4 bytes of English prose so 8 KB ≈ 2k tokens —

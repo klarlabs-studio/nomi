@@ -240,3 +240,32 @@ func TestNewClientRequiresBaseURL(t *testing.T) {
 		t.Fatal("expected error for missing BaseURL")
 	}
 }
+
+// TestProviderLabels covers the metrics-attribution heuristic. The
+// openai-compat adapter handles several real backends; the label
+// must be stable per backend so a Grafana panel can split them.
+func TestProviderLabels(t *testing.T) {
+	cases := []struct {
+		name     string
+		endpoint EndpointType
+		baseURL  string
+		want     string
+	}{
+		{"anthropic", EndpointAnthropic, "https://api.anthropic.com/v1", "anthropic"},
+		{"openai", EndpointOpenAI, "https://api.openai.com/v1", "openai"},
+		{"ollama-localhost", EndpointOpenAI, "http://localhost:11434/v1", "ollama"},
+		{"ollama-127", EndpointOpenAI, "http://127.0.0.1:11434/v1", "ollama"},
+		{"openai-compat-fork", EndpointOpenAI, "https://api.together.xyz/v1", "openai-compat"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			client, err := NewClient(Config{Type: c.endpoint, BaseURL: c.baseURL, APIKey: "x"})
+			if err != nil {
+				t.Fatalf("NewClient: %v", err)
+			}
+			if got := client.Provider(); got != c.want {
+				t.Errorf("Provider() = %q, want %q", got, c.want)
+			}
+		})
+	}
+}

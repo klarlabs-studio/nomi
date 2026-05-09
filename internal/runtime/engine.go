@@ -601,6 +601,19 @@ func (r *Runtime) EditPlan(ctx context.Context, runID string, stepDefs []domain.
 		"edited":       true,
 	})
 
+	// Edit-distance metrics: count titles added vs removed vs
+	// replaced so dashboards can spot a planner whose proposals are
+	// being heavily rewritten. provider label is best-effort — the
+	// EditPlan path doesn't have the client in scope, so we resolve
+	// it lazily here.
+	if oldPlan != nil {
+		var editClient llm.Client
+		if r.llmResolver != nil {
+			editClient, _, _ = r.llmResolver.DefaultClient()
+		}
+		emitPlannerEditDistance(plannerProviderLabel(editClient), oldPlan.Steps, plan.Steps)
+	}
+
 	// Capture plan-edit preference memory so future planning can adapt.
 	if oldPlan != nil && r.memManager != nil {
 		assistantID := run.AssistantID
@@ -660,11 +673,20 @@ func (r *Runtime) Replan(
 	failedStep *domain.Step,
 	failureMessage string,
 ) ([]*domain.Step, error) {
+	// Resolve the provider client up front so metric labels can name
+	// the actual backend. nil → "unknown" (acceptable: budget-error
+	// path doesn't need provider granularity).
+	var client llm.Client
+	if r.llmResolver != nil {
+		client, _, _ = r.llmResolver.DefaultClient()
+	}
+	provider := plannerProviderLabel(client)
+
 	r.replanMu.Lock()
 	count := r.replanCounts[run.ID]
 	if count >= MaxReplansPerRun {
 		r.replanMu.Unlock()
-		metrics.PlannerCallsTotal.WithLabelValues(plannerProviderLabel(nil), "replan_max_exceeded").Inc()
+		metrics.PlannerCallsTotal.WithLabelValues(provider, "replan_max_exceeded").Inc()
 		return nil, fmt.Errorf("replan budget exhausted (max %d): leaving run in failed state for human follow-up", MaxReplansPerRun)
 	}
 	r.replanCounts[run.ID] = count + 1
@@ -691,7 +713,7 @@ func (r *Runtime) Replan(
 	contextData, _ := r.loadFolderContexts(ctx, assistant)
 	planner := r.planWithLLMOpts(ctx, run.Goal, assistant, contextData, previous)
 	if len(planner) == 0 {
-		metrics.PlannerCallsTotal.WithLabelValues(plannerProviderLabel(nil), "replan_empty").Inc()
+		metrics.PlannerCallsTotal.WithLabelValues(provider, "replan_empty").Inc()
 		return nil, fmt.Errorf("replan: planner returned no usable steps")
 	}
 
@@ -778,7 +800,7 @@ func (r *Runtime) Replan(
 		"failure":      failureMessage,
 	})
 
-	metrics.PlannerCallsTotal.WithLabelValues(plannerProviderLabel(nil), "replan_ok").Inc()
+	metrics.PlannerCallsTotal.WithLabelValues(provider, "replan_ok").Inc()
 	return newSteps, nil
 }
 

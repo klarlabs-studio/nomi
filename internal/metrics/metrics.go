@@ -92,6 +92,21 @@ var (
 		Help:    "Approval wait time from request to resolution.",
 		Buckets: []float64{1, 5, 15, 60, 300, 900, 1800, 3600, 86400},
 	}, []string{"outcome"})
+
+	// PlannerEditDistance counts how many step changes a user makes
+	// when they edit a planner-proposed plan. The leading indicator
+	// of planner quality drop: when EditPlan starts firing more
+	// often, or with higher edit counts, the model is producing
+	// worse plans. Counter (not histogram) so we can see {provider}
+	// rates per outcome bucket.
+	//
+	// edit_kind ∈ {add, remove, replace} — captured separately so a
+	// dashboard can split "user added a missing step" from "user
+	// removed a hallucinated step".
+	PlannerEditDistance = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "nomi_planner_edit_distance_total",
+		Help: "Step-level edits applied during plan review, partitioned by provider and edit kind.",
+	}, []string{"provider", "edit_kind"})
 )
 
 func init() {
@@ -105,5 +120,6 @@ func init() {
 		PlannerCallsTotal,
 		PlannerLatencySeconds,
 		ApprovalWaitSeconds,
+		PlannerEditDistance,
 	)
 }

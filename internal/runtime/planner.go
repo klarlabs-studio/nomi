@@ -237,16 +237,20 @@ func (r *Runtime) askPlanner(
 }
 
 // plannerProviderLabel returns the provider tag used in the planner
-// metrics. We can't introspect the concrete adapter type from here
-// without an interface change, so we approximate via a type assertion
-// against the known LLM clients in internal/llm. Falls back to
-// "unknown" so the series still emits.
-func plannerProviderLabel(_ llm.Client) string {
-	// Concrete client types live in internal/llm and aren't exported,
-	// so we'd need a small reflection or interface tweak to read them.
-	// Until that ships, "default" is a stable label that still lets
-	// operators graph plan-success rate.
-	return "default"
+// metrics. Reads Client.Provider() (interface method) so each backend
+// — openai, anthropic, ollama, openai-compat — gets its own series
+// and an Anthropic regression doesn't get masked by Ollama success
+// on the same panel. Falls back to "unknown" if the caller hasn't
+// resolved a client yet (e.g. when a budget-exhausted error is
+// being attributed but the resolver wasn't called).
+func plannerProviderLabel(client llm.Client) string {
+	if client == nil {
+		return "unknown"
+	}
+	if label := client.Provider(); label != "" {
+		return label
+	}
+	return "unknown"
 }
 
 // availableToolsForPlanner returns (name, description) pairs for every
