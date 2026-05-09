@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 499,
+  "version": 501,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1995,9 +1995,15 @@
       "elapsed_minutes": 1
     },
     "task-prometheus-/metrics-+-run/step/approval-instrumentation": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "commit 3a728fe — internal/metrics package + /metrics endpoint (public scrape) + instrumentation in createRun, transitionRun terminal path, askPlanner. 9 series shipped (3 counters, 4 vec counters, 5 histograms). docs/headless.md documents series + sample scrape config. TestMetricsIsPublicAndExposesNomiSeries covers the wiring. Race sweep on internal/{runtime,api,storage/db,llm} green. Step-level histogram + approval wait time deferred — would require touching execution.go retry loop and approval-resolve path; the documented surface covers the highest-leverage signals."
+      ],
+      "started_at": "2026-05-09T09:09:22.265527+02:00",
+      "completed_at": "2026-05-09T10:21:46.257169+02:00",
+      "elapsed_minutes": 72
     },
     "task-promote-cognitive-stack-libraries-(statekit,-mnemos,-scout,-roady)-as-the-oss-moat": {
       "status": "done",
@@ -2462,5 +2468,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-09T09:08:59.572676+02:00"
+  "updated_at": "2026-05-09T10:21:46.25717+02:00"
 }
