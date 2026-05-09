@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 520,
+  "version": 522,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1776,9 +1776,15 @@
       "elapsed_minutes": 1
     },
     "task-hn/launch-screencast-+-stale-doc-cleanup": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "cc3bb77 docs(launch): purge stale planner claims, pre-stage HN FAQ"
+      ],
+      "started_at": "2026-05-09T17:26:08.844805+02:00",
+      "completed_at": "2026-05-09T17:27:52.571833+02:00",
+      "elapsed_minutes": 1
     },
     "task-landing-site-reposition-to-match-readme-coding-agent-wedge": {
       "status": "done",
@@ -2567,5 +2573,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-09T17:25:57.687774+02:00"
+  "updated_at": "2026-05-09T17:27:52.571834+02:00"
 }
