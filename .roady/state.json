@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 522,
+  "version": 524,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -2106,9 +2106,15 @@
       "elapsed_minutes": 2
     },
     "task-provider/model-matrix-evals-+-adversarial-fixtures-+-threshold-enforcement": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "8b4bf28 test(evals): adversarial fixtures + threshold gate + make eval-live"
+      ],
+      "started_at": "2026-05-09T17:28:06.294653+02:00",
+      "completed_at": "2026-05-09T17:30:22.573637+02:00",
+      "elapsed_minutes": 2
     },
     "task-refactor-chat-interface.tsx-into-chatlist-/-chatdetail-/-chatcomposer": {
       "status": "done",
@@ -2573,5 +2579,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-09T17:27:52.571834+02:00"
+  "updated_at": "2026-05-09T17:30:22.573638+02:00"
 }
