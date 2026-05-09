@@ -1,0 +1,30 @@
+# Research Assistant recipe — read folder of source material, plan,
+# summarize, synthesize. All on disk, your provider of choice.
+#
+# Apply: `nomi seed examples/research-assistant/seed.yaml`
+
+provider:
+  name: Ollama (Local)
+  type: local
+  endpoint: http://127.0.0.1:11434
+  model_ids:
+    - qwen2.5:14b
+  default_model: qwen2.5:14b
+  # Frontier models pull more out of long-context summarization:
+  # name: Anthropic
+  # type: remote
+  # endpoint: https://api.anthropic.com/v1
+  # model_ids: [claude-3-5-sonnet]
+  # api_key: ${ANTHROPIC_API_KEY}
+
+assistants:
+  - template_id: research-assistant
+    name: Researcher
+    # Folder of PDFs, markdown, or anything text-extractable. The
+    # agent reads from here and writes notes back into a `notes/`
+    # subfolder when you approve.
+    workspace: ${HOME}/research/inbox
+
+settings:
+  safety_profile: balanced
+  onboarding_complete: true

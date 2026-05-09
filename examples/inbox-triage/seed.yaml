@@ -1,0 +1,34 @@
+# Inbox Triage recipe — Telegram-bound assistant that classifies,
+# drafts replies, and waits for your approval before sending.
+#
+# Telegram bot token is NOT in this manifest — configure it in the
+# Plugins tab (Settings → Plugins → Telegram). Seed manifests by
+# design don't carry plugin secrets.
+#
+# Apply: `nomi seed examples/inbox-triage/seed.yaml`
+
+provider:
+  name: Anthropic
+  type: remote
+  endpoint: https://api.anthropic.com/v1
+  model_ids:
+    - claude-3-5-sonnet
+  default_model: claude-3-5-sonnet
+  api_key: ${ANTHROPIC_API_KEY}
+  # Or run fully local — slower, but no message contents leave your
+  # box (Telegram traffic still hits Telegram's servers, of course):
+  # name: Ollama (Local)
+  # type: local
+  # endpoint: http://127.0.0.1:11434
+  # model_ids: [qwen2.5:14b]
+
+assistants:
+  - template_id: inbox-triage
+    name: Inbox Triage
+    # Workspace is just a notes folder — the assistant writes its
+    # triage log here when you approve.
+    workspace: ${HOME}/notes/triage
+
+settings:
+  safety_profile: balanced
+  onboarding_complete: true

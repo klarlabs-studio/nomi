@@ -1,0 +1,30 @@
+# Code Reviewer recipe — local-first code review for a single repo.
+#
+# Apply: `nomi seed examples/code-reviewer/seed.yaml`
+# Re-running is idempotent (rows matched by name).
+
+provider:
+  name: Ollama (Local)
+  type: local
+  endpoint: http://127.0.0.1:11434
+  model_ids:
+    - qwen2.5:14b
+  default_model: qwen2.5:14b
+  # For frontier-quality reviews, swap to remote — uncomment one:
+  # name: Anthropic
+  # type: remote
+  # endpoint: https://api.anthropic.com/v1
+  # model_ids: [claude-3-5-sonnet]
+  # api_key: ${ANTHROPIC_API_KEY}
+
+assistants:
+  - template_id: code-reviewer
+    name: Code Reviewer
+    # Point this at the repo you want reviewed. Paths inside the
+    # planner/tools resolve relative to this folder; the permission
+    # engine refuses anything outside it.
+    workspace: ${HOME}/code/your-repo
+
+settings:
+  safety_profile: balanced
+  onboarding_complete: true
