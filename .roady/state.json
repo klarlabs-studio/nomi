@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 524,
+  "version": 526,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -2194,9 +2194,15 @@
       "elapsed_minutes": 0
     },
     "task-run-history-search,-day-grouping,-branch-from-here": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "1b490c5 feat(ui): chat-list search + branch-from-here CTA on completed runs"
+      ],
+      "started_at": "2026-05-09T17:30:34.299803+02:00",
+      "completed_at": "2026-05-09T17:33:38.617796+02:00",
+      "elapsed_minutes": 3
     },
     "task-run-pause/resume": {
       "status": "done",
@@ -2579,5 +2585,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-09T17:30:22.573638+02:00"
+  "updated_at": "2026-05-09T17:33:38.617796+02:00"
 }
