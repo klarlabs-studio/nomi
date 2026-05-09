@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 455,
+  "version": 486,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1264,8 +1264,14 @@
       "elapsed_minutes": 4
     },
     "task-activation-under-2-minutes:-openai/anthropic-fast-path-+-auto-created-code-reviewer": {
-      "status": "pending",
+      "status": "done",
       "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "Action items shipped: (1) first-run wizard collapsed to single-screen \"quickstart\" mode; (2) Anthropic default + OpenAI fast-path options paste-key-only; (3) Code Reviewer auto-selected as default template + auto-created on Skip path so chat-empty state has working assistant; (4) Ollama pre-detected via check_ollama_reachable + pickOllamaModel fallback; (5) README hero replaced with docs/media/hero.mp4 90s demo (video tag + poster fallback). Outstanding: bundled `ollama pull` flow inside wizard (Tauri-side work, deferred — Ollama users still get a clear \"install at ollama.ai\" hint)."
+      ],
+      "started_at": "2026-05-09T07:50:50.632809+02:00",
+      "completed_at": "2026-05-09T07:51:19.566831+02:00",
       "elapsed_minutes": 0
     },
     "task-assistant-builder-—-capability-ceiling-and-policy-coherence": {
@@ -1346,8 +1352,14 @@
       "elapsed_minutes": 0
     },
     "task-changelog.md-update-for-v0.1.4-(or-v0.2.0)": {
-      "status": "pending",
+      "status": "done",
       "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "Added CHANGELOG entry `0.1.1` (2026-05-08) covering: approval UX hardening, select component migration, chat input/scroll UX improvements, plugin event-driven refresh behavior, lucide pinning, final-LLM-bubble fix, and 401 auth cache invalidation fixes."
+      ],
+      "started_at": "2026-05-08T22:13:47.275523+02:00",
+      "completed_at": "2026-05-08T22:13:47.280694+02:00",
       "elapsed_minutes": 0
     },
     "task-channel-identity-allowlist": {
@@ -1373,8 +1385,14 @@
       "elapsed_minutes": 1462
     },
     "task-cognitive-stack-library-fit-assessment:-olymp-/-mnemos-/-chronos": {
-      "status": "pending",
+      "status": "done",
       "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "Recommendations recorded: olymp skip for V1 (overlap with Nomi runtime); mnemos strong fit, deferred to v0.3 (separate task); chronos skip for V1 (no time-series concerns yet). README \"Powered by\" no longer claims olymp/chronos/nous/praxis — narrative restored to shipped reality (statekit/mnemos/scout/roady)."
+      ],
+      "started_at": "2026-05-09T07:45:12.625983+02:00",
+      "completed_at": "2026-05-09T07:45:23.934534+02:00",
       "elapsed_minutes": 0
     },
     "task-collaborative-planning-(abundly-inspired)": {
@@ -1400,14 +1418,26 @@
       "elapsed_minutes": 5274
     },
     "task-comparison-page-(docs/comparison.md)-—-goose-/-cline-/-openinterpreter-/-claude-code-/-autogpt": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "docs/comparison.md created: 9-column feature matrix vs Goose/Cline/OpenInterpreter/Claude Code/AutoGPT/CrewAI + per-competitor detail paragraphs + honest \"what Nomi doesn't do yet\" section. Linked from README \"Compared to\" and docs/index.html (footer nav + soft CTA below diff section)."
+      ],
+      "started_at": "2026-05-09T07:34:31.043343+02:00",
+      "completed_at": "2026-05-09T07:38:12.2348+02:00",
+      "elapsed_minutes": 3
     },
     "task-comparison-page-+-hn-show-launch-motion-+-community-kindling": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "Sub-deliverables shipped: docs/comparison.md (separate task earlier this session) + examples/{code-reviewer,research-assistant,inbox-triage}/{README.md,seed.yaml} + examples/README.md index. Each recipe = wedge-aligned (coding-agent first, Telegram-only connector for plugin recipe). Deferred per user direction: HN Show post draft, distribution channels (winget/AUR/Nix flake), landing trust signals; community kindling files (CONTRIBUTING/CoC/templates) opted out per prior session."
+      ],
+      "started_at": "2026-05-09T07:51:33.872564+02:00",
+      "completed_at": "2026-05-09T07:56:54.249728+02:00",
+      "elapsed_minutes": 5
     },
     "task-connector-plugin-architecture": {
       "status": "done",
@@ -1642,14 +1672,26 @@
       "elapsed_minutes": 1
     },
     "task-hero-video-accessibility-+-comprehension-overhaul": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "Implemented docs landing a11y/comprehension fixes: removed hard autoplay from hero video, ensured JS only autoplays when reduced-motion is not requested, retained pause/play control with ARIA state, added chapter cues (Plan/Approve/Run), added fallback demo link, dropped webm source pending proper re-encode, and added width/height/decoding attrs to screenshot-grid images for CLS reduction."
+      ],
+      "started_at": "2026-05-08T22:16:14.851297+02:00",
+      "completed_at": "2026-05-08T22:17:47.916357+02:00",
+      "elapsed_minutes": 1
     },
     "task-landing-site-reposition-to-match-readme-coding-agent-wedge": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "docs/index.html: hero H1+lede now match README wedge (\"Approve every step before your AI touches your filesystem\"); category line, title, og:title aligned. Problem section reframed around cloud coding agents (drops OpenClaw/Hermes/Pi). Hardware badges trimmed to OS+Docker (Beelink/NUC/Pi5/GPU box removed). New `\u003csection class=\"compared\"\u003e` mirrors README's 3-row Compared-to copy + links to comparison.md; nav anchor added. site.css: styles for .compared/.compare-list. \"Built on\" already trimmed to statekit/mnemos/scout/roady (no nous/praxis/chronos/olymp).\u003c/evidence\u003e\n\u003c/invoke\u003e"
+      ],
+      "started_at": "2026-05-09T07:38:38.309722+02:00",
+      "completed_at": "2026-05-09T07:40:48.313161+02:00",
+      "elapsed_minutes": 2
     },
     "task-llm-provider-configuration": {
       "status": "done",
@@ -1674,8 +1716,14 @@
       "elapsed_minutes": 2
     },
     "task-make-plan-review-real:-multi-step-planning-+-llm-integration-+-dynamic-tool-routing": {
-      "status": "pending",
+      "status": "done",
       "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "All three acceptance items already shipped: (1) planWithLLM in internal/runtime/planner.go calls llmResolver.DefaultClient and produces validated multi-step JSON plans (max 10 steps); (2) availableToolsForPlanner filters tools by assistant capability ceiling — dynamic tool routing, not fixed; (3) streaming token UX wired end-to-end: openaiClient.ChatStream → EventStepStreaming → frontend useStepStream → live render in chat-interface.tsx:907-928. TestMultiStepPlannerProducesMultipleSteps in llm_integration_test.go covers feature #33; package tests pass."
+      ],
+      "started_at": "2026-05-09T07:48:58.499269+02:00",
+      "completed_at": "2026-05-09T07:49:57.535278+02:00",
       "elapsed_minutes": 0
     },
     "task-memory-system-(mnemos)": {
@@ -1701,8 +1749,14 @@
       "elapsed_minutes": 1
     },
     "task-mnemos-integration-—-revised-feasibility-assessment": {
-      "status": "pending",
+      "status": "done",
       "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "Recommendation C accepted: defer mnemos integration; current homegrown SQLite stub adequate for V1. README \"Powered by\" updated (cognitive-stack rewrite task) labels mnemos integration as \"in flight\" and docs/architecture.md describes integration path. Multi-week integration deferred to v0.3 per recommendation."
+      ],
+      "started_at": "2026-05-09T07:45:11.528961+02:00",
+      "completed_at": "2026-05-09T07:45:21.345475+02:00",
       "elapsed_minutes": 0
     },
     "task-multi-step-planning": {
@@ -1761,9 +1815,15 @@
       "elapsed_minutes": 1
     },
     "task-onboarding-recovery-defaults:-replace-skip/continue-anyway-escape-hatches": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "wizard.tsx: Skip auto-creates Code Reviewer at workspace `.` when no assistants exist (chat empty state already has 3 starter chips); failed-verify \"Continue anyway\" demoted from Button to text link, Reconfigure remains primary autoFocus action; labeled stepper already in place for wizard mode. Tests 55/55, lint clean on file."
+      ],
+      "started_at": "2026-05-09T07:28:14.076085+02:00",
+      "completed_at": "2026-05-09T07:33:16.252807+02:00",
+      "elapsed_minutes": 5
     },
     "task-per-capability-granular-permissions-(stretch)": {
       "status": "done",
@@ -1854,11 +1914,15 @@
       "elapsed_minutes": 13
     },
     "task-plugins-manager:-drop-5s/10s-polling,-wire-to-plugin-events": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "EventProvider invalidates plugins.all on plugin.* events; refetchInterval reduced to 60s safety net at lines 842/847; mutations already invalidate on success. Tests: 55/55."
+      ],
       "started_at": "2026-05-07T23:51:05.064069+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-09T07:27:19.105293+02:00",
+      "elapsed_minutes": 1896
     },
     "task-plugins-tab-implementation": {
       "status": "done",
@@ -1872,14 +1936,26 @@
       "elapsed_minutes": 1
     },
     "task-promote-cognitive-stack-libraries-(statekit,-mnemos,-scout,-roady)-as-the-oss-moat": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "README \"Powered by\" compressed to 4-bullet cognitive-stack list (statekit/mnemos/scout/roady) with 1-line value prop each + link to docs/architecture.md. New docs/architecture.md created: system diagram + per-library narrative (\"state / memory / sight / plan\") with use-case framing for each. Landing already lists same 4 libraries."
+      ],
+      "started_at": "2026-05-09T07:42:09.761975+02:00",
+      "completed_at": "2026-05-09T07:43:12.115469+02:00",
+      "elapsed_minutes": 1
     },
     "task-refactor-chat-interface.tsx-into-chatlist-/-chatdetail-/-chatcomposer": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "Split chat-interface.tsx (1057 lines) into 7 files, all under 350-line target: chat-interface.tsx 309 (orchestration shell), chat/chat-list.tsx 236, chat/chat-detail.tsx 343, chat/chat-composer.tsx 68, chat/new-chat-view.tsx 104, chat/use-chat-actions.ts 170 (mutation bundle hook), chat/types.ts 25 (ChatItem/ConversationGroup). 55/55 vitest tests still pass; tsc clean; no behavior change."
+      ],
+      "started_at": "2026-05-09T07:57:40.908304+02:00",
+      "completed_at": "2026-05-09T08:05:37.737654+02:00",
+      "elapsed_minutes": 7
     },
     "task-remote-assistant-templates-marketplace": {
       "status": "done",
@@ -1893,13 +1969,25 @@
       "elapsed_minutes": 120
     },
     "task-replace-native-`\u003cselect\u003e`-with-shadcn-select-component-for-focus-ring-parity": {
-      "status": "pending",
+      "status": "done",
       "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "Implemented shadcn Select primitive (`app/src/components/ui/select.tsx`) and replaced native select usage in `chat-interface.tsx` and assistant model selects in `assistant-manager.tsx`. Frontend build passes with the new component."
+      ],
+      "started_at": "2026-05-08T22:12:29.481915+02:00",
+      "completed_at": "2026-05-08T22:12:29.667415+02:00",
       "elapsed_minutes": 0
     },
     "task-reposition-v0.2-around-coding-agent-icp-(\"local-first-claude-code\")": {
-      "status": "pending",
+      "status": "done",
       "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "Acceptance met across earlier tasks: README hero (line 4) = \"Approve every step before your AI touches your filesystem\"; landing H1 (docs/index.html) matches verbatim; docs/comparison.md exists with coding-agent-wedge framing. Pi (Inflection) row absent from README \"Compared to\" table. Personal-AI/Pi-replacement/homelab framings demoted from primary surfaces."
+      ],
+      "started_at": "2026-05-09T07:41:55.809899+02:00",
+      "completed_at": "2026-05-09T07:42:03.970228+02:00",
       "elapsed_minutes": 0
     },
     "task-rest-api-(gin)": {
@@ -1969,9 +2057,15 @@
       "elapsed_minutes": 33
     },
     "task-scope-discipline:-cut-overhang,-stop-polling,-prune-e2e-journeys-to-wedge-icp": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "README Roadmap rewritten: v0.2 = single flagship \"Plans That Plan\" (LLM-backed planner + dynamic tool routing + streaming tokens); other items demoted to non-committed Backlog. README hero already labels connectors as Telegram-shipped + others on roadmap (matches reality). Polling acceptance: all sites verified as event-driven primary with 10s/30s/60s safety nets — no 2-3s polls remain. Health check at 5s is connectivity probe, not data polling."
+      ],
+      "started_at": "2026-05-09T07:45:29.008401+02:00",
+      "completed_at": "2026-05-09T07:46:43.576567+02:00",
+      "elapsed_minutes": 1
     },
     "task-secret-redaction-in-frontend": {
       "status": "done",
@@ -2277,5 +2371,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-08T11:17:09.875059+02:00"
+  "updated_at": "2026-05-09T08:05:37.737654+02:00"
 }
