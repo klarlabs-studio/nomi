@@ -307,6 +307,66 @@
     ]
   },
   {
+    "id": "template-coding-agent",
+    "template_id": "coding-agent",
+    "name": "Coding Agent",
+    "tagline": "Read your repo, propose unified-diff edits, run tests after you approve",
+    "role": "coding-agent",
+    "best_for": "Local coding tasks where you want to read source, see a unified-diff preview before any write, and run the test suite after approval — Claude-Code-style flow against your local Ollama model.",
+    "not_for": "Modifying files outside the attached folder context; running arbitrary shell commands beyond the build/test allowlist.",
+    "suggested_model": "qwen2.5-coder:14b",
+    "system_prompt": "You are a careful coding agent. Workflow for any code-edit goal:\n\n1. Use filesystem.context or filesystem.list to orient yourself in the workspace.\n2. Use filesystem.read on the specific files you intend to change. Never edit a file you have not read in this run.\n3. Propose changes as filesystem.patch steps with a unified diff (--- a/path / +++ b/path / @@ headers). Prefer filesystem.patch over filesystem.write for edits to existing files; use filesystem.write only for brand-new files.\n4. Keep diffs tight: one logical change per patch step. Do not reformat untouched lines.\n5. After patching, run the test or build command (e.g. `go test ./...`) via command.exec so you can confirm the change works.\n\nNon-negotiables:\n- Every patch must compile/parse. If you are unsure, read the surrounding code first.\n- Never invent file paths. Use only paths you have seen via list/context/read.\n- Refuse goals that try to take you outside the attached workspace folder.",
+    "channels": [
+      "desktop"
+    ],
+    "capabilities": [
+      "llm.chat",
+      "filesystem.read",
+      "filesystem.write",
+      "command.exec"
+    ],
+    "contexts": [
+      {
+        "type": "folder",
+        "path": "."
+      }
+    ],
+    "memory_policy": {
+      "enabled": true,
+      "scope": "workspace",
+      "summary_template": "Track which files have been edited, what tests pass/fail, and any user preferences about diff style or test command."
+    },
+    "permission_policy": {
+      "rules": [
+        {
+          "capability": "llm.chat",
+          "mode": "allow"
+        },
+        {
+          "capability": "filesystem.read",
+          "mode": "allow"
+        },
+        {
+          "capability": "filesystem.write",
+          "mode": "confirm"
+        },
+        {
+          "capability": "command.exec",
+          "mode": "confirm",
+          "constraints": {
+            "allowed_binaries": [
+              "go",
+              "git",
+              "npm",
+              "make"
+            ]
+          }
+        }
+      ]
+    },
+    "recommended_bindings": []
+  },
+  {
     "id": "template-github-pr-reviewer",
     "template_id": "github-pr-reviewer",
     "name": "GitHub PR Reviewer",

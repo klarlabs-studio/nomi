@@ -301,6 +301,8 @@ func planStepTitle(goal, tool string) string {
 		verb = "Read"
 	case "filesystem.write":
 		verb = "Write"
+	case "filesystem.patch":
+		verb = "Patch"
 	case "command.exec":
 		verb = "Run"
 	}

@@ -12,9 +12,8 @@ nomi seed examples/<recipe>/seed.yaml
 
 | Recipe | What it does | Plugin |
 |---|---|---|
-| [`code-reviewer`](code-reviewer/) | Point an assistant at one repo. Reads files, plans changes, asks before writing. | none |
-
-> **Coming next:** [`coding-agent`](https://github.com/felixgeelhaar/nomi/issues) — full read-plan-patch-test loop with diff previews in plan-review. Tracked at the v0.2 flagship.
+| [`coding-agent`](coding-agent/) | **Flagship.** Read repo, propose unified-diff edits via `filesystem.patch`, see diff preview before approve, run `go test ./...` after. | none |
+| [`code-reviewer`](code-reviewer/) | Point an assistant at one repo. Reads files, plans changes, asks before writing (no patch). | none |
 
 ## Other recipes
 
@@ -28,9 +27,9 @@ not the wedge launch focus:
 
 The full seed manifest schema lives in
 [`examples/seed.yaml`](seed.yaml) (the canonical reference). Templates
-available out of the box: `code-reviewer`, `research-assistant`,
-`writing-partner`, `learning-tutor`, `inbox-triage`,
-`github-pr-reviewer`, `custom`.
+available out of the box: `coding-agent`, `code-reviewer`,
+`research-assistant`, `writing-partner`, `learning-tutor`,
+`inbox-triage`, `github-pr-reviewer`, `custom`.
 
 Each assistant gets its own permission policy, model override, and
 folder context — see [`docs/architecture.md`](../docs/architecture.md)

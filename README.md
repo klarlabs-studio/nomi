@@ -205,7 +205,7 @@ $ nomi run "Add a JSON tag to the User struct in models.go"
 
 Three places to land next:
 
-1. **Try a real recipe** — [`examples/code-reviewer/`](examples/code-reviewer/) points an assistant at your repo, [`examples/coding-agent/`](examples/coding-agent/) walks the loop above (when shipped — track at [#100](https://github.com/felixgeelhaar/nomi/issues)).
+1. **Try the flagship recipe** — [`examples/coding-agent/`](examples/coding-agent/) walks the read → unified-diff preview → approve → `go test` loop above against a tiny sample repo. [`examples/code-reviewer/`](examples/code-reviewer/) is the read-only sibling.
 2. **Talk to other people** — [GitHub Discussions](https://github.com/felixgeelhaar/nomi/discussions) for questions, [issues](https://github.com/felixgeelhaar/nomi/issues) for bugs.
 3. **Watch where v0.2 lands** — the v0.2 flagship is real LLM-backed multi-step plans + Anthropic streaming; subscribe via [GitHub Releases](https://github.com/felixgeelhaar/nomi/releases) → Watch → Custom → Releases.
 

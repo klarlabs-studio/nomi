@@ -613,6 +613,11 @@ func (r *Runtime) getCapabilityForTool(toolName string) string {
 		return "filesystem.read"
 	case "filesystem.write":
 		return "filesystem.write"
+	case "filesystem.patch":
+		// Patch shares the write capability so a single permission rule
+		// covers both write and patch. Operators don't need to add a
+		// separate filesystem.patch rule per assistant.
+		return "filesystem.write"
 	case "command.exec":
 		return "command.exec"
 	default:

@@ -16,6 +16,7 @@ import type { Step, Plan, Approval, StepDefinition } from "@/types/api";
 import { labels } from "@/lib/labels";
 import { approvalCopy } from "@/lib/approval-copy";
 import { PlanGraph } from "./plan-graph";
+import { DiffPreview } from "./diff-preview";
 
 interface ThinkingBlockProps {
   status: string;
@@ -503,6 +504,10 @@ export function PlanReviewCard({
                             Depends on: {step.depends_on.map((d) => d.slice(0, 8)).join(", ")}
                           </p>
                         )}
+                        {step.expected_tool === "filesystem.patch" &&
+                          typeof step.arguments?.diff === "string" && (
+                            <DiffPreview diff={step.arguments.diff as string} />
+                          )}
                       </>
                     )}
                   </div>

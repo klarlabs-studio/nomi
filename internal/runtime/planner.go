@@ -36,7 +36,8 @@ type plannerStep struct {
 var toolDescription = map[string]string{
 	"llm.chat":           "Ask the LLM to think, reason, summarize, or generate text. Use for anything that doesn't require reading or writing files.",
 	"filesystem.read":    "Read the contents of a file from the assistant's workspace folder.",
-	"filesystem.write":   "Write content to a file in the assistant's workspace folder. Requires user approval.",
+	"filesystem.write":   "Write the FULL content of a file in the assistant's workspace folder. Requires user approval. Prefer filesystem.patch for edits to existing files.",
+	"filesystem.patch":   "Apply a unified diff to one or more files in the assistant's workspace folder. Use this for edits to existing files instead of rewriting the whole file with filesystem.write. Requires user approval.",
 	"filesystem.list":    "List the contents of a folder inside the assistant's workspace. Returns names + sizes + modified times. Use this before reading specific files.",
 	"filesystem.context": "List the folder structure of the assistant's workspace. Useful for orienting before reading specific files.",
 	"command.exec":       "Run a single shell command. Only allowed binaries are permitted; the command is refused if it contains shell metacharacters. Requires user approval.",
@@ -353,6 +354,7 @@ string. Omit "arguments" for tools that need none.
                        (omit if the goal text already says everything)
 - filesystem.read:    {"path": "<file path inside the workspace>"}
 - filesystem.write:   {"path": "<file path>", "content": "<full file body>"}
+- filesystem.patch:   {"diff": "<unified diff with --- a/path / +++ b/path / @@ headers>"}
 - filesystem.context: {} (no arguments)
 - command.exec:       {"command": "<shell command, single binary, no pipes>"}
 

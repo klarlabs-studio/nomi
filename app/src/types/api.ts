@@ -285,6 +285,7 @@ export interface StepDefinition {
   expected_capability?: string;
   depends_on?: string[];
   why?: string;  // Why this step was planned (e.g., "Based on your preference for...")
+  arguments?: Record<string, unknown>;  // Planner-supplied tool args; e.g. {diff} for filesystem.patch.
   order: number;
   created_at: string;
 }

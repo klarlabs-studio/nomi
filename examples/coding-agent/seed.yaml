@@ -1,0 +1,35 @@
+# Coding Agent recipe — Claude-Code-style local coding loop.
+#
+# What it does: reads source in the attached folder, plans a sequence of
+# unified-diff edits via filesystem.patch, surfaces the diff for your
+# approval, applies it, then runs the build/test command. The whole
+# loop runs locally against an Ollama model — no code leaves your box.
+#
+# Apply: `nomi seed examples/coding-agent/seed.yaml`
+# Re-running is idempotent (rows matched by name).
+
+provider:
+  name: Ollama (Local)
+  type: local
+  endpoint: http://127.0.0.1:11434
+  model_ids:
+    - qwen2.5-coder:14b
+  default_model: qwen2.5-coder:14b
+  # Frontier-quality coding (paid):
+  # name: Anthropic
+  # type: remote
+  # endpoint: https://api.anthropic.com/v1
+  # model_ids: [claude-3-5-sonnet]
+  # api_key: ${ANTHROPIC_API_KEY}
+
+assistants:
+  - template_id: coding-agent
+    name: Coding Agent
+    # Point at the repo you want the agent to edit. The included
+    # sample-repo/ is a tiny Go module so you can try the loop end-to-end
+    # without risking a real codebase.
+    workspace: ${PWD}/examples/coding-agent/sample-repo
+
+settings:
+  safety_profile: balanced
+  onboarding_complete: true

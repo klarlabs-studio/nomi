@@ -12,8 +12,8 @@ func TestBuiltInTemplatesParseAndValidatePolicies(t *testing.T) {
 		t.Fatalf("load templates: %v", err)
 	}
 
-	if len(templates) != 7 {
-		t.Fatalf("expected 7 templates, got %d", len(templates))
+	if len(templates) != 8 {
+		t.Fatalf("expected 8 templates, got %d", len(templates))
 	}
 
 	engine := permissions.NewEngine()

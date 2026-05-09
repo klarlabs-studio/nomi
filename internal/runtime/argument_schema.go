@@ -61,6 +61,12 @@ var argumentSchemas = map[string]argumentSchema{
 		},
 		required: []string{"path", "content"},
 	},
+	"filesystem.patch": {
+		allowed: map[string]argumentField{
+			"diff": {kind: "string"},
+		},
+		required: []string{"diff"},
+	},
 	"filesystem.context": {
 		allowed: map[string]argumentField{},
 	},

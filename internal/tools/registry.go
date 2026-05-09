@@ -164,6 +164,7 @@ func RegisterCoreTools(registry *Registry) error {
 	tools := []Tool{
 		NewFileReadTool(),
 		NewFileWriteTool(),
+		NewFilePatchTool(),
 		NewFileListTool(),
 		NewCommandExecTool(),
 		NewFolderContextTool(),
