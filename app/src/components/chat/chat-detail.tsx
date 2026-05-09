@@ -190,6 +190,16 @@ export function ChatDetail({
             <RefreshCw className="w-3 h-3 mr-1" />
             Refresh
           </Button>
+          {(status === "completed" || status === "failed") && chatData.steps.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onForkRun(chatData.steps[chatData.steps.length - 1].id)}
+              title="Start a new run that branches from this run's last step"
+            >
+              Branch from here
+            </Button>
+          )}
           <Badge
             variant={
               status === "completed"

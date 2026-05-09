@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Bot, Plug, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { ChatItem, GroupedChatItem } from "./types";
 
 function ChatSidebarItem({
@@ -154,6 +155,27 @@ export function ChatList({
   onToggleGroup: (conversationID: string) => void;
   onDelete: (id: string) => void;
 }) {
+  // Client-side search keeps the round-trip out of the keystroke
+  // path; once a user has thousands of runs, swap to /runs?search=
+  // (already wired server-side). The match is case-insensitive
+  // substring against ChatItem.title.
+  const [searchQuery, setSearchQuery] = useState("");
+  const q = searchQuery.trim().toLowerCase();
+  const filteredGroups: GroupedChatItem[] = q
+    ? groupedChats
+        .map((item) => {
+          if ("__isGroup" in item) {
+            const matchedRuns = item.runs.filter((r) =>
+              r.title.toLowerCase().includes(q),
+            );
+            if (matchedRuns.length === 0) return null;
+            return { ...item, runs: matchedRuns };
+          }
+          return item.title.toLowerCase().includes(q) ? item : null;
+        })
+        .filter((x): x is GroupedChatItem => x !== null)
+    : groupedChats;
+
   return (
     <div className="w-72 border-r flex flex-col bg-muted/20 flex-shrink-0">
       <div className="p-3 border-b flex-shrink-0 space-y-2">
@@ -165,6 +187,14 @@ export function ChatList({
           <Plug className="w-4 h-4 mr-2" />
           Connect
         </Button>
+        <Input
+          type="search"
+          placeholder="Search runs..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="h-8 text-sm"
+          aria-label="Search runs by title"
+        />
       </div>
 
       <div className="flex-1 overflow-y-auto p-2 space-y-1 min-h-0">
@@ -174,8 +204,12 @@ export function ChatList({
           <div className="p-4 text-sm text-muted-foreground">
             No chats yet. Start a new conversation!
           </div>
+        ) : filteredGroups.length === 0 ? (
+          <div className="p-4 text-sm text-muted-foreground">
+            No runs match &quot;{searchQuery}&quot;.
+          </div>
         ) : (
-          groupedChats.map((item) => {
+          filteredGroups.map((item) => {
             if ("__isGroup" in item) {
               const isExpanded = expandedGroups.has(item.conversationID);
               const latestRun = item.runs[item.runs.length - 1];

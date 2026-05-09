@@ -172,6 +172,39 @@ func (r *RunRepository) List(status *domain.RunStatus, limit, offset int) ([]*do
 	return r.scanRuns(rows)
 }
 
+// Search returns runs whose goal OR any owned step's title contains
+// the query (case-insensitive). Returns up to `limit` rows ordered by
+// created_at DESC. Empty query returns the most recent runs unfiltered
+// — same shape as List(nil, limit, 0) — so callers can just always
+// call Search and toggle the input.
+//
+// Implementation uses LIKE %q% on existing indices; no FTS5 dependency.
+// Adequate for the chat-list use case where the corpus is "this user's
+// runs", typically &lt; 1000 rows.
+func (r *RunRepository) Search(query string, limit int) ([]*domain.Run, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	if query == "" {
+		return r.List(nil, limit, 0)
+	}
+	pattern := "%" + query + "%"
+	rows, err := r.db.Query(`
+		SELECT DISTINCT r.id, r.goal, r.assistant_id, r.source, r.conversation_id, r.status, r.current_step_id, r.plan_version, r.run_parent_id, r.branched_from_step_id, r.created_at, r.updated_at
+		FROM runs r
+		LEFT JOIN steps s ON s.run_id = r.id
+		WHERE LOWER(r.goal) LIKE LOWER(?)
+		   OR LOWER(s.title) LIKE LOWER(?)
+		ORDER BY r.created_at DESC
+		LIMIT ?
+	`, pattern, pattern, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search runs: %w", err)
+	}
+	defer rows.Close()
+	return r.scanRuns(rows)
+}
+
 // ListByStatusIn returns all runs whose status is in the given set. Used by
 // the startup resumer to find orphaned runs across any non-terminal state.
 func (r *RunRepository) ListByStatusIn(statuses []domain.RunStatus) ([]*domain.Run, error) {

@@ -62,8 +62,19 @@ func (s *Server) GetRun(c *gin.Context) {
 	})
 }
 
-// ListRuns lists all runs
+// ListRuns lists all runs. When ?search=<q> is set, the result is
+// filtered to runs whose goal or any owned step title matches the
+// query (case-insensitive substring). Powers the chat-list search box.
 func (s *Server) ListRuns(c *gin.Context) {
+	if q := c.Query("search"); q != "" {
+		runs, err := s.runtime.SearchRuns(q, 50)
+		if err != nil {
+			respondInternal(c, "failed to search runs", err)
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"runs": runs})
+		return
+	}
 	runs, err := s.runtime.ListRuns()
 	if err != nil {
 		respondInternal(c, "failed to list runs", err)

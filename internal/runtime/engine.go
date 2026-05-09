@@ -423,6 +423,14 @@ func (r *Runtime) ListRuns() ([]*domain.Run, error) {
 	return r.runRepo.List(nil, 100, 0)
 }
 
+// SearchRuns returns runs whose goal or any step title matches the
+// query (case-insensitive substring). Empty query is treated as a
+// regular ListRuns. Powers the chat-list search box; the corpus is
+// usually small enough that a LIKE %q% scan is fine.
+func (r *Runtime) SearchRuns(query string, limit int) ([]*domain.Run, error) {
+	return r.runRepo.Search(query, limit)
+}
+
 // GetRunApprovals retrieves all approvals for a run.
 func (r *Runtime) GetRunApprovals(runID string) ([]*permissions.ApprovalRequest, error) {
 	return r.approvalMgr.GetByRun(runID)
