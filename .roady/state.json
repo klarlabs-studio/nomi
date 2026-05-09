@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 501,
+  "version": 503,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1935,9 +1935,15 @@
       "elapsed_minutes": 13
     },
     "task-planner-eval-harness-with-golden-plans": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "72cfa50 test(evals): add planner golden-plan corpus with per-provider pass-rate"
+      ],
+      "started_at": "2026-05-09T10:22:13.027515+02:00",
+      "completed_at": "2026-05-09T13:28:51.716948+02:00",
+      "elapsed_minutes": 186
     },
     "task-plugin-architecture-core-refactor": {
       "status": "done",
@@ -2468,5 +2474,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-09T10:21:46.25717+02:00"
+  "updated_at": "2026-05-09T13:28:51.716949+02:00"
 }
