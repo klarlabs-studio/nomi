@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 491,
+  "version": 493,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1275,9 +1275,15 @@
       "elapsed_minutes": 0
     },
     "task-anthropic-chatstream-+-planner-robustness-(few-shot,-json-mode,-self-repair)": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "commit e93d6bf — anthropicClient.ChatStream against /v1/messages SSE; openaiClient.Chat now passes response_format=json_object when ChatRequest.JSONMode set; planner buildPlannerPrompt ships 3 few-shot examples; askPlanner extracted with single repair-turn loop on recoverable validation failure; TestPlannerSelfRepairsOnInvalidArguments + TestAnthropicClientChatStreamEmitsTextDeltas cover both lifts. -race tests pass on internal/{runtime,llm,storage/db,api}."
+      ],
+      "started_at": "2026-05-09T08:31:20.698387+02:00",
+      "completed_at": "2026-05-09T08:39:51.980038+02:00",
+      "elapsed_minutes": 8
     },
     "task-assistant-builder-—-capability-ceiling-and-policy-coherence": {
       "status": "done",
@@ -2438,5 +2444,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-09T08:31:01.966866+02:00"
+  "updated_at": "2026-05-09T08:39:51.980039+02:00"
 }
