@@ -114,6 +114,62 @@ func TestEditPlan_CreatesNewVersionAndAuditEvent(t *testing.T) {
 	}
 }
 
+// TestEditPlan_PersistsArguments confirms the Arguments map on each
+// StepDefinition survives the EditPlan round-trip. The desktop UI
+// uses this to push a per-hunk-skipped diff into the persisted plan
+// before approve, so the runtime applies the exact patch the user
+// reviewed (filesystem.patch arguments.diff override).
+func TestEditPlan_PersistsArguments(t *testing.T) {
+	rt, database, _, cleanup := setupTestRuntimeWithMemory(t)
+	defer cleanup()
+
+	ctx := context.Background()
+	assistantRepo := db.NewAssistantRepository(database)
+	if err := assistantRepo.Create(&domain.AssistantDefinition{
+		ID: "args-assistant", Name: "Args", Role: "test",
+		CreatedAt: time.Now().UTC(),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	run, err := rt.CreateRun(ctx, "test args", "args-assistant")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		got, _ := db.NewRunRepository(database).GetByID(run.ID)
+		if got != nil && got.Status == domain.RunPlanReview {
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+
+	// Edit with explicit Arguments (e.g. the per-hunk-skipped diff
+	// the user reviewed in DiffPreview).
+	wantDiff := "--- a/foo\n+++ b/foo\n@@ -1 +1 @@\n-x\n+y\n"
+	edited := []domain.StepDefinition{{
+		Title:        "Apply patch",
+		ExpectedTool: "filesystem.patch",
+		Arguments:    map[string]interface{}{"diff": wantDiff},
+	}}
+	if err := rt.EditPlan(ctx, run.ID, edited); err != nil {
+		t.Fatalf("edit plan: %v", err)
+	}
+
+	updated, err := db.NewPlanRepository(database).GetByRunID(run.ID)
+	if err != nil || updated == nil || len(updated.Steps) != 1 {
+		t.Fatalf("get updated plan: %v %+v", err, updated)
+	}
+	gotArgs := updated.Steps[0].Arguments
+	if gotArgs == nil {
+		t.Fatalf("expected arguments map on persisted step, got nil")
+	}
+	if got, _ := gotArgs["diff"].(string); got != wantDiff {
+		t.Fatalf("arguments.diff round-trip = %q, want %q", got, wantDiff)
+	}
+}
+
 // TestEditPlan_RefusesIfRunNotInPlanReview guards against editing a
 // plan after the user already approved it — once the run is executing,
 // step rows have been mutated and editing the plan out from under
