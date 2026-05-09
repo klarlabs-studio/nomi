@@ -181,6 +181,10 @@ function App() {
   const [mainTab, setMainTab] = useState<MainTab>("chats");
   const [settingsTab, setSettingsTab] = useState<SettingsTab>("plugins");
   const [chatResetToken, setChatResetToken] = useState(0);
+  // Deep-link target set by ApprovalPanel when the user clicks "Open in
+  // chat". ChatInterface reads it as a one-shot prop and copies it into
+  // its own selectedChat state.
+  const [deepLinkChatId, setDeepLinkChatId] = useState<string | null>(null);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingTemplates, setOnboardingTemplates] = useState<Assistant[]>([]);
@@ -446,9 +450,18 @@ function App() {
         </header>
 
         <div className="flex-1 overflow-hidden">
-          {mainTab === "chats" && <ChatInterface resetToken={chatResetToken} />}
+          {mainTab === "chats" && (
+            <ChatInterface resetToken={chatResetToken} deepLinkChatId={deepLinkChatId} />
+          )}
           {mainTab === "assistants" && <AssistantManager />}
-          {mainTab === "approvals" && <ApprovalPanel />}
+          {mainTab === "approvals" && (
+            <ApprovalPanel
+              onOpenChat={(runId) => {
+                setDeepLinkChatId(runId);
+                setMainTab("chats");
+              }}
+            />
+          )}
           {mainTab === "memory" && <MemoryInspector />}
           {mainTab === "events" && <EventLog />}
           {mainTab === "settings" && (

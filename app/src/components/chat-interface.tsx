@@ -21,10 +21,25 @@ import type {
 } from "@/components/chat/types";
 import { useChatActions } from "@/components/chat/use-chat-actions";
 
-export function ChatInterface({ resetToken = 0 }: { resetToken?: number }) {
+export function ChatInterface({
+  resetToken = 0,
+  deepLinkChatId,
+}: {
+  resetToken?: number;
+  // Set by App.tsx when ApprovalPanel asks to open a chat. We don't lift
+  // selectedChat all the way up because the rest of ChatInterface owns
+  // it; instead, a one-shot useEffect copies the prop into local state.
+  deepLinkChatId?: string | null;
+}) {
   // Pure local UI state. Nothing here is derived from the server — those
   // fields live in React Query below.
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (deepLinkChatId) {
+      setSelectedChat(deepLinkChatId);
+    }
+  }, [deepLinkChatId]);
   const [selectedAssistant, setSelectedAssistant] = useState("");
   const [newMessage, setNewMessage] = useState("");
   const [connectDialogOpen, setConnectDialogOpen] = useState(false);

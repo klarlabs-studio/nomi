@@ -162,17 +162,24 @@ export function ApprovalCard({ approval, onResolve, processing, agentName }: App
   }, [approval.status]);
 
     return (
-    <div className={`rounded-lg p-4 my-2 ${dangerous ? "bg-red-50 border border-red-300" : "bg-amber-50 border border-amber-200"}`}
-      role={approval.status === "pending" ? "alert" : undefined}
-      aria-live={approval.status === "pending" ? "assertive" : undefined}
+    // Semantic tokens (destructive vs warning) so dark-mode and forked
+    // themes render the right contrast without literal palette values.
+    // aria-live: dangerous → assertive (must interrupt), routine →
+    // polite (queues behind the user's current task). Pre-refactor
+    // every approval was assertive, which spammed screen readers.
+    <div className={`rounded-lg p-4 my-2 border ${dangerous
+        ? "bg-destructive/10 border-destructive/40 text-destructive-foreground"
+        : "bg-amber-100 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700 text-amber-950 dark:text-amber-100"}`}
+      role={approval.status === "pending" ? (dangerous ? "alert" : "status") : undefined}
+      aria-live={approval.status === "pending" ? (dangerous ? "assertive" : "polite") : undefined}
     >
       <div className="flex items-start gap-3">
-        <AlertCircle className={`w-5 h-5 mt-0.5 ${dangerous ? "text-red-600" : "text-amber-600"}`} />
+        <AlertCircle className={`w-5 h-5 mt-0.5 ${dangerous ? "text-destructive" : "text-amber-700 dark:text-amber-300"}`} />
         <div className="flex-1 space-y-2">
-          <p className={`text-sm font-medium ${dangerous ? "text-red-900" : "text-amber-900"}`}>
+          <p className="text-sm font-medium">
             {(agentName?.trim() || "Nomi") + " needs your approval"}
           </p>
-          <p className={`text-sm ${dangerous ? "text-red-800" : "text-amber-800"}`}>
+          <p className="text-sm">
             {copy.summary}
           </p>
           <div className="text-xs">
@@ -185,7 +192,7 @@ export function ApprovalCard({ approval, onResolve, processing, agentName }: App
             </button>
           </div>
           {showRaw && approval.context && (
-            <div className={`text-xs rounded p-2 ${dangerous ? "text-red-700 bg-red-100/50" : "text-amber-700 bg-amber-100/50"}`}>
+            <div className="text-xs rounded p-2 bg-background/60 text-foreground">
               {JSON.stringify(approval.context, null, 2)}
             </div>
           )}
@@ -193,9 +200,9 @@ export function ApprovalCard({ approval, onResolve, processing, agentName }: App
             <div className="space-y-1">
               <label
                 htmlFor={`confirm-${approval.id}`}
-                className="block text-xs font-medium text-red-900"
+                className="block text-xs font-medium"
               >
-                Type <code className="bg-red-100 px-1 rounded">{IRREVERSIBLE_CONFIRM_TOKEN}</code> to enable Approve
+                Type <code className="bg-destructive/20 px-1 rounded">{IRREVERSIBLE_CONFIRM_TOKEN}</code> to enable Approve
               </label>
               <input
                 id={`confirm-${approval.id}`}
@@ -204,10 +211,10 @@ export function ApprovalCard({ approval, onResolve, processing, agentName }: App
                 onChange={(e) => setConfirmText(e.target.value)}
                 autoComplete="off"
                 aria-describedby={`confirm-${approval.id}-help`}
-                className="w-full rounded-md border border-red-300 bg-white px-2 py-1 text-sm text-red-900 placeholder:text-red-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-600"
+                className="w-full rounded-md border border-destructive/40 bg-background px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-destructive"
                 placeholder={IRREVERSIBLE_CONFIRM_TOKEN}
               />
-              <p id={`confirm-${approval.id}-help`} className="text-[11px] text-red-800/80">
+              <p id={`confirm-${approval.id}-help`} className="text-[11px] opacity-80">
                 This action cannot be undone.
               </p>
             </div>
@@ -226,14 +233,14 @@ export function ApprovalCard({ approval, onResolve, processing, agentName }: App
             <button
               onClick={() => onResolve(true, rememberChoice)}
               disabled={processing || !unlockApprove}
-              className={`px-3 py-1.5 text-white text-sm rounded-md disabled:opacity-50 transition-colors ${dangerous ? "bg-red-600 hover:bg-red-700" : "bg-amber-600 hover:bg-amber-700"}`}
+              className={`px-3 py-1.5 text-white text-sm rounded-md disabled:opacity-50 transition-colors ${dangerous ? "bg-destructive hover:bg-destructive/90" : "bg-amber-700 dark:bg-amber-600 hover:bg-amber-800 dark:hover:bg-amber-500"}`}
             >
               {processing ? "Approving..." : "Approve"}
             </button>
             <button
               onClick={() => onResolve(false, rememberChoice)}
               disabled={processing}
-              className={`px-3 py-1.5 bg-white border text-sm rounded-md disabled:opacity-50 transition-colors ${dangerous ? "border-red-300 text-red-800 hover:bg-red-50" : "border-amber-300 text-amber-800 hover:bg-amber-50"}`}
+              className="px-3 py-1.5 bg-background border text-sm rounded-md disabled:opacity-50 transition-colors hover:bg-muted"
             >
               Deny
             </button>
