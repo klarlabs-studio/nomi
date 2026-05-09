@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 495,
+  "version": 499,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1869,9 +1869,15 @@
       "elapsed_minutes": 5
     },
     "task-onboarding:-defer-setonboardingcomplete-until-verify-success": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "commit 1259325 — wizard.tsx no longer fires setOnboardingComplete in handleFinish before verify polls. Flag flips only on (a) verified-good run via pollVerification success branches, (b) explicit Continue-anyway via cancelVerificationAndExit, (c) advanceToConnectors when user reached step 5, or (d) the existing Skip handler in App.tsx. Reconfigure path leaves the flag unset so a refresh reopens the wizard. Tests 55/55 still pass."
+      ],
+      "started_at": "2026-05-09T09:04:22.419074+02:00",
+      "completed_at": "2026-05-09T09:06:14.600645+02:00",
+      "elapsed_minutes": 1
     },
     "task-per-capability-granular-permissions-(stretch)": {
       "status": "done",
@@ -2005,9 +2011,15 @@
       "elapsed_minutes": 1
     },
     "task-prompt-injection-sanitization-+-context-budgeting-in-planner": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "commit 322e6f4 — wrapUntrusted helper + trusted=false delimiters around workspace_context and user_preferences in planWithLLM; plannerSystemPrompt instructs LLM to treat trusted=false content as data only; 16 KB context cap with truncation marker. MaxTokens default already raised to 2048 in earlier planner-robustness work. Tests cover the wrap shape and the system-prompt clause. Race sweep on internal/runtime green. Per-model ContextWindow resolution scoped out as bigger surface area; 16 KB byte cap is conservative across all current chat models."
+      ],
+      "started_at": "2026-05-09T09:06:29.354506+02:00",
+      "completed_at": "2026-05-09T09:08:59.572676+02:00",
+      "elapsed_minutes": 2
     },
     "task-refactor-chat-interface.tsx-into-chatlist-/-chatdetail-/-chatcomposer": {
       "status": "done",
@@ -2450,5 +2462,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-09T09:04:08.036325+02:00"
+  "updated_at": "2026-05-09T09:08:59.572676+02:00"
 }
