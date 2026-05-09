@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 493,
+  "version": 495,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -2087,9 +2087,15 @@
       "elapsed_minutes": 6
     },
     "task-run-transition-atomicity-+-transitionrunatomic": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "commit c34dc08 — RunRepository.CASUpdateStatusTx uses UPDATE...WHERE id=? AND status=?; transitionRun runs state-machine check, then a tx with the CAS. Loser of a concurrent race gets ErrConcurrentTransition. TestTransitionRun_ConcurrentLoserGetsErrConcurrentTransition asserts exactly-one-winner under -race. Race sweep on internal/runtime, internal/storage/db, internal/api all green."
+      ],
+      "started_at": "2026-05-09T08:40:08.991947+02:00",
+      "completed_at": "2026-05-09T09:04:08.036325+02:00",
+      "elapsed_minutes": 23
     },
     "task-runtime-engine-modularization": {
       "status": "done",
@@ -2444,5 +2450,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-09T08:39:51.980039+02:00"
+  "updated_at": "2026-05-09T09:04:08.036325+02:00"
 }
