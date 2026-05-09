@@ -1,9 +1,13 @@
 package db
 
 import (
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"sort"
+	"sync"
 	"time"
 
 	"github.com/felixgeelhaar/nomi/internal/domain"
@@ -266,9 +270,16 @@ func (r *AssistantRepository) Delete(id string) error {
 	return nil
 }
 
-// EventRepository handles database operations for Events
+// EventRepository handles database operations for Events.
+//
+// Writes are serialized through `chainMu` so the hash-chain (see
+// migration 000023) has a well-defined predecessor for every entry,
+// even under concurrent producers. The mutex is process-local — Nomi
+// is a single-writer daemon, so this is sufficient for the audit
+// guarantee. Multi-writer setups would need a chain-coordinator service.
 type EventRepository struct {
-	db *DB
+	db      *DB
+	chainMu sync.Mutex
 }
 
 // NewEventRepository creates a new EventRepository
@@ -278,33 +289,207 @@ func NewEventRepository(db *DB) *EventRepository {
 
 // Create inserts a new event
 func (r *EventRepository) Create(event *domain.Event) error {
-	return r.create(r.db, event)
+	r.chainMu.Lock()
+	defer r.chainMu.Unlock()
+	prevHash, err := lookupLatestEntryHashDB(r.db)
+	if err != nil {
+		return fmt.Errorf("failed to read prior entry_hash: %w", err)
+	}
+	return r.create(r.db, event, prevHash)
 }
 
 // CreateTx inserts an event inside the caller's transaction. Used by the
 // runtime so state-machine row updates and their corresponding events are
-// persisted atomically.
+// persisted atomically. Still serializes on chainMu to keep the hash chain
+// well-defined.
 func (r *EventRepository) CreateTx(tx *sql.Tx, event *domain.Event) error {
-	return r.create(tx, event)
+	r.chainMu.Lock()
+	defer r.chainMu.Unlock()
+	prevHash, err := lookupLatestEntryHashTx(tx)
+	if err != nil {
+		return fmt.Errorf("failed to read prior entry_hash: %w", err)
+	}
+	return r.create(tx, event, prevHash)
 }
 
-func (r *EventRepository) create(e execer, event *domain.Event) error {
+func (r *EventRepository) create(e execer, event *domain.Event, prevHash string) error {
 	payload, err := json.Marshal(event.Payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal payload: %w", err)
 	}
 
+	entryHash := computeEntryHash(prevHash, event, payload)
+
 	query := `
-		INSERT INTO events (id, type, run_id, step_id, payload, timestamp)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO events (id, type, run_id, step_id, payload, timestamp, prev_hash, entry_hash)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`
 	if _, err := e.Exec(query,
 		event.ID, event.Type, event.RunID, event.StepID,
-		payload, event.Timestamp,
+		payload, event.Timestamp, nullableString(prevHash), entryHash,
 	); err != nil {
 		return fmt.Errorf("failed to create event: %w", err)
 	}
 	return nil
+}
+
+// queryRower lets us share the latest-hash lookup between the
+// connection (DB) and transaction (sql.Tx) variants of Create.
+type queryRower interface {
+	QueryRow(query string, args ...interface{}) *sql.Row
+}
+
+const latestEntryHashQuery = `
+	SELECT entry_hash FROM events
+	WHERE entry_hash IS NOT NULL
+	ORDER BY timestamp DESC, id DESC
+	LIMIT 1
+`
+
+func lookupLatestEntryHashDB(db *DB) (string, error) {
+	return scanLatestEntryHash(db.QueryRow(latestEntryHashQuery))
+}
+
+func lookupLatestEntryHashTx(tx *sql.Tx) (string, error) {
+	return scanLatestEntryHash(tx.QueryRow(latestEntryHashQuery))
+}
+
+func scanLatestEntryHash(row *sql.Row) (string, error) {
+	var hash sql.NullString
+	if err := row.Scan(&hash); err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil
+		}
+		return "", err
+	}
+	if !hash.Valid {
+		return "", nil
+	}
+	return hash.String, nil
+}
+
+// computeEntryHash returns sha256_hex(prev_hash || canonical_event).
+// canonical_event encodes id, type, run_id, step_id, timestamp (UTC,
+// RFC3339Nano), and the marshalled payload bytes — anything an auditor
+// can read back from the row. Sorting keys keeps the hash stable across
+// Go versions and JSON encoder tweaks.
+func computeEntryHash(prevHash string, event *domain.Event, payload []byte) string {
+	h := sha256.New()
+	h.Write([]byte(prevHash))
+	canon := canonicalEventBytes(event, payload)
+	h.Write(canon)
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func canonicalEventBytes(event *domain.Event, payload []byte) []byte {
+	var stepID string
+	if event.StepID != nil {
+		stepID = *event.StepID
+	}
+	// Map keys are written in sorted order so the encoder output is
+	// stable independent of Go's map iteration randomness.
+	fields := map[string]string{
+		"id":        event.ID,
+		"type":      string(event.Type),
+		"run_id":    event.RunID,
+		"step_id":   stepID,
+		"timestamp": event.Timestamp.UTC().Format(time.RFC3339Nano),
+		"payload":   string(payload),
+	}
+	keys := make([]string, 0, len(fields))
+	for k := range fields {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	var out []byte
+	for _, k := range keys {
+		out = append(out, k...)
+		out = append(out, '=')
+		out = append(out, fields[k]...)
+		out = append(out, '\n')
+	}
+	return out
+}
+
+func nullableString(s string) interface{} {
+	if s == "" {
+		return nil
+	}
+	return s
+}
+
+// VerifyChain walks the events table in canonical order (timestamp ASC,
+// id ASC) and recomputes each entry_hash. Returns ok=true and n=count
+// when the chain is intact; otherwise returns the offending event ID
+// and the reason. A chain with NULL prev_hash/entry_hash columns (rows
+// inserted before migration 000023) is treated as "unverified" — the
+// walk skips them and reports the first verified-vs-recomputed mismatch.
+type ChainVerifyResult struct {
+	OK              bool   `json:"ok"`
+	Count           int    `json:"count"`
+	FirstBadEventID string `json:"first_bad_event_id,omitempty"`
+	Reason          string `json:"reason,omitempty"`
+}
+
+func (r *EventRepository) VerifyChain() (*ChainVerifyResult, error) {
+	rows, err := r.db.Query(`
+		SELECT id, type, run_id, step_id, payload, timestamp, prev_hash, entry_hash
+		FROM events
+		WHERE entry_hash IS NOT NULL
+		ORDER BY timestamp ASC, id ASC
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan events for verify: %w", err)
+	}
+	defer rows.Close()
+
+	expectedPrev := ""
+	count := 0
+	for rows.Next() {
+		var (
+			id, evtType, runID         string
+			stepID                     sql.NullString
+			payload                    []byte
+			ts                         time.Time
+			storedPrev, storedEntry    sql.NullString
+		)
+		if err := rows.Scan(&id, &evtType, &runID, &stepID, &payload, &ts, &storedPrev, &storedEntry); err != nil {
+			return nil, fmt.Errorf("scan: %w", err)
+		}
+		if storedPrev.String != expectedPrev {
+			return &ChainVerifyResult{
+				OK:              false,
+				Count:           count,
+				FirstBadEventID: id,
+				Reason:          fmt.Sprintf("prev_hash mismatch: expected %q, found %q", expectedPrev, storedPrev.String),
+			}, nil
+		}
+		evt := &domain.Event{
+			ID:        id,
+			Type:      domain.EventType(evtType),
+			RunID:     runID,
+			Timestamp: ts,
+		}
+		if stepID.Valid {
+			s := stepID.String
+			evt.StepID = &s
+		}
+		recomputed := computeEntryHash(storedPrev.String, evt, payload)
+		if recomputed != storedEntry.String {
+			return &ChainVerifyResult{
+				OK:              false,
+				Count:           count,
+				FirstBadEventID: id,
+				Reason:          fmt.Sprintf("entry_hash mismatch: recomputed %s, stored %s", recomputed, storedEntry.String),
+			}, nil
+		}
+		expectedPrev = storedEntry.String
+		count++
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return &ChainVerifyResult{OK: true, Count: count}, nil
 }
 
 // ListByRun retrieves events for a specific run

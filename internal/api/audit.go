@@ -128,6 +128,24 @@ type pruneAuditRequest struct {
 	Days int `json:"days" binding:"required"`
 }
 
+// Verify walks the events table and recomputes the hash chain. Returns
+// {"ok": true, "count": N} when intact, or {"ok": false, "first_bad_event_id":
+// "...", "reason": "..."} on the first inconsistency. Underlies the README's
+// "hash-chained audit log" claim — exposed so a self-hoster can prove the
+// SQLite file hasn't been tampered with after the fact.
+func (s *AuditServer) Verify(c *gin.Context) {
+	result, err := s.events.VerifyChain()
+	if err != nil {
+		respondInternal(c, "audit verify failed", err)
+		return
+	}
+	if !result.OK {
+		c.JSON(http.StatusUnprocessableEntity, result)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
 func (s *AuditServer) Prune(c *gin.Context) {
 	var req pruneAuditRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

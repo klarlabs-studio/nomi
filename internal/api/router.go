@@ -298,6 +298,7 @@ func NewRouter(cfg RouterConfig) *gin.Engine {
 	audit := r.Group("/audit")
 	{
 		audit.GET("/export", auditServer.Export)
+		audit.GET("/verify", auditServer.Verify)
 		audit.POST("/prune", auditServer.Prune)
 	}
 
