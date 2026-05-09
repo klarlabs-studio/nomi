@@ -455,10 +455,10 @@ export interface RemoteTemplate {
   system_prompt?: string;
   channels?: string[]; // JSON array
   capabilities?: string[]; // JSON array
-  contexts?: any[]; // JSON array
-  memory_policy?: any; // JSON object
-  permission_policy?: any; // JSON object
-  recommended_bindings?: any[]; // JSON array
+  contexts?: ContextAttachment[]; // JSON array
+  memory_policy?: MemoryPolicy; // JSON object
+  permission_policy?: PermissionPolicy; // JSON object
+  recommended_bindings?: Array<Record<string, unknown>>; // JSON array
   installed_at?: string;
   local_assistant_id?: string;
 }

@@ -713,31 +713,118 @@ function AssistantForm({
           />
         </div>
         {formData.memory_policy?.enabled && (
-                <div className="space-y-2">
-                  <label className="text-sm">Fallback Model</label>
-                  <Select>
-                    value={formData.model_policy?.fallback || ""}
-                    onValueChange={(value: string) => {
-                      setFormData({
-                        ...formData,
-                        model_policy: {
-                          ...formData.model_policy,
-                          mode: "assistant_override",
-                          fallback: value || undefined,
-                        },
-                      });
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Scope</label>
+            <select
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+              value={formData.memory_policy?.scope || "workspace"}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  memory_policy: {
+                    enabled: true,
+                    scope: e.target.value,
+                  },
+                })
+              }
+            >
+              <option value="workspace">Workspace</option>
+              <option value="profile">Profile</option>
+            </select>
+            <p className="text-xs text-muted-foreground">
+              {formData.memory_policy?.scope === "profile"
+                ? "Profile memories persist across all workspaces."
+                : "Workspace memories are local to this project."}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Permissions */}
+      <div className="border rounded-lg p-3 space-y-3">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium">Permissions</label>
+          <div className="flex items-center gap-2">
+            {assistant?.id && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={applyingProfile}
+                onClick={async () => {
+                  setApplyingProfile(true);
+                  try {
+                    const data = await assistantsApi.applySafetyProfile(assistant.id);
+                    setFormData((prev) => ({
+                      ...prev,
+                      permission_policy: data.assistant.permission_policy,
+                    }));
+                  } catch (err) {
+                    console.error("Failed to apply safety profile:", err);
+                  } finally {
+                    setApplyingProfile(false);
+                  }
+                }}
+              >
+                {applyingProfile ? "Applying..." : "Apply Safety Profile"}
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setFormData({
+                  ...formData,
+                  permission_policy: {
+                    rules: [...(formData.permission_policy?.rules || []), { capability: "", mode: "confirm" }],
+                  },
+                })
+              }
+            >
+              <Plus className="w-3 h-3 mr-1" />
+              Add Rule
+            </Button>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Control what actions require approval, are allowed, or denied
+        </p>
+        <div className="space-y-2">
+          {(formData.permission_policy?.rules || []).length === 0 && (
+            <div className="text-sm text-muted-foreground">No custom rules. Using default permissions.</div>
+          )}
+          {(formData.permission_policy?.rules || []).map((rule, i) => {
+            const violation = ruleCeilingViolations.find((v) => v.ruleIndex === i);
+            return (
+              <div key={i} className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={rule.capability}
+                    onChange={(e) => {
+                      const newRules = [...(formData.permission_policy?.rules || [])];
+                      newRules[i] = { ...rule, capability: e.target.value };
+                      setFormData({ ...formData, permission_policy: { rules: newRules } });
                     }}
-                    placeholder="None"
+                    placeholder="e.g. filesystem.write"
+                    className={
+                      "flex-1 text-sm " +
+                      (violation ? "border-amber-400 focus-visible:ring-amber-400" : "")
+                    }
+                  />
+                  <select
+                    value={rule.mode}
+                    onChange={(e) => {
+                      const newRules = [...(formData.permission_policy?.rules || [])];
+                      newRules[i] = { ...rule, mode: e.target.value as PermissionRule["mode"] };
+                      setFormData({ ...formData, permission_policy: { rules: newRules } });
+                    }}
+                    className="h-9 rounded-md border border-input bg-transparent px-2 py-1 text-sm shadow-sm"
                   >
-                    <SelectItem value="">None</SelectItem>
-                    {availableProviders.map((provider) =>
-                      provider.model_ids.map((model) => (
-                        <SelectItem key={`${provider.id}:${model}`} value={`${provider.id}:${model}`}>
-                          {provider.name} — {model}
-                        </SelectItem>
-                      ))
-                    )}
-                  </Select>
+                    <option value="allow">Allow</option>
+                    <option value="confirm">Confirm</option>
+                    <option value="deny">Deny</option>
+                  </select>
                   <button
                     type="button"
                     onClick={() => {

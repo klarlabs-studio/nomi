@@ -32,7 +32,7 @@ export interface Outcome {
 // Outcome-to-plugin mapping. These plugin IDs must match the manifest IDs
 // registered by the Go daemon. System plugins are always present; marketplace
 // plugins may need installation first.
-export const OUTCOMES: Outcome[] = [
+const OUTCOMES: Outcome[] = [
   {
     id: "read-email",
     title: "Read my email",
