@@ -42,17 +42,27 @@ async function checkOllamaReachable(): Promise<boolean> {
 // suggest remote models (e.g. claude-3-5-sonnet) tuned for capability, not
 // what's locally installed; piping that into an Ollama profile would 404
 // every chat with no actionable hint.
-async function pickOllamaModel(): Promise<string> {
-  const fallback = "qwen2.5:latest";
+// pickOllamaModel inspects the locally-running Ollama instance and
+// picks the best installed model, biasing toward coder-tuned models
+// when the user is starting from the coding-agent template (the
+// flagship recipe in README + examples/coding-agent/). Without this
+// preference, a user picking "Coding Agent" lands on qwen2.5 instead
+// of qwen2.5-coder and the demo underperforms the marketing.
+async function pickOllamaModel(templateID?: string): Promise<string> {
+  const wantsCoder = templateID === "coding-agent";
+  const fallback = wantsCoder ? "qwen2.5-coder:7b" : "qwen2.5:latest";
   try {
     const res = await fetch("http://127.0.0.1:11434/api/tags");
     if (!res.ok) return fallback;
     const data = (await res.json()) as { models?: Array<{ name: string }> };
     const names = (data.models ?? []).map((m) => m.name);
     if (names.length === 0) return fallback;
-    // Prefer chat-capable, well-rounded models in this order, then any
-    // installed model as a last resort.
-    const preferred = ["qwen2.5", "llama3.2", "llama3.1", "mistral", "qwen2"];
+    // Coder-template preference order — qwen2.5-coder and
+    // deepseek-coder both ship Hermes-style structured-output
+    // performance, which is what the planner needs.
+    const coderOrder = ["qwen2.5-coder", "deepseek-coder", "codellama"];
+    const generalOrder = ["qwen2.5", "llama3.2", "llama3.1", "mistral", "qwen2"];
+    const preferred = wantsCoder ? [...coderOrder, ...generalOrder] : generalOrder;
     for (const stem of preferred) {
       const hit = names.find((n) => n === `${stem}:latest`) ?? names.find((n) => n.startsWith(`${stem}:`));
       if (hit) return hit;
@@ -91,8 +101,13 @@ export function OnboardingWizard({
   // want to pick a different template, configure connectors, etc.
   const [mode, setMode] = useState<"quickstart" | "wizard">("quickstart");
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(() => {
+    // Coding Agent is the flagship recipe (README + examples/coding-agent).
+    // First-run users should land there by default; code-reviewer is the
+    // read-only fallback for users who don't want write access from the
+    // first session.
+    const coder = templates.find((t) => t.template_id === "coding-agent");
     const reviewer = templates.find((t) => t.template_id === "code-reviewer");
-    return (reviewer ?? templates[0])?.id || "";
+    return (coder ?? reviewer ?? templates[0])?.id || "";
   });
   // Anthropic is the default fast-path because it ships an API key that
   // works against current frontier models without a separate model
@@ -191,7 +206,10 @@ export function OnboardingWizard({
       // Use a model Ollama actually has installed. The template's
       // suggested_model is a remote model name (e.g. claude-3-5-sonnet)
       // that Ollama would 404 on, so we ignore it for local providers.
-      const model = await pickOllamaModel();
+      // Pass the chosen template_id so Coding Agent biases toward the
+      // coder-tuned variant.
+      const selectedTpl = templates.find((t) => t.id === selectedTemplateId);
+      const model = await pickOllamaModel(selectedTpl?.template_id);
       return {
         name: "Ollama (Local)",
         type: "local",

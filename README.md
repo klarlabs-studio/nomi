@@ -173,9 +173,11 @@ source into a remote LLM.
 
 ```bash
 # 1. Local LLM (or skip and use Anthropic / OpenAI from the wizard)
+#    qwen2.5-coder is the recommended model for the Coding Agent
+#    flagship recipe; swap in qwen2.5 for general-purpose chat.
 brew install ollama
 ollama serve &
-ollama pull qwen2.5:14b
+ollama pull qwen2.5-coder:7b
 
 # 2. Install Nomi
 brew install --cask felixgeelhaar/tap/nomi
