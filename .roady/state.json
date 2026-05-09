@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 518,
+  "version": 520,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -2001,9 +2001,15 @@
       "elapsed_minutes": 186
     },
     "task-planner-observability:-real-provider-labels-+-edit-distance-metric": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "0c7b0c8 feat(metrics): real provider labels + planner_edit_distance series"
+      ],
+      "started_at": "2026-05-09T17:21:35.579936+02:00",
+      "completed_at": "2026-05-09T17:25:57.687773+02:00",
+      "elapsed_minutes": 4
     },
     "task-plugin-architecture-core-refactor": {
       "status": "done",
@@ -2561,5 +2567,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-09T17:21:13.640475+02:00"
+  "updated_at": "2026-05-09T17:25:57.687774+02:00"
 }
