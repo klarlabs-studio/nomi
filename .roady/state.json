@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 516,
+  "version": 518,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1495,9 +1495,15 @@
       "elapsed_minutes": 0
     },
     "task-context-budget-+-summarization-for-long-coding-sessions": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "ed78de2 feat(runtime): planner-context budget envelope + case-insensitive memory search"
+      ],
+      "started_at": "2026-05-09T17:18:17.865459+02:00",
+      "completed_at": "2026-05-09T17:21:13.640473+02:00",
+      "elapsed_minutes": 2
     },
     "task-core-foundation": {
       "status": "done",
@@ -2555,5 +2561,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-09T17:18:07.796773+02:00"
+  "updated_at": "2026-05-09T17:21:13.640475+02:00"
 }
