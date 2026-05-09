@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 505,
+  "version": 507,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -2304,9 +2304,15 @@
       "elapsed_minutes": 1
     },
     "task-unified-approval-surface-+-wcag-color-contrast-pass": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "63f29e3 feat(approvals): unify surface, deep-link panel, semantic tokens, polite ARIA"
+      ],
+      "started_at": "2026-05-09T15:05:08.719478+02:00",
+      "completed_at": "2026-05-09T15:08:31.844558+02:00",
+      "elapsed_minutes": 3
     },
     "task-unified-approval-surface-with-plain-english-capability-copy": {
       "status": "done",
@@ -2480,5 +2486,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-09T15:04:58.033816+02:00"
+  "updated_at": "2026-05-09T15:08:31.844558+02:00"
 }
