@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 509,
+  "version": 512,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1395,6 +1395,11 @@
       "completed_at": "2026-05-07T22:11:34.134529+02:00",
       "elapsed_minutes": 1462
     },
+    "task-coding-agent-as-onboarding-default-+-qwen2.5-coder-preference": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
     "task-coding-agent-flagship-recipe-+-filesystem.patch-tool": {
       "status": "done",
       "path": "",
@@ -1483,6 +1488,11 @@
       "completed_at": "2026-04-26T14:33:17.147076+02:00",
       "elapsed_minutes": 0
     },
+    "task-context-budget-+-summarization-for-long-coding-sessions": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
     "task-core-foundation": {
       "status": "done",
       "path": "",
@@ -1526,6 +1536,11 @@
       "started_at": "2026-05-09T15:08:43.133283+02:00",
       "completed_at": "2026-05-09T15:19:21.731712+02:00",
       "elapsed_minutes": 10
+    },
+    "task-diff-preview-parity-(shiki-highlight,-per-hunk-skip/refine,-side-by-side-toggle)": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
     },
     "task-discord-plugin-(channel-+-tool)": {
       "status": "done",
@@ -1592,6 +1607,11 @@
       "started_at": "2026-04-24T13:23:46.239719+02:00",
       "completed_at": "2026-04-24T13:29:19.813839+02:00",
       "elapsed_minutes": 5
+    },
+    "task-filesystem.patch-dry-run-+-3-way-fallback-+-path-pre-flight": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
     },
     "task-final-llm-conclusion-must-render-as-chat-bubble,-not-be-hidden-in-thinkingblock": {
       "status": "done",
@@ -1736,6 +1756,11 @@
       "started_at": "2026-05-08T22:16:14.851297+02:00",
       "completed_at": "2026-05-08T22:17:47.916357+02:00",
       "elapsed_minutes": 1
+    },
+    "task-hn/launch-screencast-+-stale-doc-cleanup": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
     },
     "task-landing-site-reposition-to-match-readme-coding-agent-wedge": {
       "status": "done",
@@ -1957,6 +1982,11 @@
       "completed_at": "2026-05-09T13:28:51.716948+02:00",
       "elapsed_minutes": 186
     },
+    "task-planner-observability:-real-provider-labels-+-edit-distance-metric": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
     "task-plugin-architecture-core-refactor": {
       "status": "done",
       "path": "",
@@ -2045,6 +2075,11 @@
       "completed_at": "2026-05-09T09:08:59.572676+02:00",
       "elapsed_minutes": 2
     },
+    "task-provider/model-matrix-evals-+-adversarial-fixtures-+-threshold-enforcement": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
     "task-refactor-chat-interface.tsx-into-chatlist-/-chatdetail-/-chatcomposer": {
       "status": "done",
       "path": "",
@@ -2078,6 +2113,17 @@
       "completed_at": "2026-05-08T22:12:29.667415+02:00",
       "elapsed_minutes": 0
     },
+    "task-replan-on-failure-loop-(test-output-driven-self-correction)": {
+      "status": "done",
+      "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "8815116 feat(runtime): replan-on-failure loop closes the test-output feedback gap"
+      ],
+      "started_at": "2026-05-09T17:03:11.936661+02:00",
+      "completed_at": "2026-05-09T17:13:37.357081+02:00",
+      "elapsed_minutes": 10
+    },
     "task-reposition-v0.2-around-coding-agent-icp-(\"local-first-claude-code\")": {
       "status": "done",
       "path": "",
@@ -2109,6 +2155,11 @@
       ],
       "started_at": "2026-05-05T10:48:52.950464+02:00",
       "completed_at": "2026-05-05T10:48:54.292141+02:00",
+      "elapsed_minutes": 0
+    },
+    "task-run-history-search,-day-grouping,-branch-from-here": {
+      "status": "pending",
+      "path": "",
       "elapsed_minutes": 0
     },
     "task-run-pause/resume": {
@@ -2492,5 +2543,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-09T15:19:21.731713+02:00"
+  "updated_at": "2026-05-09T17:13:37.357082+02:00"
 }
