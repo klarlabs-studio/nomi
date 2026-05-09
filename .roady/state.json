@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 507,
+  "version": 509,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1517,9 +1517,15 @@
       "elapsed_minutes": 0
     },
     "task-deterministic-fake-llm-fixture-for-e2e-+-plan-review-e2e-coverage": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "5f3841d test(e2e): deterministic fake LLM, plan-review e2e + edit_plan integration"
+      ],
+      "started_at": "2026-05-09T15:08:43.133283+02:00",
+      "completed_at": "2026-05-09T15:19:21.731712+02:00",
+      "elapsed_minutes": 10
     },
     "task-discord-plugin-(channel-+-tool)": {
       "status": "done",
@@ -2486,5 +2492,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-09T15:08:31.844558+02:00"
+  "updated_at": "2026-05-09T15:19:21.731713+02:00"
 }
