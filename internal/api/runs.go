@@ -229,12 +229,17 @@ func (s *Server) ApprovePlan(c *gin.Context) {
 // EditPlanRequest represents a request to edit a plan
 type EditPlanRequest struct {
 	Steps []struct {
-		ID                 string   `json:"id,omitempty"`
-		Title              string   `json:"title"`
-		Description        string   `json:"description,omitempty"`
-		ExpectedTool       string   `json:"expected_tool,omitempty"`
-		ExpectedCapability string   `json:"expected_capability,omitempty"`
-		DependsOn          []string `json:"depends_on,omitempty"`
+		ID                 string                 `json:"id,omitempty"`
+		Title              string                 `json:"title"`
+		Description        string                 `json:"description,omitempty"`
+		ExpectedTool       string                 `json:"expected_tool,omitempty"`
+		ExpectedCapability string                 `json:"expected_capability,omitempty"`
+		DependsOn          []string               `json:"depends_on,omitempty"`
+		// Arguments lets the desktop UI push a modified tool argument
+		// payload (e.g. a unified diff with skipped hunks dropped)
+		// without re-running the planner. Optional; when absent, the
+		// existing arguments map persists.
+		Arguments map[string]interface{} `json:"arguments,omitempty"`
 	} `json:"steps" binding:"required"`
 }
 
@@ -261,6 +266,7 @@ func (s *Server) EditPlan(c *gin.Context) {
 			ExpectedTool:       s.ExpectedTool,
 			ExpectedCapability: s.ExpectedCapability,
 			DependsOn:          s.DependsOn,
+			Arguments:          s.Arguments,
 		}
 	}
 

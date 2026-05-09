@@ -286,6 +286,10 @@ export const runsApi = {
       expected_tool?: string;
       expected_capability?: string;
       depends_on?: string[];
+      // arguments lets the desktop UI push a modified tool argument
+      // payload (e.g. a unified diff with skipped hunks dropped) so
+      // the planner doesn't have to re-run.
+      arguments?: Record<string, unknown>;
     }[]
   ) =>
     fetchApi<{ status: string }>(`/runs/${id}/plan/edit`, {

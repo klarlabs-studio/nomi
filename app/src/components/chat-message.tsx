@@ -262,6 +262,7 @@ interface PlanReviewCardProps {
       expected_tool?: string;
       expected_capability?: string;
       depends_on?: string[];
+      arguments?: Record<string, unknown>;
     }[]
   ) => void;
   onFork?: (stepID: string) => void;
@@ -300,6 +301,12 @@ export function PlanReviewCard({
   const [viewMode, setViewMode] = useState<"list" | "graph">("list");
   const [selectedStepID, setSelectedStepID] = useState<string | undefined>();
   const [draftSteps, setDraftSteps] = useState<StepDefinition[]>([]);
+  // Per-step diff overrides keyed by step.id. When DiffPreview's
+  // per-hunk skip toggle fires, we stash the rebuilt diff here; on
+  // Approve, if any entry differs from the original arguments.diff,
+  // we issue a /plan/edit before approving so the patch that gets
+  // applied is the one the user reviewed.
+  const [modifiedDiffs, setModifiedDiffs] = useState<Record<string, string>>({});
 
   useEffect(() => {
     approveRef.current?.focus();
@@ -411,6 +418,33 @@ export function PlanReviewCard({
     setIsEditing(false);
   };
 
+  // approveAfterFlush flushes any per-hunk-skip diff overrides
+  // through /plan/edit before approving, so the runtime applies the
+  // exact diff the user previewed. If nothing changed, fall through
+  // straight to onApprove.
+  const approveAfterFlush = () => {
+    const ids = Object.keys(modifiedDiffs);
+    if (ids.length === 0) {
+      onApprove();
+      return;
+    }
+    const payload = (plan.steps ?? []).map((step) => ({
+      id: step.id,
+      title: step.title,
+      description: step.description,
+      expected_tool: step.expected_tool,
+      expected_capability: step.expected_capability,
+      depends_on: step.depends_on ?? [],
+      arguments: modifiedDiffs[step.id]
+        ? { ...(step.arguments ?? {}), diff: modifiedDiffs[step.id] }
+        : step.arguments,
+    }));
+    onEdit(payload);
+    setModifiedDiffs({});
+    // The parent will re-fetch the plan; the user's next click on
+    // Approve will fire the actual onApprove.
+  };
+
   return (
     <div
       role="region"
@@ -513,7 +547,20 @@ export function PlanReviewCard({
                         )}
                         {step.expected_tool === "filesystem.patch" &&
                           typeof step.arguments?.diff === "string" && (
-                            <DiffPreview diff={step.arguments.diff as string} />
+                            <DiffPreview
+                              diff={step.arguments.diff as string}
+                              onDiffChange={(d) =>
+                                setModifiedDiffs((prev) =>
+                                  d === step.arguments?.diff
+                                    ? (() => {
+                                        const next = { ...prev };
+                                        delete next[step.id];
+                                        return next;
+                                      })()
+                                    : { ...prev, [step.id]: d },
+                                )
+                              }
+                            />
                           )}
                       </>
                     )}
@@ -632,11 +679,11 @@ export function PlanReviewCard({
             <button
               ref={approveRef}
               type="button"
-              onClick={onApprove}
+              onClick={approveAfterFlush}
               disabled={busy}
               className="px-3 py-1.5 bg-primary text-primary-foreground text-sm rounded-md hover:bg-primary/90 disabled:opacity-50 transition-colors"
             >
-              {approving ? "Approving..." : labels.actions.approveAndRun}
+              {approving ? "Approving..." : Object.keys(modifiedDiffs).length > 0 ? "Save & Approve" : labels.actions.approveAndRun}
             </button>
           </>
         )}
