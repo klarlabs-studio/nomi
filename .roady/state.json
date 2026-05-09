@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 512,
+  "version": 514,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1609,9 +1609,15 @@
       "elapsed_minutes": 5
     },
     "task-filesystem.patch-dry-run-+-3-way-fallback-+-path-pre-flight": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "f9e4415 feat(tools): filesystem.patch dry-run + 3-way fallback + path pre-flight"
+      ],
+      "started_at": "2026-05-09T17:13:48.820335+02:00",
+      "completed_at": "2026-05-09T17:16:30.279512+02:00",
+      "elapsed_minutes": 2
     },
     "task-final-llm-conclusion-must-render-as-chat-bubble,-not-be-hidden-in-thinkingblock": {
       "status": "done",
@@ -2543,5 +2549,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-09T17:13:37.357082+02:00"
+  "updated_at": "2026-05-09T17:16:30.279513+02:00"
 }
