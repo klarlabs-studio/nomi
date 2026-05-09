@@ -4,6 +4,89 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-05-09 (post-v0.1 cycle 2)
+
+Two rounds of expert review (product + ai expert agents) drove this
+cycle. 9 features shipped end-to-end through the roady backlog.
+
+### Added
+- **Replan-on-failure loop** — `Runtime.Replan` re-prompts the planner
+  with prior step outputs + the failure as a `<previous_attempts
+  trusted="false">` block, bounded by `MaxReplansPerRun`. Wired both
+  automatic (executor calls before falling back to `failRun`) and
+  manual (`POST /runs/:id/replan` + "Fix this with the agent" CTA on
+  failed runs in chat-detail). Closes the wedge gap with Claude Code /
+  Cursor / Aider, which all iterate on test failures.
+- **`filesystem.patch` hardening** — diff size cap (1 MB), structured
+  `--- / +++` header parsing, on-disk pre-flight (modify/delete must
+  exist; create-blocks must not collide), `git apply --check` dry-run
+  with `-3 --whitespace=fix` 3-way fallback. New `UserError` codes:
+  `patch_file_missing`, `patch_too_large`, `patch_apply_failed` so the
+  replan loop can react with appropriate retry strategy.
+- **Coding Agent as onboarding default** — wizard's quickstart now
+  picks `coding-agent` over `code-reviewer`. `pickOllamaModel` biases
+  toward `qwen2.5-coder` / `deepseek-coder` / `codellama` when the
+  template wants a coder. README quickstart pulls `qwen2.5-coder:7b`.
+- **Planner-context budget envelope** — `summarizePriorAttempts` lives
+  in `internal/runtime/context_window.go` with two-level budgets:
+  `StepOutputBudget` (512 B per step) + `PriorAttemptsBudget` (8 KB
+  total) with recency-biased truncation and an explicit `[N earlier
+  step(s) elided]` breadcrumb so the planner knows context is partial.
+- **Real provider labels** — `llm.Client.Provider() string` discriminates
+  openai / anthropic / ollama / openai-compat from baseURL. Threaded
+  through `metrics.PlannerCallsTotal` so each backend gets its own
+  series.
+- **`nomi_planner_edit_distance_total{provider, edit_kind}`** —
+  counts step titles added vs removed when the user edits a plan; the
+  leading indicator of planner quality drop.
+- **Adversarial planner evals + threshold gate** —
+  `internal/runtime/evals/planner_adversarial_test.go` covers
+  markdown-fenced JSON, prose-wrapped JSON, unknown-tool hallucination.
+  `NOMI_GOLDEN_THRESHOLD` is now an enforced gate (was dead code that
+  only logged). New `make eval-live` runs golden + adversarial corpus.
+- **Chat-list run search** — case-insensitive substring filter on
+  `ChatItem.title` with empty-state messaging. Server-side
+  `RunRepository.Search` + `GET /runs?search=<q>` available for once
+  the corpus outgrows client-side filtering.
+- **Branch-from-here CTA** — completed/failed runs in chat-detail
+  expose a button that calls the existing fork endpoint with the last
+  step ID.
+- **DiffPreview parity overhaul** — structured per-file / per-hunk
+  parser, per-hunk Skip / Include toggle (rebuilds the diff payload
+  via `onDiffChange` callback), Unified ↔ Side-by-side toggle
+  persisted to `localStorage`. Class names already match what a
+  future Shiki migration will reuse.
+- **HN/launch FAQ** — `docs/launch/hn-faq.md` pre-stages the first
+  comment for a public launch (privacy posture, prompt-injection
+  handling, replan loop, what's still rough).
+
+### Changed
+- Memory search is now case-insensitive token-aware substring match
+  (`strings.Contains(strings.ToLower(...), token)` over each
+  whitespace-delimited query token). Until SQLite FTS5 lands, this is
+  the cheapest fix that prevents `"auth"` from missing capitalised
+  rows.
+- README + `docs/comparison.md` purged of stale "planner emits one
+  hardcoded step" / "one-step plans for non-LLM intents" claims —
+  multi-step LLM-generated plans + replan have shipped.
+- ApprovalPanel is now a list-only deep-link surface; the in-context
+  ApprovalCard inside chat-detail is the single source of truth for
+  approve/deny. Pre-refactor the same approval was resolvable from
+  two places, leading to stale state.
+- ApprovalCard color tokens swapped to semantic destructive / amber+dark
+  pairs so light and dark themes both pass WCAG AA contrast (no more
+  `text-red-700` on `bg-red-50`). `aria-live="assertive"` reserved for
+  irreversible-only; routine approvals use `polite` so screen readers
+  don't get spammed.
+- Runtime CAS-style transitions (`runRepo.CASUpdateStatusTx`) prevent
+  two writers racing the same `RunCreated → RunPlanning` transition.
+
+### Fixed
+- Pre-existing JSX/TS errors in `assistant-manager.tsx` (Memory scope
+  + Permissions sections lost during a Select-component migration).
+- 26c9b7d corrupted half the form during a shadcn-Select migration;
+  restored verbatim from the parent commit. CI lint now passes clean.
+
 ## [0.1.0] - 2026-05-01
 
 First public beta. Local-first, state-driven agent platform.

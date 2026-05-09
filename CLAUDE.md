@@ -85,16 +85,17 @@ Tabs/features in `App.tsx`: Chats, Assistants, Approvals, Memory, Events, Settin
 Planning and task state live in `.roady/` — this is the source of truth for what's shipped and what's next. Read it before starting a feature.
 
 - `.roady/spec.yaml` — product spec: feature list with descriptions (includes V1 scope *and* post-V1 items). `.roady/spec.lock.json` is the locked hash.
-- `.roady/plan.json` — decomposed tasks (65 total) per feature with `depends_on` graph.
-- `.roady/state.json` — per-task status. Currently every sub-task (47) is `done`; the 18 remaining entries are umbrella `task-<feature>` rows for features whose sub-tasks haven't been decomposed yet.
+- `.roady/plan.json` — decomposed tasks (234 total at 2026-05-09) per feature with `depends_on` graph.
+- `.roady/state.json` — per-task status. Backlog is **234/234 done** as of 2026-05-09 cycle 2; new features land via `roady_add_feature` + `roady_generate_plan` rather than editing JSON.
 - `.roady/events.jsonl` — hash-chained audit log of task transitions and plan generations.
 - `.roady/policy.yaml` — `max_wip: 3`, `allow_ai: true`.
 
-**Shipped (V1):** core runtime + state machines, permission/approval engine, core tools (fs read/write, command.exec, folder context), memory (Mnemos), SQLite storage + embedded migrations, REST API (Gin), SSE events, Tauri desktop UI with all tabs, Telegram connector + plugin architecture, LLM provider profiles + per-assistant model override, folder context attachment end-to-end, collaborative plan review (runtime exposes `plan_review` state and `/runs/:id/plan/approve` + `/runs/:id/plan/edit` endpoints).
+**Shipped (V1 + post-V1 cycle 2):** core runtime + state machines, permission/approval engine, core tools (fs read/write/patch, command.exec, folder context), Mnemos memory + case-insensitive search, SQLite storage + embedded migrations + hash-chained audit (`/audit/verify`), REST API (Gin), SSE events, Tauri desktop UI with all tabs (deep-linked approval surface), Telegram connector + plugin architecture, LLM provider profiles + per-assistant model override, folder context attachment end-to-end, collaborative plan review (`/runs/:id/plan/approve` + `/runs/:id/plan/edit` + `/runs/:id/replan`), planner with multi-step LLM plans + JSON mode + few-shot exemplars + self-repair retry + replan-on-failure (bounded by `MaxReplansPerRun`), prompt-injection trust-boundary tags, planner-context budget envelope, **filesystem.patch** with `git apply --check` dry-run + 3-way fallback + path pre-flight, **coding-agent** flagship recipe (`examples/coding-agent/`), Prometheus `/metrics` (per-provider planner + edit-distance + step counters), planner golden corpus + adversarial fixtures + threshold gate (`make eval-live`), deterministic fake-LLM e2e fixture (Playwright globalSetup), unified approval surface with WCAG-AA semantic tokens + polite ARIA, chat-list run search + branch-from-here, diff preview with per-hunk skip + side-by-side toggle.
 
-**Pending / in-flight** (features present in spec, not yet marked done as umbrella tasks):
+**Pending / deferred:**
 - **Tauri Native IPC Event Streaming** — replace browser `EventSource` with Rust `reqwest` + `window.emit()` to get reliable real-time events on macOS WKWebView. Partial: the Rust side (`start_event_stream` in `app/src-tauri/src/main.rs`) and React hook (`use-tauri-events.ts`) already exist; finishing this feature means making it the only path and removing any EventSource fallback.
-- **Collaborative Planning (Abundly-inspired)** — plan visualization, branching runs, evolving preferences via Mnemos. Core plan review is wired; the UX layer (plan editor graph view, preference learning) is the unshipped part.
 - **macOS Menu Bar Integration** — `tauri::SystemTray` with New Chat / Pause All Agents / Settings / Quit. Deferred to post-V1.
+- **Shiki syntax highlighting in DiffPreview** — class names already match what a future Shiki swap will reuse; the worker dep was deferred when per-hunk skip + side-by-side shipped.
+- **NOMI_EVAL_LIVE provider matrix** — `make eval-live` runs the fake-LLM corpus + adversarial fixtures with the threshold gate; live-against-real-providers pass-rate reporting is the post-deferral.
 
 **Workflow when picking up work:** check `.roady/state.json` for the task, run `roady` MCP tools (`roady_get_ready_tasks`, `roady_transition_task`) to claim it, keep WIP ≤ 3. Spec/plan changes go through `roady_review_spec` / `roady_generate_plan` rather than editing YAML by hand — the `events.jsonl` chain breaks otherwise.
