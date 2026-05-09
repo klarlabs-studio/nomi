@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 514,
+  "version": 516,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1396,9 +1396,15 @@
       "elapsed_minutes": 1462
     },
     "task-coding-agent-as-onboarding-default-+-qwen2.5-coder-preference": {
-      "status": "pending",
+      "status": "done",
       "path": "",
-      "elapsed_minutes": 0
+      "owner": "ai-agent",
+      "evidence": [
+        "18b3b4d feat(onboarding): coding-agent default + qwen2.5-coder bias"
+      ],
+      "started_at": "2026-05-09T17:16:40.329866+02:00",
+      "completed_at": "2026-05-09T17:18:07.796772+02:00",
+      "elapsed_minutes": 1
     },
     "task-coding-agent-flagship-recipe-+-filesystem.patch-tool": {
       "status": "done",
@@ -2549,5 +2555,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-09T17:16:30.279513+02:00"
+  "updated_at": "2026-05-09T17:18:07.796773+02:00"
 }
