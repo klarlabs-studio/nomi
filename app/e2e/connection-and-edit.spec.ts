@@ -102,8 +102,12 @@ test.describe("Assistant edit + safety profile", () => {
       // POST /assistants/:id/apply-safety-profile and rewrites the
       // permission_policy rules into formData.
       const applyBtn = dialog.getByRole("button", { name: /Apply Safety Profile/ });
+      // Hard-fail with context if the button isn't surfaced — earlier
+      // we'd silently skip, which let the safety-profile-flow regression
+      // a few releases ago hide for a week. If the button is gone the
+      // builder UI broke; flag it.
       if (!(await applyBtn.isVisible({ timeout: 3_000 }).catch(() => false))) {
-        test.skip(true, "Apply Safety Profile button not surfaced — assistant may need to be saved first");
+        throw new Error("Apply Safety Profile button missing in builder dialog; UI regression");
       }
       await applyBtn.click();
 

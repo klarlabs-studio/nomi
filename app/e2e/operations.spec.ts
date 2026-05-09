@@ -150,14 +150,14 @@ test.describe("settings persistence", () => {
       expect(j2.provider_id).toBe(j.provider_id);
       expect(j2.model_id).toBe(j.model_id);
     } else {
-      test.skip(true, "no default LLM configured to round-trip");
+      throw new Error("no default LLM configured; globalSetup should have wired FakeLLM");
     }
   });
 
   test("safety profile setting persists across reads", async ({ api }) => {
     const r = await api.get("/settings/safety-profile");
     if (r.status() !== 200) {
-      test.skip(true, "safety profile endpoint not configured");
+      throw new Error(`safety profile endpoint returned ${r.status()}; daemon must expose /settings/safety-profile`);
     }
     const j = await r.json();
     // The endpoint should return SOME profile name (default: balanced).

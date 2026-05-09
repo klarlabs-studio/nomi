@@ -44,7 +44,7 @@ test.describe("Chat tab plan review flow", () => {
   }) => {
     const settings = await api.get("/settings/llm-default");
     if (settings.status() !== 200 || !(await settings.json()).provider_id) {
-      test.skip(true, "default LLM not configured");
+      throw new Error("e2e fake-llm should be configured by globalSetup; check playwright.config.ts");
     }
 
     // Make a dedicated, allow-everything assistant so the test

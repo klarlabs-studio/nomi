@@ -40,10 +40,13 @@ test.describe("approval dialog UI", () => {
     api,
     authedPage,
   }) => {
-    // Pre-condition: Ollama provider must be the default LLM.
+    // Pre-condition: a default LLM must exist. globalSetup wires the
+    // FakeLLM as the default provider; if it doesn't, fail hard so we
+    // notice the fixture is broken instead of silently skipping the
+    // highest-value flows on every CI run.
     const settings = await api.get("/settings/llm-default");
     if (settings.status() !== 200 || !(await settings.json()).provider_id) {
-      test.skip(true, "default LLM not configured");
+      throw new Error("e2e fake-llm should be configured by globalSetup; check playwright.config.ts");
     }
 
     // Create assistant whose llm.chat is confirm-mode → first step
@@ -71,15 +74,17 @@ test.describe("approval dialog UI", () => {
       // Drive the run to plan_review and approve so executor reaches
       // the confirm-mode step.
       const planned = await pollRun(api, runID, (d) => d.run.status === "plan_review");
-      // If mistral generates a plan with non-llm.chat steps, the
-      // ceiling will deny first and the run never enters
-      // awaiting_approval. Skip rather than flake.
+      // FakeLLM must produce a plan whose first step routes to llm.chat
+      // so the confirm-mode rule fires. If it doesn't, the fixture
+      // changed; fail hard and update the fixture.
       const planSteps = planned.plan?.steps ?? [];
       const nonLLM = planSteps.filter(
         (s) => s.expected_capability && s.expected_capability !== "llm.chat",
       );
       if (nonLLM.length > 0) {
-        test.skip(true, `planner produced non-llm.chat plan; LLM-quality issue`);
+        throw new Error(
+          "FakeLLM produced a plan with non-llm.chat steps; update e2e/fixtures/fake-llm-server.mjs",
+        );
       }
       await api.post(`/runs/${runID}/plan/approve`, { data: {} });
 

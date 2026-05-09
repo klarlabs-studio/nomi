@@ -155,16 +155,16 @@ test.describe("assistant + run end-to-end via Ollama", () => {
   test("create assistant, kick a run, plan_review → approve → completed", async ({
     api,
   }) => {
-    // Pre-condition: an Ollama provider profile must be configured as
-    // the default LLM. The setup phase of the live e2e walk did this
-    // already; if the daemon was reset, this test self-skips.
+    // Pre-condition: a default LLM must exist. globalSetup wires the
+    // FakeLLM as default, so a missing config means the fixture is
+    // broken and we want to fail loudly, not skip silently.
     const settings = await api.get("/settings/llm-default");
     if (settings.status() !== 200) {
-      test.skip(true, "default LLM not configured — set Ollama as default first");
+      throw new Error("e2e fake-llm not configured (settings/llm-default returned non-200); check globalSetup");
     }
     const settingsJ = await settings.json();
     if (!settingsJ.provider_id) {
-      test.skip(true, "default LLM provider_id missing");
+      throw new Error("e2e fake-llm provider_id missing from /settings/llm-default; check globalSetup");
     }
 
     const assistantID = await createAssistant(api, {

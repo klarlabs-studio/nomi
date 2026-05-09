@@ -74,10 +74,10 @@ test.describe("approval flow end-to-end", () => {
   test("confirm-mode capability pauses run, resolve approves, run completes", async ({
     api,
   }) => {
-    // Default LLM must exist (Ollama configured during the live walk).
+    // Default LLM must exist (FakeLLM wired by globalSetup).
     const settings = await api.get("/settings/llm-default");
     if (settings.status() !== 200) {
-      test.skip(true, "default LLM not configured — set Ollama as default first");
+      throw new Error("e2e fake-llm should be configured by globalSetup; check playwright.config.ts");
     }
 
     // Assistant whose llm.chat rule is CONFIRM. The first planner
@@ -165,7 +165,7 @@ test.describe("approval flow end-to-end", () => {
   }) => {
     const settings = await api.get("/settings/llm-default");
     if (settings.status() !== 200) {
-      test.skip(true, "default LLM not configured");
+      throw new Error("e2e fake-llm should be configured by globalSetup; check playwright.config.ts");
     }
 
     // NOTE: mistral's planner is name- and prompt-sensitive. An
@@ -248,10 +248,13 @@ test.describe("AI Providers tab", () => {
     const profilesResp = await api.get("/provider-profiles");
     expect(profilesResp.status()).toBe(200);
     const profilesJ = await profilesResp.json();
-    const ollama = (profilesJ.profiles as Array<{ name: string; endpoint: string }>)
-      .find((p) => /ollama/i.test(p.name));
-    if (!ollama) {
-      test.skip(true, "no Ollama profile — run the e2e setup steps first");
+    // The e2e fixture creates a profile named "e2e-fake-llm". Match by
+    // name; the older "ollama" string is kept as a fallback for the
+    // legacy live-walk setup path.
+    const profile = (profilesJ.profiles as Array<{ name: string; endpoint: string }>)
+      .find((p) => /e2e-fake-llm|ollama/i.test(p.name));
+    if (!profile) {
+      throw new Error("no provider profile found; check globalSetup wired the FakeLLM");
     }
 
     await authedPage.goto("/");
@@ -268,10 +271,10 @@ test.describe("AI Providers tab", () => {
     // The provider name + endpoint should appear in the rendered list.
     // Use first() because endpoint strings may appear in input
     // placeholders too once forms render.
-    await expect(authedPage.getByText(ollama!.name).first()).toBeVisible({
+    await expect(authedPage.getByText(profile!.name).first()).toBeVisible({
       timeout: 10_000,
     });
-    await expect(authedPage.getByText(ollama!.endpoint).first()).toBeVisible();
+    await expect(authedPage.getByText(profile!.endpoint).first()).toBeVisible();
   });
 });
 
