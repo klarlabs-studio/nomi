@@ -130,16 +130,54 @@ export function OnboardingWizard({
     providerChoice === "ollama" ||
     (providerChoice === "anthropic" ? anthropicKey.trim().length > 0 : openaiKey.trim().length > 0);
 
+  // handleSkip auto-creates a Code Reviewer assistant pointed at the
+  // current folder before exiting so the user lands in Chats with a
+  // selectable assistant + working starter prompts instead of an empty
+  // dropdown. Provider can be added later in Settings → AI Providers;
+  // assistant creation does not require one.
+  const handleSkip = async () => {
+    try {
+      const existing = await assistantsApi.list();
+      if (existing.assistants.length === 0) {
+        const reviewer =
+          templates.find((t) => t.template_id === "code-reviewer") ?? templates[0];
+        if (reviewer) {
+          await assistantsApi.create({
+            template_id: reviewer.template_id,
+            name: reviewer.name,
+            tagline: reviewer.tagline,
+            role: reviewer.role,
+            best_for: reviewer.best_for,
+            not_for: reviewer.not_for,
+            suggested_model: reviewer.suggested_model,
+            system_prompt: reviewer.system_prompt,
+            channels: reviewer.channels,
+            channel_configs: reviewer.channel_configs,
+            capabilities: reviewer.capabilities,
+            contexts: [{ type: "folder", path: "." }],
+            memory_policy: reviewer.memory_policy,
+            permission_policy: reviewer.permission_policy,
+            model_policy: reviewer.model_policy,
+          });
+        }
+      }
+    } catch {
+      // Non-fatal — falls back to original empty-chat behavior.
+    }
+    void onSkip();
+  };
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "w") {
         event.preventDefault();
-        void onSkip();
+        void handleSkip();
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onSkip]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleSkip closes over stable templates + onSkip
+  }, [onSkip, templates]);
 
   const runOllamaCheck = async () => {
     setCheckingOllama(true);
@@ -375,7 +413,7 @@ export function OnboardingWizard({
               <div className="space-y-1">
                 <h2 className="font-medium">Quick start</h2>
                 <p className="text-sm text-muted-foreground">
-                  Code Reviewer pointed at your current folder. Pick a provider, paste a key, and you're done.
+                  Code Reviewer pointed at your current folder. Pick a provider, paste a key, and you&apos;re done.
                 </p>
               </div>
 
@@ -433,7 +471,7 @@ export function OnboardingWizard({
 
               {providerChoice === "ollama" && (
                 <div className="rounded-md border p-3 space-y-2">
-                  <p className="text-sm">Ollama runs the model on your machine. Detected on the first try; install at <a href="https://ollama.ai" rel="noopener" className="underline">ollama.ai</a> if you don't have it.</p>
+                  <p className="text-sm">Ollama runs the model on your machine. Detected on the first try; install at <a href="https://ollama.ai" rel="noopener" className="underline">ollama.ai</a> if you don&apos;t have it.</p>
                   <div className="flex items-center gap-2">
                     <Button type="button" variant="outline" onClick={runOllamaCheck} disabled={checkingOllama}>
                       {checkingOllama ? "Checking..." : "Check Ollama"}
@@ -669,7 +707,7 @@ export function OnboardingWizard({
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => void onSkip()}
+                onClick={() => void handleSkip()}
                 disabled={submitting || verifyState === "running"}
               >
                 Skip for now
@@ -717,14 +755,13 @@ export function OnboardingWizard({
                 )}
                 {step === 4 && verifyState === "failed" && (
                   <>
-                    <Button
+                    <button
                       type="button"
-                      variant="ghost"
-                      className="text-muted-foreground"
                       onClick={cancelVerificationAndExit}
+                      className="text-xs text-muted-foreground underline-offset-2 hover:underline self-center"
                     >
                       Continue anyway
-                    </Button>
+                    </button>
                     <Button type="button" onClick={reconfigureFromStep4} autoFocus>
                       Reconfigure
                     </Button>
