@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 486,
+  "version": 491,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1274,6 +1274,11 @@
       "completed_at": "2026-05-09T07:51:19.566831+02:00",
       "elapsed_minutes": 0
     },
+    "task-anthropic-chatstream-+-planner-robustness-(few-shot,-json-mode,-self-repair)": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
     "task-assistant-builder-—-capability-ceiling-and-policy-coherence": {
       "status": "done",
       "path": "",
@@ -1384,6 +1389,11 @@
       "completed_at": "2026-05-07T22:11:34.134529+02:00",
       "elapsed_minutes": 1462
     },
+    "task-coding-agent-flagship-recipe-+-filesystem.patch-tool": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
     "task-cognitive-stack-library-fit-assessment:-olymp-/-mnemos-/-chronos": {
       "status": "done",
       "path": "",
@@ -1492,6 +1502,11 @@
       ],
       "started_at": "2026-04-26T14:32:54.133011+02:00",
       "completed_at": "2026-04-26T14:33:15.655882+02:00",
+      "elapsed_minutes": 0
+    },
+    "task-deterministic-fake-llm-fixture-for-e2e-+-plan-review-e2e-coverage": {
+      "status": "pending",
+      "path": "",
       "elapsed_minutes": 0
     },
     "task-discord-plugin-(channel-+-tool)": {
@@ -1671,6 +1686,28 @@
       "completed_at": "2026-04-24T15:33:31.073748+02:00",
       "elapsed_minutes": 1
     },
+    "task-gtm:-outcome-led-hero-+-first-run-conversion-path": {
+      "status": "done",
+      "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "commit 39e2588 — README/landing/meta hero now lead with \"Ship code without leaking your repo.\" First-5-minutes section with concrete nomi-run transcript + 3 next-steps shipped on both surfaces. Single-ICP rewrite + recipes split (wedge vs other)."
+      ],
+      "started_at": "2026-05-09T08:21:26.074316+02:00",
+      "completed_at": "2026-05-09T08:30:58.945738+02:00",
+      "elapsed_minutes": 9
+    },
+    "task-hash-chained-audit-log-(real,-not-just-claimed)": {
+      "status": "done",
+      "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "commit 4463b02 — migration 000023 adds prev_hash/entry_hash; EventRepository serializes hash-chain writes via mutex; VerifyChain walks chain and returns first inconsistency; /audit/verify endpoint exposes it; event_chain_test.go covers OK + tamper-detection paths. -race tests pass on internal/runtime, internal/api, internal/storage/db."
+      ],
+      "started_at": "2026-05-09T08:21:26.924002+02:00",
+      "completed_at": "2026-05-09T08:31:01.966865+02:00",
+      "elapsed_minutes": 9
+    },
     "task-hero-video-accessibility-+-comprehension-overhaul": {
       "status": "done",
       "path": "",
@@ -1825,6 +1862,11 @@
       "completed_at": "2026-05-09T07:33:16.252807+02:00",
       "elapsed_minutes": 5
     },
+    "task-onboarding:-defer-setonboardingcomplete-until-verify-success": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
     "task-per-capability-granular-permissions-(stretch)": {
       "status": "done",
       "path": "",
@@ -1879,6 +1921,11 @@
       "started_at": "2026-04-24T14:50:23.333088+02:00",
       "completed_at": "2026-04-24T15:03:39.722627+02:00",
       "elapsed_minutes": 13
+    },
+    "task-planner-eval-harness-with-golden-plans": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
     },
     "task-plugin-architecture-core-refactor": {
       "status": "done",
@@ -1935,6 +1982,11 @@
       "completed_at": "2026-04-24T15:30:34.663951+02:00",
       "elapsed_minutes": 1
     },
+    "task-prometheus-/metrics-+-run/step/approval-instrumentation": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
     "task-promote-cognitive-stack-libraries-(statekit,-mnemos,-scout,-roady)-as-the-oss-moat": {
       "status": "done",
       "path": "",
@@ -1945,6 +1997,11 @@
       "started_at": "2026-05-09T07:42:09.761975+02:00",
       "completed_at": "2026-05-09T07:43:12.115469+02:00",
       "elapsed_minutes": 1
+    },
+    "task-prompt-injection-sanitization-+-context-budgeting-in-planner": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
     },
     "task-refactor-chat-interface.tsx-into-chatlist-/-chatdetail-/-chatcomposer": {
       "status": "done",
@@ -2022,6 +2079,11 @@
       "started_at": "2026-04-24T15:17:59.000365+02:00",
       "completed_at": "2026-04-24T15:24:05.392112+02:00",
       "elapsed_minutes": 6
+    },
+    "task-run-transition-atomicity-+-transitionrunatomic": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
     },
     "task-runtime-engine-modularization": {
       "status": "done",
@@ -2199,6 +2261,11 @@
       "completed_at": "2026-04-24T15:16:46.60119+02:00",
       "elapsed_minutes": 1
     },
+    "task-unified-approval-surface-+-wcag-color-contrast-pass": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
     "task-unified-approval-surface-with-plain-english-capability-copy": {
       "status": "done",
       "path": "",
@@ -2371,5 +2438,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-09T08:05:37.737654+02:00"
+  "updated_at": "2026-05-09T08:31:01.966866+02:00"
 }
