@@ -130,3 +130,8 @@ roady-guard:
 # Run reliability eval taxonomy tests.
 reliability-evals:
 	@go test ./internal/runtime/evals/...
+
+# Run the planner golden corpus + adversarial fixtures against the
+# fake LLM. Threshold default is 0.80; tighten via NOMI_GOLDEN_THRESHOLD.
+eval-live:
+	@NOMI_GOLDEN_THRESHOLD=$${NOMI_GOLDEN_THRESHOLD:-0.80} go test -v -count=1 -run "TestPlannerGoldenSet|TestPlannerAdversarialResilience" ./internal/runtime/evals/

@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -88,13 +89,14 @@ var goldenCases = []goldenCase{
 
 // TestPlannerGoldenSet runs every fixture against an in-memory runtime
 // + httptest fake LLM. Reports per-case pass/fail and a final pass
-// rate. Goes red below the 80% threshold so a planner regression in
+// rate. Goes red below the threshold so a planner regression in
 // validation, parsing, or routing surfaces here.
+//
+// NOMI_GOLDEN_THRESHOLD overrides the default 0.80 — useful in CI for
+// pinning a stricter floor on the fake-LLM corpus where there's no
+// real model variance.
 func TestPlannerGoldenSet(t *testing.T) {
-	threshold := 0.80
-	if v := os.Getenv("NOMI_GOLDEN_THRESHOLD"); v != "" {
-		t.Logf("NOMI_GOLDEN_THRESHOLD=%s honored", v)
-	}
+	threshold := loadThreshold(t, 0.80)
 
 	pass := 0
 	for _, c := range goldenCases {
@@ -112,6 +114,28 @@ func TestPlannerGoldenSet(t *testing.T) {
 	if rate < threshold {
 		t.Fatalf("planner golden pass rate [provider=%s] %.2f below threshold %.2f", provider, rate, threshold)
 	}
+}
+
+// loadThreshold reads NOMI_GOLDEN_THRESHOLD or falls back to the
+// supplied default. Was previously dead code (just logged the env
+// value); now it's the actual gate so an env override can tighten the
+// floor in CI without code changes.
+func loadThreshold(t *testing.T, def float64) float64 {
+	t.Helper()
+	v := os.Getenv("NOMI_GOLDEN_THRESHOLD")
+	if v == "" {
+		return def
+	}
+	parsed, err := strconv.ParseFloat(v, 64)
+	if err != nil {
+		t.Logf("NOMI_GOLDEN_THRESHOLD=%q is not a float; using default %.2f", v, def)
+		return def
+	}
+	if parsed < 0 || parsed > 1 {
+		t.Logf("NOMI_GOLDEN_THRESHOLD=%v out of range [0,1]; using default %.2f", parsed, def)
+		return def
+	}
+	return parsed
 }
 
 func runGoldenCase(t *testing.T, c goldenCase) {
