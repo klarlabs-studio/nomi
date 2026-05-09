@@ -26,8 +26,18 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/02-plan-review.png" alt="Plan review screen" width="900" />
+  <video src="https://github.com/felixgeelhaar/nomi/raw/main/docs/media/hero.mp4"
+         poster="docs/media/hero-poster.jpg"
+         width="900"
+         controls
+         muted
+         playsinline>
+    <a href="https://github.com/felixgeelhaar/nomi/blob/main/docs/media/hero.mp4">
+      <img src="docs/media/hero-poster.jpg" alt="Plan → Approve → Run — 90s demo" width="900" />
+    </a>
+  </video>
 </p>
+<p align="center"><sub><strong>90s demo.</strong> Type a goal · review the plan · approve · run. Recorded against a local Ollama.</sub></p>
 
 ---
 
@@ -73,6 +83,9 @@ crosses your network unless you point it at a remote provider.
 | **Goose / OpenInterpreter / Aider** | Same local-first stance, but with a real state machine (`Run → Plan → Step`), a real permission engine, real multi-step plans the user can edit, and a desktop UI built around the approval moment instead of around the chat box. |
 | **LangChain / AutoGPT / CrewAI** | Those are kits — you assemble the agent. Nomi is the finished product: a working state machine, a permission engine, a memory subsystem, a Tauri shell, all wired up. |
 | **Bespoke agent stacks** | Stop reinventing scaffolding. The runtime, the audit trail, the approval workflow, and the plugin model all ship today. Bring your assistants and your prompts. |
+
+Full feature-by-feature breakdown:
+[`docs/comparison.md`](docs/comparison.md).
 
 ## Install
 
@@ -232,32 +245,20 @@ policy, folder context, model override, and bound plugin connections.
 
 ## Powered by
 
-Nomi is the application layer. The runtime is built directly into this
-repository today; over time, load-bearing subsystems move out into
-independently-released Go libraries you can use in your own projects.
+Nomi is built from composable cognitive-stack libraries you can use
+independently. Each is Apache-2.0, documented, releasable on its own:
 
-- **[`statekit`](https://github.com/felixgeelhaar/statekit)** —
-  statechart execution engine with XState JSON compatibility. The
-  vendored `pkg/statekit` carries the same model that powers every
-  `Run` / `Plan` / `Step` transition.
-- **[`roady`](https://github.com/felixgeelhaar/roady)** — planning-first
-  system of record. Every Nomi feature change passes through a `roady`
-  spec before code lands; see [`.roady/`](.roady/) for the live
-  spec/plan/state.
-- **[`scout`](https://github.com/felixgeelhaar/scout)** — AI-powered
-  browser automation. Used by the user-journey test runner; the Browser
-  plugin will adopt it once the connector ships.
-- **[`mnemos`](https://github.com/felixgeelhaar/mnemos)** — evidence-
-  backed local-first knowledge engine. Today Nomi's memory subsystem is
-  a thin homegrown SQLite store; integration with mnemos as an embedded
-  library is on the roadmap.
+- **[`statekit`](https://github.com/felixgeelhaar/statekit)** — finite
+  state machines for Go (powers every `Run` / `Plan` / `Step`).
+- **[`mnemos`](https://github.com/felixgeelhaar/mnemos)** —
+  evidence-backed local-first knowledge engine *(integration in flight)*.
+- **[`scout`](https://github.com/felixgeelhaar/scout)** — browser
+  automation built for agents.
+- **[`roady`](https://github.com/felixgeelhaar/roady)** — spec-driven
+  planning + task tracking with hash-chained audit log.
 
-External runtime dependencies: [Tauri](https://tauri.app),
-[Gin](https://github.com/gin-gonic/gin),
-[modernc.org/sqlite](https://gitlab.com/cznic/sqlite),
-[wazero](https://wazero.io), [Ollama](https://ollama.com),
-[shadcn/ui](https://ui.shadcn.com), [Radix UI](https://www.radix-ui.com),
-[TanStack Query](https://tanstack.com/query/latest).
+Full architecture and the case for each library:
+[`docs/architecture.md`](docs/architecture.md).
 
 ## Architecture
 
@@ -315,20 +316,23 @@ every release ships against — is in
 
 ## Roadmap
 
-v0.2 candidates (track in [`.roady/`](.roady/) and on the
-[issues page](https://github.com/felixgeelhaar/nomi/issues)):
+**v0.2 — "Plans That Plan."** One bet: make plan-review real. Wire LLM
+provider profiles into runtime planning so the planner generates real
+multi-step plans, route tools dynamically against assistant capability
+rules, and stream tokens into the chat UI as plans execute. Today the
+planner emits one hardcoded step — that's the single biggest
+perceived-quality gap vs. Claude Code / Cursor, and the wedge depends
+on closing it.
 
-- **NomiHub plugin marketplace** — signed WASM plugins, install/update
-  flow, signed update manifests
-- **Vision backend** for the media plugin — LLaVA via Ollama,
-  `media.describe_image` ships
-- **Streaming chat tokens in the UI** — wire is done, the live-render
-  pass is next
-- **`nomi tui`** — full bubbletea TUI on top of the existing CLI for
-  SSH-only workflows: chat list, plan-review with inline edit, live
-  approvals, event tail
-- **Cross-device sync** (opt-in, end-to-end-encrypted) — the local-first
-  story extended to two laptops, not weakened to a cloud one
+Backlog (post-v0.2, in priority order — not committed):
+
+- NomiHub plugin marketplace (signed WASM, install/update flow).
+- `nomi tui` — bubbletea TUI for SSH-only workflows.
+- Cross-device sync (opt-in, end-to-end-encrypted).
+- Vision backend for the media plugin (LLaVA via Ollama).
+
+Live spec, plan, and task state in [`.roady/`](.roady/); ideas and bug
+reports on the [issues page](https://github.com/felixgeelhaar/nomi/issues).
 
 ## Contributing
 

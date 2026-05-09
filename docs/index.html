@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Nomi — Agents you can audit. On data you keep.</title>
-<meta name="description" content="Local-first, state-driven agent runtime. Plan, approve, run — all on your machine. Open source, Apache 2.0." />
+<title>Nomi — Approve every step before your AI touches your filesystem.</title>
+<meta name="description" content="Local-first coding agent. Plans every task, asks before it runs, persists the audit trail to a SQLite file you own. Apache 2.0." />
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
 <link rel="icon" type="image/png" sizes="64x64" href="icons/icon-64.png" />
 <link rel="apple-touch-icon" href="icons/icon-128.png" />
-<meta property="og:title" content="Nomi — Agents you can audit. On data you keep." />
-<meta property="og:description" content="Local-first, state-driven agent runtime. Plan, approve, run — all on your machine." />
+<meta property="og:title" content="Nomi — Approve every step before your AI touches your filesystem." />
+<meta property="og:description" content="Local-first coding agent. Plans every task, asks before it runs, persists the audit trail to a SQLite file you own." />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://felixgeelhaar.github.io/nomi/" />
 <meta property="og:image" content="https://felixgeelhaar.github.io/nomi/images/02-plan-review.png" />
@@ -24,6 +24,7 @@
   <nav>
     <a href="#how">How it works</a>
     <a href="#diff">Why local-first</a>
+    <a href="#compared">Compared to</a>
     <a href="#install">Install</a>
     <a href="https://github.com/felixgeelhaar/nomi" rel="noopener">GitHub →</a>
   </nav>
@@ -33,10 +34,10 @@
 
   <section class="hero">
     <div class="kicker">Open source · Apache 2.0 · v0.1.3</div>
-    <p class="category">The local-first agent runtime.</p>
-    <h1>Agents you can audit.<br/><span class="accent">On data you keep.</span></h1>
+    <p class="category">Local-first coding agent.</p>
+    <h1>Approve every step<br/><span class="accent">before your AI touches your filesystem.</span></h1>
     <p class="lede">
-      Stop pasting your code, files and customer data into someone else's cloud. Nomi plans every task, asks before it runs anything dangerous, and persists the whole audit trail to a SQLite file you own — all on your machine.
+      Cloud coding agents read your repo, run shell commands, and write files the moment the model is confident. Nomi makes every step a contract — a plan you approve, tools that ask before they act, an audit trail you own. Runs on your laptop, against any LLM you point it at.
     </p>
     <div class="cta-row">
       <button class="copy" data-copy="brew install --cask felixgeelhaar/tap/nomi" title="Copy command">
@@ -50,9 +51,6 @@
       <span>Linux</span>
       <span>Windows</span>
       <span>Docker</span>
-      <span>Raspberry Pi 5</span>
-      <span>Beelink / NUC</span>
-      <span>your GPU box</span>
     </div>
 
     <aside class="audit-strip" aria-label="Sample audit log">
@@ -88,12 +86,12 @@
   </section>
 
   <section class="problem" id="problem">
-    <h2>The agent platforms you've seen all live in someone else's cloud.</h2>
+    <h2>Cloud coding agents are always confident. That's the problem.</h2>
     <p>
-      OpenClaw, Hermes, Pi — they're impressive. They're also opaque. Your prompts, your file contents, your customer data — all crossing somebody else's network, retained on somebody else's terms, billed on somebody else's metric.
+      Cursor agents, Claude Code, Copilot — they read your repo, run commands, write files the moment the model decides. Your code, your shell history, the diffs they propose — all crossing someone else's network, retained on someone else's terms.
     </p>
     <p>
-      That's the wrong default for serious work. Nomi flips it: <strong>the agent runs on your laptop or your server, the data never leaves, the LLM provider is yours to choose</strong> — Ollama for fully offline, OpenAI / Anthropic / any OpenAI-compatible API when you want a frontier model.
+      Nomi flips the default: <strong>every multi-step task lays out the plan first, every dangerous tool call asks first, the LLM provider is yours to choose</strong> — Ollama for fully offline, OpenAI / Anthropic / any OpenAI-compatible API when you want a frontier model.
     </p>
   </section>
 
@@ -158,6 +156,25 @@
         <span class="copy-icon">⧉</span>
       </button>
     </div>
+  </section>
+
+  <section class="compared" id="compared">
+    <h2>Compared to</h2>
+    <p class="section-lede">
+      The wedge is <strong>Claude Code with local Ollama</strong> — same coding-agent UX, but the agent asks before it touches your filesystem and your code never crosses your network unless you point it at a remote provider.
+    </p>
+    <dl class="compare-list">
+      <dt>Claude Code · Cursor agents · Cline</dt>
+      <dd>Same goal-driven coding flow (read repo, plan changes, write files, run commands), but every step is laid out as an approveable plan first, every tool call is gated by an explicit capability, and every event is persisted. Point it at Ollama and your repo never leaves your laptop.</dd>
+      <dt>Goose · OpenInterpreter · Aider</dt>
+      <dd>Same local-first stance, but with a real state machine (<code>Run → Plan → Step</code>), a real permission engine, multi-step plans the user can edit, and a desktop UI built around the approval moment.</dd>
+      <dt>LangChain · AutoGPT · CrewAI</dt>
+      <dd>Those are kits — you assemble the agent. Nomi is the finished product: state machine, permission engine, memory, Tauri shell, all wired up.</dd>
+    </dl>
+    <p class="muted">
+      Full feature-by-feature breakdown:
+      <a href="https://github.com/felixgeelhaar/nomi/blob/main/docs/comparison.md">docs/comparison.md</a>.
+    </p>
   </section>
 
   <section class="screenshot-grid">
@@ -261,6 +278,7 @@
     <div>
       <h4>Docs</h4>
       <a href="https://github.com/felixgeelhaar/nomi#readme">README</a>
+      <a href="https://github.com/felixgeelhaar/nomi/blob/main/docs/comparison.md">Compared to</a>
       <a href="https://github.com/felixgeelhaar/nomi/blob/main/docs/headless.md">Headless guide</a>
       <a href="https://github.com/felixgeelhaar/nomi/blob/main/docs/user-journeys.md">User journeys</a>
     </div>

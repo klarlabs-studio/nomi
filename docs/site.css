@@ -228,6 +228,31 @@ h3 { font-size: 18px; font-weight: 600; }
 }
 .cta-soft button.copy { font-size: 13px; }
 
+/* compared-to section — narrative take on alternatives */
+.compared {
+  padding: 64px 24px;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.compared h2 { margin: 0 0 12px 0; }
+.compare-list {
+  margin: 32px 0 16px 0;
+  display: grid;
+  gap: 18px;
+}
+.compare-list dt {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--fg);
+}
+.compare-list dd {
+  margin: 6px 0 0 0;
+  color: var(--fg-muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+.compared .muted { font-size: 14px; }
+
 /* diff-card primary tier — visually weighted vs supporting cards */
 .diff-card.primary {
   background: linear-gradient(180deg, var(--accent-soft) 0%, var(--bg-card) 60%);
