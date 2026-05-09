@@ -133,6 +133,7 @@ func NewRouter(cfg RouterConfig) *gin.Engine {
 		runs.POST("/:id/plan/edit", runServer.EditPlan)
 		runs.POST("/:id/fork", runServer.ForkRun)
 		runs.POST("/:id/retry", runServer.RetryRun)
+		runs.POST("/:id/replan", runServer.ReplanRun)
 		runs.POST("/:id/pause", runServer.PauseRun)
 		runs.POST("/:id/resume", runServer.ResumeRun)
 		runs.POST("/:id/cancel", runServer.CancelRun)

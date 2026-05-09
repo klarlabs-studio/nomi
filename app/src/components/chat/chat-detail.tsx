@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowDown, Bot, Pause, Play, RefreshCw } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ArrowDown, Bot, Pause, Play, RefreshCw, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ApprovalCard, PlanReviewCard, ThinkingBlock } from "@/components/chat-message";
 import { pickResponseText } from "@/lib/response-text";
+import { runsApi } from "@/lib/api";
+import { queryKeys } from "@/lib/query-keys";
 import type { Approval, Assistant, RunWithSteps } from "@/types/api";
 import { ChatComposer } from "./chat-composer";
 
@@ -307,10 +310,11 @@ export function ChatDetail({
 
         {status === "failed" && chatData.steps.some((s) => s.error) && (
           <div className="flex justify-start">
-            <div className="max-w-[80%] bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-              <p className="text-sm text-red-700">
+            <div className="max-w-[80%] bg-destructive/10 border border-destructive/40 rounded-lg px-4 py-3 space-y-2">
+              <p className="text-sm text-destructive">
                 {chatData.steps.find((s) => s.error)?.error}
               </p>
+              <ReplanCTA runID={chatData.run.id} />
             </div>
           </div>
         )}
@@ -339,5 +343,39 @@ export function ChatDetail({
         status={status}
       />
     </>
+  );
+}
+
+// ReplanCTA wraps a one-click "Fix this with the agent" call to
+// /runs/:id/replan. Server-side budget (MaxReplansPerRun) bounds how
+// many times we can ask, so the button can stay visible across
+// retries; the API will refuse once the budget is gone.
+function ReplanCTA({ runID }: { runID: string }) {
+  const qc = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: () => runsApi.replan(runID),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.runs.detail(runID) });
+      qc.invalidateQueries({ queryKey: queryKeys.runs.list() });
+    },
+  });
+  return (
+    <div className="flex items-center gap-2">
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => mutation.mutate()}
+        disabled={mutation.isPending}
+        className="gap-2"
+      >
+        <Sparkles className="w-3.5 h-3.5" />
+        {mutation.isPending ? "Replanning..." : "Fix this with the agent"}
+      </Button>
+      {mutation.error && (
+        <span className="text-xs text-destructive">
+          {mutation.error instanceof Error ? mutation.error.message : "Replan failed"}
+        </span>
+      )}
+    </div>
   );
 }

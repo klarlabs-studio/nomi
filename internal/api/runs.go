@@ -169,6 +169,36 @@ func (s *Server) CancelRun(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "cancelled"})
 }
 
+// ReplanRun triggers a manual replan against the run's last failed
+// step. The user-facing CTA "Fix this with the agent" lives next to
+// the failed-step banner in chat-detail.tsx; the desktop app POSTs
+// here. The backend re-uses Runtime.Replan, which is also called
+// automatically from the executor. Bounded by MaxReplansPerRun.
+func (s *Server) ReplanRun(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		respondValidationError(c, "id is required")
+		return
+	}
+
+	run, _, _, err := s.runtime.GetRun(id)
+	if err != nil {
+		respondError(c, http.StatusBadRequest, err)
+		return
+	}
+	if !run.Status.IsTerminal() {
+		respondValidationError(c, "manual replan is only allowed on a terminal (failed) run")
+		return
+	}
+
+	steps, err := s.runtime.ManualReplan(c.Request.Context(), id)
+	if err != nil {
+		respondError(c, http.StatusBadRequest, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "replanned", "step_count": len(steps)})
+}
+
 // ApprovePlan approves the proposed plan for a run
 func (s *Server) ApprovePlan(c *gin.Context) {
 	id := c.Param("id")

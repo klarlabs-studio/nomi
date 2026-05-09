@@ -28,6 +28,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 	"time"
 
@@ -93,7 +94,21 @@ type Runtime struct {
 	// pauseSignals wakes paused run goroutines when ResumeRun is called.
 	pauseMu      sync.RWMutex
 	pauseSignals map[string]chan struct{}
+
+	// replanCounts tracks how many automatic replans each run has
+	// triggered. Capped at MaxReplansPerRun so a planner that keeps
+	// emitting bad plans can't burn the user's token budget. In-memory
+	// only — replans across daemon restarts are rare enough that
+	// persisting the counter isn't worth a migration.
+	replanMu     sync.Mutex
+	replanCounts map[string]int
 }
+
+// MaxReplansPerRun bounds the automatic replan loop. After hitting this
+// ceiling, the run fails normally so a human can intervene. The number
+// is small on purpose: replans are expensive and a planner that can't
+// fix a problem in two tries is unlikely to fix it in twenty.
+const MaxReplansPerRun = 2
 
 // ConnectorManifestLookup returns the capability allowlist declared in the
 // named connector's manifest. ok=false indicates the connector isn't
@@ -192,6 +207,7 @@ func NewRuntime(
 		rootCancel:     rootCancel,
 		planApprovals:  make(map[string]chan struct{}),
 		pauseSignals:   make(map[string]chan struct{}),
+		replanCounts:   make(map[string]int),
 		limiter: newRateLimiter(
 			config.RunsPerMinutePerSource, config.RunsBurst,
 			config.ToolCallsPerMinutePerRun, config.ToolCallsBurst,
@@ -627,6 +643,218 @@ func (r *Runtime) EditPlan(ctx context.Context, runID string, stepDefs []domain.
 	}
 
 	return nil
+}
+
+// Replan asks the planner to produce a new plan for the running run,
+// seeded with the previously executed steps' outputs and the failure
+// reason. Used both as the automatic recovery path when a step fails
+// (the executeExecutionPhase loop calls this before falling back to
+// failRun) and as a user-driven "Fix this with the agent" CTA on a
+// failed run. The replan budget is bounded by MaxReplansPerRun so a
+// planner that can't fix the problem doesn't burn the user's tokens.
+//
+// Returns the fresh step list on success. Caller is expected to swap
+// the run's in-memory step slice and rewind its loop index.
+func (r *Runtime) Replan(
+	ctx context.Context,
+	run *domain.Run,
+	failedStep *domain.Step,
+	failureMessage string,
+) ([]*domain.Step, error) {
+	r.replanMu.Lock()
+	count := r.replanCounts[run.ID]
+	if count >= MaxReplansPerRun {
+		r.replanMu.Unlock()
+		metrics.PlannerCallsTotal.WithLabelValues(plannerProviderLabel(nil), "replan_max_exceeded").Inc()
+		return nil, fmt.Errorf("replan budget exhausted (max %d): leaving run in failed state for human follow-up", MaxReplansPerRun)
+	}
+	r.replanCounts[run.ID] = count + 1
+	r.replanMu.Unlock()
+
+	if !r.hasDefaultLLM() {
+		return nil, fmt.Errorf("replan requires a configured default LLM")
+	}
+	assistant, err := r.assistantRepo.GetByID(run.AssistantID)
+	if err != nil {
+		return nil, fmt.Errorf("replan: assistant lookup: %w", err)
+	}
+
+	// Build the previous-attempts blob from the run's existing step
+	// outputs. We pass the failure message verbatim so the LLM sees
+	// stderr / tool error / approval-denied reason. Wrapped in a
+	// trusted=false tag downstream by the planner.
+	priorSteps, err := r.stepRepo.ListByRun(run.ID)
+	if err != nil {
+		return nil, fmt.Errorf("replan: list prior steps: %w", err)
+	}
+	previous := summarizePriorAttempts(priorSteps, failedStep, failureMessage)
+
+	contextData, _ := r.loadFolderContexts(ctx, assistant)
+	planner := r.planWithLLMOpts(ctx, run.Goal, assistant, contextData, previous)
+	if len(planner) == 0 {
+		metrics.PlannerCallsTotal.WithLabelValues(plannerProviderLabel(nil), "replan_empty").Inc()
+		return nil, fmt.Errorf("replan: planner returned no usable steps")
+	}
+
+	// Replace the run's plan in the same way EditPlan does: increment
+	// version, rewrite step rows, persist.
+	stepDefs := make([]domain.StepDefinition, len(planner))
+	for i, ps := range planner {
+		stepDefs[i] = domain.StepDefinition{
+			ID:                 uuid.New().String(),
+			Title:              ps.Title,
+			Description:        ps.Description,
+			ExpectedTool:       ps.Tool,
+			ExpectedCapability: r.getCapabilityForTool(ps.Tool),
+			Arguments:          ps.Arguments,
+			Order:              i,
+		}
+	}
+
+	existing, err := r.stepRepo.ListByRun(run.ID)
+	if err != nil {
+		return nil, fmt.Errorf("replan: list existing steps: %w", err)
+	}
+	for _, s := range existing {
+		if err := r.stepRepo.Delete(s.ID); err != nil {
+			return nil, fmt.Errorf("replan: delete prior step: %w", err)
+		}
+	}
+
+	version, err := r.planRepo.GetPlanVersion(run.ID)
+	if err != nil {
+		version = 1
+	}
+	planID := uuid.New().String()
+	for i := range stepDefs {
+		stepDefs[i].PlanID = planID
+		stepDefs[i].CreatedAt = time.Now().UTC()
+	}
+	plan := &domain.Plan{
+		ID:        planID,
+		RunID:     run.ID,
+		Version:   version,
+		Steps:     stepDefs,
+		CreatedAt: time.Now().UTC(),
+	}
+	if err := r.planRepo.Create(plan); err != nil {
+		return nil, fmt.Errorf("replan: create plan: %w", err)
+	}
+
+	newSteps := make([]*domain.Step, 0, len(stepDefs))
+	for i, def := range stepDefs {
+		stepID := uuid.New().String()
+		stepCopy := def
+		step := &domain.Step{
+			ID:               stepID,
+			RunID:            run.ID,
+			StepDefinitionID: &stepCopy.ID,
+			Title:            def.Title,
+			Input:            run.Goal,
+			Status:           domain.StepPending,
+			CreatedAt:        time.Now().UTC(),
+			UpdatedAt:        time.Now().UTC(),
+		}
+		if i == 0 {
+			step.Status = domain.StepReady
+		}
+		if err := r.stepRepo.Create(step); err != nil {
+			return nil, fmt.Errorf("replan: create step: %w", err)
+		}
+		newSteps = append(newSteps, step)
+	}
+
+	run.PlanVersion = plan.Version
+	run.UpdatedAt = time.Now().UTC()
+	if err := r.runRepo.Update(run); err != nil {
+		return nil, fmt.Errorf("replan: update run: %w", err)
+	}
+
+	_, _ = r.eventBus.Publish(ctx, domain.EventPlanProposed, run.ID, nil, map[string]interface{}{
+		"plan_id":      plan.ID,
+		"plan_version": plan.Version,
+		"step_count":   len(plan.Steps),
+		"replan":       true,
+		"replan_count": count + 1,
+		"failure":      failureMessage,
+	})
+
+	metrics.PlannerCallsTotal.WithLabelValues(plannerProviderLabel(nil), "replan_ok").Inc()
+	return newSteps, nil
+}
+
+// ManualReplan is the user-driven counterpart to the automatic
+// replan path: the run is already terminal (failed) and the user
+// clicked "Fix this with the agent". We find the most recent failed
+// step, read the failure, then delegate to Replan and re-launch the
+// executor goroutine so the new plan actually runs. Bounded by the
+// same MaxReplansPerRun budget.
+func (r *Runtime) ManualReplan(ctx context.Context, runID string) ([]*domain.Step, error) {
+	run, err := r.runRepo.GetByID(runID)
+	if err != nil {
+		return nil, err
+	}
+	if !run.Status.IsTerminal() {
+		return nil, fmt.Errorf("manual replan only valid on terminal runs, got %s", run.Status)
+	}
+	priorSteps, err := r.stepRepo.ListByRun(runID)
+	if err != nil {
+		return nil, err
+	}
+	var failedStep *domain.Step
+	failureMessage := "previous run did not complete successfully"
+	for _, s := range priorSteps {
+		if s.Status == domain.StepFailed {
+			failedStep = s
+			if s.Error != nil {
+				failureMessage = *s.Error
+			}
+		}
+	}
+	newSteps, err := r.Replan(ctx, run, failedStep, failureMessage)
+	if err != nil {
+		return nil, err
+	}
+
+	// Move the run back into the active path. Terminal → created is
+	// already a legal edge (see RetryRun). The executor will pick up
+	// the new step rows and re-execute.
+	if err := r.transitionRun(ctx, run, domain.RunCreated); err != nil {
+		return nil, fmt.Errorf("manual replan transition: %w", err)
+	}
+	assistant, err := r.assistantRepo.GetByID(run.AssistantID)
+	if err != nil {
+		return nil, err
+	}
+	go r.executeRun(r.rootCtx, run, assistant)
+	return newSteps, nil
+}
+
+// summarizePriorAttempts produces the trusted=false body that
+// describes what's already been tried in this run. Step outputs are
+// truncated so a 100KB stderr can't blow the prompt budget.
+func summarizePriorAttempts(steps []*domain.Step, failed *domain.Step, failureMessage string) string {
+	const maxOutputBytes = 1024
+	var b strings.Builder
+	b.WriteString("Previously executed steps:\n")
+	for _, s := range steps {
+		out := s.Output
+		if len(out) > maxOutputBytes {
+			out = out[:maxOutputBytes] + "…[truncated]"
+		}
+		fmt.Fprintf(&b, "- [%s] %s — status=%s\n  output: %s\n", s.ID[:8], s.Title, s.Status, out)
+	}
+	if failed != nil {
+		fmt.Fprintf(&b, "\nFailing step: [%s] %s\n", failed.ID[:8], failed.Title)
+	}
+	if failureMessage != "" {
+		msg := failureMessage
+		if len(msg) > maxOutputBytes {
+			msg = msg[:maxOutputBytes] + "…[truncated]"
+		}
+		fmt.Fprintf(&b, "Failure reason: %s\n", msg)
+	}
+	return b.String()
 }
 
 // RetryRun retries a terminal run by resetting it to Created and starting a

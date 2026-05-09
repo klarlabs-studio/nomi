@@ -304,6 +304,14 @@ export const runsApi = {
       method: "POST",
     }),
 
+  // replan: ask the planner to propose a corrective plan against the
+  // last failed step. Surfaced in the UI as "Fix this with the agent".
+  // Bounded server-side by MaxReplansPerRun.
+  replan: (id: string) =>
+    fetchApi<{ status: string; step_count: number }>(`/runs/${id}/replan`, {
+      method: "POST",
+    }),
+
   pause: (id: string) =>
     fetchApi<{ status: string }>(`/runs/${id}/pause`, {
       method: "POST",

@@ -69,7 +69,7 @@ func TestParsePlannerResponseCarriesArguments(t *testing.T) {
 func TestBuildPlannerPromptDocumentsArgumentsShape(t *testing.T) {
 	prompt := buildPlannerPrompt("write README", nil, "", []toolInfo{
 		{Name: "filesystem.write", Description: "Write file."},
-	})
+	}, "")
 	for _, must := range []string{"arguments", "filesystem.write:", `"path"`, `"content"`} {
 		if !strings.Contains(prompt, must) {
 			t.Errorf("prompt missing %q. Full prompt:\n%s", must, prompt)
@@ -105,6 +105,7 @@ func TestBuildPlannerPromptIncludesToolList(t *testing.T) {
 			{Name: "llm.chat", Description: "Ask the LLM."},
 			{Name: "filesystem.read", Description: "Read a file."},
 		},
+		"",
 	)
 
 	for _, must := range []string{

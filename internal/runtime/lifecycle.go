@@ -212,6 +212,20 @@ func (r *Runtime) executeExecutionPhase(ctx context.Context, run *domain.Run, as
 			if errors.Is(err, errRunPaused) {
 				continue
 			}
+			// Replan-on-failure: feed the error back into the planner
+			// so it can propose a corrective plan instead of dying on
+			// the first stack-trace. Bounded by MaxReplansPerRun
+			// inside Replan; once exhausted the run fails normally.
+			if newSteps, replanErr := r.Replan(ctx, run, step, err.Error()); replanErr == nil && len(newSteps) > 0 {
+				slog.Info("replan-on-failure: planner returned corrective plan", "run_id", run.ID, "old_step", step.ID, "new_step_count", len(newSteps))
+				steps = newSteps
+				i = 0
+				// Drop back into executing — the run already is, but
+				// transitionRun is a no-op against same-state.
+				continue
+			} else if replanErr != nil {
+				slog.Info("replan-on-failure: skipped", "run_id", run.ID, "reason", replanErr.Error())
+			}
 			r.failRun(ctx, run, fmt.Errorf("step %d execution failed: %w", i, err))
 			return
 		}

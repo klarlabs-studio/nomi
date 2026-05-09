@@ -319,8 +319,8 @@ func TestListAssistantTemplates(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &out); err != nil {
 		t.Fatalf("unmarshal templates: %v", err)
 	}
-	if len(out.Templates) != 7 {
-		t.Fatalf("want 7 templates, got %d", len(out.Templates))
+	if len(out.Templates) != 8 {
+		t.Fatalf("want 8 templates, got %d", len(out.Templates))
 	}
 }
 
