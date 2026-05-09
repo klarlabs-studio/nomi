@@ -134,6 +134,91 @@ func TestAnthropicClientSplitsSystemPrompt(t *testing.T) {
 	}
 }
 
+func TestAnthropicClientChatStreamEmitsTextDeltas(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/messages" {
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		}
+		// Sanity-check that the streaming flag was actually set in the body.
+		body, _ := io.ReadAll(r.Body)
+		if !strings.Contains(string(body), `"stream":true`) {
+			t.Fatalf("expected stream:true in body, got %s", body)
+		}
+
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.WriteHeader(http.StatusOK)
+		flusher, _ := w.(http.Flusher)
+
+		// Anthropic SSE shape: each event has its own type + a JSON data
+		// line. Token text only ships in content_block_delta frames whose
+		// delta.type is text_delta. Other event types (message_start,
+		// content_block_start, ping, message_delta, message_stop) are
+		// noise as far as user-visible tokens go.
+		frames := []string{
+			`event: message_start
+data: {"type":"message_start","message":{"id":"m1","model":"claude-test","usage":{"input_tokens":4,"output_tokens":0}}}
+
+`,
+			`event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"hello "}}
+
+`,
+			`event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"world"}}
+
+`,
+			`event: message_delta
+data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":2}}
+
+`,
+			`event: message_stop
+data: {"type":"message_stop"}
+
+`,
+		}
+		for _, f := range frames {
+			_, _ = io.WriteString(w, f)
+			if flusher != nil {
+				flusher.Flush()
+			}
+		}
+	}))
+	defer srv.Close()
+
+	client, err := NewClient(Config{Type: EndpointAnthropic, BaseURL: srv.URL, APIKey: "ant-key"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	streaming, ok := client.(StreamingClient)
+	if !ok {
+		t.Fatal("anthropic client should implement StreamingClient")
+	}
+
+	var deltas []string
+	resp, err := streaming.ChatStream(context.Background(), ChatRequest{
+		Model:    "claude-test",
+		Messages: []ChatMessage{{Role: "user", Content: "hi"}},
+	}, func(d string) error {
+		deltas = append(deltas, d)
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("ChatStream: %v", err)
+	}
+	if got := strings.Join(deltas, "|"); got != "hello |world" {
+		t.Fatalf("deltas=%q want 'hello |world'", got)
+	}
+	if resp.Content != "hello world" {
+		t.Fatalf("content=%q", resp.Content)
+	}
+	if resp.Model != "claude-test" {
+		t.Fatalf("model=%q", resp.Model)
+	}
+	if resp.PromptTokens != 4 || resp.OutputTokens != 2 {
+		t.Fatalf("usage: prompt=%d output=%d", resp.PromptTokens, resp.OutputTokens)
+	}
+}
+
 func TestEndpointTypeFor(t *testing.T) {
 	cases := []struct {
 		endpoint string

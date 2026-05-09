@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -207,6 +208,111 @@ func TestRunRoutesThroughLLMWhenProviderConfigured(t *testing.T) {
 	}
 	if !strings.Contains(sawSystem, "testing assistant") {
 		t.Fatalf("LLM did not receive assistant's system prompt: %q", sawSystem)
+	}
+}
+
+// TestPlannerSelfRepairsOnInvalidArguments asserts that when the LLM
+// emits a near-correct plan with invalid arguments (e.g. filesystem.write
+// without a `content` field), the runtime feeds the validator error back
+// and the second attempt produces an accepted plan. Without the repair
+// loop the original feature description's "user sees Execute: <goal>
+// fallback with no signal" failure mode kicks in.
+func TestPlannerSelfRepairsOnInvalidArguments(t *testing.T) {
+	dir := t.TempDir()
+
+	var planCalls int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		w.Header().Set("Content-Type", "application/json")
+		if strings.Contains(string(body), "planning assistant for Nomi") {
+			atomic.AddInt32(&planCalls, 1)
+			// First call: invalid arguments (filesystem.write without content).
+			// Second call (after repair hint): well-formed plan with both fields.
+			if atomic.LoadInt32(&planCalls) == 1 {
+				_, _ = io.WriteString(w, `{"model":"test-model","choices":[{"message":{"role":"assistant","content":"{\"steps\":[{\"title\":\"Write file\",\"description\":\"Save output\",\"tool\":\"filesystem.write\",\"arguments\":{\"path\":\"out.txt\"}}]}"}}]}`)
+				return
+			}
+			_, _ = io.WriteString(w, `{"model":"test-model","choices":[{"message":{"role":"assistant","content":"{\"steps\":[{\"title\":\"Write file\",\"description\":\"Save output\",\"tool\":\"filesystem.write\",\"arguments\":{\"path\":\"out.txt\",\"content\":\"hello\"}}]}"}}]}`)
+			return
+		}
+		_, _ = io.WriteString(w, `{"model":"test-model","choices":[{"message":{"role":"assistant","content":"ok"}}]}`)
+	}))
+	defer srv.Close()
+
+	database, err := db.New(db.Config{Path: filepath.Join(dir, "test.db")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer database.Close()
+	if err := database.Migrate(); err != nil {
+		t.Fatal(err)
+	}
+
+	secretStore := newInMemoryStore()
+	providerRepo := db.NewProviderProfileRepository(database)
+	_ = providerRepo.Create(&domain.ProviderProfile{
+		ID: "p", Name: "F", Type: "remote", Endpoint: srv.URL,
+		ModelIDs: []string{"test-model"}, Enabled: true,
+		CreatedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(),
+	})
+	settings := db.NewGlobalSettingsRepository(database)
+	_ = settings.SetLLMDefault("p", "test-model")
+
+	bus := events.NewEventBus(db.NewEventRepository(database))
+	permEngine := permissions.NewEngine()
+	approvalMgr := permissions.NewApprovalManager(db.NewApprovalRepository(database), bus)
+	toolReg := tools.NewRegistry()
+	_ = tools.RegisterCoreTools(toolReg)
+	resolver := llm.NewResolver(providerRepo, settings, secretStore)
+	_ = toolReg.Register(tools.NewLLMChatTool(resolver))
+	memMgr := memory.NewManager(db.NewMemoryRepository(database))
+
+	rt := NewRuntime(database, bus, permEngine, approvalMgr, tools.NewExecutor(toolReg), memMgr, DefaultConfig())
+	rt.SetLLMResolver(resolver)
+	defer rt.Shutdown()
+
+	assistantRepo := db.NewAssistantRepository(database)
+	_ = assistantRepo.Create(&domain.AssistantDefinition{
+		ID: "a", Name: "Bot", Role: "dev",
+		PermissionPolicy: domain.PermissionPolicy{
+			Rules: []domain.PermissionRule{
+				{Capability: "filesystem.write", Mode: domain.PermissionAllow},
+				{Capability: "llm.chat", Mode: domain.PermissionAllow},
+			},
+		},
+		CreatedAt: time.Now().UTC(),
+	})
+
+	run, err := rt.CreateRun(context.Background(), "save output", "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Wait for plan_review (would be RunFailed if both planner attempts
+	// were rejected and no fallback applied).
+	for deadline := time.Now().Add(5 * time.Second); time.Now().Before(deadline); {
+		cur, _ := db.NewRunRepository(database).GetByID(run.ID)
+		if cur != nil && (cur.Status == domain.RunPlanReview || cur.Status == domain.RunExecuting || cur.Status.IsTerminal()) {
+			break
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+
+	// Two planner calls: original + one repair turn. If repair didn't
+	// fire we'd see only one.
+	if got := atomic.LoadInt32(&planCalls); got != 2 {
+		t.Fatalf("expected exactly 2 planner calls (initial + repair), got %d", got)
+	}
+
+	// Step in the persisted plan must use filesystem.write — proves the
+	// repaired plan landed, not the legacy llm.chat fallback.
+	planRepo := db.NewPlanRepository(database)
+	plan, err := planRepo.GetByRunID(run.ID)
+	if err != nil || plan == nil {
+		t.Fatalf("plan: %v", err)
+	}
+	if len(plan.Steps) != 1 || plan.Steps[0].ExpectedTool != "filesystem.write" {
+		t.Fatalf("expected one filesystem.write step, got %+v", plan.Steps)
 	}
 }
 

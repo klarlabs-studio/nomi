@@ -42,6 +42,14 @@ type ChatRequest struct {
 	Temperature float64       `json:"temperature,omitempty"`
 	// Stop is optional and tool-usage-adjacent; kept minimal for V1.
 	Stop []string `json:"stop,omitempty"`
+	// JSONMode asks adapters that support it (OpenAI / Ollama) to set
+	// response_format=json_object so the model emits parseable JSON
+	// without prose. Anthropic ignores the flag — its messages API
+	// handles JSON via tool-use or prefill, neither of which is wired
+	// here yet — so the planner falls back to instruction-following on
+	// that path. Set true only when the caller can recover from a
+	// silently-text response.
+	JSONMode bool `json:"-"`
 }
 
 // AuthError is returned when an LLM provider responds with 401 Unauthorized.
@@ -145,12 +153,17 @@ type openaiClient struct {
 }
 
 type openaiChatRequest struct {
-	Model       string        `json:"model"`
-	Messages    []ChatMessage `json:"messages"`
-	MaxTokens   int           `json:"max_tokens,omitempty"`
-	Temperature *float64      `json:"temperature,omitempty"`
-	Stop        []string      `json:"stop,omitempty"`
-	Stream      bool          `json:"stream,omitempty"`
+	Model          string                  `json:"model"`
+	Messages       []ChatMessage           `json:"messages"`
+	MaxTokens      int                     `json:"max_tokens,omitempty"`
+	Temperature    *float64                `json:"temperature,omitempty"`
+	Stop           []string                `json:"stop,omitempty"`
+	Stream         bool                    `json:"stream,omitempty"`
+	ResponseFormat *openaiResponseFormat   `json:"response_format,omitempty"`
+}
+
+type openaiResponseFormat struct {
+	Type string `json:"type"`
 }
 
 type openaiChatResponse struct {
@@ -180,6 +193,9 @@ func (c *openaiClient) Chat(ctx context.Context, req ChatRequest) (ChatResponse,
 	if req.Temperature != 0 {
 		t := req.Temperature
 		body.Temperature = &t
+	}
+	if req.JSONMode {
+		body.ResponseFormat = &openaiResponseFormat{Type: "json_object"}
 	}
 
 	buf, err := json.Marshal(body)
@@ -467,5 +483,168 @@ func (c *anthropicClient) Chat(ctx context.Context, req ChatRequest) (ChatRespon
 		Model:        parsed.Model,
 		PromptTokens: parsed.Usage.InputTokens,
 		OutputTokens: parsed.Usage.OutputTokens,
+	}, nil
+}
+
+// ChatStream issues a /v1/messages request with stream=true and invokes
+// visit() as content_block_delta frames arrive. Anthropic's SSE shape is
+// distinct from OpenAI's: each frame is `event: <type>\ndata: {...}\n\n`,
+// and only events of type content_block_delta with delta.type=text_delta
+// carry user-visible tokens. message_stop ends the stream.
+//
+// On any visit() error or context cancel, the connection is closed and
+// the partial accumulation is returned alongside the error. Mirrors the
+// openaiClient.ChatStream contract so the runtime can route either
+// adapter through the same streaming path.
+func (c *anthropicClient) ChatStream(
+	ctx context.Context,
+	req ChatRequest,
+	visit func(delta string) error,
+) (ChatResponse, error) {
+	var system string
+	var userMsgs []ChatMessage
+	for _, m := range req.Messages {
+		if m.Role == "system" {
+			if system != "" {
+				system += "\n\n"
+			}
+			system += m.Content
+			continue
+		}
+		userMsgs = append(userMsgs, m)
+	}
+
+	maxTokens := req.MaxTokens
+	if maxTokens == 0 {
+		maxTokens = 4096
+	}
+	bodyMap := map[string]interface{}{
+		"model":      req.Model,
+		"max_tokens": maxTokens,
+		"messages":   userMsgs,
+		"stream":     true,
+	}
+	if system != "" {
+		bodyMap["system"] = system
+	}
+	if req.Temperature != 0 {
+		bodyMap["temperature"] = req.Temperature
+	}
+	if len(req.Stop) > 0 {
+		bodyMap["stop_sequences"] = req.Stop
+	}
+	buf, err := json.Marshal(bodyMap)
+	if err != nil {
+		return ChatResponse{}, fmt.Errorf("llm: marshal anthropic stream request: %w", err)
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/messages", bytes.NewReader(buf))
+	if err != nil {
+		return ChatResponse{}, fmt.Errorf("llm: build anthropic stream request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Accept", "text/event-stream")
+	httpReq.Header.Set("anthropic-version", "2023-06-01")
+	httpReq.Header.Set("User-Agent", c.ua)
+	if c.apiKey != "" {
+		httpReq.Header.Set("x-api-key", c.apiKey)
+	}
+
+	resp, err := c.http.Do(httpReq)
+	if err != nil {
+		return ChatResponse{}, fmt.Errorf("llm: http error: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		raw, _ := io.ReadAll(resp.Body)
+		if resp.StatusCode == http.StatusUnauthorized {
+			return ChatResponse{}, &AuthError{Provider: "anthropic", Message: string(raw)}
+		}
+		return ChatResponse{}, fmt.Errorf("llm: %s: %s", resp.Status, string(raw))
+	}
+
+	var (
+		accumulated  strings.Builder
+		modelID      string
+		inputTokens  int
+		outputTokens int
+	)
+	scanner := bufio.NewScanner(resp.Body)
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || !strings.HasPrefix(line, "data:") {
+			continue
+		}
+		payload := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+		if payload == "" {
+			continue
+		}
+		var frame struct {
+			Type    string `json:"type"`
+			Index   int    `json:"index"`
+			Message struct {
+				Model string `json:"model"`
+				Usage struct {
+					InputTokens  int `json:"input_tokens"`
+					OutputTokens int `json:"output_tokens"`
+				} `json:"usage"`
+			} `json:"message,omitempty"`
+			Delta struct {
+				Type         string `json:"type"`
+				Text         string `json:"text"`
+				StopReason   string `json:"stop_reason,omitempty"`
+				OutputTokens int    `json:"output_tokens,omitempty"`
+			} `json:"delta,omitempty"`
+			Usage struct {
+				OutputTokens int `json:"output_tokens"`
+			} `json:"usage,omitempty"`
+		}
+		if err := json.Unmarshal([]byte(payload), &frame); err != nil {
+			// Anthropic sends ping events whose data line is empty JSON
+			// or non-JSON keep-alives — skip silently.
+			continue
+		}
+		switch frame.Type {
+		case "message_start":
+			if frame.Message.Model != "" {
+				modelID = frame.Message.Model
+			}
+			inputTokens = frame.Message.Usage.InputTokens
+		case "content_block_delta":
+			if frame.Delta.Type == "text_delta" && frame.Delta.Text != "" {
+				accumulated.WriteString(frame.Delta.Text)
+				if err := visit(frame.Delta.Text); err != nil {
+					return ChatResponse{
+						Content:      accumulated.String(),
+						Model:        modelID,
+						PromptTokens: inputTokens,
+						OutputTokens: outputTokens,
+					}, err
+				}
+			}
+		case "message_delta":
+			// Final usage arrives here.
+			if frame.Usage.OutputTokens > 0 {
+				outputTokens = frame.Usage.OutputTokens
+			}
+		case "message_stop":
+			// stream complete; loop will exit on next read.
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return ChatResponse{
+			Content:      accumulated.String(),
+			Model:        modelID,
+			PromptTokens: inputTokens,
+			OutputTokens: outputTokens,
+		}, fmt.Errorf("llm: read stream: %w", err)
+	}
+	return ChatResponse{
+		Content:      accumulated.String(),
+		Model:        modelID,
+		PromptTokens: inputTokens,
+		OutputTokens: outputTokens,
 	}, nil
 }

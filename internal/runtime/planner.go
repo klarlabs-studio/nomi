@@ -94,43 +94,21 @@ func (r *Runtime) planWithLLM(
 	}
 
 	prompt := buildPlannerPrompt(goal, assistant, contextData, toolList)
-	resp, err := client.Chat(ctx, llm.ChatRequest{
-		Model: model,
-		Messages: []llm.ChatMessage{
-			{Role: "system", Content: plannerSystemPrompt},
-			{Role: "user", Content: prompt},
-		},
-		MaxTokens:   1024,
-		Temperature: 0.2,
-	})
-	if err != nil {
-		return nil
-	}
-
-	steps := parsePlannerResponse(resp.Content)
-	// Validate: every step's tool must be registered. If any step names a
-	// non-existent tool we refuse the whole plan rather than silently
-	// skipping — prompt injection could otherwise propose "system.exec"
-	// or similar and hope we pass it through.
 	knownTools := map[string]bool{}
 	for _, n := range r.toolExecutor.KnownTools() {
 		knownTools[n] = true
 	}
-	for _, s := range steps {
-		if !knownTools[s.Tool] {
-			return nil
-		}
-		if s.Title == "" {
-			return nil
-		}
-		// Reject the whole plan if any step's arguments don't match the
-		// tool's declared schema. Catching here avoids persisting a plan
-		// the user would only see fail at execution time with a
-		// "missing required field" error from inside the tool.
-		if err := validatePlannerArguments(s.Tool, s.Arguments); err != nil {
-			return nil
-		}
+
+	steps, validationErr := r.askPlanner(ctx, client, model, prompt, knownTools, "")
+	if validationErr != "" {
+		// Self-repair: feed the validator's complaint back to the LLM
+		// once. Capped at a single retry so a stuck model can't burn
+		// the run's token budget. This catches the common case of a
+		// model that emitted a near-correct plan with a missing
+		// required field (e.g. filesystem.write without `content`).
+		steps, _ = r.askPlanner(ctx, client, model, prompt, knownTools, validationErr)
 	}
+
 	if len(steps) == 0 {
 		return nil
 	}
@@ -141,6 +119,66 @@ func (r *Runtime) planWithLLM(
 		steps = steps[:maxPlannedSteps]
 	}
 	return steps
+}
+
+// askPlanner runs one planner LLM call and validates the response. When
+// repairHint is non-empty, it is appended to the user message so the LLM
+// can correct its previous attempt.
+//
+// Returns (steps, "") on a fully-valid plan or (nil, reason) when the
+// caller should retry (parse failure, unknown tool, schema mismatch).
+// "" reason on (nil, "") means the plan was structurally fine but
+// rejected for a non-recoverable reason (LLM error, empty steps).
+func (r *Runtime) askPlanner(
+	ctx context.Context,
+	client llm.Client,
+	model string,
+	prompt string,
+	knownTools map[string]bool,
+	repairHint string,
+) ([]plannerStep, string) {
+	userMsg := prompt
+	if repairHint != "" {
+		userMsg = prompt + "\n\nYour previous attempt was rejected: " + repairHint +
+			"\nReturn a NEW JSON object that fixes this issue. No prose."
+	}
+	resp, err := client.Chat(ctx, llm.ChatRequest{
+		Model: model,
+		Messages: []llm.ChatMessage{
+			{Role: "system", Content: plannerSystemPrompt},
+			{Role: "user", Content: userMsg},
+		},
+		MaxTokens:   2048,
+		Temperature: 0.2,
+		JSONMode:    true,
+	})
+	if err != nil {
+		return nil, ""
+	}
+	steps := parsePlannerResponse(resp.Content)
+	if len(steps) == 0 {
+		return nil, "JSON did not parse into the expected {steps:[...]} shape."
+	}
+	for _, s := range steps {
+		// Validate: every step's tool must be registered. If any step
+		// names a non-existent tool we refuse the whole plan rather
+		// than silently skipping — prompt injection could otherwise
+		// propose "system.exec" or similar and hope we pass it through.
+		if !knownTools[s.Tool] {
+			return nil, fmt.Sprintf("step uses unknown tool %q. Pick from the listed tools only.", s.Tool)
+		}
+		if s.Title == "" {
+			return nil, "every step needs a non-empty title."
+		}
+		// Reject the whole plan if any step's arguments don't match the
+		// tool's declared schema. Catching here avoids persisting a
+		// plan the user would only see fail at execution time with a
+		// "missing required field" error from inside the tool.
+		if err := validatePlannerArguments(s.Tool, s.Arguments); err != nil {
+			return nil, fmt.Sprintf("step %q has invalid arguments for %s: %v", s.Title, s.Tool, err)
+		}
+	}
+	return steps, ""
 }
 
 // availableToolsForPlanner returns (name, description) pairs for every
@@ -216,7 +254,18 @@ func buildPlannerPrompt(
 	}
 	b.WriteString("\n")
 
-	b.WriteString(`Produce a plan as a JSON object with this exact shape:
+	b.WriteString(`Examples (the JSON below is the entire response — no prose around it).
+
+Example 1 — single-step llm.chat for a question:
+{"steps":[{"title":"Explain WAL mode","description":"Summarize how SQLite WAL mode differs from rollback journals.","tool":"llm.chat","arguments":{"prompt":"Explain how SQLite WAL mode differs from rollback journals in 4-5 sentences."}}]}
+
+Example 2 — read then summarize across two steps:
+{"steps":[{"title":"Read notes.md","description":"Pull in the full contents of notes.md from the workspace root.","tool":"filesystem.read","arguments":{"path":"notes.md"}},{"title":"Summarize notes","description":"Produce a 5-bullet summary of the notes you just read.","tool":"llm.chat","arguments":{"prompt":"Summarize the notes you just read into 5 bullets."}}]}
+
+Example 3 — multi-step write plus run:
+{"steps":[{"title":"Read main.go","description":"Inspect the current main.go before editing.","tool":"filesystem.read","arguments":{"path":"main.go"}},{"title":"Write updated main.go","description":"Replace main.go with a version that adds a -version flag.","tool":"filesystem.write","arguments":{"path":"main.go","content":"package main\n// ... full file body ..."}},{"title":"Run tests","description":"Verify the change compiles and passes tests.","tool":"command.exec","arguments":{"command":"go test ./..."}}]}
+
+Produce a plan as a JSON object with this exact shape:
 
 {
   "steps": [
