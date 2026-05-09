@@ -345,13 +345,14 @@ every release ships against — is in
 
 ## Roadmap
 
-**v0.2 — "Plans That Plan."** One bet: make plan-review real. Wire LLM
-provider profiles into runtime planning so the planner generates real
-multi-step plans, route tools dynamically against assistant capability
-rules, and stream tokens into the chat UI as plans execute. Today the
-planner emits one hardcoded step — that's the single biggest
-perceived-quality gap vs. Claude Code / Cursor, and the wedge depends
-on closing it.
+**v0.2 — "Plans That Plan."** Shipped: LLM-generated multi-step
+plans, capability-routed tools, streaming tokens, JSON mode + few-shot
+exemplars, self-repair retry loop, prompt-injection trust-boundary
+tags, replan-on-failure (planner sees prior step output + failure and
+proposes a corrective plan, bounded by MaxReplansPerRun), the
+[`coding-agent` flagship recipe](examples/coding-agent/) with
+unified-diff previews, hash-chained audit log, and Prometheus
+`/metrics` for plan / step / replan attribution per provider.
 
 Backlog (post-v0.2, in priority order — not committed):
 

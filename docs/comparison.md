@@ -136,10 +136,11 @@ To keep the comparisons honest:
 - **No multi-tenant / team mode.** Nomi runs as a single-user local
   daemon. Cross-device sync (E2E-encrypted) is on the post-V1
   roadmap, not shipped.
-- **Plan-review is wired end-to-end, but the planner currently emits
-  one-step plans for non-LLM intents.** Multi-step LLM-generated
-  plans are on the next ship list (see the "plan-review real" item
-  in `.roady/spec.yaml`).
+- **Multi-tool planner is shipped** with replan-on-failure, prompt-injection
+  trust-boundary tags, JSON mode, few-shot exemplars, and a self-repair
+  retry loop. The flagship recipe lives at [`examples/coding-agent/`](../examples/coding-agent/)
+  — read repo → unified-diff preview → approve → run tests, all
+  against your local Ollama model.
 - **No mobile client.** REST API is reachable from anything; there's
   no first-party iOS / Android app.
 - **No hosted offering.** Nomi is software you run, not a service.
