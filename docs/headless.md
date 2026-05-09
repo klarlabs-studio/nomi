@@ -463,7 +463,17 @@ Series shipped today:
 | `nomi_step_retry_total` | counter | `tool` |
 | `nomi_planner_calls_total` | counter | `provider`, `outcome` |
 | `nomi_planner_latency_seconds` | histogram | `provider` |
+| `nomi_planner_edit_distance_total` | counter | `provider`, `edit_kind` |
 | `nomi_approval_wait_seconds` | histogram | `outcome` |
+
+`provider` is one of `openai` / `anthropic` / `ollama` / `openai-compat`
+(picked from the LLM endpoint URL). `outcome` for
+`nomi_planner_calls_total` covers `ok`, `parse_fail`, `tool_unknown`,
+`schema_invalid`, `llm_error`, plus `replan_ok` / `replan_empty` /
+`replan_max_exceeded` for the replan-on-failure loop. `edit_kind` for
+`nomi_planner_edit_distance_total` is `add` or `remove` — the leading
+indicator of planner quality drop, since users edit a plan when the
+planner's proposal didn't fit.
 
 Sample scrape config:
 
