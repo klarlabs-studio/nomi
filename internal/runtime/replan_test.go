@@ -88,6 +88,29 @@ func TestReplan_PassesPriorAttemptsToPlanner(t *testing.T) {
 	}
 }
 
+// TestManualReplan_RefusesNonTerminalRun is the safety check on the
+// /runs/:id/replan API endpoint: the user-facing CTA only fires on
+// failed runs, but a buggy client could POST against an
+// in-flight run. ManualReplan must refuse so we don't end up with
+// two executor goroutines on the same run.
+func TestManualReplan_RefusesNonTerminalRun(t *testing.T) {
+	rt, database := newReplanRuntime(t, simplePlanResponder)
+	ctx := context.Background()
+	if err := db.NewAssistantRepository(database).Create(replanTestAssistant()); err != nil {
+		t.Fatal(err)
+	}
+	run, err := rt.CreateRun(ctx, "test", "a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	waitForPlanReview(t, database, run.ID)
+
+	// Run is in plan_review (non-terminal). ManualReplan must refuse.
+	if _, err := rt.ManualReplan(ctx, run.ID); err == nil {
+		t.Fatal("ManualReplan should refuse a non-terminal run")
+	}
+}
+
 // simplePlanResponder is the default fake-LLM handler used by replan
 // tests that don't care about the prompt body shape — just returns a
 // valid one-step llm.chat plan so the runtime accepts it.
