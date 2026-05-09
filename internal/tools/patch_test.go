@@ -137,3 +137,97 @@ func TestSummarizeDiff_RejectsHeaderlessDiff(t *testing.T) {
 		t.Fatal("expected header-missing error")
 	}
 }
+
+// TestFilePatchTool_RejectsMissingTargetFile is the new pre-flight:
+// the LLM hallucinates a path that doesn't exist; the tool surfaces
+// ErrCodePatchFileMissing so the replan loop can read+retry.
+func TestFilePatchTool_RejectsMissingTargetFile(t *testing.T) {
+	root := t.TempDir()
+	diff := `--- a/missing.txt
++++ b/missing.txt
+@@ -1 +1 @@
+-old
++new
+`
+	_, err := NewFilePatchTool().Execute(context.Background(), map[string]interface{}{
+		"workspace_root": root,
+		"diff":           diff,
+	})
+	var ue *domain.UserError
+	if !errors.As(err, &ue) || ue.Code != domain.ErrCodePatchFileMissing {
+		t.Fatalf("expected ErrCodePatchFileMissing, got %v", err)
+	}
+}
+
+// TestFilePatchTool_RejectsCreateCollision: a `--- /dev/null` create
+// block targets a path that already exists. Without this check, git
+// apply would fail with a confusing "already exists" message; the
+// distinct UserError lets the planner pick a different name.
+func TestFilePatchTool_RejectsCreateCollision(t *testing.T) {
+	root := t.TempDir()
+	target := filepath.Join(root, "existing.txt")
+	if err := os.WriteFile(target, []byte("hi\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	diff := `--- /dev/null
++++ b/existing.txt
+@@ -0,0 +1 @@
++new
+`
+	_, err := NewFilePatchTool().Execute(context.Background(), map[string]interface{}{
+		"workspace_root": root,
+		"diff":           diff,
+	})
+	var ue *domain.UserError
+	if !errors.As(err, &ue) || ue.Code != domain.ErrCodeToolExecution {
+		t.Fatalf("expected tool-execution UserError for create collision, got %v", err)
+	}
+	if !strings.Contains(ue.Message, "already exists") {
+		t.Fatalf("expected collision message, got %q", ue.Message)
+	}
+}
+
+// TestFilePatchTool_RejectsOversizedDiff caps the diff at MaxPatchBytes
+// so a runaway LLM cannot OOM the daemon.
+func TestFilePatchTool_RejectsOversizedDiff(t *testing.T) {
+	root := t.TempDir()
+	huge := strings.Repeat("x", MaxPatchBytes+1)
+	diff := "--- a/file\n+++ b/file\n@@ -1 +1 @@\n+" + huge + "\n"
+	_, err := NewFilePatchTool().Execute(context.Background(), map[string]interface{}{
+		"workspace_root": root,
+		"diff":           diff,
+	})
+	var ue *domain.UserError
+	if !errors.As(err, &ue) || ue.Code != domain.ErrCodePatchTooLarge {
+		t.Fatalf("expected ErrCodePatchTooLarge, got %v", err)
+	}
+}
+
+// TestFilePatchTool_AcceptsCreate covers the new-file path: create
+// block + non-existent target = success.
+func TestFilePatchTool_AcceptsCreate(t *testing.T) {
+	requireGit(t)
+	root := t.TempDir()
+	diff := `--- /dev/null
++++ b/new.txt
+@@ -0,0 +1 @@
++hello
+`
+	out, err := NewFilePatchTool().Execute(context.Background(), map[string]interface{}{
+		"workspace_root": root,
+		"diff":           diff,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if ok, _ := out["success"].(bool); !ok {
+		t.Fatalf("expected success, got %+v", out)
+	}
+	body, err := os.ReadFile(filepath.Join(root, "new.txt"))
+	if err != nil {
+		t.Fatalf("create did not write file: %v", err)
+	}
+	if string(body) != "hello\n" {
+		t.Fatalf("file body = %q, want %q", body, "hello\n")
+	}
+}

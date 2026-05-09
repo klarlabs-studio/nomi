@@ -34,4 +34,10 @@ const (
 	ErrCodeBinaryNotAllowed   = "binary_not_allowed"
 	ErrCodeCommandTimeout     = "command_timeout"
 	ErrCodeCommandUnsafe      = "command_unsafe"
+	// Patch-tool specific. Distinct codes so the planner / replan loop
+	// can react to "file doesn't exist" (read+retry) vs "diff too big"
+	// (split into smaller patches) vs generic apply failure.
+	ErrCodePatchFileMissing = "patch_file_missing"
+	ErrCodePatchTooLarge    = "patch_too_large"
+	ErrCodePatchApplyFailed = "patch_apply_failed"
 )
