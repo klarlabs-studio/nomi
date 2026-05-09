@@ -92,6 +92,41 @@ func (r *RunRepository) UpdateTx(tx *sql.Tx, run *domain.Run) error {
 	return r.update(tx, run)
 }
 
+// CASUpdateStatusTx performs a compare-and-swap status update inside the
+// caller's transaction. Returns sql.ErrNoRows when the WHERE clause
+// matched zero rows — meaning a concurrent writer already advanced the
+// run past `from`. Callers should treat that as a benign race and skip
+// the duplicate transition. Other update fields (current_step_id,
+// plan_version, source) are passed through verbatim so the caller's
+// in-memory mutation is reflected on disk.
+func (r *RunRepository) CASUpdateStatusTx(
+	tx *sql.Tx,
+	runID string,
+	from, to domain.RunStatus,
+	currentStepID *string,
+	planVersion int,
+	source *string,
+) error {
+	res, err := tx.Exec(
+		`UPDATE runs
+		   SET status = ?, current_step_id = ?, plan_version = ?, source = ?, updated_at = ?
+		 WHERE id = ? AND status = ?`,
+		to, currentStepID, planVersion, toNullString(source),
+		time.Now(), runID, from,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to CAS-update run: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to read rows affected: %w", err)
+	}
+	if n == 0 {
+		return sql.ErrNoRows
+	}
+	return nil
+}
+
 type execer interface {
 	Exec(query string, args ...interface{}) (sql.Result, error)
 }

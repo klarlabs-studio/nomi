@@ -13,29 +13,59 @@ import (
 	"github.com/felixgeelhaar/nomi/pkg/statekit"
 )
 
-// transitionRun transitions a run to a new state
+// ErrConcurrentTransition is returned when a run-status update lost a CAS
+// race against another writer. Callers should treat it as a benign sign
+// that the run already moved on, and skip the duplicate transition (and
+// any event they were about to publish for it).
+var ErrConcurrentTransition = fmt.Errorf("concurrent run transition detected")
+
+// transitionRun moves a run to a new status. The status update is
+// performed under a tx with a CAS-style WHERE status = <from> guard so
+// two callers racing to change the same run can't both succeed —
+// whichever loses gets ErrConcurrentTransition and skips its work.
+//
+// State-machine validity is checked before the SQL CAS so an illegal
+// transition (e.g. completed → executing) fails fast without touching
+// the row.
 func (r *Runtime) transitionRun(_ context.Context, run *domain.Run, to domain.RunStatus) error {
+	// Load fresh state outside the tx. The DB has MaxOpenConns=1, so
+	// any read that goes through r.runRepo.GetByID (which doesn't take
+	// a *sql.Tx) would deadlock if invoked while a tx held the conn.
 	current, err := r.runRepo.GetByID(run.ID)
 	if err != nil {
 		slog.Error("transitionRun: failed to load run", "run_id", run.ID, "error", err)
 		return fmt.Errorf("failed to load run for transition: %w", err)
 	}
-	slog.Info("transitionRun", "run_id", run.ID, "from", current.Status, "to", to)
+	fromStatus := current.Status
 
 	sm := statekit.NewRunStateMachine()
 	sm.SetCurrent(current.Status)
-	if err := sm.Transition(to, nil); err != nil {
+	if smErr := sm.Transition(to, nil); smErr != nil {
+		return smErr
+	}
+
+	// CAS-style write under tx. If a concurrent writer already advanced
+	// the row past `current.Status`, the WHERE clause matches zero rows
+	// and we return ErrConcurrentTransition so the caller skips its
+	// follow-up event publish for the duplicate transition.
+	if err := r.db.WithTx(func(tx *sql.Tx) error {
+		casErr := r.runRepo.CASUpdateStatusTx(
+			tx, run.ID, current.Status, to,
+			current.CurrentStepID, current.PlanVersion, current.Source,
+		)
+		if casErr == sql.ErrNoRows {
+			return ErrConcurrentTransition
+		}
+		return casErr
+	}); err != nil {
 		return err
 	}
 
-	current.Status = to
-	current.UpdatedAt = time.Now().UTC()
-	if err := r.runRepo.Update(current); err != nil {
-		return err
-	}
+	now := time.Now().UTC()
+	slog.Info("transitionRun", "run_id", run.ID, "from", fromStatus, "to", to)
 
 	run.Status = to
-	run.UpdatedAt = time.Now().UTC()
+	run.UpdatedAt = now
 	run.CurrentStepID = current.CurrentStepID
 	run.PlanVersion = current.PlanVersion
 	run.Source = current.Source
