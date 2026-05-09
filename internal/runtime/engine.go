@@ -28,7 +28,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 	"sync"
 	"time"
 
@@ -828,33 +827,6 @@ func (r *Runtime) ManualReplan(ctx context.Context, runID string) ([]*domain.Ste
 	}
 	go r.executeRun(r.rootCtx, run, assistant)
 	return newSteps, nil
-}
-
-// summarizePriorAttempts produces the trusted=false body that
-// describes what's already been tried in this run. Step outputs are
-// truncated so a 100KB stderr can't blow the prompt budget.
-func summarizePriorAttempts(steps []*domain.Step, failed *domain.Step, failureMessage string) string {
-	const maxOutputBytes = 1024
-	var b strings.Builder
-	b.WriteString("Previously executed steps:\n")
-	for _, s := range steps {
-		out := s.Output
-		if len(out) > maxOutputBytes {
-			out = out[:maxOutputBytes] + "…[truncated]"
-		}
-		fmt.Fprintf(&b, "- [%s] %s — status=%s\n  output: %s\n", s.ID[:8], s.Title, s.Status, out)
-	}
-	if failed != nil {
-		fmt.Fprintf(&b, "\nFailing step: [%s] %s\n", failed.ID[:8], failed.Title)
-	}
-	if failureMessage != "" {
-		msg := failureMessage
-		if len(msg) > maxOutputBytes {
-			msg = msg[:maxOutputBytes] + "…[truncated]"
-		}
-		fmt.Fprintf(&b, "Failure reason: %s\n", msg)
-	}
-	return b.String()
 }
 
 // RetryRun retries a terminal run by resetting it to Created and starting a

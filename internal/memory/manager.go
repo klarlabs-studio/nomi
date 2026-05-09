@@ -109,16 +109,28 @@ func (m *Manager) StoreProfileMemory(content string) error {
 	return m.Save(entry)
 }
 
-// filterEntries filters entries by a case-sensitive substring match. An empty
-// query returns the input unchanged.
+// filterEntries filters entries by a case-insensitive substring
+// match against any whitespace-delimited token in the query. An empty
+// query returns the input unchanged. Until SQLite FTS5 lands this is
+// the cheapest improvement that prevents "Auth" / "auth" mismatches
+// hiding the most-relevant rows from the planner-context retrieval.
 func filterEntries(entries []*domain.MemoryEntry, query string) []*domain.MemoryEntry {
 	if query == "" {
 		return entries
 	}
+	q := strings.ToLower(query)
+	tokens := strings.Fields(q)
+	if len(tokens) == 0 {
+		return entries
+	}
 	var filtered []*domain.MemoryEntry
 	for _, entry := range entries {
-		if strings.Contains(entry.Content, query) {
-			filtered = append(filtered, entry)
+		body := strings.ToLower(entry.Content)
+		for _, t := range tokens {
+			if strings.Contains(body, t) {
+				filtered = append(filtered, entry)
+				break
+			}
 		}
 	}
 	return filtered
