@@ -1,10 +1,10 @@
 <h1 align="center">Nomi</h1>
 
 <p align="center">
-  <strong>Approve every step before your AI touches your filesystem.</strong><br />
-  Local-first coding agent that plans, asks, then runs — on your machine,
-  with your LLM of choice. Code never leaves your laptop unless you
-  decide otherwise.
+  <strong>Ship code without leaking your repo.</strong><br />
+  Local-first coding agent that plans every step, asks before it
+  touches your filesystem, runs on your machine against the LLM you
+  pick. Your repo never leaves your laptop unless you decide otherwise.
 </p>
 
 <p align="center">
@@ -158,14 +158,16 @@ settings:
 
 ## Who this is for
 
-- You run **Ollama** or **LM Studio** locally and want a real agent UX
-  on top.
-- You need an **audit trail** before you let an LLM touch your
-  filesystem, your inbox, or a production database.
-- You prefer **composing Go libraries** over importing a Python
-  framework that gets rewritten every six months.
-- You want a coding agent **without the IDE lock-in** or a personal AI
-  **without the data lock-in**.
+You're a developer who works on code your security team doesn't want
+in someone else's cloud. You'd use Claude Code or Cursor agents if the
+model ran on your machine. Ollama on a 14B model is enough for the
+edits you actually make; you just want a real agent surface — plans,
+approvals, audit log — wrapped around it.
+
+If that's not you, Nomi probably still runs your inbox, your research
+folder, or a Telegram bot — see [`examples/`](examples/) for other
+recipes — but the wedge it's built around is the dev who won't paste
+source into a remote LLM.
 
 ## Quickstart
 
@@ -181,6 +183,31 @@ brew install --cask felixgeelhaar/tap/nomi
 # 3. Open Nomi → wizard sets provider + assistant + workspace in <60s
 # 4. Type a goal in chat → review the plan → approve → watch it run
 ```
+
+### Your first 5 minutes
+
+```text
+$ nomi run "Add a JSON tag to the User struct in models.go"
+
+✓ run.created            id=r_8a2  goal="Add a JSON tag to the User struct in models.go"
+✓ plan.proposed          steps=3
+   1. filesystem.read    path=models.go
+   2. filesystem.patch   path=models.go      ← needs your approval
+   3. command.exec       cmd="go test ./..." ← needs your approval
+
+[plan-review] Approve? [y/n/edit]: y
+✓ approval.granted       step=2  by=user
+✓ step.completed         tool=filesystem.patch  diff=+1 -1
+✓ approval.granted       step=3  by=user
+✓ step.completed         tool=command.exec      exit=0
+✓ run.completed          duration=11s
+```
+
+Three places to land next:
+
+1. **Try a real recipe** — [`examples/code-reviewer/`](examples/code-reviewer/) points an assistant at your repo, [`examples/coding-agent/`](examples/coding-agent/) walks the loop above (when shipped — track at [#100](https://github.com/felixgeelhaar/nomi/issues)).
+2. **Talk to other people** — [GitHub Discussions](https://github.com/felixgeelhaar/nomi/discussions) for questions, [issues](https://github.com/felixgeelhaar/nomi/issues) for bugs.
+3. **Watch where v0.2 lands** — the v0.2 flagship is real LLM-backed multi-step plans + Anthropic streaming; subscribe via [GitHub Releases](https://github.com/felixgeelhaar/nomi/releases) → Watch → Custom → Releases.
 
 ## Features
 

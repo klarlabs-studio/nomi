@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Nomi — Approve every step before your AI touches your filesystem.</title>
-<meta name="description" content="Local-first coding agent. Plans every task, asks before it runs, persists the audit trail to a SQLite file you own. Apache 2.0." />
+<title>Nomi — Ship code without leaking your repo.</title>
+<meta name="description" content="Local-first coding agent. Plans every step, asks before it touches your filesystem, runs against the LLM you pick. Apache 2.0." />
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
 <link rel="icon" type="image/png" sizes="64x64" href="icons/icon-64.png" />
 <link rel="apple-touch-icon" href="icons/icon-128.png" />
-<meta property="og:title" content="Nomi — Approve every step before your AI touches your filesystem." />
-<meta property="og:description" content="Local-first coding agent. Plans every task, asks before it runs, persists the audit trail to a SQLite file you own." />
+<meta property="og:title" content="Nomi — Ship code without leaking your repo." />
+<meta property="og:description" content="Local-first coding agent. Plans every step, asks before it touches your filesystem, runs against the LLM you pick." />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://felixgeelhaar.github.io/nomi/" />
 <meta property="og:image" content="https://felixgeelhaar.github.io/nomi/images/02-plan-review.png" />
@@ -35,9 +35,9 @@
   <section class="hero">
     <div class="kicker">Open source · Apache 2.0 · v0.1.3</div>
     <p class="category">Local-first coding agent.</p>
-    <h1>Approve every step<br/><span class="accent">before your AI touches your filesystem.</span></h1>
+    <h1>Ship code<br/><span class="accent">without leaking your repo.</span></h1>
     <p class="lede">
-      Cloud coding agents read your repo, run shell commands, and write files the moment the model is confident. Nomi makes every step a contract — a plan you approve, tools that ask before they act, an audit trail you own. Runs on your laptop, against any LLM you point it at.
+      Same coding-agent UX as Claude Code or Cursor — read the repo, plan changes, run tests — but every step is laid out as an approveable plan first, every tool call is gated by a capability rule, and your code never crosses your network unless you point it at a remote LLM.
     </p>
     <div class="cta-row">
       <button class="copy" data-copy="brew install --cask felixgeelhaar/tap/nomi" title="Copy command">
@@ -227,6 +227,29 @@
   ghcr.io/felixgeelhaar/nomi</code></pre>
         <p class="alt">full guide: <a href="https://github.com/felixgeelhaar/nomi/blob/main/docs/headless.md">docs/headless.md</a></p>
       </div>
+    </div>
+
+    <div class="first-five">
+      <h3>Your first 5 minutes</h3>
+      <p class="section-lede">After install, point Nomi at a repo and run a real goal. The plan-review surface and the approvals are the entire feature.</p>
+<pre class="terminal-block"><code>$ nomi run "Add a JSON tag to the User struct in models.go"
+
+<span class="ev-ok">✓</span> run.created       id=r_8a2  goal="Add a JSON tag to the User struct..."
+<span class="ev-ok">✓</span> plan.proposed     steps=3
+   1. filesystem.read    path=models.go
+   2. filesystem.patch   path=models.go      <span class="ev-warn">← needs your approval</span>
+   3. command.exec       cmd="go test ./..." <span class="ev-warn">← needs your approval</span>
+
+[plan-review] Approve? [y/n/edit]: y
+<span class="ev-ok">✓</span> step.completed    tool=filesystem.patch  diff=+1 -1
+<span class="ev-ok">✓</span> step.completed    tool=command.exec      exit=0
+<span class="ev-ok">✓</span> run.completed     duration=11s</code></pre>
+
+      <p class="next-steps">
+        <a class="next-link" href="https://github.com/felixgeelhaar/nomi/tree/main/examples">Try a recipe →</a>
+        <a class="next-link" href="https://github.com/felixgeelhaar/nomi/discussions">Ask in Discussions →</a>
+        <a class="next-link" href="https://github.com/felixgeelhaar/nomi/releases">Watch releases →</a>
+      </p>
     </div>
   </section>
 

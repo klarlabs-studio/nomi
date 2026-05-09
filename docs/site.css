@@ -228,6 +228,49 @@ h3 { font-size: 18px; font-weight: 600; }
 }
 .cta-soft button.copy { font-size: 13px; }
 
+/* first-five — onboarding bridge under the install grid */
+.first-five {
+  margin-top: 56px;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.first-five h3 {
+  margin: 0 0 8px 0;
+  font-size: 22px;
+}
+.terminal-block {
+  background: var(--bg-card, #0e1117);
+  color: var(--fg-mono, #d4d4d8);
+  border: 1px solid var(--border-strong, #30363d);
+  border-radius: var(--radius, 12px);
+  padding: 20px 22px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow-x: auto;
+  margin: 18px 0;
+}
+.terminal-block code {
+  color: inherit;
+  background: none;
+  padding: 0;
+}
+.next-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 12px 0 0 0;
+}
+.next-link {
+  color: var(--accent);
+  font-size: 14px;
+  text-decoration: none;
+  border-bottom: 1px dashed var(--accent);
+  padding-bottom: 1px;
+}
+.next-link:hover { border-bottom-style: solid; }
+
 /* compared-to section — narrative take on alternatives */
 .compared {
   padding: 64px 24px;

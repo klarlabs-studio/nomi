@@ -14,7 +14,7 @@ maps to behavior shipped today, not roadmap claims.
 | Local-first | ✅ Daemon + SQLite on your box | ✅ | ◐ Runs in editor; data in workspace | ✅ | ◐ CLI local; model is Claude only | ◐ Local exec, remote LLM by default | ✕ Library, no daemon |
 | Plan review **before** execution | ✅ `plan_review` state, edit + approve before any tool call | ✕ Per-tool approval mid-run | ✅ Plan/Act mode | ✕ Confirm-per-block | ✅ Plan mode | ✕ Self-driven | ✕ |
 | Capability-gated tools | ✅ Per-assistant `allow / confirm / deny` rules | ◐ Per-tool prompts | ◐ Per-action prompts | ◐ Per-block confirm | ◐ Allowlist | ✕ | ✕ |
-| Persisted event log | ✅ Full event stream in SQLite, queryable + streamable | ◐ Session log | ◐ Editor history | ◐ Console log | ◐ Session transcripts | ✕ | ✕ |
+| Persisted event log | ✅ Full event stream in SQLite, queryable + streamable + hash-chained (`GET /audit/verify` walks the chain) | ◐ Session log | ◐ Editor history | ◐ Console log | ◐ Session transcripts | ✕ | ✕ |
 | Approval workflow (out-of-band) | ✅ Approval cards in desktop UI; resolvable later | ✕ Inline only | ✕ Inline only | ✕ Inline only | ✕ Inline only | ✕ | ✕ |
 | BYO LLM | ✅ Anthropic, OpenAI, Ollama; per-assistant override | ✅ | ✅ | ✅ | ✕ Anthropic only | ✅ | ✅ |
 | Desktop UI | ✅ Tauri shell (macOS / Linux / Windows) | ✅ Goose Desktop | ◐ VSCode extension | ◐ Terminal + 01 device | ✕ CLI | ◐ Web UI | ✕ |

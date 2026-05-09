@@ -8,13 +8,21 @@ via the CLI:
 nomi seed examples/<recipe>/seed.yaml
 ```
 
-## Recipes
+## Coding-agent recipes (the wedge)
 
-| Recipe | Wedge | Plugin |
+| Recipe | What it does | Plugin |
 |---|---|---|
-| [`code-reviewer`](code-reviewer/) | Local-first code review on a single repo. Plan → approve → patch. | none |
-| [`research-assistant`](research-assistant/) | Read a folder of PDFs / markdown, summarize, draft synthesized notes. | none |
-| [`inbox-triage`](inbox-triage/) | Classify and draft replies for messages forwarded to a Telegram bot. | Telegram |
+| [`code-reviewer`](code-reviewer/) | Point an assistant at one repo. Reads files, plans changes, asks before writing. | none |
+
+> **Coming next:** [`coding-agent`](https://github.com/felixgeelhaar/nomi/issues) — full read-plan-patch-test loop with diff previews in plan-review. Tracked at the v0.2 flagship.
+
+## Other recipes
+
+Nomi also runs personal-AI workflows. Sharing the same runtime, but
+not the wedge launch focus:
+
+- [`research-assistant`](research-assistant/) — read a folder of PDFs / markdown, summarize, draft synthesized notes.
+- [`inbox-triage`](inbox-triage/) — classify and draft replies for messages forwarded to a Telegram bot.
 
 ## Building your own
 
