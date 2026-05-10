@@ -4,13 +4,16 @@ import (
 	"context"
 	"crypto/ed25519"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -521,6 +524,51 @@ func main() {
 		}
 	}
 
+	// Port + listener resolution. Bind eagerly so a busy port is detected
+	// here (not deep inside http.Server.Serve), and so the tunnel + the
+	// api.endpoint file can both reflect the *actual* port we're on.
+	//
+	// Persisted setting first, env override last (intended for test/CI
+	// runners that must bind a free port without mutating the user's
+	// stored preference). The persisted value still wins under normal
+	// use because users expect the port they configured to stick.
+	port := settingsRepo.GetOrDefault("api_port", "8080")
+	if envPort := os.Getenv("NOMI_API_PORT"); envPort != "" {
+		port = envPort
+	}
+
+	// Bind address: defaults to loopback (the desktop app convention)
+	// because the API still trusts the local user account boundary.
+	// Headless / docker deploys override via NOMI_BIND=0.0.0.0; the
+	// auth token continues to gate every non-public request, so binding
+	// to 0.0.0.0 doesn't open the API to anonymous callers — it just
+	// makes the daemon reachable from sibling containers / the host.
+	bindHost := os.Getenv("NOMI_BIND")
+	if bindHost == "" {
+		bindHost = "127.0.0.1"
+	}
+
+	// Free-port fallback: if the configured port is occupied (another
+	// nomid instance, an unrelated process on 8080, a leftover Docker
+	// publish), we ask the kernel for any free port instead of dying.
+	// The Tauri shell + nomi CLI both discover the URL via api.endpoint,
+	// so a non-default port is transparent. NOMI_STRICT_PORT=1 disables
+	// the fallback for users who'd rather see the failure (e.g. when a
+	// reverse proxy assumes a fixed port).
+	apiListener, err := net.Listen("tcp", bindHost+":"+port)
+	if err != nil {
+		strictPort := os.Getenv("NOMI_STRICT_PORT") == "1"
+		if strictPort || !isAddrInUse(err) {
+			log.Fatalf("Failed to bind API port %s: %v", port, err)
+		}
+		log.Printf("API port %s in use, picking a free port", port)
+		apiListener, err = net.Listen("tcp", bindHost+":0")
+		if err != nil {
+			log.Fatalf("Failed to bind fallback port: %v", err)
+		}
+		port = strconv.Itoa(apiListener.Addr().(*net.TCPAddr).Port)
+	}
+
 	// Tunnel — expose local API to internet for inbound webhooks.
 	// Disabled by default; enabled when the user configures an ngrok
 	// authtoken in Settings → Connections.
@@ -536,7 +584,7 @@ func main() {
 		if err != nil {
 			log.Printf("Tunnel init failed: %v — inbound webhooks disabled", err)
 		} else {
-			publicURL, err := tunnelAdapter.Start(context.Background(), "127.0.0.1:"+settingsRepo.GetOrDefault("api_port", "8080"))
+			publicURL, err := tunnelAdapter.Start(context.Background(), "127.0.0.1:"+port)
 			if err != nil {
 				log.Printf("Tunnel start failed: %v — inbound webhooks disabled", err)
 				tunnelAdapter = nil
@@ -578,29 +626,12 @@ func main() {
 		PluginUpdater:   buildPluginUpdater(pluginRegistry, db.NewPluginStateRepository(database), pluginStore, pluginVerifier, wasmLoader, eventBus, catalogProvider),
 		RemoteTemplates: db.NewRemoteTemplateRepository(database),
 	})
-	// Port resolution: persisted setting first, env override last (intended
-	// for test/CI runners that must bind a free port without mutating the
-	// user's stored preference). The persisted value still wins under
-	// normal use because users expect the port they configured to stick.
-	port := settingsRepo.GetOrDefault("api_port", "8080")
-	if envPort := os.Getenv("NOMI_API_PORT"); envPort != "" {
-		port = envPort
-	}
-
-	// Bind address: defaults to loopback (the desktop app convention)
-	// because the API still trusts the local user account boundary.
-	// Headless / docker deploys override via NOMI_BIND=0.0.0.0; the
-	// auth token continues to gate every non-public request, so binding
-	// to 0.0.0.0 doesn't open the API to anonymous callers — it just
-	// makes the daemon reachable from sibling containers / the host.
-	bindHost := os.Getenv("NOMI_BIND")
-	if bindHost == "" {
-		bindHost = "127.0.0.1"
-	}
 
 	// Publish the endpoint so non-Go clients (the Tauri shell, e2e
 	// harness) discover the URL instead of hardcoding 127.0.0.1:8080.
 	// Lives next to auth.token in the data dir; same trust boundary.
+	// Written *after* the listener bind above so a free-port fallback
+	// is reflected accurately.
 	apiURL := "http://" + bindHost + ":" + port
 	endpointPath, err := api.WriteAPIEndpoint(dataDir, apiURL, port)
 	if err != nil {
@@ -609,7 +640,6 @@ func main() {
 	log.Printf("API endpoint at %s (URL %s)", endpointPath, apiURL)
 
 	server := &http.Server{
-		Addr:              bindHost + ":" + port,
 		Handler:           router,
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       30 * time.Second,
@@ -618,10 +648,12 @@ func main() {
 		// long-lived SSE endpoint. Non-streaming handlers return quickly.
 	}
 
-	// Start server in background
+	// Start server in background. We Serve a pre-bound listener (rather
+	// than ListenAndServe) so the port-in-use fallback above stays the
+	// single source of truth for which port we're on.
 	go func() {
-		log.Printf("API server listening on %s", server.Addr)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Printf("API server listening on %s", apiListener.Addr())
+		if err := server.Serve(apiListener); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server failed: %v", err)
 		}
 	}()
@@ -754,4 +786,16 @@ func defaultUpdateFetch(ctx context.Context, url string) ([]byte, error) {
 		return nil, fmt.Errorf("bundle exceeds %d bytes", maxBundle)
 	}
 	return body, nil
+}
+
+// isAddrInUse reports whether err is a "port already in use" bind error.
+// We unwrap through *net.OpError → *os.SyscallError to reach the raw
+// syscall errno; this is the canonical Go check for EADDRINUSE and
+// works the same on darwin/linux/windows (errors.Is handles the
+// platform-specific WSAEADDRINUSE alias).
+func isAddrInUse(err error) bool {
+	if err == nil {
+		return false
+	}
+	return errors.Is(err, syscall.EADDRINUSE)
 }
