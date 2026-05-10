@@ -29,7 +29,7 @@ jobs:
     outputs:
       version: ${{ steps.derive.outputs.version }}
     steps:
-      - uses: actions/checkout@34e114876b011c390a56381ad16ebd13914f8d5
+      - uses: actions/checkout@v4
 
       - id: derive
         name: Derive semver from tag
@@ -41,7 +41,7 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Create or update draft release
-        uses: softprops/action-gh-release@5d5d5d8bcfb0c1c9aa211b5c52198f5d4b6b9327
+        uses: softprops/action-gh-release@v2
         with:
           draft: true
           name: ${{ github.ref_name }}
@@ -70,7 +70,7 @@ jobs:
             daemon_suffix: 'x86_64-pc-windows-msvc.exe'
 
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0   # `git describe` in Makefile needs full history
 
@@ -380,7 +380,7 @@ jobs:
           cp app/src-tauri/target/release/bundle/nsis/*.exe.sig dist/ 2>/dev/null || true
 
       - name: Attach artifacts to draft release
-        uses: softprops/action-gh-release@5d5d5d8bcfb0c1c9aa211b5c52198f5d4b6b9327
+        uses: softprops/action-gh-release@v2
         with:
           draft: true
           tag_name: ${{ github.ref_name }}
@@ -424,7 +424,7 @@ jobs:
             > SHA256SUMS
 
       - name: Attach SHA256SUMS to release
-        uses: softprops/action-gh-release@5d5d5d8bcfb0c1c9aa211b5c52198f5d4b6b9327
+        uses: softprops/action-gh-release@v2
         with:
           draft: true
           tag_name: ${{ github.ref_name }}
@@ -440,7 +440,7 @@ jobs:
     # GitHub Release for direct download.
     if: ${{ vars.SCOOP_BUCKET_REPO != '' }}
     steps:
-      - uses: actions/checkout@34e114876b011c390a56381ad16ebd13914f8d5
+      - uses: actions/checkout@v4
 
       - name: Download MSI from draft release
         env:
@@ -549,7 +549,7 @@ jobs:
     # macOS can download the .dmg directly until the tap is wired.
     if: ${{ vars.HOMEBREW_TAP_REPO != '' }}
     steps:
-      - uses: actions/checkout@34e114876b011c390a56381ad16ebd13914f8d5
+      - uses: actions/checkout@v4
 
       - name: Download universal DMG from draft release
         env:
