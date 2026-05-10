@@ -75,17 +75,17 @@ jobs:
           fetch-depth: 0   # `git describe` in Makefile needs full history
 
       - name: Setup Go
-        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff
+        uses: actions/setup-go@v5
         with:
           go-version: '1.26.x'
 
       - name: Setup Node
-        uses: actions/setup-node@cd5c5b3d6e12d867fd17b5cf922a18c6f9c02d0
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       - name: Cache Cargo
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
