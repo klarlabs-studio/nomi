@@ -84,6 +84,30 @@ jobs:
           done
           curl -fsS http://127.0.0.1:7777/health
 
+      - name: Issue an E2E bearer token
+        run: |
+          # Mnemos serve requires a bearer token on write endpoints. The
+          # CLI exposes `token issue` against the running server; capture
+          # the raw token (last non-empty line of stdout, in case the CLI
+          # prints help / banner above it) and feed it to the test
+          # process via MNEMOS_E2E_TOKEN.
+          set +e
+          TOKEN_OUT=$(/tmp/mnemos token issue --subject e2e --visibility team 2>&1)
+          TOKEN_RC=$?
+          set -e
+          echo "$TOKEN_OUT"
+          if [ "$TOKEN_RC" -ne 0 ]; then
+            echo "token issue failed (rc=$TOKEN_RC); aborting"
+            exit 1
+          fi
+          TOKEN=$(echo "$TOKEN_OUT" | awk 'NF{line=$0} END{print line}')
+          if [ -z "$TOKEN" ]; then
+            echo "no token in output"
+            exit 1
+          fi
+          echo "MNEMOS_E2E_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+          echo "token captured (length=${#TOKEN})"
+
       - name: "Run E2E test suite (tag: e2e_mnemos)"
         working-directory: nomi
         env:

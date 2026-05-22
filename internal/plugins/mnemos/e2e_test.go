@@ -40,15 +40,27 @@ func e2eBaseURL(t *testing.T) string {
 // setupE2EPlugin configures a Mnemos plugin pointing at the running
 // `mnemos serve` instance. Returns the plugin ready to invoke tools
 // against connection id "e2e".
+//
+// MNEMOS_E2E_TOKEN, when set, is plumbed through fakeSecrets so the
+// real Mnemos server can authenticate the test's writes; absent, the
+// plugin runs token-less (works against a dev server with auth
+// disabled).
 func setupE2EPlugin(t *testing.T) *Plugin {
 	t.Helper()
-	p := New(&fakeSecrets{})
+	secretStore := &fakeSecrets{}
+	tokenRef := ""
+	if tok := os.Getenv("MNEMOS_E2E_TOKEN"); tok != "" {
+		_ = secretStore.Put("e2e-token", tok)
+		tokenRef = "e2e-token"
+	}
+	p := New(secretStore)
 	cfg, err := json.Marshal(configureInput{
 		Connections: []connectionConfig{
 			{
 				ID:                "e2e",
 				BaseURL:           e2eBaseURL(t),
 				VisibilityDefault: "team",
+				TokenRef:          tokenRef,
 			},
 		},
 	})
