@@ -2,16 +2,10 @@ module github.com/felixgeelhaar/nomi
 
 go 1.26.2
 
-// Mnemos plugin (ADR 0004 revised, roady feature #113) consumes the
-// standalone Mnemos client. Pinned via local replace until the plugin
-// stabilizes; remove the replace + bump the require once a tagged
-// version is settled.
-replace github.com/felixgeelhaar/mnemos => /Users/felixgeelhaar/Developer/projects/business-felix-geelhaar/mnemos
-
 require (
 	github.com/bwmarrin/discordgo v0.29.0
 	github.com/emersion/go-imap/v2 v2.0.0-beta.8
-	github.com/felixgeelhaar/mnemos v0.0.0-00010101000000-000000000000
+	github.com/felixgeelhaar/mnemos v0.15.3
 	github.com/gin-gonic/gin v1.12.0
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/google/uuid v1.6.0

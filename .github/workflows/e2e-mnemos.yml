@@ -28,7 +28,7 @@ on:
       mnemos-ref:
         description: 'Mnemos git ref to build against (branch / tag / SHA)'
         required: false
-        default: 'main'
+        default: 'v0.15.3'
 
 permissions:
   contents: read
@@ -49,7 +49,7 @@ jobs:
         with:
           repository: felixgeelhaar/mnemos
           path: mnemos
-          ref: ${{ inputs.mnemos-ref || 'main' }}
+          ref: ${{ inputs.mnemos-ref || 'v0.15.3' }}
 
       - name: Setup Go
         uses: actions/setup-go@v5
@@ -81,16 +81,6 @@ jobs:
             sleep 1
           done
           curl -fsS http://127.0.0.1:9099/health
-
-      - name: Rewrite go.mod replace to point at the checked-out Mnemos
-        working-directory: nomi
-        run: |
-          # The default replace points at a developer's local checkout;
-          # in CI we need it to point at the actions/checkout output.
-          # `go mod edit -replace` overwrites the existing replace.
-          go mod edit -replace github.com/felixgeelhaar/mnemos=../mnemos
-          go mod tidy
-          grep -E 'replace.*mnemos' go.mod
 
       - name: Run E2E test suite (tag: e2e_mnemos)
         working-directory: nomi
