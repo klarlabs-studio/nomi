@@ -88,7 +88,7 @@ type stubContextSource struct{ connID, name string }
 
 func (s stubContextSource) ConnectionID() string                      { return s.connID }
 func (s stubContextSource) Name() string                              { return s.name }
-func (s stubContextSource) Query(context.Context, string) (string, error) { return "", nil }
+func (s stubContextSource) Query(context.Context, ContextQueryRequest) (string, error) { return "", nil }
 
 // TestList_ReturnsStableIDOrder pins the registry contract relied on
 // by the UI: list-by-id ascending, deterministic across calls. Before

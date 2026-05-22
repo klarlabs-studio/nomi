@@ -241,10 +241,32 @@ type ContextSource interface {
 	// Name matches the ContextSourceContribution.Name in the manifest.
 	Name() string
 
-	// Query returns context relevant to the given goal. Implementations
-	// should respect reasonable size bounds — return the most relevant
-	// slice, not the whole dataset. Errors are surfaced to the planner
-	// but do not fail the run; the planner proceeds with whatever context
+	// Query returns context relevant to the request. Implementations
+	// should respect ContextQueryRequest.MaxTokens (or a sensible
+	// default when zero) and return the most relevant slice, not the
+	// whole dataset. Errors are surfaced to the planner but do not
+	// fail the run; the planner proceeds with whatever context
 	// succeeded.
-	Query(ctx context.Context, goal string) (string, error)
+	Query(ctx context.Context, request ContextQueryRequest) (string, error)
+}
+
+// ContextQueryRequest is the parameter set passed to ContextSource.Query.
+// Struct shape (rather than positional args) so future fields land
+// without breaking every implementation — visibility caps, max tokens,
+// run-time filters, etc.
+type ContextQueryRequest struct {
+	// RunID is the in-flight run requesting context. Sources that key
+	// retrieval by run identity (Mnemos's rendered Context Block) need
+	// this; sources that don't (folder context) ignore it.
+	RunID string
+
+	// Goal is the human-language goal text the planner is decomposing.
+	// Used as a similarity / lexical query by sources that support
+	// query-driven retrieval.
+	Goal string
+
+	// MaxTokens hints the upper bound on the returned string's token
+	// budget. Zero means "implementation default." Honored as a hint;
+	// implementations may truncate sooner if they have better signal.
+	MaxTokens int
 }

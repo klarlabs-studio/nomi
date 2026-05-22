@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/felixgeelhaar/nomi/internal/plugins"
 )
 
 func TestVaultContextSource_QueryReturnsScoredMatches(t *testing.T) {
@@ -29,7 +31,7 @@ Memory management strategies.
 		vaultPath:    dir,
 		displayName:  "Research Vault",
 	}
-	out, err := src.Query(context.Background(), "rust performance arena")
+	out, err := src.Query(context.Background(), plugins.ContextQueryRequest{Goal: "rust performance arena"})
 	if err != nil {
 		t.Fatalf("query: %v", err)
 	}
@@ -60,7 +62,7 @@ Notes on the research topic. See [[appendix]] for the source list.
 	mustWrite(t, filepath.Join(dir, "appendix.md"), "Bibliography entries.\n")
 
 	src := &vaultContextSource{vaultPath: dir, connectionID: "c"}
-	out, err := src.Query(context.Background(), "research topic notes")
+	out, err := src.Query(context.Background(), plugins.ContextQueryRequest{Goal: "research topic notes"})
 	if err != nil {
 		t.Fatalf("query: %v", err)
 	}
@@ -85,7 +87,7 @@ private/**
 	mustWrite(t, filepath.Join(dir, "real.md"), "rust performance real notes")
 
 	src := &vaultContextSource{vaultPath: dir, connectionID: "c"}
-	out, err := src.Query(context.Background(), "rust performance")
+	out, err := src.Query(context.Background(), plugins.ContextQueryRequest{Goal: "rust performance"})
 	if err != nil {
 		t.Fatalf("query: %v", err)
 	}
@@ -104,7 +106,7 @@ func TestVaultContextSource_NoMatchesProducesPlaceholder(t *testing.T) {
 	mustWrite(t, filepath.Join(dir, "n.md"), "irrelevant content")
 
 	src := &vaultContextSource{vaultPath: dir, connectionID: "c"}
-	out, err := src.Query(context.Background(), "nothing here matches xyz123")
+	out, err := src.Query(context.Background(), plugins.ContextQueryRequest{Goal: "nothing here matches xyz123"})
 	if err != nil {
 		t.Fatalf("query: %v", err)
 	}
@@ -115,7 +117,7 @@ func TestVaultContextSource_NoMatchesProducesPlaceholder(t *testing.T) {
 
 func TestVaultContextSource_MissingVaultErrors(t *testing.T) {
 	src := &vaultContextSource{vaultPath: filepath.Join(t.TempDir(), "does-not-exist"), connectionID: "c"}
-	if _, err := src.Query(context.Background(), "anything"); err == nil {
+	if _, err := src.Query(context.Background(), plugins.ContextQueryRequest{Goal: "anything"}); err == nil {
 		t.Fatal("expected error for missing vault")
 	}
 }
@@ -128,7 +130,7 @@ func TestVaultContextSource_OutputIsCapped(t *testing.T) {
 	}
 
 	src := &vaultContextSource{vaultPath: dir, connectionID: "c"}
-	out, err := src.Query(context.Background(), "rust performance")
+	out, err := src.Query(context.Background(), plugins.ContextQueryRequest{Goal: "rust performance"})
 	if err != nil {
 		t.Fatalf("query: %v", err)
 	}

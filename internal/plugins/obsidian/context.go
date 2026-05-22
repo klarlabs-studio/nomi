@@ -92,7 +92,7 @@ func (v *vaultContextSource) Name() string         { return contextSourceName }
 // the result as a markdown blob the planner can splice into its
 // system prompt. Errors are surfaced (not swallowed) so the planner
 // sees them in its own retry/backoff loop.
-func (v *vaultContextSource) Query(_ context.Context, goal string) (string, error) {
+func (v *vaultContextSource) Query(_ context.Context, request plugins.ContextQueryRequest) (string, error) {
 	if v.vaultPath == "" {
 		return "", fmt.Errorf("obsidian.vault: vault path is empty")
 	}
@@ -101,7 +101,7 @@ func (v *vaultContextSource) Query(_ context.Context, goal string) (string, erro
 	}
 
 	ignore := loadObsidianIgnore(v.vaultPath)
-	tokens := tokenizeGoal(goal)
+	tokens := tokenizeGoal(request.Goal)
 
 	notes, err := indexVault(v.vaultPath, ignore)
 	if err != nil {
