@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 532,
+  "version": 533,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -2337,11 +2337,15 @@
       "elapsed_minutes": 82
     },
     "task-scheduled-runs-with-natural-language-cron": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "6f39089 (NL translation + Tauri UI deferred to follow-up tasks)"
+      ],
       "started_at": "2026-05-22T19:43:25.537396+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-22T19:50:37.625078+02:00",
+      "elapsed_minutes": 7
     },
     "task-scope-discipline:-cut-overhang,-stop-polling,-prune-e2e-journeys-to-wedge-icp": {
       "status": "done",
@@ -2684,5 +2688,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-22T19:43:25.537396+02:00"
+  "updated_at": "2026-05-22T19:50:37.62508+02:00"
 }
