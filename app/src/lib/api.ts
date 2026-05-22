@@ -441,6 +441,40 @@ export const recipesApi = {
     ),
 };
 
+// Skills (roady #126) — induction reads the user's past successful
+// runs, heuristically clusters them by goal-text similarity, and
+// surfaces candidate Recipes. Promote materialises the suggestion as
+// a Recipe + Assistant via the same install path.
+export interface SkillSuggestion {
+  id: string;
+  representative_goal: string;
+  common_tokens?: string[];
+  source_run_ids: string[];
+  size: number;
+  suggested_assistant_id?: string;
+}
+
+export const skillsApi = {
+  listSuggestions: () =>
+    fetchApi<{ suggestions: SkillSuggestion[] }>("/skills/suggestions"),
+  promote: (params: {
+    suggestion_id: string;
+    recipe_id: string;
+    name: string;
+    description?: string;
+    source_assistant_id?: string;
+  }) =>
+    fetchApi<{
+      recipe: RecipeDocument;
+      sha256: string;
+      assistant: Assistant;
+      source_run_ids: string[];
+    }>("/skills/promote", {
+      method: "POST",
+      body: JSON.stringify(params),
+    }),
+};
+
 // Runtime introspection — surfaces what backends nomid registered at
 // boot so the assistant editor can populate its Sandbox dropdown
 // instead of hardcoding ["local", "docker", "gvisor"]. Backends only

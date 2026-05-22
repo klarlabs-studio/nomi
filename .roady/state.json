@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 537,
+  "version": 538,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -2393,8 +2393,10 @@
       "elapsed_minutes": 0
     },
     "task-skill-induction-from-run-history": {
-      "status": "pending",
+      "status": "in_progress",
       "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-22T20:12:22.970559+02:00",
       "elapsed_minutes": 0
     },
     "task-slack-plugin-(channel-+-tool)": {
@@ -2700,5 +2702,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-22T20:10:51.482048+02:00"
+  "updated_at": "2026-05-22T20:12:22.970559+02:00"
 }

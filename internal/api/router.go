@@ -148,6 +148,23 @@ func NewRouter(cfg RouterConfig) *gin.Engine {
 		runs.DELETE("/:id", runServer.DeleteRun)
 	}
 
+	// Skill induction (roady #126). Reads successful runs from the
+	// state store, clusters them heuristically, and surfaces candidate
+	// Recipes the user can review and promote. Cheap enough to run on
+	// demand — no background job in v1.
+	if cfg.DB != nil {
+		skillsServer := NewSkillsServer(
+			db.NewRunRepository(cfg.DB),
+			db.NewRecipeRepository(cfg.DB),
+			db.NewAssistantRepository(cfg.DB),
+		)
+		skillsGroup := r.Group("/skills")
+		{
+			skillsGroup.GET("/suggestions", skillsServer.ListSuggestions)
+			skillsGroup.POST("/promote", skillsServer.PromoteSuggestion)
+		}
+	}
+
 	// Recipe registry (roady #125). The built-in catalog ships with the
 	// binary; user-imported and exported recipes live in the recipes
 	// table. AssistantRepo is required for install + export.

@@ -4,6 +4,40 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-05-22 (Skill induction from run history)
+
+Adds skill induction (roady #126). Reads the user's past successful
+runs, clusters them heuristically by Jaccard similarity over goal
+tokens, and surfaces candidate Recipes the user can promote into a
+real assistant + recipe via the registry.
+
+v1 ships the scaffolding — heuristic clustering, on-demand pass,
+basic promote flow. Richer variants (embeddings-based similarity,
+LLM-driven prompt synthesis, parameterized slots, PII/secret scan,
+periodic background job) are additive without changing the wire shape.
+
+### Added
+- `internal/skills` package — token-based goal clustering with
+  configurable similarity threshold + minimum cluster size.
+  Suggestion ID is a stable hash over sorted source run IDs so the UI
+  can dedupe and the promote call has a reproducible reference.
+- REST endpoints:
+  - `GET /skills/suggestions` — runs an induction pass on demand and
+    returns ranked suggestions (largest cluster first).
+  - `POST /skills/promote` — materialises a suggestion as a Recipe
+    (`source: induced`) and creates a fresh Assistant; supports
+    copying capabilities + permission policy from a source assistant.
+- `skillsApi` in the frontend client (TS types only — no UI panel
+  in v1; the inline "Suggested skills" surface is a follow-up).
+
+### Scope notes
+- Heuristic only — no embeddings, no LLM prompt synthesis. Cluster
+  centroid is the run whose token set has the highest summed Jaccard
+  to its peers; representative goal becomes the new assistant's
+  system_prompt.
+- Defaults: min 3 successful runs per cluster, Jaccard ≥ 0.5,
+  max 10 suggestions, scan up to 500 most-recent successful runs.
+
 ## [Unreleased] - 2026-05-22 (Recipe registry + sharing)
 
 Adds the Recipe registry (roady #125). A Recipe is a versioned,
