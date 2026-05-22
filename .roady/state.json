@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 571,
+  "version": 574,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -2717,8 +2717,14 @@
       "elapsed_minutes": 1
     },
     "task-verify-e2e-mnemos-workflow-once-via-workflow_dispatch": {
-      "status": "blocked",
+      "status": "done",
       "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "run 26309388591 green in 2m9s. Fixes along the way: a5e3b0f quoted YAML step name; f6a0a5c switched to mnemos default port 7777; 8a10146 + c9c575f plumbed two-step user-create + token-issue auth; e3b59b3 + 87aba70 seeded event id / source_input_id / timestamp + claim id required by Mnemos v0.15.3."
+      ],
+      "started_at": "2026-05-22T22:07:38.202373+02:00",
+      "completed_at": "2026-05-22T22:07:47.718997+02:00",
       "elapsed_minutes": 0
     },
     "task-wire-plugins.registry.contextsources()-into-the-planner-prompt": {
@@ -2805,5 +2811,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-22T21:22:17.385232+02:00"
+  "updated_at": "2026-05-22T22:07:47.718997+02:00"
 }
