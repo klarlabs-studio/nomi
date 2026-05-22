@@ -1,0 +1,109 @@
+name: Mnemos plugin E2E
+
+# End-to-end test of the Mnemos plugin against a running `mnemos serve`
+# instance. Exercises each of the 6 tools + the context source so wire-
+# format drift between Nomi's tool input parsing and the upstream
+# Mnemos API is caught before it lands in main.
+#
+# Scope:
+#   - Build mnemos from the upstream repo (pinned via mnemos-ref input).
+#   - Start `mnemos serve` on a free port, in the background.
+#   - Run the Go tests gated behind the e2e_mnemos build tag.
+#   - Tear down the server after the test sweep.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'internal/plugins/mnemos/**'
+      - 'cmd/nomid/main.go'
+      - '.github/workflows/e2e-mnemos.yml'
+  pull_request:
+    paths:
+      - 'internal/plugins/mnemos/**'
+      - 'cmd/nomid/main.go'
+      - '.github/workflows/e2e-mnemos.yml'
+  workflow_dispatch:
+    inputs:
+      mnemos-ref:
+        description: 'Mnemos git ref to build against (branch / tag / SHA)'
+        required: false
+        default: 'main'
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: Mnemos tool calls against real server
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Nomi
+        uses: actions/checkout@v4
+        with:
+          path: nomi
+
+      - name: Checkout Mnemos
+        uses: actions/checkout@v4
+        with:
+          repository: felixgeelhaar/mnemos
+          path: mnemos
+          ref: ${{ inputs.mnemos-ref || 'main' }}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache: true
+          cache-dependency-path: nomi/go.sum
+
+      - name: Build mnemos binary
+        working-directory: mnemos
+        run: |
+          go build -o /tmp/mnemos ./cmd/mnemos
+          /tmp/mnemos --version || true
+
+      - name: Start mnemos serve in background
+        working-directory: mnemos
+        env:
+          MNEMOS_REGISTRY_PORT: '9099'
+          MNEMOS_REGISTRY_DB: ':memory:'
+        run: |
+          /tmp/mnemos serve > /tmp/mnemos.log 2>&1 &
+          echo "MNEMOS_PID=$!" >> "$GITHUB_ENV"
+          # Wait for /health to become responsive (up to 30s).
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:9099/health > /dev/null 2>&1; then
+              echo "mnemos serve up after ${i}s"
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:9099/health
+
+      - name: Rewrite go.mod replace to point at the checked-out Mnemos
+        working-directory: nomi
+        run: |
+          # The default replace points at a developer's local checkout;
+          # in CI we need it to point at the actions/checkout output.
+          # `go mod edit -replace` overwrites the existing replace.
+          go mod edit -replace github.com/felixgeelhaar/mnemos=../mnemos
+          go mod tidy
+          grep -E 'replace.*mnemos' go.mod
+
+      - name: Run E2E test suite (tag: e2e_mnemos)
+        working-directory: nomi
+        env:
+          MNEMOS_E2E_BASE_URL: http://127.0.0.1:9099
+        run: |
+          go test -race -count=1 -tags e2e_mnemos -v ./internal/plugins/mnemos/...
+
+      - name: Stop mnemos serve
+        if: always()
+        run: |
+          if [ -n "${MNEMOS_PID:-}" ]; then
+            kill "$MNEMOS_PID" || true
+          fi
+          echo '--- mnemos.log ---'
+          tail -n 200 /tmp/mnemos.log || true
