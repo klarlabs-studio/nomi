@@ -87,7 +87,7 @@ jobs:
           done
           curl -fsS http://127.0.0.1:9099/health
 
-      - name: Run E2E test suite (tag: e2e_mnemos)
+      - name: "Run E2E test suite (tag: e2e_mnemos)"
         working-directory: nomi
         env:
           MNEMOS_E2E_BASE_URL: http://127.0.0.1:9099
