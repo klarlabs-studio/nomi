@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 538,
+  "version": 539,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -2393,11 +2393,15 @@
       "elapsed_minutes": 0
     },
     "task-skill-induction-from-run-history": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "e90435d — heuristic clustering + REST + frontend API client; UI panel + embeddings deferred"
+      ],
       "started_at": "2026-05-22T20:12:22.970559+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-22T20:16:27.64271+02:00",
+      "elapsed_minutes": 4
     },
     "task-slack-plugin-(channel-+-tool)": {
       "status": "done",
@@ -2702,5 +2706,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-22T20:12:22.970559+02:00"
+  "updated_at": "2026-05-22T20:16:27.642711+02:00"
 }
