@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChatInterface } from "@/components/chat-interface";
 import { AssistantManager } from "@/components/assistant-manager";
 import { RecipesManager } from "@/components/recipes-manager";
+import { SchedulesManager } from "@/components/schedules-manager";
 import { ApprovalPanel } from "@/components/approval-panel";
 import { MemoryInspector } from "@/components/memory-inspector";
 import { EventLog } from "@/components/event-log";
@@ -31,6 +32,7 @@ import {
   ShieldCheck,
   Info,
   BookOpen,
+  Clock,
 } from "lucide-react";
 
 function ConnectionStatus() {
@@ -59,7 +61,7 @@ function ConnectionStatus() {
   );
 }
 
-type MainTab = "chats" | "assistants" | "approvals" | "memory" | "events" | "recipes" | "settings";
+type MainTab = "chats" | "assistants" | "approvals" | "schedules" | "memory" | "events" | "recipes" | "settings";
 type SettingsTab = "plugins" | "ai-providers" | "safety" | "about";
 
 // Ordered list of every sidebar entry. Order determines keyboard-arrow
@@ -76,6 +78,7 @@ const SIDEBAR_TABS: {
   { id: "assistants", label: "Assistants", icon: Bot, section: "Chat" },
   { id: "recipes", label: "Recipes", icon: BookOpen, section: "Chat" },
   { id: "approvals", label: "Approvals", icon: Shield, section: "Chat" },
+  { id: "schedules", label: "Schedules", icon: Clock, section: "System" },
   { id: "memory", label: "Memory", icon: Brain, section: "System" },
   { id: "events", label: "Events", icon: Radio, section: "System" },
   {
@@ -115,6 +118,7 @@ const TAB_HEADERS: Record<MainTab, { title: string; subtitle: string }> = {
   assistants: { title: "Assistants", subtitle: "Manage your AI assistants" },
   recipes: { title: "Recipes", subtitle: "Browse and install assistant recipes" },
   approvals: { title: "Approvals", subtitle: "Pending actions requiring your approval" },
+  schedules: { title: "Schedules", subtitle: "Cron-driven Runs against your assistants" },
   memory: { title: "Memory", subtitle: "Agent memories and context" },
   events: { title: "Events", subtitle: "System event log" },
   settings: { title: "Settings", subtitle: "Configure Nomi" },
@@ -467,6 +471,7 @@ function App() {
               }}
             />
           )}
+          {mainTab === "schedules" && <SchedulesManager />}
           {mainTab === "memory" && <MemoryInspector />}
           {mainTab === "events" && <EventLog />}
           {mainTab === "settings" && (

@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 542,
+  "version": 544,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1564,6 +1564,13 @@
       "completed_at": "2026-04-26T14:33:15.655882+02:00",
       "elapsed_minutes": 0
     },
+    "task-desktop-ui-surfaces-for-schedules,-skills,-recipe-export": {
+      "status": "in_progress",
+      "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-22T20:39:12.9359+02:00",
+      "elapsed_minutes": 0
+    },
     "task-desktop-ui:-mnemos-connections-card-in-connections-tab": {
       "status": "pending",
       "path": "",
@@ -2717,5 +2724,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-22T20:35:09.171477+02:00"
+  "updated_at": "2026-05-22T20:39:12.9359+02:00"
 }

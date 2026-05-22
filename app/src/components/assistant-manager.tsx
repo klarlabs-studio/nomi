@@ -12,7 +12,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ApiError, assistantsApi, toolsApi, connectorsApi, providersApi, settingsApi, runtimeApi } from "@/lib/api";
+import { ApiError, assistantsApi, toolsApi, connectorsApi, providersApi, settingsApi, runtimeApi, recipesApi } from "@/lib/api";
 import { AssistantBindingsPanel } from "@/components/assistant-bindings-panel";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type {
@@ -220,6 +220,7 @@ function AssistantForm({
     Record<number, { tree?: FileNode; stats?: { file_count: number; dir_count: number; total_size: number }; loading: boolean }>
   >({});
   const [showAdvancedModel, setShowAdvancedModel] = useState(false);
+  const [exportedYAML, setExportedYAML] = useState<string | null>(null);
 	const [applyingProfile, setApplyingProfile] = useState(false);
 	const [showRemoteTemplates, setShowRemoteTemplates] = useState(false);
 
@@ -1115,6 +1116,24 @@ function AssistantForm({
       )}
 
       <DialogFooter>
+        {assistant?.id && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={async () => {
+              try {
+                const result = await recipesApi.export(assistant.id);
+                setExportedYAML(result.yaml);
+              } catch (err) {
+                console.error("export recipe failed:", err);
+              }
+            }}
+            title="Export this assistant as a shareable Recipe YAML"
+          >
+            <Download className="w-3.5 h-3.5 mr-1" />
+            Export as recipe
+          </Button>
+        )}
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
@@ -1130,6 +1149,37 @@ function AssistantForm({
           {assistant ? "Update" : "Create"} Assistant
         </Button>
       </DialogFooter>
+
+      {exportedYAML !== null && (
+        <div className="mt-4 rounded-md border p-3 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-medium">Exported recipe (YAML)</span>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  void navigator.clipboard.writeText(exportedYAML);
+                }}
+              >
+                Copy
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setExportedYAML(null)}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+          <pre className="max-h-72 overflow-auto rounded bg-muted p-2 text-xs">
+            {exportedYAML}
+          </pre>
+        </div>
+      )}
     </form>
   );
 }

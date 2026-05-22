@@ -3,7 +3,13 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { recipesApi, type RecipeCatalogEntry } from "@/lib/api";
+import { Input } from "@/components/ui/input";
+import {
+  recipesApi,
+  skillsApi,
+  type RecipeCatalogEntry,
+  type SkillSuggestion,
+} from "@/lib/api";
 
 // Recipes tab — browse the built-in catalog + imported/exported recipes
 // and install a recipe as a fresh assistant. Minimal v1: no inline
@@ -16,6 +22,56 @@ export function RecipesManager() {
   const [installing, setInstalling] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [installedRecipeID, setInstalledRecipeID] = useState<string | null>(null);
+
+  // Skill induction state. Suggestions are fetched lazily — the panel
+  // collapses by default so cold loads don't always scan the run history.
+  const [suggestions, setSuggestions] = useState<SkillSuggestion[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [suggestionsLoaded, setSuggestionsLoaded] = useState(false);
+  const [promoteFor, setPromoteFor] = useState<string | null>(null);
+  const [promoteName, setPromoteName] = useState("");
+
+  const refreshSuggestions = async () => {
+    setSuggestionsLoading(true);
+    setError(null);
+    try {
+      const data = await skillsApi.listSuggestions();
+      setSuggestions(data.suggestions);
+      setSuggestionsLoaded(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  };
+
+  const promote = async (s: SkillSuggestion) => {
+    if (!promoteName.trim()) {
+      setError("Choose a name for the new skill before promoting.");
+      return;
+    }
+    const recipeID = promoteName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || `skill-${s.id}`;
+    try {
+      const result = await skillsApi.promote({
+        suggestion_id: s.id,
+        recipe_id: recipeID,
+        name: promoteName.trim(),
+        source_assistant_id: s.suggested_assistant_id,
+      });
+      setInstalledRecipeID(result.recipe.id);
+      setPromoteFor(null);
+      setPromoteName("");
+      // Refresh both panels so the new recipe shows up immediately.
+      const data = await recipesApi.list();
+      setItems(data.recipes);
+      await refreshSuggestions();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -76,6 +132,88 @@ export function RecipesManager() {
           Assistants tab to see your new assistant.
         </div>
       )}
+
+      {/* Suggested skills — derived from past successful runs. Collapsed
+          by default; clicking the toggle triggers a fresh induction
+          pass on the run history. */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-base">Suggested skills</CardTitle>
+            <Button size="sm" variant="outline" onClick={() => void refreshSuggestions()}>
+              {suggestionsLoading ? "Scanning…" : suggestionsLoaded ? "Refresh" : "Scan history"}
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Mines your past successful runs and surfaces clusters of similar work as candidate
+            recipes. Promote one to turn the cluster into a reusable assistant.
+          </p>
+          {suggestionsLoaded && suggestions.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No clusters above the threshold yet — try again after you&apos;ve run a few similar
+              tasks.
+            </p>
+          )}
+          {suggestions.map((s) => (
+            <div key={s.id} className="rounded-md border p-3 space-y-2 text-sm">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium truncate">{s.representative_goal}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {s.size} similar runs · sha:{s.id}
+                  </div>
+                  {s.common_tokens && s.common_tokens.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {s.common_tokens.slice(0, 8).map((t) => (
+                        <Badge key={t} variant="secondary" className="text-xs">
+                          {t}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {promoteFor !== s.id ? (
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setPromoteFor(s.id);
+                      setPromoteName(s.common_tokens?.slice(0, 3).join(" ") || "");
+                    }}
+                  >
+                    Promote
+                  </Button>
+                ) : null}
+              </div>
+              {promoteFor === s.id && (
+                <div className="space-y-2 border-t pt-2">
+                  <Input
+                    placeholder="Name for the new skill"
+                    value={promoteName}
+                    onChange={(e) => setPromoteName(e.target.value)}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setPromoteFor(null);
+                        setPromoteName("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={() => void promote(s)}>
+                      Create recipe + assistant
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {items.map((entry) => (

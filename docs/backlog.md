@@ -2137,3 +2137,9 @@ Hermes-style auto-generated skills: mine successful Runs in Mnemos memory + stat
 LLM-driven translator from natural-language schedule phrases ("every weekday at 8am", "first Monday of the month") to standard 5-field cron expressions, gated by the scheduler's cron parser before persistence. Closes the gap vs Hermes Agent's flagship scheduling UX. Adds `POST /schedules/translate` returning the parsed cron + a human-readable explanation, plus an `nl_phrase` column on the schedules table so the UI can re-display the original phrase next to the persisted cron. Validation is two-stage: the LLM is asked for a strict JSON object via the existing structured-output prompt pattern, then the returned cron_expr is verified with the same robfig/cron parser the scheduler uses at fire time. Confidence + explanation surface in the UI so the user can confirm before save.
 
 ---
+
+## Desktop UI surfaces for schedules, skills, recipe export
+
+Ships the deferred Tauri UI panels for three backend features that landed without front-end surfaces: (1) Schedules tab — NL phrase input wired to /schedules/translate with parsed-cron confirmation step before save, schedule list with enable toggle + delete; (2) Skill suggestions panel inside the Recipes tab — fetches /skills/suggestions on demand and surfaces clusters with a one-click promote button that hits /skills/promote; (3) Recipe export button on the assistant editor that calls /recipes/export and opens a dialog with the resulting YAML for copy/download. Each surface is built as a focused component that consumes the existing TypeScript API client; no new backend work.
+
+---

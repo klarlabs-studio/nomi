@@ -4,6 +4,26 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-05-22 (Desktop UI surfaces — schedules, skills, recipe export)
+
+Ships the deferred Tauri front-end surfaces for three backend features
+that landed without UI in the prior cycle. No new backend work; all
+three components consume the existing TypeScript API client.
+
+### Added
+- `SchedulesManager` (new "Schedules" tab, System section) —
+  natural-language phrase input wired to `/schedules/translate` with
+  a parsed-cron confirmation step before save. Active schedules list
+  with enable toggle, last-fire / next-fire times, last-error
+  surfacing, and delete button.
+- Skill suggestions panel inside the `RecipesManager` Recipes tab —
+  on-demand "Scan history" action that calls `/skills/suggestions`,
+  with one-click promote that hits `/skills/promote` and refreshes
+  both the recipe list and the suggestions panel.
+- "Export as recipe" button on the assistant editor footer (visible
+  only when editing an existing assistant) — calls `/recipes/export`
+  and opens an inline YAML viewer with Copy + Close actions.
+
 ## [Unreleased] - 2026-05-22 (Natural-language cron translation)
 
 Closes the last flagship gap vs Hermes Agent: schedules can now be
