@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 530,
+  "version": 531,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -2326,11 +2326,15 @@
       "elapsed_minutes": 33
     },
     "task-sandboxed-executor-backends": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "eaa7b37 (PR1) + 5159cf6 (PR2) + 3c99201 (PR3) + 5e16940 (PR4) + 8525012 (PR5)"
+      ],
       "started_at": "2026-05-22T18:14:55.519905+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-22T19:36:59.666177+02:00",
+      "elapsed_minutes": 82
     },
     "task-scheduled-runs-with-natural-language-cron": {
       "status": "pending",
@@ -2678,5 +2682,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-22T18:14:55.519905+02:00"
+  "updated_at": "2026-05-22T19:36:59.666178+02:00"
 }
