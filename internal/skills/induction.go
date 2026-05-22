@@ -10,12 +10,14 @@
 package skills
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"sort"
 	"strings"
 
 	"github.com/felixgeelhaar/nomi/internal/domain"
+	"github.com/felixgeelhaar/nomi/internal/llm"
 )
 
 // Defaults for the induction pass. Conservative on purpose: a noisier
@@ -46,6 +48,19 @@ type Config struct {
 	MinJaccardSim  float64
 	MaxSuggestions int
 	MaxSourceRuns  int
+
+	// EmbeddingClient, when non-nil, swaps the Jaccard clustering for
+	// cosine-similarity clustering over goal embeddings. Falls back to
+	// Jaccard automatically on embedding errors so an outage in the
+	// embedding provider doesn't kill suggestions.
+	EmbeddingClient llm.EmbeddingClient
+	// EmbeddingThreshold overrides the default cosine cutoff (0.78).
+	// Zero uses the default.
+	EmbeddingThreshold float64
+	// Ctx is the context the embedding call runs under. nil falls back
+	// to context.Background(); callers with timeouts should supply
+	// their own.
+	Ctx context.Context
 }
 
 // DefaultConfig returns the conservative defaults.
@@ -90,13 +105,48 @@ func Induce(src RunSource, cfg Config) ([]Suggestion, error) {
 		minSim = DefaultMinJaccardSim
 	}
 
-	// Precompute token sets per run.
+	// Precompute token sets per run — used either as the clustering
+	// signal (Jaccard path) or as a fallback for the "common tokens"
+	// label in the embedding path.
 	tokenSets := make([]map[string]struct{}, len(runs))
 	for i, r := range runs {
 		tokenSets[i] = tokenize(r.Goal)
 	}
 
-	clusters := greedyCluster(tokenSets, minSim)
+	var (
+		clusters         [][]int
+		usedEmbeddings   bool
+		embeddingVectors [][]float32
+	)
+	if cfg.EmbeddingClient != nil {
+		goals := make([]string, len(runs))
+		for i, r := range runs {
+			goals[i] = r.Goal
+		}
+		embedCtx := cfg.Ctx
+		if embedCtx == nil {
+			embedCtx = context.Background()
+		}
+		if cs, ok := inducerWithEmbeddings(embedCtx, cfg.EmbeddingClient, goals, cfg.EmbeddingThreshold); ok {
+			clusters = cs
+			usedEmbeddings = true
+			// Re-embed for centroid + ordering — same call returns
+			// vectors so a second invocation isn't needed. Re-embed
+			// only because inducerWithEmbeddings discards them today;
+			// trade an extra round trip for keeping the helper API
+			// narrow.
+			if vecs, err := cfg.EmbeddingClient.Embed(embedCtx, goals); err == nil && len(vecs) == len(goals) {
+				embeddingVectors = make([][]float32, len(vecs))
+				for i, v := range vecs {
+					embeddingVectors[i] = normalize(v)
+				}
+				sortClustersByMostInformative(clusters, embeddingVectors)
+			}
+		}
+	}
+	if clusters == nil {
+		clusters = greedyCluster(tokenSets, minSim)
+	}
 
 	suggestions := make([]Suggestion, 0)
 	for _, members := range clusters {
@@ -110,10 +160,15 @@ func Induce(src RunSource, cfg Config) ([]Suggestion, error) {
 		}
 		sort.Strings(runIDs)
 
-		// Representative goal: pick the run whose token set has the
-		// highest sum of Jaccard-similarities to the other members — a
-		// rough centroid. Cheap because the cluster is small.
-		repIdx := pickCentroid(members, tokenSets)
+		// Representative goal + common tokens: prefer the embedding
+		// centroid when we have vectors (more semantic), fall back to
+		// Jaccard otherwise.
+		var repIdx int
+		if usedEmbeddings && len(embeddingVectors) == len(runs) {
+			repIdx = pickEmbeddingCentroid(members, embeddingVectors)
+		} else {
+			repIdx = pickCentroid(members, tokenSets)
+		}
 		representative := runs[repIdx].Goal
 		common := intersectTokens(members, tokenSets)
 		assistantID := dominantAssistant(members, runs)

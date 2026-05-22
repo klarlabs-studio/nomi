@@ -26,23 +26,23 @@ func (r *ProviderProfileRepository) Create(profile *domain.ProviderProfile) erro
 		return fmt.Errorf("failed to marshal model_ids: %w", err)
 	}
 
-	query := `INSERT INTO provider_profiles (id, name, type, endpoint, model_ids, secret_ref, enabled, created_at, updated_at)
-			  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	query := `INSERT INTO provider_profiles (id, name, type, endpoint, model_ids, embedding_model_id, secret_ref, enabled, created_at, updated_at)
+			  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	_, err = r.db.Exec(query, profile.ID, profile.Name, profile.Type, profile.Endpoint,
-		string(modelIDs), profile.SecretRef, profile.Enabled, profile.CreatedAt, profile.UpdatedAt)
+		string(modelIDs), profile.EmbeddingModelID, profile.SecretRef, profile.Enabled, profile.CreatedAt, profile.UpdatedAt)
 	return err
 }
 
 // GetByID retrieves a provider profile by ID
 func (r *ProviderProfileRepository) GetByID(id string) (*domain.ProviderProfile, error) {
-	query := `SELECT id, name, type, endpoint, model_ids, secret_ref, enabled, created_at, updated_at
+	query := `SELECT id, name, type, endpoint, model_ids, embedding_model_id, secret_ref, enabled, created_at, updated_at
 			  FROM provider_profiles WHERE id = ?`
 	return r.scanRow(r.db.QueryRow(query, id))
 }
 
 // List returns all provider profiles
 func (r *ProviderProfileRepository) List() ([]*domain.ProviderProfile, error) {
-	query := `SELECT id, name, type, endpoint, model_ids, secret_ref, enabled, created_at, updated_at
+	query := `SELECT id, name, type, endpoint, model_ids, embedding_model_id, secret_ref, enabled, created_at, updated_at
 			  FROM provider_profiles ORDER BY created_at DESC`
 	rows, err := r.db.Query(query)
 	if err != nil {
@@ -69,10 +69,10 @@ func (r *ProviderProfileRepository) Update(profile *domain.ProviderProfile) erro
 	}
 
 	profile.UpdatedAt = time.Now().UTC()
-	query := `UPDATE provider_profiles SET name = ?, type = ?, endpoint = ?, model_ids = ?, secret_ref = ?, enabled = ?, updated_at = ?
+	query := `UPDATE provider_profiles SET name = ?, type = ?, endpoint = ?, model_ids = ?, embedding_model_id = ?, secret_ref = ?, enabled = ?, updated_at = ?
 			  WHERE id = ?`
 	_, err = r.db.Exec(query, profile.Name, profile.Type, profile.Endpoint,
-		string(modelIDs), profile.SecretRef, profile.Enabled, profile.UpdatedAt, profile.ID)
+		string(modelIDs), profile.EmbeddingModelID, profile.SecretRef, profile.Enabled, profile.UpdatedAt, profile.ID)
 	return err
 }
 
@@ -87,7 +87,7 @@ func (r *ProviderProfileRepository) scanRow(scanner interface{ Scan(dest ...inte
 	var modelIDsJSON string
 
 	err := scanner.Scan(&profile.ID, &profile.Name, &profile.Type, &profile.Endpoint,
-		&modelIDsJSON, &profile.SecretRef, &profile.Enabled, &profile.CreatedAt, &profile.UpdatedAt)
+		&modelIDsJSON, &profile.EmbeddingModelID, &profile.SecretRef, &profile.Enabled, &profile.CreatedAt, &profile.UpdatedAt)
 	if err != nil {
 		return nil, err
 	}

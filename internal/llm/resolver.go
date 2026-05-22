@@ -132,6 +132,56 @@ func (r *Resolver) ClientForProfile(id string) (Client, error) {
 	return client, nil
 }
 
+// DefaultEmbeddingClient returns an EmbeddingClient built from the
+// default provider's endpoint + secret, with the embedding model
+// pulled from the provider's `embedding_model_id` field (or the
+// settings-level fallback). Returns nil, nil when no embeddings model
+// is configured — caller's contract is "treat that as 'no embeddings
+// available' and fall back to the heuristic path."
+//
+// Errors only surface when a default IS configured but can't be
+// constructed (missing key, malformed endpoint).
+func (r *Resolver) DefaultEmbeddingClient() (EmbeddingClient, error) {
+	if r == nil || r.settings == nil {
+		return nil, nil
+	}
+	providerID, _ := r.settings.GetLLMDefault()
+	if providerID == "" {
+		return nil, nil
+	}
+	profile, err := r.profiles.GetByID(providerID)
+	if err != nil {
+		return nil, fmt.Errorf("llm: load provider %s: %w", providerID, err)
+	}
+	if !profile.Enabled || profile.EmbeddingModelID == "" {
+		return nil, nil
+	}
+	if endpointTypeFor(profile.Endpoint) != EndpointOpenAI {
+		// Anthropic native API has no embeddings endpoint; callers fall
+		// back to heuristic paths on that provider.
+		return nil, nil
+	}
+
+	apiKey := ""
+	if profile.SecretRef != "" {
+		if r.secrets == nil {
+			return nil, fmt.Errorf("llm: provider %s has secret_ref but no secrets store is configured", providerID)
+		}
+		plain, err := secrets.Resolve(r.secrets, profile.SecretRef)
+		if err != nil {
+			return nil, fmt.Errorf("llm: resolve secret for provider %s: %w", providerID, err)
+		}
+		apiKey = plain
+	}
+
+	return NewEmbeddingClient(EmbeddingConfig{
+		BaseURL:  profile.Endpoint,
+		APIKey:   apiKey,
+		Model:    profile.EmbeddingModelID,
+		Provider: providerID,
+	})
+}
+
 // InvalidateCacheIfAuthError checks if err is an AuthError (401)
 // and clears the cached client for the profile so the next request
 // obtains a fresh client with a new token.

@@ -231,15 +231,16 @@ type ModelPolicy struct {
 
 // ProviderProfile defines an LLM provider configuration
 type ProviderProfile struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	Type      string    `json:"type"` // "local" | "remote"
-	Endpoint  string    `json:"endpoint,omitempty"`
-	ModelIDs  []string  `json:"model_ids"`
-	SecretRef string    `json:"secret_ref,omitempty"`
-	Enabled   bool      `json:"enabled"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID               string    `json:"id"`
+	Name             string    `json:"name"`
+	Type             string    `json:"type"` // "local" | "remote"
+	Endpoint         string    `json:"endpoint,omitempty"`
+	ModelIDs         []string  `json:"model_ids"`
+	EmbeddingModelID string    `json:"embedding_model_id,omitempty"`
+	SecretRef        string    `json:"secret_ref,omitempty"`
+	Enabled          bool      `json:"enabled"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
 }
 
 // ChannelConfig defines which connections within a connector an assistant uses

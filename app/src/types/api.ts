@@ -390,6 +390,7 @@ export interface ProviderProfile {
   type: "local" | "remote";
   endpoint?: string;
   model_ids: string[];
+  embedding_model_id?: string;
   secret_configured: boolean;
   enabled: boolean;
   created_at: string;
@@ -407,6 +408,7 @@ export interface ProviderProfileRequest {
   type: "local" | "remote";
   endpoint?: string;
   model_ids: string[];
+  embedding_model_id?: string;
   secret_ref?: string;
   enabled: boolean;
 }

@@ -4,6 +4,64 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-05-22 (Embeddings + auto-learning loop)
+
+Closes the "self-learning" gap vs Hermes while preserving the
+reviewable-agents wedge. Three coupled changes:
+
+1. **Embedding client** — `llm.EmbeddingClient` interface +
+   OpenAI-compat implementation (works against any /v1/embeddings
+   endpoint: OpenAI, Ollama, Together, vLLM, LM Studio).
+   `ProviderProfile.EmbeddingModelID` carries the per-provider model
+   selection (migration #30). Anthropic skipped — no native
+   embeddings endpoint.
+
+2. **Embedding-backed skill clustering** — `skills.Induce` consumes
+   an optional `EmbeddingClient` via `Config.EmbeddingClient`. When
+   present, cosine-similarity clustering replaces Jaccard tokens;
+   clusters get sorted by average pairwise cosine so the most
+   cohesive surface first. Threshold tunable (default 0.78).
+   Embedding errors fall back to the heuristic path silently — the
+   clustering is a quality lever, not a load-bearing dependency.
+
+3. **Auto-extracted user preferences** — new `internal/learning`
+   package subscribes to `RunCompleted` events. On a successful run
+   above MinRunDuration, asks the default LLM for ≤3 short
+   preference statements ("Run tests before committing", "Prefer
+   yarn over npm"), validates them (length cap, dedup, JSON parse),
+   and writes them to `memstore.LocalPreferences` under the
+   assistant's scope. The planner already reads that surface —
+   future runs reflect the inferred preference without any extra
+   wiring.
+
+### Added
+- `internal/llm/embeddings.go` — interface + OpenAI-compat impl with
+  Authorization header + 30s default timeout + auth-error
+  surfacing.
+- `Resolver.DefaultEmbeddingClient()` — builds an embedding client
+  from the default provider's endpoint when an embedding model is
+  configured; nil otherwise (graceful degrade).
+- Migration #30 — `embedding_model_id` column on
+  `provider_profiles`.
+- `domain.ProviderProfile.EmbeddingModelID` + API request/response
+  fields + TS types updated.
+- `internal/skills/embedding_cluster.go` — cosine-similarity
+  clustering, normalised dot product, embedding centroid, cluster
+  ordering by average pairwise cosine.
+- `internal/learning/preferences.go` — RunCompleted subscriber that
+  extracts preferences via LLM and stores them in
+  `memstore.LocalPreferences`.
+
+### Behavior notes
+- The loop closes: planner already reads `LocalPreferences` at plan
+  time and annotates plans with "Why: Based on your preference for
+  …". Auto-extracted prefs now feed that read path automatically.
+- Reviewable-agents wedge preserved: every learned preference lands
+  in Mnemos memory and is visible/deletable by the user — same
+  surface that exists today.
+- Capability allowlist + size cap + LLM JSON-mode guard against
+  prompt-injected "remember everything I say" goals.
+
 ## [Unreleased] - 2026-05-22 (Mnemos lineage polish — context-source wiring, enum config, memstore ADR, comparison refresh)
 
 Closes the Mnemos-lineage backlog: ContextSource plumbing now actually

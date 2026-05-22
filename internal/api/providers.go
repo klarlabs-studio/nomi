@@ -53,12 +53,13 @@ func (s *ProviderServer) stashProviderSecret(profileID, raw string) (string, err
 
 // CreateProviderProfileRequest represents a request to create a provider profile
 type CreateProviderProfileRequest struct {
-	Name      string   `json:"name" binding:"required"`
-	Type      string   `json:"type" binding:"required"` // "local" | "remote"
-	Endpoint  string   `json:"endpoint,omitempty"`
-	ModelIDs  []string `json:"model_ids" binding:"required"`
-	SecretRef string   `json:"secret_ref,omitempty"`
-	Enabled   bool     `json:"enabled"`
+	Name             string   `json:"name" binding:"required"`
+	Type             string   `json:"type" binding:"required"` // "local" | "remote"
+	Endpoint         string   `json:"endpoint,omitempty"`
+	ModelIDs         []string `json:"model_ids" binding:"required"`
+	EmbeddingModelID string   `json:"embedding_model_id,omitempty"`
+	SecretRef        string   `json:"secret_ref,omitempty"`
+	Enabled          bool     `json:"enabled"`
 }
 
 // CreateProviderProfile creates a new provider profile
@@ -83,15 +84,16 @@ func (s *ProviderServer) CreateProviderProfile(c *gin.Context) {
 	}
 
 	profile := &domain.ProviderProfile{
-		ID:        id,
-		Name:      req.Name,
-		Type:      req.Type,
-		Endpoint:  endpoint,
-		ModelIDs:  req.ModelIDs,
-		SecretRef: secretRef,
-		Enabled:   req.Enabled,
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
+		ID:               id,
+		Name:             req.Name,
+		Type:             req.Type,
+		Endpoint:         endpoint,
+		ModelIDs:         req.ModelIDs,
+		EmbeddingModelID: req.EmbeddingModelID,
+		SecretRef:        secretRef,
+		Enabled:          req.Enabled,
+		CreatedAt:        time.Now().UTC(),
+		UpdatedAt:        time.Now().UTC(),
 	}
 
 	if err := s.profileRepo.Create(profile); err != nil {
@@ -111,6 +113,7 @@ type providerView struct {
 	Type             string    `json:"type"`
 	Endpoint         string    `json:"endpoint,omitempty"`
 	ModelIDs         []string  `json:"model_ids"`
+	EmbeddingModelID string    `json:"embedding_model_id,omitempty"`
 	SecretConfigured bool      `json:"secret_configured"`
 	Enabled          bool      `json:"enabled"`
 	CreatedAt        time.Time `json:"created_at"`
@@ -124,6 +127,7 @@ func toProviderView(p *domain.ProviderProfile) providerView {
 		Type:             p.Type,
 		Endpoint:         p.Endpoint,
 		ModelIDs:         p.ModelIDs,
+		EmbeddingModelID: p.EmbeddingModelID,
 		SecretConfigured: p.SecretRef != "",
 		Enabled:          p.Enabled,
 		CreatedAt:        p.CreatedAt,
@@ -207,6 +211,7 @@ respondInternal(c, "failed to stash secret", err)
 	profile.Type = req.Type
 	profile.Endpoint = endpoint
 	profile.ModelIDs = req.ModelIDs
+	profile.EmbeddingModelID = req.EmbeddingModelID
 	profile.Enabled = req.Enabled
 
 	if err := s.profileRepo.Update(profile); err != nil {

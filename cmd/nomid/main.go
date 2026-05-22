@@ -24,6 +24,7 @@ import (
 	"github.com/felixgeelhaar/nomi/internal/domain"
 	"github.com/felixgeelhaar/nomi/internal/events"
 	"github.com/felixgeelhaar/nomi/internal/integrations/google"
+	"github.com/felixgeelhaar/nomi/internal/learning"
 	"github.com/felixgeelhaar/nomi/internal/llm"
 	"github.com/felixgeelhaar/nomi/internal/memory"
 	"github.com/felixgeelhaar/nomi/internal/permissions"
@@ -211,6 +212,15 @@ func main() {
 	defer schedCancel()
 	sched.Start(schedCtx)
 	log.Printf("scheduler: started (tick=%s)", scheduler.DefaultTickInterval)
+
+	// Auto-learning loop (roady #130). Subscribes to RunCompleted and
+	// mines short preference statements from successful runs into the
+	// LocalPreferences scope, which the planner already reads at plan
+	// time. Closed loop: future runs reflect inferred preferences with
+	// no extra wiring on the assistant or the planner side.
+	learner := learning.New(eventBus, llmResolver, memClient, db.NewRunRepository(database), db.NewAssistantRepository(database))
+	learner.Start(schedCtx)
+	log.Printf("learning: preference extractor started")
 
 	// Plugin system (ADR 0001). plugins.Registry is now the source of truth
 	// for channels/tools/triggers/context_sources. connectors.Registry

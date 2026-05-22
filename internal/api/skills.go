@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"time"
@@ -34,7 +35,7 @@ func NewSkillsServer(runs *db.RunRepository, recipes *db.RecipeRepository, assis
 // current suggestions. Cheap enough to call per page-load; the pass
 // scans up to MaxSourceRuns successful runs and clusters them.
 func (s *SkillsServer) ListSuggestions(c *gin.Context) {
-	out, err := skills.Induce(s.runs, skills.DefaultConfig())
+	out, err := skills.Induce(s.runs, s.inductionConfig(c.Request.Context()))
 	if err != nil {
 		respondInternal(c, "induction failed", err)
 		return
@@ -72,7 +73,7 @@ func (s *SkillsServer) PromoteSuggestion(c *gin.Context) {
 		respondValidationError(c, err.Error())
 		return
 	}
-	suggestions, err := skills.Induce(s.runs, skills.DefaultConfig())
+	suggestions, err := skills.Induce(s.runs, s.inductionConfig(c.Request.Context()))
 	if err != nil {
 		respondInternal(c, "induction failed", err)
 		return
@@ -196,7 +197,7 @@ func (s *SkillsServer) Synthesize(c *gin.Context) {
 		respondValidationError(c, err.Error())
 		return
 	}
-	suggestions, err := skills.Induce(s.runs, skills.DefaultConfig())
+	suggestions, err := skills.Induce(s.runs, s.inductionConfig(c.Request.Context()))
 	if err != nil {
 		respondInternal(c, "induction failed", err)
 		return
@@ -248,6 +249,21 @@ func (s *SkillsServer) fetchClusterGoals(runIDs []string) ([]string, error) {
 		out = append(out, run.Goal)
 	}
 	return out, nil
+}
+
+// inductionConfig stitches the default heuristic config together with
+// the optional embedding client. When no embedding model is configured
+// the EmbeddingClient field stays nil and Induce falls back to the
+// Jaccard path silently.
+func (s *SkillsServer) inductionConfig(ctx context.Context) skills.Config {
+	cfg := skills.DefaultConfig()
+	cfg.Ctx = ctx
+	if s.llm != nil {
+		if ec, err := s.llm.DefaultEmbeddingClient(); err == nil && ec != nil {
+			cfg.EmbeddingClient = ec
+		}
+	}
+	return cfg
 }
 
 func commaJoin(s []string) string {
