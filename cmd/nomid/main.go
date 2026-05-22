@@ -171,13 +171,13 @@ func main() {
 
 	toolExecutor := tools.NewExecutor(toolRegistry)
 
-	// Memory system. Runtime + /memory/export + /memory/import go through
+	// Memory system. Every /memory/* endpoint + the runtime go through
 	// the standalone Mnemos embedded backend at <dataDir>/mnemos.db
-	// (ADR 0004 step 2). REST CRUD endpoints (POST/GET/DELETE /memory)
-	// still write to nomi.db's memory table via *memory.Manager —
-	// migration of those handlers to mnemos.Client is a follow-up.
+	// (ADR 0004 step 2). The legacy *memory.Manager exists only as a
+	// migration source — it reads from nomi.db's memory table once at
+	// boot via MigrateLegacyMemory, then nothing else uses it.
 	memoryRepo := db.NewMemoryRepository(database)
-	memManager := memory.NewManager(memoryRepo)
+	legacyManager := memory.NewManager(memoryRepo)
 
 	mnemosDBPath := filepath.Join(dataDir, "mnemos.db")
 	memClient, err := embedded.Open(mnemosDBPath)
@@ -192,7 +192,7 @@ func main() {
 	// table and mnemos.db is empty, copy them over once. Records a
 	// completion marker in app_settings so subsequent boots skip the
 	// step. Best-effort: failure logs but does not abort startup.
-	if err := memory.MigrateLegacyMemory(context.Background(), database, memClient, memManager); err != nil {
+	if err := memory.MigrateLegacyMemory(context.Background(), database, memClient, legacyManager); err != nil {
 		slog.Warn("legacy memory migration", "error", err)
 	}
 
@@ -634,7 +634,6 @@ func main() {
 		DB:             database,
 		EventBus:       eventBus,
 		Approvals:      approvalMgr,
-		Memory:         memManager,
 		MemoryClient:   memClient,
 		Tools:          toolRegistry,
 		Connectors:     connRegistry,

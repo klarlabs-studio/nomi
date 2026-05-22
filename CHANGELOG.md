@@ -4,6 +4,42 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-05-22 (REST CRUD memory on mnemos.Client)
+
+Closes the deferred follow-up from step 2: REST CRUD memory endpoints
+(`POST/GET/DELETE /memory`) now flow through `mnemos.Client` instead
+of `*memory.Manager`, so the desktop UI's Memory tab reads/writes the
+same store the runtime writes to. The legacy `*memory.Manager` stays
+only as a one-shot migration source.
+
+### Changed
+- **`internal/api/memory.go`** — `MemoryServer` rewritten over
+  `mnemos.Client`. `*memory.Manager` field removed. New response
+  shape `memoryResponse` decouples the wire format from
+  `mnemos.Entry` so upstream field renames don't ripple through the
+  API surface.
+- **ID-based endpoints** (`GET /memory/:id`, `DELETE /memory/:id`)
+  iterate `idLookupScopes` (workspace, profile, preferences) because
+  the path carries no scope hint. Workspace-first since most writes
+  land there. Worst-case 3 lookups on a miss.
+- **`ListMemory`** drops the implicit "workspace + profile" union
+  when no scope is given — now defaults to workspace only. Callers
+  that want both pass `?scope=...` explicitly.
+- **`RouterConfig.Memory *memory.Manager`** field removed; only
+  `MemoryClient mnemos.Client` remains. `NewMemoryServer(client)`
+  takes one arg.
+- **`cmd/nomid/main.go`** renames `memManager → legacyManager` to
+  signal its single remaining role (input to
+  `MigrateLegacyMemory`). Passed through `RouterConfig.MemoryClient`
+  is the embedded backend; the legacy manager never reaches the
+  router.
+
+### Upstream
+- `github.com/felixgeelhaar/mnemos` commit `1afbc79` — added
+  `Client.GetByID(ctx, scope, id) (*Entry, error)` to the interface
+  and the embedded implementation. Scope-isolated (same posture as
+  Forget). 3 new tests (happy, unknown id, cross-scope).
+
 ## [Unreleased] - 2026-05-22 (ADR 0004 step 2 — Mnemos package extracted)
 
 Step 2 of ADR 0004's migration path. The Mnemos package + the
