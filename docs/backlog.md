@@ -1963,3 +1963,141 @@ Depends on: a tagged Mnemos release (#114 chain) — easier to pin a known-good 
 Relates to: roady #113, commit dd58ae6.
 
 ---
+
+## Decide fate of internal/memstore + internal/memory.EmbeddedClient
+
+Audit and decide what to do with the internal/memstore package (renamed from internal/mnemos in commit 0d9b414) and the internal/memory.EmbeddedClient that implements it.
+
+Background:
+These types were introduced in commit ac42baf when the plan was to extract memory access into a standalone library. ADR 0004 has since been revised (commit 4bf31da) to treat Mnemos as a plugin, not a runtime subsystem; the extraction path was abandoned. internal/memstore now exists as a Nomi-internal abstraction layer between the runtime and *db.MemoryRepository — same shape as if it had been extracted, just sitting in-tree.
+
+Question: does it still earn its keep?
+
+For:
+- Provides a typed Scope tuple (owner_id, kind, key) instead of the flat string scope that *memory.Manager uses. The runtime call sites consume the typed shape (lifecycle.go:257 etc.). Reverting to *memory.Manager directly would lose that.
+- The Tombstone wiring + content hash + audit event emission (memory.* events) that landed alongside the interface are real value. Reverting drops them.
+- The export/import functionality (memory.Export / memory.Import) is built on top.
+
+Against:
+- Dead abstraction in the sense that no second implementation is planned. mnemos.Client was meant to be that second implementation; Mnemos-as-plugin removes the motivation.
+- Two memory-adjacent paths (Manager for REST CRUD + EmbeddedClient for runtime) creates a divergence risk. REST CRUD writes still go through Manager → nomi.db; runtime writes go through EmbeddedClient → same store but via the abstraction. Reads diverge if anyone forgets which side they're on.
+
+Scope of this feature:
+- Audit every call site (planner.go, lifecycle.go, engine.go, internal/api/memory.go) and document who depends on what.
+- Decide: keep, simplify, or revert.
+  Option A: Keep as-is. Document the abstraction's purpose in internal/memstore/doc.go more clearly ("typed memory boundary; not a future external interface").
+  Option B: Merge memstore + EmbeddedClient back into *memory.Manager. Manager grows the typed Scope API; runtime + REST CRUD share one type. Lose ~400 LOC; gain simpler import graph.
+  Option C: Keep memstore.Client as the only memory interface, port REST CRUD to it, delete *memory.Manager. Most invasive; eliminates divergence entirely.
+- Whichever option lands, preserve the audit events (memory.store / memory.forget / memory.tombstone) and the export/import wire format.
+
+Acceptance:
+- Decision recorded as a short note in docs/adr/ or as a comment block in internal/memory/doc.go.
+- 41 packages still green under go test -race ./...
+- No regression in audit-chain coverage for memory operations.
+
+Depends on: nothing.
+Relates to: ADR 0004 revised, commits ac42baf, 0d9b414, 4bf31da.
+
+---
+
+## Wire plugins.Registry.ContextSources() into the planner prompt
+
+Consume context sources at plan time. The plugins registry already collects ContextSource instances across registered plugins (internal/plugins/registry.go), and the ContextSource.Query interface now carries RunID (commit bde5ccf), but nothing in internal/runtime/planner.go actually invokes them at run start. Result: the Mnemos plugin's claimsContextSource exists, is configurable, has a working stub-server unit test, and produces zero output when an assistant uses it. Same for Obsidian's vaultContextSource and any future context source.
+
+Scope:
+- Add a step in the planner's prompt-assembly phase (likely in internal/runtime/planner.go near where folder context is currently spliced in) that:
+  1. Looks up the assistant's bound connections (existing assistant_connection_bindings table).
+  2. For each binding with role="context_source", finds the matching ContextSource on the plugin registry.
+  3. Calls Query(ctx, plugins.ContextQueryRequest{RunID, Goal, MaxTokens}).
+  4. Wraps the result in the existing wrapUntrusted("plugin_context", ...) trust-boundary tag and appends to the context block the planner already builds.
+- Errors from Query are non-fatal — log + continue, don't fail the run (existing pattern for folder context).
+- Respect a sane MaxTokens cap so a chatty context source can't blow the planner context budget. Pull from MaxContextBytes / similar that the planner already enforces.
+- Add a test in internal/runtime that:
+  - Wires a fake plugin with a ContextSource implementation that returns a known string.
+  - Creates a run with an assistant bound to that plugin's connection in role=context_source.
+  - Asserts the planner prompt (or step input, whichever it lands on) contains the known string wrapped in plugin_context tags.
+
+Out of scope:
+- Per-source priority / ordering. First-implementation can be insertion order; an explicit priority field on the binding is a follow-up.
+- Visibility caps per assistant — a Mnemos-specific concern that can layer on once the plumbing exists.
+- Streaming partial context — Query returns the full string today; chunked context delivery is a future optimization.
+
+Acceptance:
+- Test asserts that a run with a Mnemos-bound assistant + a stub Mnemos server returns a planner prompt containing the rendered Context Block.
+- Folder context still works (no behavior regression).
+- A run for an assistant with no context-source bindings produces the same prompt it does today (no spurious empty sections).
+
+Depends on: #115 (ContextSource.Query takes ContextQueryRequest) — landed in bde5ccf. This is the consumer side of that interface change; without it, #115's plumbing is dormant.
+
+Relates to: roady #113 (Mnemos plugin), commits bde5ccf, dd58ae6.
+
+---
+
+## Add enum/options support to plugins.ConfigField for dropdown UI
+
+Extend the plugin manifest's ConfigField type with an optional enum/options list so the desktop UI can render a <select> dropdown for fixed-choice fields. Today every config field renders as a free-text Input, which is fine for base_url but suboptimal for visibility_default (personal | team | org), poll-interval presets, log-level selectors, and similar.
+
+Concrete motivation: the Mnemos plugin's visibility_default field (commit dd58ae6) is rendered as a free-text input. A user typo silently produces an invalid value the server later rejects. A dropdown UX gives both validation and discovery.
+
+Scope:
+- internal/plugins/manifest.go — extend ConfigField:
+    type ConfigField struct {
+      Type        string   `json:"type"`     // "string" | "boolean" | "number" | "enum"
+      Label       string   `json:"label"`
+      Required    bool     `json:"required"`
+      Default     string   `json:"default,omitempty"`
+      Description string   `json:"description,omitempty"`
+      Options     []ConfigOption `json:"options,omitempty"` // populated when Type == "enum"
+    }
+    type ConfigOption struct {
+      Value string `json:"value"`
+      Label string `json:"label,omitempty"` // human-readable; falls back to Value
+    }
+- internal/plugins/mnemos/manifest.go — update visibility_default to use Type: "enum" with three options (personal, team, org). Keep Default: "team".
+- Update any other plugin manifest that could benefit (audit telegram, gmail, etc. — most plugins won't need it, leave them alone).
+- app/src/components/plugins-manager.tsx — in the AddConnectionDialog form rendering, branch on field.type === "enum" → render a <select> populated from field.options instead of an <Input>. Selected value defaults to field.default if present.
+- Playwright test in app/e2e/mnemos-plugin.spec.ts asserts that visibility_default surfaces with type "enum" and the three options.
+- Unit test in internal/plugins for the manifest schema serialization.
+
+Out of scope:
+- Multi-select inputs. Single-select only; multi can layer later if a plugin needs it.
+- Conditional fields ("show X only when Y is selected"). Static schema for v1.
+- Numeric enums (Type: "enum" with numeric values). String-only for the first pass.
+
+Acceptance:
+- New AddConnectionDialog renders a dropdown for Mnemos visibility_default.
+- The dropdown defaults to "team" matching the manifest's Default.
+- Existing string/number/boolean fields render unchanged.
+- A plugin with a malformed enum (Type: "enum" + empty Options) loads as before but the UI surfaces a clear validation warning instead of rendering an empty dropdown.
+
+Depends on: nothing.
+Relates to: roady #113, #116. Cross-cutting change touching the plugin manifest contract.
+
+---
+
+## Verify e2e-mnemos workflow once via workflow_dispatch
+
+Trigger the .github/workflows/e2e-mnemos.yml workflow once manually to confirm CI plumbing works end to end against `mnemos serve` at the pinned v0.15.3 ref. Catches issues that only surface in the GitHub Actions environment: cache hits, working-directory drift, mnemos serve startup quirks on ubuntu-latest, port-collision behavior under the GitHub runner network, etc.
+
+Why this isn't automatic:
+- The workflow was added in commit 62a99e1. Triggers fire on pushes/PRs touching internal/plugins/mnemos/** or cmd/nomid/main.go, plus manual workflow_dispatch.
+- A green run on a real PR is the canonical proof. The first PR that touches plugin code will exercise it; this feature is the deliberate verification before that organic test happens, so we know the workflow itself isn't broken when we actually need it.
+
+Scope:
+- gh workflow run e2e-mnemos --ref main (or via the GitHub UI).
+- Inspect the run: confirm mnemos serve started, /health came up within 30s, all 6 tool calls + the context source roundtripped, server log got dumped to the workflow output.
+- If anything fails, fix the workflow in-place rather than re-pinning Mnemos to a different version (the pin is correct; CI quirks are the suspect).
+- Write a short note in docs/runbooks/ (or extend docs/vendor-notes.md) summarizing what to look for next time the workflow trips so the failure mode is documented.
+- Pin the green-run URL in this feature's notes for future reference.
+
+Acceptance:
+- The workflow shows a green run in the GitHub Actions tab.
+- The mnemos.log artifact (or stdout tail) is captured and inspectable.
+- TestE2E_FullRoundTrip's 7 sub-steps all pass against the live server.
+- Total runtime <90s (the budget the workflow's timeout-minutes: 10 assumes plenty of headroom for).
+
+Depends on: nothing. The workflow + test are already in main as of commit 62a99e1.
+
+Relates to: roady #117. Not blocking any other feature; pure CI hygiene.
+
+---
