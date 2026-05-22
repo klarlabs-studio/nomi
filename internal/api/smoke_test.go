@@ -106,7 +106,9 @@ func newHarness(t *testing.T) *harness {
 	}
 	toolExec := tools.NewExecutor(toolReg)
 
+	memRepo := db.NewMemoryRepository(database)
 	memClient := memory.NewTestClient(t)
+	memMgr := memory.NewManager(memRepo)
 	rt := runtime.NewRuntime(database, bus, permEngine, approvalMgr, toolExec, memClient, runtime.DefaultConfig())
 
 	connReg := connectors.NewRegistry()
@@ -117,6 +119,7 @@ func newHarness(t *testing.T) *harness {
 		DB:           database,
 		EventBus:     bus,
 		Approvals:    approvalMgr,
+		Memory:       memMgr,
 		MemoryClient: memClient,
 		Tools:      toolReg,
 		Connectors: connReg,

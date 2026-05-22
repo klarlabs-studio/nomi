@@ -10,6 +10,7 @@ import (
 	"github.com/felixgeelhaar/nomi/internal/connectors"
 	"github.com/felixgeelhaar/nomi/internal/domain"
 	"github.com/felixgeelhaar/nomi/internal/events"
+	"github.com/felixgeelhaar/nomi/internal/memory"
 	"github.com/felixgeelhaar/nomi/internal/metrics"
 	"github.com/felixgeelhaar/mnemos"
 	"github.com/felixgeelhaar/nomi/internal/permissions"
@@ -32,9 +33,8 @@ type RouterConfig struct {
 	DB         *db.DB
 	EventBus   *events.EventBus
 	Approvals  *permissions.Manager
-	// MemoryClient backs every /memory/* endpoint (ADR 0004 step 2).
-	// Required; nil disables the whole memory surface at boot.
-	MemoryClient mnemos.Client
+	Memory     *memory.Manager
+	MemoryClient mnemos.Client // optional; required for /memory/export + /memory/import endpoints (ADR 0004 §8)
 	Tools      *tools.Registry
 	Connectors  *connectors.Registry
 	Plugins *plugins.Registry // source of truth for plugin-architecture endpoints
@@ -173,7 +173,7 @@ func NewRouter(cfg RouterConfig) *gin.Engine {
 	}
 
 	// Memory endpoints
-	memoryServer := NewMemoryServer(cfg.MemoryClient)
+	memoryServer := NewMemoryServer(cfg.Memory, cfg.MemoryClient)
 	memories := r.Group("/memory")
 	{
 		memories.POST("", memoryServer.CreateMemory)
