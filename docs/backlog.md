@@ -1719,3 +1719,54 @@ Depends on: ADR 0004 moving from Proposed to Accepted.
 Blocks: future features "mnemos.Client extraction to Mnemos repo" (step 2), "mnemos/remote HTTP client" (step 3).
 
 ---
+
+## Mnemos package extraction to standalone repo (ADR 0004 Step 2)
+
+Implement step 2 of ADR 0004: move internal/mnemos + internal/memory/EmbeddedClient out of the Nomi repo into the standalone github.com/felixgeelhaar/mnemos OSS project. Introduce a separate mnemos.db SQLite file alongside nomi.db. Migrate existing memory rows from nomi.db's memory table into mnemos.db on first boot post-upgrade. Zero behavior change for the laptop user; sets up step 3 (mnemos/remote HTTP client) by making the package independently versionable.
+
+ADR reference: docs/adr/0004-nomi-mnemos-cognitive-boundary.md, status Accepted 2026-05-22.
+
+Depends on: feature #111 (step 1) — mnemos.Client interface already extracted, EmbeddedClient already implements it, runtime already depends on the interface, audit + tombstone + export/import already wired. Commits: 9812042 (narrative) + ac42baf (implementation).
+
+Scope:
+1. Bootstrap github.com/felixgeelhaar/mnemos repo
+   - Public package mnemos at root: copy internal/mnemos/{doc,types,client}.go verbatim. Public surface stays identical (no renaming).
+   - Subpackage mnemos/embedded: copy internal/memory/{client.go, exportimport.go} renaming EmbeddedClient → embedded.Client. Drop the *db.MemoryRepository dependency by inlining the SQL (the rows are now in mnemos.db, not nomi.db, so cross-package DB access is gone).
+   - Own migration set under mnemos/embedded/migrations/*.sql. Initial migration 000001 creates the memory table extracted from nomi's 000001_init_schema.up.sql (without the FK to assistants/runs since those tables don't exist in mnemos.db).
+   - Apache 2.0 LICENSE matching Nomi.
+   - README with the wire-contract summary, link to ADR 0004 in Nomi, and the embedded vs remote shape.
+   - Tests move with the code (client_test.go, exportimport_test.go).
+
+2. Wire Nomi as a consumer of the external package
+   - go.mod: require github.com/felixgeelhaar/mnemos vX.Y.Z (pin the first tagged release).
+   - Delete internal/mnemos/ and internal/memory/client.go + tests. internal/memory/manager.go stays (still used by REST CRUD endpoints).
+   - Replace import paths: github.com/felixgeelhaar/nomi/internal/mnemos → github.com/felixgeelhaar/mnemos. Same for embedded.
+   - Update cmd/nomid/main.go: open mnemos.db separately from nomi.db (new file in the OS app-data dir alongside nomi.db). Construct embedded.NewClient(mnemosDB).WithEventBus(eventBus).
+
+3. Data migration on first boot post-upgrade
+   - Detection: mnemos.db does not exist but nomi.db has rows in the memory table.
+   - One-shot import: read every row via the existing nomi.db connection, transform to mnemos.Entry, call client.Store on the fresh mnemos.db backend. Wrap in a transaction.
+   - Persist a marker (in app_settings) recording the migration completed at <timestamp> with the row count, so the importer never re-runs.
+   - Leave the nomi.db memory table in place (don't drop) until a follow-up cleanup migration ships and a stable release confirms no rollback is needed.
+
+4. Acceptance criteria (ADR 0004 step 2 closure)
+   - Fresh install: mnemos.db is created, all 14 EmbeddedClient tests pass against the external package, full Nomi repo test suite green.
+   - Upgrade install: existing memory rows from nomi.db appear in mnemos.db after first boot; nomi.db memory table is untouched; second boot does not re-import (idempotent).
+   - go.mod has exactly one mnemos dep at a pinned semver.
+   - mnemos repo CI passes its own tests independently.
+   - No internal/mnemos/ path remains in the Nomi tree.
+
+5. Out of scope
+   - mnemos/remote HTTP client (step 3, separate feature).
+   - Cross-DB FK reconstruction (intentionally dropped — replaced by event-driven Tombstone, already shipped in step 1).
+   - Vector retrieval / embeddings (separate ADR).
+   - Multi-tenant auth (Phase 4).
+
+6. Risks + mitigations
+   - Risk: silent FK behavior change as memory table moves out of nomi.db. Mitigation: step 1's Tombstone wiring (already shipped) handles assistant.deleted + run.deleted explicitly.
+   - Risk: migration failure on upgrade leaves user without memory. Mitigation: preserve nomi.db memory table until cleanup migration; ship a rollback-friendly version pin in go.mod; transactional one-shot import.
+   - Risk: cross-repo version skew (mnemos interface evolves out of sync with Nomi expectations). Mitigation: interface stability contract documented in mnemos README; additive-only changes on minor; major bumps coordinated with Nomi PRs.
+
+Blocks: future feature "mnemos/remote HTTP client (ADR 0004 Step 3)".
+
+---
