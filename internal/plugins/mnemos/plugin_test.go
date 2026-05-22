@@ -147,14 +147,68 @@ func TestPlugin_Configure_HotReload(t *testing.T) {
 	}
 }
 
-func TestPlugin_Tools_ReturnsAtLeastOne(t *testing.T) {
+func TestPlugin_Tools_ReturnsAllSix(t *testing.T) {
 	p := New(&fakeSecrets{})
-	if got := len(p.Tools()); got < 1 {
-		t.Errorf("Tools() = %d, want at least 1", got)
+	tools := p.Tools()
+	if got := len(tools); got != 6 {
+		t.Fatalf("Tools() = %d, want 6", got)
 	}
-	// First-shipped tool must be mnemos.events.append; the remaining
-	// stubs land in a follow-up commit.
-	if name := p.Tools()[0].Name(); name != ToolEventsAppend {
-		t.Errorf("first tool = %q, want %q", name, ToolEventsAppend)
+	got := make(map[string]string, len(tools))
+	for _, tl := range tools {
+		got[tl.Name()] = tl.Capability()
+	}
+	wantCaps := map[string]string{
+		ToolEventsAppend:      CapWrite,
+		ToolClaimsAppend:      CapWrite,
+		ToolClaimsList:        CapRead,
+		ToolRelationshipsList: CapRead,
+		ToolEmbeddingsAppend:  CapWrite,
+		ToolSearch:            CapRead,
+	}
+	for name, wantCap := range wantCaps {
+		gotCap, ok := got[name]
+		if !ok {
+			t.Errorf("missing tool %q", name)
+			continue
+		}
+		if gotCap != wantCap {
+			t.Errorf("tool %q capability = %q, want %q", name, gotCap, wantCap)
+		}
+	}
+}
+
+func TestPlugin_ContextSources_OnePerConnection(t *testing.T) {
+	p := New(&fakeSecrets{})
+	cfg, _ := json.Marshal(configureInput{
+		Connections: []connectionConfig{
+			{ID: "personal", BaseURL: "http://a"},
+			{ID: "company", BaseURL: "http://b"},
+		},
+	})
+	if err := p.Configure(context.Background(), cfg); err != nil {
+		t.Fatal(err)
+	}
+	sources := p.ContextSources()
+	if len(sources) != 2 {
+		t.Errorf("ContextSources() = %d, want 2", len(sources))
+	}
+	for _, s := range sources {
+		if s.Name() != ContextSourceName {
+			t.Errorf("source name = %q, want %q", s.Name(), ContextSourceName)
+		}
+	}
+}
+
+func TestPlugin_ToolValidation_RejectsMissingConnection(t *testing.T) {
+	p := New(&fakeSecrets{})
+	// No Configure call — connection map is empty.
+	tools := p.Tools()
+	// Each tool should fail with the same not-found shape when
+	// connection_id is omitted or unknown.
+	for _, tl := range tools {
+		_, err := tl.Execute(context.Background(), map[string]interface{}{})
+		if err == nil {
+			t.Errorf("tool %q: missing connection_id should error", tl.Name())
+		}
 	}
 }

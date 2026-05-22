@@ -36,6 +36,7 @@ import (
 	mediaplugin "github.com/felixgeelhaar/nomi/internal/plugins/media"
 	obsidianplugin "github.com/felixgeelhaar/nomi/internal/plugins/obsidian"
 	slackplugin "github.com/felixgeelhaar/nomi/internal/plugins/slack"
+	mnemosplugin "github.com/felixgeelhaar/nomi/internal/plugins/mnemos"
 	telegramplugin "github.com/felixgeelhaar/nomi/internal/plugins/telegram"
 	"github.com/felixgeelhaar/nomi/internal/plugins/devloader"
 	"github.com/felixgeelhaar/nomi/internal/plugins/hub"
@@ -264,6 +265,16 @@ func main() {
 	githubPlugin := githubplugin.NewPlugin(connectionRepo, bindingRepo, secretStore)
 	if err := pluginRegistry.Register(githubPlugin); err != nil {
 		log.Fatalf("Failed to register GitHub plugin: %v", err)
+	}
+
+	// Mnemos plugin — tool-only + context source, no channels/triggers.
+	// One Connection = one Mnemos service (base_url + optional bearer
+	// token). Capability split: mnemos.read for retrieval, mnemos.write
+	// for appending events/claims/relationships/embeddings. Inert until
+	// the user adds a Connection in the Connections tab.
+	mnemosPlugin := mnemosplugin.New(secretStore)
+	if err := pluginRegistry.Register(mnemosPlugin); err != nil {
+		log.Fatalf("Failed to register Mnemos plugin: %v", err)
 	}
 
 	// Obsidian Vault plugin — tool-only, filesystem-only. One Connection

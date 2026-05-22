@@ -156,9 +156,11 @@ func (p *Plugin) Status() plugins.PluginStatus {
 func (p *Plugin) Tools() []tools.Tool {
 	return []tools.Tool{
 		&eventsAppendTool{p: p},
-		// Remaining tools follow the same pattern; stubs land in a
-		// follow-up commit so the first one can be reviewed in
-		// isolation before fanning out.
+		&claimsAppendTool{p: p},
+		&claimsListTool{p: p},
+		&relationshipsListTool{p: p},
+		&embeddingsAppendTool{p: p},
+		&searchTool{p: p},
 	}
 }
 

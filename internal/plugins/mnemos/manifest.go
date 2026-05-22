@@ -32,8 +32,12 @@ const (
 	ToolClaimsAppend        = "mnemos.claims.append"
 	ToolClaimsList          = "mnemos.claims.list"
 	ToolRelationshipsList   = "mnemos.relationships.list"
-	ToolEmbeddingsAppend    = "mnemos.embeddings.append"
-	ToolEmbeddingsSimilar   = "mnemos.embeddings.similar"
+	ToolEmbeddingsAppend  = "mnemos.embeddings.append"
+	// ToolSearch covers hybrid retrieval (vector + lexical) over the
+	// claim store. Maps to client.Search upstream — the "embeddings
+	// similar" name from the original ADR sketch turned out to be a
+	// poor fit for what real Mnemos exposes.
+	ToolSearch = "mnemos.search"
 )
 
 // ContextSourceName is the identifier the planner uses when invoking
@@ -88,9 +92,9 @@ func buildManifest() plugins.PluginManifest {
 					RequiresConnection: true,
 				},
 				{
-					Name:               ToolEmbeddingsSimilar,
+					Name:               ToolSearch,
 					Capability:         CapRead,
-					Description:        "Retrieve embeddings similar to a query. Use when the planner wants prior context relevant to the current goal.",
+					Description:        "Hybrid retrieval (vector + lexical) over the Mnemos claim store. Returns the top-k claims relevant to the query plus any contradictions among them. Use when the planner wants prior context for the current goal.",
 					RequiresConnection: true,
 				},
 			},
