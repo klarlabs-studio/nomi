@@ -4,15 +4,13 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/felixgeelhaar/nomi/internal/buildinfo"
 	"github.com/felixgeelhaar/nomi/internal/connectors"
 	"github.com/felixgeelhaar/nomi/internal/domain"
 	"github.com/felixgeelhaar/nomi/internal/events"
 	"github.com/felixgeelhaar/nomi/internal/memory"
-	"github.com/felixgeelhaar/nomi/internal/metrics"
 	"github.com/felixgeelhaar/nomi/internal/memstore"
+	"github.com/felixgeelhaar/nomi/internal/metrics"
 	"github.com/felixgeelhaar/nomi/internal/permissions"
 	"github.com/felixgeelhaar/nomi/internal/plugins"
 	"github.com/felixgeelhaar/nomi/internal/plugins/hub"
@@ -20,26 +18,29 @@ import (
 	"github.com/felixgeelhaar/nomi/internal/plugins/store"
 	"github.com/felixgeelhaar/nomi/internal/plugins/wasmhost"
 	"github.com/felixgeelhaar/nomi/internal/runtime"
+	"github.com/felixgeelhaar/nomi/internal/scheduler"
 	"github.com/felixgeelhaar/nomi/internal/secrets"
 	"github.com/felixgeelhaar/nomi/internal/storage/db"
 	"github.com/felixgeelhaar/nomi/internal/tools"
 	"github.com/felixgeelhaar/nomi/internal/tunnel"
 	"github.com/felixgeelhaar/nomi/internal/webhooks"
+	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // RouterConfig bundles the dependencies and security knobs the router needs.
 type RouterConfig struct {
-	Runtime    *runtime.Runtime
-	DB         *db.DB
-	EventBus   *events.EventBus
-	Approvals  *permissions.Manager
-	Memory     *memory.Manager
+	Runtime      *runtime.Runtime
+	DB           *db.DB
+	EventBus     *events.EventBus
+	Approvals    *permissions.Manager
+	Memory       *memory.Manager
 	MemoryClient memstore.Client // optional; required for /memory/export + /memory/import endpoints (ADR 0004 §8)
-	Tools      *tools.Registry
-	Connectors  *connectors.Registry
-	Plugins *plugins.Registry // source of truth for plugin-architecture endpoints
-	Secrets secrets.Store
-	AuthToken   string // required; requests must carry Authorization: Bearer <AuthToken>
+	Tools        *tools.Registry
+	Connectors   *connectors.Registry
+	Plugins      *plugins.Registry // source of truth for plugin-architecture endpoints
+	Secrets      secrets.Store
+	AuthToken    string // required; requests must carry Authorization: Bearer <AuthToken>
 
 	// AuthTokenStore optionally lets the auth middleware pick up rotated
 	// tokens at runtime. When non-nil, the middleware reads from the
@@ -68,6 +69,11 @@ type RouterConfig struct {
 	// RemoteTemplates enables the remote assistant templates marketplace.
 	// nil disables the endpoint.
 	RemoteTemplates *db.RemoteTemplateRepository
+
+	// ScheduleRepo + Scheduler back the /schedules endpoints. Both nil
+	// disables the surface (routes return 404 instead of 503).
+	ScheduleRepo *db.ScheduleRepository
+	Scheduler    *scheduler.Scheduler
 }
 
 // NewRouter assembles the HTTP routes and wraps them in CORS + auth middleware.
@@ -140,6 +146,22 @@ func NewRouter(cfg RouterConfig) *gin.Engine {
 		runs.POST("/:id/resume", runServer.ResumeRun)
 		runs.POST("/:id/cancel", runServer.CancelRun)
 		runs.DELETE("/:id", runServer.DeleteRun)
+	}
+
+	// Schedule endpoints (roady #124). The scheduler dependency is
+	// optional — when nil, the routes still register but every handler
+	// short-circuits with a 503 so the UI degrades gracefully on a
+	// daemon that hasn't wired the scheduler yet.
+	if cfg.ScheduleRepo != nil && cfg.Scheduler != nil {
+		scheduleServer := NewScheduleServer(cfg.ScheduleRepo, cfg.Scheduler)
+		schedules := r.Group("/schedules")
+		{
+			schedules.POST("", scheduleServer.CreateSchedule)
+			schedules.GET("", scheduleServer.ListSchedules)
+			schedules.GET("/:id", scheduleServer.GetSchedule)
+			schedules.PATCH("/:id", scheduleServer.UpdateSchedule)
+			schedules.DELETE("/:id", scheduleServer.DeleteSchedule)
+		}
 	}
 
 	// Runtime introspection — surface the registered executor backends so
@@ -290,7 +312,6 @@ func NewRouter(cfg RouterConfig) *gin.Engine {
 		conversations.GET("/:id", conversationServer.GetConversation)
 		conversations.DELETE("/:id", conversationServer.DeleteConversation)
 	}
-
 
 	// Provider profile endpoints
 	providerServer := NewProviderServer(cfg.DB, cfg.Secrets)

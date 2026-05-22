@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 531,
+  "version": 532,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -2337,8 +2337,10 @@
       "elapsed_minutes": 82
     },
     "task-scheduled-runs-with-natural-language-cron": {
-      "status": "pending",
+      "status": "in_progress",
       "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-22T19:43:25.537396+02:00",
       "elapsed_minutes": 0
     },
     "task-scope-discipline:-cut-overhang,-stop-polling,-prune-e2e-journeys-to-wedge-icp": {
@@ -2682,5 +2684,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-22T19:36:59.666178+02:00"
+  "updated_at": "2026-05-22T19:43:25.537396+02:00"
 }

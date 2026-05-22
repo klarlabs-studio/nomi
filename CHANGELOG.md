@@ -4,6 +4,39 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-05-22 (Scheduled runs)
+
+First cut of cron-driven scheduled runs (roady #124). A Schedule fires
+a Run on a recurring cadence against a chosen assistant with a fixed
+prompt. Background ticker polls every 30s and triggers via the runtime
+exactly as a connector source would — schedule fires show up in the
+audit log with `source = "schedule"`.
+
+### Added
+- `schedules` table (migration #27) with `assistant_id` FK + index on
+  `next_fire_at` (partial, enabled-only).
+- `domain.Schedule` + `db.ScheduleRepository` CRUD + `DueBefore`.
+- `internal/scheduler` package — background ticker, cron parsing
+  (robfig/cron/v3), fire dispatch through the existing
+  `runtime.CreateRunFromSource` path.
+- REST endpoints: `POST/GET/PATCH/DELETE /schedules`, `GET /schedules/:id`.
+- Boot wire in `cmd/nomid/main.go` starts the scheduler with a 30s
+  tick interval.
+
+### Behavior notes
+- Missed-fire policy: skip. A daemon down for 8 hours doesn't unleash
+  8 catch-up runs on restart — it fires once on the next tick and
+  advances `next_fire_at` to the next future cron slot.
+- Invalid cron expressions disable the schedule and record the cause in
+  `last_error`, rather than busy-looping.
+- Schedules respect the assistant's permission policy — they go
+  through the same approval flow a manual run would.
+
+### Deferred
+- Natural-language cron translation (e.g. "every weekday at 8am") —
+  needs an LLM call + grammar guard; ship in a follow-up.
+- Tauri Settings UI surface for schedule CRUD.
+
 ## [Unreleased] - 2026-05-22 (Sandboxed executor backends — PR5: assistant editor UI)
 
 Exposes the executor backend choice in the desktop app's assistant editor.

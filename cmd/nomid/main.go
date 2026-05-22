@@ -47,6 +47,7 @@ import (
 	"github.com/felixgeelhaar/nomi/internal/plugins/wasmplugin"
 	"github.com/felixgeelhaar/nomi/internal/runtime"
 	"github.com/felixgeelhaar/nomi/internal/runtime/executor"
+	"github.com/felixgeelhaar/nomi/internal/scheduler"
 	"github.com/felixgeelhaar/nomi/internal/secrets"
 	"github.com/felixgeelhaar/nomi/internal/seed"
 	"github.com/felixgeelhaar/nomi/internal/storage/db"
@@ -198,6 +199,16 @@ func main() {
 		log.Printf("executor: gvisor backend registered")
 	}
 	probeCancel()
+
+	// Scheduler — picks up cron-driven schedules from the schedules
+	// table and fires Runs on schedule. Started in the background; the
+	// shutdown signal handler stops it before closing the DB.
+	scheduleRepo := db.NewScheduleRepository(database)
+	sched := scheduler.New(scheduleRepo, rt)
+	schedCtx, schedCancel := context.WithCancel(context.Background())
+	defer schedCancel()
+	sched.Start(schedCtx)
+	log.Printf("scheduler: started (tick=%s)", scheduler.DefaultTickInterval)
 
 	// Plugin system (ADR 0001). plugins.Registry is now the source of truth
 	// for channels/tools/triggers/context_sources. connectors.Registry
@@ -658,6 +669,8 @@ func main() {
 		CatalogProvider: catalogProvider,
 		PluginUpdater:   buildPluginUpdater(pluginRegistry, db.NewPluginStateRepository(database), pluginStore, pluginVerifier, wasmLoader, eventBus, catalogProvider),
 		RemoteTemplates: db.NewRemoteTemplateRepository(database),
+		ScheduleRepo:    scheduleRepo,
+		Scheduler:       sched,
 	})
 
 	// Publish the endpoint so non-Go clients (the Tauri shell, e2e

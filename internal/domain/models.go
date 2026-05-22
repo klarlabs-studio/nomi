@@ -279,6 +279,23 @@ type AssistantDefinition struct {
 	CreatedAt           time.Time            `json:"created_at"`
 }
 
+// Schedule fires a Run on a recurring cadence (cron). Scheduler ticker
+// queries enabled schedules whose NextFireAt has elapsed and triggers a
+// new Run on behalf of the assistant. Missed-fire policy: skip (no
+// catch-up runs for windows the daemon wasn't running through).
+type Schedule struct {
+	ID          string     `json:"id"`
+	AssistantID string     `json:"assistant_id"`
+	Prompt      string     `json:"prompt"`
+	CronExpr    string     `json:"cron_expr"`
+	Enabled     bool       `json:"enabled"`
+	NextFireAt  time.Time  `json:"next_fire_at"`
+	LastFireAt  *time.Time `json:"last_fire_at,omitempty"`
+	LastRunID   string     `json:"last_run_id,omitempty"`
+	LastError   string     `json:"last_error,omitempty"`
+	CreatedAt   time.Time  `json:"created_at"`
+}
+
 // MemoryEntry represents a single memory item
 type MemoryEntry struct {
 	ID          string    `json:"id"`
