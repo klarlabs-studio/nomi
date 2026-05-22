@@ -2,10 +2,13 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/felixgeelhaar/mnemos"
 )
 
 // TestMemoryExportImportRoundTrip exercises GET /memory/export and POST
@@ -17,14 +20,15 @@ import (
 func TestMemoryExportImportRoundTrip(t *testing.T) {
 	h := newHarness(t)
 
-	// Seed three entries via the existing POST /memory handler.
+	// Seed three entries directly through the mnemos.Client backing the
+	// export endpoint. POST /memory still writes to the legacy
+	// nomi.db memory table via *memory.Manager (ADR 0004 step 2
+	// follow-up); these tests target the new mnemos.db backend.
+	ctx := context.Background()
+	scope := mnemos.LocalWorkspace()
 	for _, body := range []string{"alpha", "beta", "gamma"} {
-		w := h.do("POST", "/memory", map[string]any{
-			"content": body,
-			"scope":   "workspace",
-		})
-		if w.Code != 201 {
-			t.Fatalf("seed %q: HTTP %d: %s", body, w.Code, w.Body.String())
+		if err := h.memClient.Store(ctx, scope, &mnemos.Entry{Content: body}); err != nil {
+			t.Fatalf("seed %q: %v", body, err)
 		}
 	}
 

@@ -6,9 +6,10 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/felixgeelhaar/mnemos"
+	"github.com/felixgeelhaar/mnemos/embedded"
 	"github.com/felixgeelhaar/nomi/internal/domain"
 	"github.com/felixgeelhaar/nomi/internal/memory"
-	"github.com/felixgeelhaar/nomi/internal/mnemos"
 )
 
 // MemoryServer handles memory-related endpoints
@@ -147,7 +148,7 @@ func (s *MemoryServer) ExportMemory(c *gin.Context) {
 	}
 	c.Header("Content-Type", "application/x-ndjson")
 	c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="mnemos-%s.jsonl"`, scope.Kind))
-	if _, err := memory.Export(c.Request.Context(), s.client, scope, c.Writer); err != nil {
+	if _, err := embedded.Export(c.Request.Context(), s.client, scope, c.Writer); err != nil {
 		// Body may already be partly written; can't switch status code.
 		// Trailer-style error is unfortunate but matches streaming endpoints.
 		_, _ = fmt.Fprintf(c.Writer, "\n# export error: %s\n", err.Error())
@@ -164,7 +165,7 @@ func (s *MemoryServer) ImportMemory(c *gin.Context) {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "memory import unavailable: no mnemos.Client wired"})
 		return
 	}
-	n, err := memory.Import(c.Request.Context(), s.client, c.Request.Body)
+	n, err := embedded.Import(c.Request.Context(), s.client, c.Request.Body)
 	if err != nil {
 		respondValidationError(c, err.Error())
 		return

@@ -11,13 +11,13 @@ import (
 	"github.com/felixgeelhaar/nomi/internal/domain"
 	"github.com/felixgeelhaar/nomi/internal/events"
 	"github.com/felixgeelhaar/nomi/internal/memory"
-	"github.com/felixgeelhaar/nomi/internal/mnemos"
+	"github.com/felixgeelhaar/mnemos"
 	"github.com/felixgeelhaar/nomi/internal/permissions"
 	"github.com/felixgeelhaar/nomi/internal/storage/db"
 	"github.com/felixgeelhaar/nomi/internal/tools"
 )
 
-func setupTestRuntimeWithMemory(t *testing.T) (*Runtime, *db.DB, *memory.EmbeddedClient, func()) {
+func setupTestRuntimeWithMemory(t *testing.T) (*Runtime, *db.DB, mnemos.Client, func()) {
 	// Use temp file database instead of :memory: for connection stability
 	tmpFile, err := os.CreateTemp("", "nomi-integration-*.db")
 	if err != nil {
@@ -48,8 +48,7 @@ func setupTestRuntimeWithMemory(t *testing.T) (*Runtime, *db.DB, *memory.Embedde
 		t.Fatalf("Failed to register tools: %v", err)
 	}
 	toolExecutor := tools.NewExecutor(toolRegistry)
-	memRepo := db.NewMemoryRepository(database)
-	memManager := memory.NewEmbeddedClient(memRepo)
+	memManager := memory.NewTestClient(t)
 
 	rt := NewRuntime(database, eventBus, permEngine, approvalMgr, toolExecutor, memManager, DefaultConfig())
 

@@ -10,7 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/mnemos"
+	"github.com/felixgeelhaar/mnemos"
 	"github.com/felixgeelhaar/nomi/internal/tools"
 )
 

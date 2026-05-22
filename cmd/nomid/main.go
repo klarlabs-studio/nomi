@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -18,6 +19,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/felixgeelhaar/mnemos/embedded"
 	"github.com/felixgeelhaar/nomi/internal/api"
 	"github.com/felixgeelhaar/nomi/internal/buildinfo"
 	"github.com/felixgeelhaar/nomi/internal/connectors"
@@ -169,12 +171,30 @@ func main() {
 
 	toolExecutor := tools.NewExecutor(toolRegistry)
 
-	// Memory system. Runtime depends on the mnemos.Client interface (ADR
-	// 0004 step 1); the REST API still uses *memory.Manager directly for
-	// its CRUD handlers and is wired separately below.
+	// Memory system. Runtime + /memory/export + /memory/import go through
+	// the standalone Mnemos embedded backend at <dataDir>/mnemos.db
+	// (ADR 0004 step 2). REST CRUD endpoints (POST/GET/DELETE /memory)
+	// still write to nomi.db's memory table via *memory.Manager —
+	// migration of those handlers to mnemos.Client is a follow-up.
 	memoryRepo := db.NewMemoryRepository(database)
 	memManager := memory.NewManager(memoryRepo)
-	memClient := memory.NewEmbeddedClient(memoryRepo).WithEventBus(eventBus)
+
+	mnemosDBPath := filepath.Join(dataDir, "mnemos.db")
+	memClient, err := embedded.Open(mnemosDBPath)
+	if err != nil {
+		slog.Error("open mnemos store", "path", mnemosDBPath, "error", err)
+		os.Exit(1)
+	}
+	defer memClient.Close()
+	memClient.WithEmitter(memory.NewBusEmitter(eventBus))
+
+	// First-boot migration: if nomi.db has rows in its legacy memory
+	// table and mnemos.db is empty, copy them over once. Records a
+	// completion marker in app_settings so subsequent boots skip the
+	// step. Best-effort: failure logs but does not abort startup.
+	if err := memory.MigrateLegacyMemory(context.Background(), database, memClient, memManager); err != nil {
+		slog.Warn("legacy memory migration", "error", err)
+	}
 
 	// Runtime
 	rt := runtime.NewRuntime(database, eventBus, permEngine, approvalMgr, toolExecutor, memClient, runtime.DefaultConfig())

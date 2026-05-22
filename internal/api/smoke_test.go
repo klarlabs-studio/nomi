@@ -19,6 +19,7 @@ import (
 	"github.com/felixgeelhaar/nomi/internal/connectors"
 	"github.com/felixgeelhaar/nomi/internal/domain"
 	"github.com/felixgeelhaar/nomi/internal/events"
+	"github.com/felixgeelhaar/mnemos"
 	"github.com/felixgeelhaar/nomi/internal/memory"
 	"github.com/felixgeelhaar/nomi/internal/permissions"
 	"github.com/felixgeelhaar/nomi/internal/runtime"
@@ -77,6 +78,7 @@ type harness struct {
 	events     *events.EventBus
 	secrets    secrets.Store
 	connectors *connectors.Registry
+	memClient  mnemos.Client
 }
 
 func newHarness(t *testing.T) *harness {
@@ -105,7 +107,7 @@ func newHarness(t *testing.T) *harness {
 	toolExec := tools.NewExecutor(toolReg)
 
 	memRepo := db.NewMemoryRepository(database)
-	memClient := memory.NewEmbeddedClient(memRepo)
+	memClient := memory.NewTestClient(t)
 	memMgr := memory.NewManager(memRepo)
 	rt := runtime.NewRuntime(database, bus, permEngine, approvalMgr, toolExec, memClient, runtime.DefaultConfig())
 
@@ -132,6 +134,7 @@ func newHarness(t *testing.T) *harness {
 		events:     bus,
 		secrets:    secretStore,
 		connectors: connReg,
+		memClient:  memClient,
 	}
 	t.Cleanup(func() {
 		rt.Shutdown()

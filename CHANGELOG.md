@@ -4,6 +4,80 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-05-22 (ADR 0004 step 2 — Mnemos package extracted)
+
+Step 2 of ADR 0004's migration path. The Mnemos package + the
+embedded SQLite backend now live in the standalone
+`github.com/felixgeelhaar/mnemos` repository. Nomi consumes them via
+`go.mod`. Memory persists to a separate `mnemos.db` SQLite file
+alongside `nomi.db`; first-boot migration copies the legacy memory
+table over once.
+
+### Added
+- **`internal/memory/emitter.go`** — `BusEmitter` adapts the standalone
+  `embedded.Emitter` interface to Nomi's `*events.EventBus`. Memory
+  ops emitted by the external package land in the existing
+  hash-chained audit log via this thin shim.
+- **`internal/memory/migrate.go`** — `MigrateLegacyMemory(ctx, db,
+  dst, src)` reads every row from `nomi.db`'s legacy `memory` table
+  and stores it through the new mnemos.db backend. Records completion
+  in `app_settings.mnemos_legacy_migration_completed_at` so subsequent
+  boots short-circuit. Idempotent; preserves the legacy table for
+  rollback safety. 3 unit tests (copy + idempotent + empty-noop).
+- **`internal/memory/testhelpers.go`** — `NewTestClient(t)` returns an
+  in-memory `*embedded.Client` registered for cleanup. Replaces the
+  dozen-plus call sites that previously constructed
+  `*memory.EmbeddedClient`.
+
+### Changed
+- **`go.mod`** — requires `github.com/felixgeelhaar/mnemos` v0.0.0
+  (replace directive pins to local `../mnemos` until v0.1.0 is tagged
+  upstream).
+- **`cmd/nomid/main.go`** — opens `<dataDir>/mnemos.db` via
+  `embedded.Open`, attaches `memory.NewBusEmitter(eventBus)`, invokes
+  `memory.MigrateLegacyMemory` once at boot. The `*memory.Manager`
+  used by REST CRUD endpoints (POST/GET/DELETE /memory) continues to
+  write to the legacy `nomi.db` memory table — its migration is a
+  follow-up.
+- **`internal/api/memory.go`** — `ExportMemory` and `ImportMemory`
+  call `embedded.Export` / `embedded.Import` (relocated from
+  `internal/memory`).
+- All runtime test files (`runtime`, `runtime/evals`, `api/smoke`)
+  swap `memory.NewEmbeddedClient(repo)` for `memory.NewTestClient(t)`.
+- `setupTestRuntimeWithMemory` returns `mnemos.Client` instead of
+  `*memory.EmbeddedClient`.
+
+### Removed
+- `internal/mnemos/` — moved upstream to
+  `github.com/felixgeelhaar/mnemos`.
+- `internal/memory/client.go`, `client_test.go`, `exportimport.go`,
+  `exportimport_test.go`, `audit_integration_test.go` — all moved
+  upstream (the equivalent tests live in
+  `github.com/felixgeelhaar/mnemos/embedded`).
+
+### Mnemos repository
+- Initial commit `e913fbf` bootstrapped at
+  `github.com/felixgeelhaar/mnemos`:
+  - Root package: `Client` interface, `Scope`/`Entry`/`Query`/
+    `EntityRef` types, `ValidateScope`, sentinel errors. Stdlib only.
+  - `embedded` subpackage: SQLite-backed implementation with
+    `Open(path)`, in-line DDL bootstrap (no external migrate tool),
+    optional `Emitter` for audit emission, JSONL `Export`/`Import`.
+  - 9 ValidateScope tests, 14 embedded.Client tests (incl. Emitter
+    fan-out + Close idempotency), 4 export/import tests. All green
+    on Go 1.22.x + 1.23.x.
+  - Apache 2.0, GitHub Actions CI, README documenting the contract.
+
+### Roadmap
+- Push `github.com/felixgeelhaar/mnemos` to GitHub, tag v0.1.0, drop
+  the local replace directive from Nomi's `go.mod`.
+- Migrate REST CRUD memory handlers (`POST/GET/DELETE /memory`) to
+  use `mnemos.Client` so the desktop UI's Memory tab reads/writes
+  the same store the runtime writes to. Add `GetByID` to the
+  `mnemos.Client` interface in the same change.
+- Roady feature #113 (planned) — `mnemos/remote` HTTP client (ADR
+  0004 step 3).
+
 ## [Unreleased] - 2026-05-22 (ADR 0004 step 1 — mnemos.Client extraction)
 
 Implements step 1 of ADR 0004's migration path: runtime depends on the
