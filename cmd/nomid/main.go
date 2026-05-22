@@ -192,6 +192,11 @@ func main() {
 		rt.RegisterExecutorBackend(dockerBackend)
 		log.Printf("executor: docker backend registered")
 	}
+	gvisorBackend := executor.NewGvisor()
+	if gvisorBackend.Available(probeCtx) {
+		rt.RegisterExecutorBackend(gvisorBackend)
+		log.Printf("executor: gvisor backend registered")
+	}
 	probeCancel()
 
 	// Plugin system (ADR 0001). plugins.Registry is now the source of truth

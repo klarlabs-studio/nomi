@@ -27,6 +27,7 @@ import (
 //     exit code 137 as an OOM heuristic (see Run).
 type DockerBackend struct {
 	Binary      string // docker CLI path, default "docker"
+	Runtime     string // docker --runtime; empty = host default; "runsc" = gVisor
 	MemoryLimit string // docker --memory format, default "512m"
 	CPULimit    string // docker --cpus format, default "1.0"
 	PIDsLimit   int    // docker --pids-limit, default 128
@@ -153,6 +154,9 @@ func (d DockerBackend) buildArgs(req Request) ([]string, error) {
 		"--init",
 		"-v", req.WorkspaceRoot + ":/workspace",
 		"-w", containerWorkDir,
+	}
+	if d.Runtime != "" {
+		args = append(args, "--runtime="+d.Runtime)
 	}
 	for _, e := range req.Env {
 		args = append(args, "-e", e)

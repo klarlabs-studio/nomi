@@ -19,6 +19,7 @@ import (
 const (
 	BackendLocal  = "local"
 	BackendDocker = "docker"
+	BackendGvisor = "gvisor"
 )
 
 // DefaultBackend is used when an assistant has no explicit choice or the

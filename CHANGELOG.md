@@ -4,6 +4,21 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-05-22 (Sandboxed executor backends — PR3: gVisor)
+
+Adds the gVisor (runsc) execution backend. Reuses the Docker code path
+with `--runtime=runsc` so the container traps syscalls through a
+user-space kernel instead of the host kernel — a meaningful upgrade
+against kernel-exploit escapes for assistants running untrusted code.
+
+### Added
+- `executor.GvisorBackend` — thin composition over `DockerBackend` with
+  `Runtime = "runsc"` pinned.
+- `executor.DockerBackend.Runtime` field — supports any installed docker
+  runtime (runsc, kata, custom) as a future extension point.
+- `cmd/nomid/main.go` boot probe for the runsc runtime via `docker info`;
+  backend registered only when reachable.
+
 ## [Unreleased] - 2026-05-22 (Sandboxed executor backends — PR2: docker)
 
 Adds the Docker execution backend. Containers are rootless on the host
