@@ -86,24 +86,27 @@ jobs:
 
       - name: Issue an E2E bearer token
         run: |
-          # Mnemos serve requires a bearer token on write endpoints. The
-          # CLI exposes `token issue` against the running server; capture
-          # the raw token (last non-empty line of stdout, in case the CLI
-          # prints help / banner above it) and feed it to the test
-          # process via MNEMOS_E2E_TOKEN.
-          set +e
-          TOKEN_OUT=$(/tmp/mnemos token issue --subject e2e --visibility team 2>&1)
-          TOKEN_RC=$?
+          # Mnemos serve requires a bearer JWT on write endpoints. The
+          # CLI's two-step flow: create a user, then mint a token for
+          # them. Both commands talk to the same SQLite the running
+          # `mnemos serve` is using, so the new user is visible to the
+          # request path immediately.
           set -e
-          echo "$TOKEN_OUT"
-          if [ "$TOKEN_RC" -ne 0 ]; then
-            echo "token issue failed (rc=$TOKEN_RC); aborting"
-            exit 1
+          echo "=== mnemos user create ==="
+          USER_OUT=$(/tmp/mnemos user create --name e2e --email e2e@ci.local 2>&1)
+          echo "$USER_OUT"
+          USER_ID=$(echo "$USER_OUT" | grep -o 'user_id=[^ ]*' | head -1 | cut -d= -f2)
+          if [ -z "$USER_ID" ]; then
+            echo "no user_id in output"; exit 1
           fi
+          echo "=== mnemos token issue ==="
+          TOKEN_OUT=$(/tmp/mnemos token issue --user "$USER_ID" 2>&1)
+          echo "$TOKEN_OUT"
+          # Token sits on the last non-empty line, after the
+          # "Token (save this — it will not be shown again):" banner.
           TOKEN=$(echo "$TOKEN_OUT" | awk 'NF{line=$0} END{print line}')
           if [ -z "$TOKEN" ]; then
-            echo "no token in output"
-            exit 1
+            echo "no token in output"; exit 1
           fi
           echo "MNEMOS_E2E_TOKEN=$TOKEN" >> "$GITHUB_ENV"
           echo "token captured (length=${#TOKEN})"
