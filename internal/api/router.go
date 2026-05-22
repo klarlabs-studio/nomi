@@ -12,7 +12,7 @@ import (
 	"github.com/felixgeelhaar/nomi/internal/events"
 	"github.com/felixgeelhaar/nomi/internal/memory"
 	"github.com/felixgeelhaar/nomi/internal/metrics"
-	"github.com/felixgeelhaar/mnemos"
+	"github.com/felixgeelhaar/nomi/internal/mnemos"
 	"github.com/felixgeelhaar/nomi/internal/permissions"
 	"github.com/felixgeelhaar/nomi/internal/plugins"
 	"github.com/felixgeelhaar/nomi/internal/plugins/hub"

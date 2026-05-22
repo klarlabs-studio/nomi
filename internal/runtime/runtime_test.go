@@ -51,7 +51,8 @@ func setupTestRuntime(t *testing.T) (*Runtime, *db.DB, func()) {
 		t.Fatalf("Failed to register tools: %v", err)
 	}
 	toolExecutor := tools.NewExecutor(toolRegistry)
-	memManager := memory.NewTestClient(t)
+	memRepo := db.NewMemoryRepository(database)
+	memManager := memory.NewEmbeddedClient(memRepo)
 	rt := NewRuntime(database, eventBus, permEngine, approvalMgr, toolExecutor, memManager, DefaultConfig())
 
 	cleanup := func() {

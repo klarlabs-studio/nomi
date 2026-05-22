@@ -118,7 +118,7 @@ func runAdversarialCase(t *testing.T, c adversarialCase) {
 	_ = tools.RegisterCoreTools(toolReg)
 	resolver := llm.NewResolver(providerRepo, settings, newInMemoryStore())
 	_ = toolReg.Register(tools.NewLLMChatTool(resolver))
-	memMgr := memory.NewTestClient(t)
+	memMgr := memory.NewEmbeddedClient(db.NewMemoryRepository(database))
 
 	rt := runtime.NewRuntime(database, bus, permEngine, approvalMgr, tools.NewExecutor(toolReg), memMgr, runtime.DefaultConfig())
 	rt.SetLLMResolver(resolver)
