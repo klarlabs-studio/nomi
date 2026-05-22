@@ -115,9 +115,13 @@ func (p *Plugin) Manifest() plugins.PluginManifest {
 					Description: "The phone_number_id from your Meta WhatsApp Business Account.",
 				},
 				"first_contact_policy": {
-					Type: "string", Label: "Unknown-sender policy",
+					Type: "enum", Label: "Unknown-sender policy",
 					Default:     "drop",
-					Description: `How to handle WhatsApp senders not in the identity allowlist: "drop" | "queue_approval".`,
+					Description: "How to handle WhatsApp senders not in the identity allowlist.",
+					Options: []plugins.ConfigOption{
+						{Value: "drop", Label: "Drop silently"},
+						{Value: "queue_approval", Label: "Queue for approval"},
+					},
 				},
 			},
 			NetworkAllowlist: []string{"graph.facebook.com"},

@@ -202,12 +202,25 @@ type CredentialSpec struct {
 
 // ConfigField describes a single user-facing, non-secret config field.
 // Shape mirrors today's connectors.ConfigField for UX continuity.
+//
+// Type "enum" turns the field into a fixed-choice dropdown in the UI;
+// the Options slice supplies the valid values. Free-text Types
+// (string/number/boolean) ignore Options.
 type ConfigField struct {
-	Type        string `json:"type"` // "string" | "boolean" | "number"
-	Label       string `json:"label"`
-	Required    bool   `json:"required"`
-	Default     string `json:"default,omitempty"`
-	Description string `json:"description,omitempty"`
+	Type        string         `json:"type"` // "string" | "boolean" | "number" | "enum"
+	Label       string         `json:"label"`
+	Required    bool           `json:"required"`
+	Default     string         `json:"default,omitempty"`
+	Description string         `json:"description,omitempty"`
+	Options     []ConfigOption `json:"options,omitempty"`
+}
+
+// ConfigOption is one entry in an enum ConfigField's choice list. Label
+// falls back to Value when omitted so manifests stay terse for the
+// common case where the value IS the label.
+type ConfigOption struct {
+	Value string `json:"value"`
+	Label string `json:"label,omitempty"`
 }
 
 // PluginStatus is the runtime state the Plugins tab surfaces per plugin.

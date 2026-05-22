@@ -123,11 +123,16 @@ func buildManifest() plugins.PluginManifest {
 					Description: "Server URL the plugin will talk to, e.g. https://mnemos.example.com.",
 				},
 				"visibility_default": {
-					Type:        "string",
+					Type:        "enum",
 					Label:       "Default visibility for writes",
 					Required:    false,
 					Default:     "team",
-					Description: "personal | team | org. Applied to new claims when the tool input omits an explicit value.",
+					Description: "Applied to new claims when the tool input omits an explicit value.",
+					Options: []plugins.ConfigOption{
+						{Value: "personal"},
+						{Value: "team"},
+						{Value: "org"},
+					},
 				},
 			},
 			NetworkAllowlist: nil, // Per-connection base_url, supplied at runtime.

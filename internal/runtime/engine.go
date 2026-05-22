@@ -66,6 +66,11 @@ type Runtime struct {
 	// boot. command.exec consults this on every step.
 	executorRegistry *executor.Registry
 
+	// pluginContextResolver fetches plan-time context from any plugin
+	// ContextSource the assistant has bound. nil disables the surface;
+	// the planner runs without plugin context exactly as it does today.
+	pluginContextResolver PluginContextResolver
+
 	// rootCtx is the parent context for every background run. Shutdown()
 	// cancels it, which propagates into in-flight tool executions
 	// (including command.exec's 30s timeout) and the approval-wait paths.
@@ -127,6 +132,25 @@ type ConnectorManifestLookup func(name string) (capabilities []string, ok bool)
 // manifest ∩ assistant-policy at tool-execution time.
 func (r *Runtime) SetConnectorManifestLookup(fn ConnectorManifestLookup) {
 	r.connectorManifest = fn
+}
+
+// PluginContextResolver fetches additional plan-time context from any
+// plugin ContextSource an assistant has bound (role=context_source).
+// Returns the concatenated context block (empty when no sources or all
+// returned empty). Errors are absorbed internally and logged by the
+// resolver — context-source failures must never fail the run.
+//
+// The resolver is set from cmd/nomid/main.go where both the plugin
+// registry and the binding repository are wired; the runtime stays
+// decoupled from concrete plugin types.
+type PluginContextResolver func(ctx context.Context, assistantID, runID, goal string) string
+
+// SetPluginContextResolver installs the plugin context resolver. The
+// lifecycle layer invokes it during plan assembly, after folder
+// contexts are loaded, so plugin-sourced context lands in the same
+// trust-tagged block the planner already consumes.
+func (r *Runtime) SetPluginContextResolver(fn PluginContextResolver) {
+	r.pluginContextResolver = fn
 }
 
 // RegisterExecutorBackend adds an additional execution backend (docker,

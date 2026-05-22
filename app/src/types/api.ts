@@ -64,7 +64,7 @@ export interface PluginManifest {
       required: boolean;
       description?: string;
     }[];
-    config_schema?: Record<string, { type: string; label: string; required: boolean; default?: string; description?: string }>;
+    config_schema?: Record<string, { type: string; label: string; required: boolean; default?: string; description?: string; options?: { value: string; label?: string }[] }>;
     network_allowlist?: string[];
   };
 }
@@ -363,6 +363,12 @@ export interface ConfigField {
   required: boolean;
   default?: string;
   description?: string;
+  options?: ConfigOption[];
+}
+
+export interface ConfigOption {
+  value: string;
+  label?: string;
 }
 
 export interface ConnectorStatus {

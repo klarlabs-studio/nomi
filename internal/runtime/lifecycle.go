@@ -76,6 +76,21 @@ func (r *Runtime) executePlanningPhase(ctx context.Context, run *domain.Run, ass
 		return nil, fmt.Errorf("failed to load folder contexts: %w", err)
 	}
 
+	// Plugin context sources (roady #119). Any binding with
+	// role=context_source contributes a block to the planner prompt.
+	// Failures inside the resolver are absorbed there and logged;
+	// nothing here can fail the run.
+	if r.pluginContextResolver != nil && assistant != nil {
+		if block := r.pluginContextResolver(ctx, assistant.ID, run.ID, run.Goal); block != "" {
+			tagged := "<plugin_context trusted=\"false\">\n" + block + "\n</plugin_context>"
+			if contextData != "" {
+				contextData = contextData + "\n\n" + tagged
+			} else {
+				contextData = tagged
+			}
+		}
+	}
+
 	// Inbound media enrichment (ADR 0001 §rich-media, task media-10).
 	// Channel plugins captured attachments on inbound; the planner sees
 	// a goal that includes transcripts + extracted text so the

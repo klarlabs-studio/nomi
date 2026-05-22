@@ -276,6 +276,18 @@ function AddConnectionDialog({
                 />
                 Enabled
               </label>
+            ) : field.type === "enum" && field.options && field.options.length > 0 ? (
+              <select
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                value={config[key] ?? field.default ?? ""}
+                onChange={(e) => setConfig((prev) => ({ ...prev, [key]: e.target.value }))}
+              >
+                {field.options.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label || opt.value}
+                  </option>
+                ))}
+              </select>
             ) : (
               <Input
                 type={field.type === "number" ? "number" : "text"}

@@ -4,6 +4,40 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-05-22 (Mnemos lineage polish — context-source wiring, enum config, memstore ADR, comparison refresh)
+
+Closes the Mnemos-lineage backlog: ContextSource plumbing now actually
+fires at plan time, plugin manifests carry typed enum config fields,
+the memstore boundary has a written-down decision, and the comparison
+table reflects the features that landed this session.
+
+### Added
+- `runtime.PluginContextResolver` callback type + `SetPluginContextResolver`
+  hook on `Runtime`. The lifecycle layer invokes it after folder context
+  is loaded, wraps the result in a `plugin_context` trust-tagged block,
+  and splices it into the planner prompt. Wired in `cmd/nomid/main.go`:
+  walks each assistant's connection bindings, picks ones with
+  `role=context_source`, matches them to the right `ContextSource` on
+  the plugin registry, and concatenates the rendered blocks. Mnemos's
+  `claimsContextSource` (and Obsidian's `vaultContextSource`) now feed
+  the planner instead of sitting dormant. Closes roady #119.
+- `plugins.ConfigOption` + `Type: "enum"` on `plugins.ConfigField` —
+  manifests can declare fixed-choice fields with labeled values.
+  Mnemos `visibility_default` and WhatsApp `first_contact_policy`
+  migrated to enums; the desktop plugin dialog now renders a `<select>`
+  for them, eliminating the silent-typo failure mode. Closes roady #120.
+- ADR 0005 — written-down decision to keep `internal/memstore` as the
+  typed memory boundary. The audit-chain + Tombstone + typed-Scope
+  value pays for the one-implementation overhead. Closes roady #118.
+
+### Changed
+- `docs/comparison.md` — Nomi vs OpenClaw/NanoClaw/Hermes/Pi table
+  refreshed with sandboxed-exec, scheduled-runs, recipe-registry, and
+  skill-induction rows. Connector list updated to reflect Telegram +
+  Slack + Discord + WhatsApp shipped this session.
+- `internal/memstore/doc.go` rewritten to reflect ADR 0004's revision
+  (Mnemos-as-plugin) + ADR 0005's keep-the-boundary decision.
+
 ## [Unreleased] - 2026-05-22 (LLM-driven skill synthesis)
 
 Augments the heuristic skill induction pipeline with an LLM-driven

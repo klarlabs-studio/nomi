@@ -140,10 +140,14 @@ companion only, no workflow execution.
 | Local-first daemon | ✅ `nomid` + SQLite | ✅ Local + BYO API key | ✅ Local in Docker | ✅ Self-hosted | ✕ Cloud only |
 | Plan review **before** execution | ✅ `plan_review` state | ✕ Acts immediately | ✕ Acts immediately | ✕ Acts immediately | n/a (no tools) |
 | Capability-gated tools | ✅ Per-assistant `allow / confirm / deny` | ✕ Broad system access | ◐ Container isolation (different layer) | ◐ Per-action confirm | n/a |
+| Sandboxed exec backends | ✅ Local + Docker + gVisor (runsc) | ✕ | ✅ Docker | ◐ Docker + SSH + Modal + others | n/a |
 | Persistent memory | ✅ Mnemos — workspace-scoped, queryable, exportable | ◐ Conversation memory | ◐ Per-user memory | ✅ Self-improving memory (opaque) | ✅ Cloud memory (opaque) |
 | Audit trail | ✅ Hash-chained event log, `/audit/verify` | ✕ Session log | ◐ Container logs | ◐ Session log | ✕ |
 | Plugin isolation | ✅ WASM + ed25519 signed | ✕ Plain JS / npm extensions | ✅ Docker / micro-VM / Apple Container | ◐ Tool registry | n/a |
-| Connector breadth (shipped) | Telegram (roadmap: 10+) | 20+ messaging apps + email | 13+ (WhatsApp, Telegram, Slack, Teams, Gmail, iMessage, Matrix, GitHub, Linear, …) | Telegram-primary + others | n/a |
+| Scheduled runs | ✅ Cron + NL-to-cron via LLM | ✕ | ✕ | ✅ NL cron | n/a |
+| Recipe registry | ✅ Signed (SHA-256) shareable YAML bundles + install/export | ✕ | ✕ | ◐ Skills (different shape) | n/a |
+| Skill induction | ✅ Heuristic clustering + LLM synthesis from run history | ✕ | ✕ | ✅ Self-improving (opaque) | n/a |
+| Connector breadth (shipped) | Telegram, Slack, Discord, WhatsApp, Email, Gmail, GitHub, Obsidian, Calendar (roadmap: 10+) | 20+ messaging apps + email | 13+ (WhatsApp, Telegram, Slack, Teams, Gmail, iMessage, Matrix, GitHub, Linear, …) | Telegram-primary + others | n/a |
 | Model strategy | ✅ BYO any (Ollama, Anthropic, OpenAI, OpenAI-compatible) | ✅ BYO API key | ◐ Anthropic Agents SDK bias | ✅ 300+ via OpenRouter + direct | ✕ Inflection 2.5 only |
 | License | Apache-2.0 | Apache-2.0 (non-profit stewardship) | MIT | Open source | Proprietary |
 | Threat model | Agent does the wrong thing → gated by capability engine + plan review | Agent has broad reach by design → user trusts the agent | Agent escapes execution boundary → contained by Docker / micro-VM | Agent does the wrong thing → confirm-per-action | n/a |

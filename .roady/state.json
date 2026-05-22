@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 548,
+  "version": 563,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1401,8 +1401,14 @@
       "elapsed_minutes": 1462
     },
     "task-ci:-e2e-tests-for-mnemos-plugin-against-`mnemos-serve`": {
-      "status": "pending",
+      "status": "done",
       "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "62a99e1 — e2e-mnemos workflow + build-tagged TestE2E_FullRoundTrip cover 6 tools + context source"
+      ],
+      "started_at": "2026-05-22T21:11:28.067485+02:00",
+      "completed_at": "2026-05-22T21:11:33.989044+02:00",
       "elapsed_minutes": 0
     },
     "task-coding-agent-as-onboarding-default-+-qwen2.5-coder-preference": {
@@ -1576,8 +1582,14 @@
       "elapsed_minutes": 5
     },
     "task-desktop-ui:-mnemos-connections-card-in-connections-tab": {
-      "status": "pending",
+      "status": "done",
       "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "e0f8f58 — Mnemos plugin surfaces alongside other connectors in Plugins tab"
+      ],
+      "started_at": "2026-05-22T21:11:16.914391+02:00",
+      "completed_at": "2026-05-22T21:11:22.380016+02:00",
       "elapsed_minutes": 0
     },
     "task-deterministic-fake-llm-fixture-for-e2e-+-plan-review-e2e-coverage": {
@@ -1923,23 +1935,47 @@
       "elapsed_minutes": 0
     },
     "task-mnemos-package-extraction-to-standalone-repo-(adr-0004-step-2)": {
-      "status": "pending",
+      "status": "done",
       "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "Superseded by #113 (Mnemos plugin) per task description. ADR 0004 revised; extraction abandoned. Closing."
+      ],
+      "started_at": "2026-05-22T21:10:32.71983+02:00",
+      "completed_at": "2026-05-22T21:10:38.936017+02:00",
       "elapsed_minutes": 0
     },
     "task-mnemos-plugin-(adr-0001-+-adr-0004-revised)": {
-      "status": "pending",
+      "status": "done",
       "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "0d25839 (skeleton) + dd58ae6 (full tool set + context source + main wiring) — all 6 tools live, capability split enforced"
+      ],
+      "started_at": "2026-05-22T21:10:43.399027+02:00",
+      "completed_at": "2026-05-22T21:10:48.888568+02:00",
       "elapsed_minutes": 0
     },
     "task-mnemos-plugin:-drop-go.mod-replace-directive-after-upstream-release": {
-      "status": "pending",
+      "status": "done",
       "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "69f3e6d — pinned to v0.15.3, replace directive removed, go.sum populated"
+      ],
+      "started_at": "2026-05-22T21:10:53.82227+02:00",
+      "completed_at": "2026-05-22T21:11:00.906511+02:00",
       "elapsed_minutes": 0
     },
     "task-mnemos.client-interface-extraction-(adr-0004-step-1)": {
-      "status": "pending",
+      "status": "done",
       "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "ac42baf — interface + EmbeddedClient + tombstone wiring + export/import + audit events all landed pre-session"
+      ],
+      "started_at": "2026-05-22T21:10:21.23867+02:00",
+      "completed_at": "2026-05-22T21:10:26.956336+02:00",
       "elapsed_minutes": 0
     },
     "task-multi-step-planning": {
@@ -2196,8 +2232,14 @@
       "elapsed_minutes": 2
     },
     "task-propagate-runid-through-plugins.contextsource.query": {
-      "status": "pending",
+      "status": "done",
       "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "bde5ccf — ContextQueryRequest type lands; Query signature carries RunID"
+      ],
+      "started_at": "2026-05-22T21:11:06.063053+02:00",
+      "completed_at": "2026-05-22T21:11:12.197506+02:00",
       "elapsed_minutes": 0
     },
     "task-provider/model-matrix-evals-+-adversarial-fixtures-+-threshold-enforcement": {
@@ -2662,8 +2704,10 @@
       "elapsed_minutes": 0
     },
     "task-wire-plugins.registry.contextsources()-into-the-planner-prompt": {
-      "status": "pending",
+      "status": "in_progress",
       "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-22T21:11:48.314927+02:00",
       "elapsed_minutes": 0
     },
     "tauri-init": {
@@ -2739,5 +2783,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-22T21:06:19.196802+02:00"
+  "updated_at": "2026-05-22T21:11:48.314927+02:00"
 }

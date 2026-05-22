@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -371,6 +372,52 @@ func main() {
 	// than plugin id so run.Source strings ("telegram", "email", …)
 	// continue to resolve exactly as before.
 	rt.SetConnectorManifestLookup(pluginRegistry.CapabilitiesForSource)
+
+	// Plugin context resolver (roady #119). Walks the assistant's
+	// connection bindings, picks the ones with role=context_source,
+	// matches each to the corresponding ContextSource on the plugin
+	// registry, and concatenates the rendered blocks. Failures are
+	// logged but never propagated — folder context already follows
+	// the same pattern.
+	rt.SetPluginContextResolver(func(ctx context.Context, assistantID, runID, goal string) string {
+		bindings, err := bindingRepo.ListByAssistant(assistantID)
+		if err != nil {
+			log.Printf("plugin-ctx: list bindings for %s: %v", assistantID, err)
+			return ""
+		}
+		sources := pluginRegistry.ContextSources()
+		if len(bindings) == 0 || len(sources) == 0 {
+			return ""
+		}
+		var blocks []string
+		for _, b := range bindings {
+			if b.Role != domain.BindingRoleContextSource || !b.Enabled {
+				continue
+			}
+			for _, cs := range sources {
+				if cs.ConnectionID() != b.ConnectionID {
+					continue
+				}
+				out, err := cs.Query(ctx, plugins.ContextQueryRequest{
+					RunID:     runID,
+					Goal:      goal,
+					MaxTokens: 2048,
+				})
+				if err != nil {
+					log.Printf("plugin-ctx: %s.Query failed: %v", cs.Name(), err)
+					continue
+				}
+				if out == "" {
+					continue
+				}
+				blocks = append(blocks, "[source: "+cs.Name()+"]\n"+out)
+			}
+		}
+		if len(blocks) == 0 {
+			return ""
+		}
+		return strings.Join(blocks, "\n\n")
+	})
 
 	// Project plugin-contributed tools into the shared tools.Registry so
 	// the runtime's executor can dispatch them alongside system tools
