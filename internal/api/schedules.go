@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/felixgeelhaar/nomi/internal/llm"
 	"github.com/felixgeelhaar/nomi/internal/scheduler"
 	"github.com/felixgeelhaar/nomi/internal/storage/db"
 )
@@ -13,19 +14,22 @@ import (
 type ScheduleServer struct {
 	repo *db.ScheduleRepository
 	sch  *scheduler.Scheduler
+	llm  *llm.Resolver
 }
 
 // NewScheduleServer wires the schedule REST handlers. The scheduler is
 // consulted for cron validation + next-fire calculation; the repository
-// owns persistence.
-func NewScheduleServer(repo *db.ScheduleRepository, sch *scheduler.Scheduler) *ScheduleServer {
-	return &ScheduleServer{repo: repo, sch: sch}
+// owns persistence. llmResolver is optional — when nil, the NL
+// translation endpoint returns 503 but cron CRUD still works.
+func NewScheduleServer(repo *db.ScheduleRepository, sch *scheduler.Scheduler, llmResolver *llm.Resolver) *ScheduleServer {
+	return &ScheduleServer{repo: repo, sch: sch, llm: llmResolver}
 }
 
 type createScheduleRequest struct {
 	AssistantID string `json:"assistant_id" binding:"required"`
 	Prompt      string `json:"prompt" binding:"required"`
 	CronExpr    string `json:"cron_expr" binding:"required"`
+	NLPhrase    string `json:"nl_phrase,omitempty"`
 	Enabled     *bool  `json:"enabled,omitempty"`
 }
 
@@ -41,6 +45,7 @@ func (s *ScheduleServer) CreateSchedule(c *gin.Context) {
 		respondValidationError(c, err.Error())
 		return
 	}
+	sched.NLPhrase = req.NLPhrase
 	if req.Enabled != nil {
 		sched.Enabled = *req.Enabled
 	}
@@ -49,6 +54,38 @@ func (s *ScheduleServer) CreateSchedule(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, sched)
+}
+
+// translateRequest carries the natural-language phrase the user typed.
+type translateRequest struct {
+	Phrase string `json:"phrase" binding:"required"`
+}
+
+// TranslateNL (POST /schedules/translate). Converts a natural-language
+// phrase to a cron expression via the configured LLM. The returned
+// payload includes a Valid flag the UI can check before calling
+// CreateSchedule with the parsed expression.
+func (s *ScheduleServer) TranslateNL(c *gin.Context) {
+	if s.llm == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "no LLM provider configured; configure one in Settings → AI Providers to enable natural-language schedules"})
+		return
+	}
+	var req translateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		respondValidationError(c, err.Error())
+		return
+	}
+	client, _, err := s.llm.DefaultClient()
+	if err != nil || client == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "default LLM provider is unavailable"})
+		return
+	}
+	result, err := s.sch.TranslateNL(c.Request.Context(), client, req.Phrase)
+	if err != nil {
+		respondInternal(c, "translation failed", err)
+		return
+	}
+	c.JSON(http.StatusOK, result)
 }
 
 // ListSchedules (GET /schedules).

@@ -288,6 +288,7 @@ type Schedule struct {
 	AssistantID string     `json:"assistant_id"`
 	Prompt      string     `json:"prompt"`
 	CronExpr    string     `json:"cron_expr"`
+	NLPhrase    string     `json:"nl_phrase,omitempty"`
 	Enabled     bool       `json:"enabled"`
 	NextFireAt  time.Time  `json:"next_fire_at"`
 	LastFireAt  *time.Time `json:"last_fire_at,omitempty"`

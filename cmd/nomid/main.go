@@ -684,6 +684,7 @@ func main() {
 		RemoteTemplates: db.NewRemoteTemplateRepository(database),
 		ScheduleRepo:    scheduleRepo,
 		Scheduler:       sched,
+		LLMResolver:     llmResolver,
 	})
 
 	// Publish the endpoint so non-Go clients (the Tauri shell, e2e

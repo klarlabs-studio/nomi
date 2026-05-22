@@ -441,6 +441,62 @@ export const recipesApi = {
     ),
 };
 
+// Schedules — cron-driven Runs (roady #124). The /translate endpoint
+// turns a natural-language phrase into a cron expression via the
+// configured LLM provider; the UI is expected to surface the parsed
+// result for confirmation before calling create.
+export interface Schedule {
+  id: string;
+  assistant_id: string;
+  prompt: string;
+  cron_expr: string;
+  nl_phrase?: string;
+  enabled: boolean;
+  next_fire_at: string;
+  last_fire_at?: string;
+  last_run_id?: string;
+  last_error?: string;
+  created_at: string;
+}
+
+export interface TranslateResult {
+  nl_phrase: string;
+  cron_expr: string;
+  explanation: string;
+  valid: boolean;
+}
+
+export const schedulesApi = {
+  list: () => fetchApi<{ schedules: Schedule[] }>("/schedules"),
+  get: (id: string) => fetchApi<Schedule>(`/schedules/${id}`),
+  create: (params: {
+    assistant_id: string;
+    prompt: string;
+    cron_expr: string;
+    nl_phrase?: string;
+    enabled?: boolean;
+  }) =>
+    fetchApi<Schedule>("/schedules", {
+      method: "POST",
+      body: JSON.stringify(params),
+    }),
+  patch: (
+    id: string,
+    params: { prompt?: string; cron_expr?: string; enabled?: boolean },
+  ) =>
+    fetchApi<Schedule>(`/schedules/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(params),
+    }),
+  delete: (id: string) =>
+    fetchApi<{ status: string }>(`/schedules/${id}`, { method: "DELETE" }),
+  translate: (phrase: string) =>
+    fetchApi<TranslateResult>("/schedules/translate", {
+      method: "POST",
+      body: JSON.stringify({ phrase }),
+    }),
+};
+
 // Skills (roady #126) — induction reads the user's past successful
 // runs, heuristically clusters them by goal-text similarity, and
 // surfaces candidate Recipes. Promote materialises the suggestion as

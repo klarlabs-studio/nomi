@@ -4,6 +4,37 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-05-22 (Natural-language cron translation)
+
+Closes the last flagship gap vs Hermes Agent: schedules can now be
+created from a natural-language phrase ("every weekday at 8am", "first
+Monday of the month") instead of requiring the user to write a cron
+expression by hand. The translation goes through the configured LLM
+provider with a strict JSON response shape and is gated by the
+scheduler's existing cron parser before being returned to the caller.
+
+### Added
+- `scheduler.TranslateNL(ctx, client, phrase)` — two-stage translator:
+  asks the LLM for a JSON envelope `{cron_expr, explanation}`, then
+  runs `cron.Parse` on the result. Invalid expressions come back with
+  `Valid=false` and the parser error in `Explanation` so the UI can
+  ask the user to retype rather than silently persisting bad input.
+- `POST /schedules/translate` — REST surface for the translator;
+  returns 503 when no LLM provider is configured (matching the
+  existing graceful-degrade pattern).
+- `nl_phrase` column on the `schedules` table (migration #29) so the
+  UI can re-display the original phrase next to the persisted cron.
+  `Schedule.NLPhrase` field added to the domain model + repo CRUD.
+- `schedulesApi.translate(phrase)` + a complete `schedulesApi` TS
+  client (list/get/create/patch/delete + translate).
+
+### Scope notes
+- Few-shot prompt covers the common cases (daily, weekday filter,
+  monthly, sub-hourly, business hours, multi-time-per-day refusal).
+- Tolerant parsing strips ``` ```json fences ``` ``` an over-eager
+  model may wrap the JSON envelope in even when asked not to.
+- UI surface for the translate endpoint is a follow-up.
+
 ## [Unreleased] - 2026-05-22 (Skill induction from run history)
 
 Adds skill induction (roady #126). Reads the user's past successful

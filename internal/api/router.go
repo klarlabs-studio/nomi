@@ -17,6 +17,7 @@ import (
 	"github.com/felixgeelhaar/nomi/internal/plugins/signing"
 	"github.com/felixgeelhaar/nomi/internal/plugins/store"
 	"github.com/felixgeelhaar/nomi/internal/plugins/wasmhost"
+	"github.com/felixgeelhaar/nomi/internal/llm"
 	"github.com/felixgeelhaar/nomi/internal/runtime"
 	"github.com/felixgeelhaar/nomi/internal/scheduler"
 	"github.com/felixgeelhaar/nomi/internal/secrets"
@@ -74,6 +75,10 @@ type RouterConfig struct {
 	// disables the surface (routes return 404 instead of 503).
 	ScheduleRepo *db.ScheduleRepository
 	Scheduler    *scheduler.Scheduler
+
+	// LLMResolver enables /schedules/translate (NL → cron). Optional;
+	// when nil the translate endpoint returns 503.
+	LLMResolver *llm.Resolver
 }
 
 // NewRouter assembles the HTTP routes and wraps them in CORS + auth middleware.
@@ -185,10 +190,11 @@ func NewRouter(cfg RouterConfig) *gin.Engine {
 	// short-circuits with a 503 so the UI degrades gracefully on a
 	// daemon that hasn't wired the scheduler yet.
 	if cfg.ScheduleRepo != nil && cfg.Scheduler != nil {
-		scheduleServer := NewScheduleServer(cfg.ScheduleRepo, cfg.Scheduler)
+		scheduleServer := NewScheduleServer(cfg.ScheduleRepo, cfg.Scheduler, cfg.LLMResolver)
 		schedules := r.Group("/schedules")
 		{
 			schedules.POST("", scheduleServer.CreateSchedule)
+			schedules.POST("/translate", scheduleServer.TranslateNL)
 			schedules.GET("", scheduleServer.ListSchedules)
 			schedules.GET("/:id", scheduleServer.GetSchedule)
 			schedules.PATCH("/:id", scheduleServer.UpdateSchedule)

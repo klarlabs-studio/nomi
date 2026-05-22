@@ -2131,3 +2131,9 @@ Promote `examples/coding-agent` to a first-class artifact: a `Recipe` is a versi
 Hermes-style auto-generated skills: mine successful Runs in Mnemos memory + state store, cluster by goal embedding similarity + tool-call shape, and synthesize reusable Recipe candidates with parameterized prompts and named slots for variable inputs. Surfaces "Suggested skills" panel in the Assistants tab — user reviews extracted skill, can edit prompts/policies, then promotes to a Recipe via the registry. Includes guardrails: minimum N successful runs per cluster before suggestion, no PII/secret leakage (scan parameterized slots against secret patterns), and provenance trail linking the skill back to the source Runs. Optional periodic background job (gated by a setting) re-mines weekly. Depends on the recipe registry feature.
 
 ---
+
+## Natural-language cron translation
+
+LLM-driven translator from natural-language schedule phrases ("every weekday at 8am", "first Monday of the month") to standard 5-field cron expressions, gated by the scheduler's cron parser before persistence. Closes the gap vs Hermes Agent's flagship scheduling UX. Adds `POST /schedules/translate` returning the parsed cron + a human-readable explanation, plus an `nl_phrase` column on the schedules table so the UI can re-display the original phrase next to the persisted cron. Validation is two-stage: the LLM is asked for a strict JSON object via the existing structured-output prompt pattern, then the returned cron_expr is verified with the same robfig/cron parser the scheduler uses at fire time. Confidence + explanation surface in the UI so the user can confirm before save.
+
+---

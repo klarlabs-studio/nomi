@@ -27,10 +27,10 @@ func (r *ScheduleRepository) Create(s *domain.Schedule) error {
 		enabled = 1
 	}
 	_, err := r.db.Exec(`
-		INSERT INTO schedules (id, assistant_id, prompt, cron_expr, enabled, next_fire_at, last_fire_at, last_run_id, last_error, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO schedules (id, assistant_id, prompt, cron_expr, nl_phrase, enabled, next_fire_at, last_fire_at, last_run_id, last_error, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`,
-		s.ID, s.AssistantID, s.Prompt, s.CronExpr, enabled, s.NextFireAt,
+		s.ID, s.AssistantID, s.Prompt, s.CronExpr, s.NLPhrase, enabled, s.NextFireAt,
 		nullableTime(s.LastFireAt), nullableString(s.LastRunID), nullableString(s.LastError),
 		s.CreatedAt,
 	)
@@ -43,7 +43,7 @@ func (r *ScheduleRepository) Create(s *domain.Schedule) error {
 // GetByID fetches a single Schedule.
 func (r *ScheduleRepository) GetByID(id string) (*domain.Schedule, error) {
 	row := r.db.QueryRow(`
-		SELECT id, assistant_id, prompt, cron_expr, enabled, next_fire_at, last_fire_at, last_run_id, last_error, created_at
+		SELECT id, assistant_id, prompt, cron_expr, nl_phrase, enabled, next_fire_at, last_fire_at, last_run_id, last_error, created_at
 		FROM schedules WHERE id = ?
 	`, id)
 	return scanSchedule(row)
@@ -52,7 +52,7 @@ func (r *ScheduleRepository) GetByID(id string) (*domain.Schedule, error) {
 // List returns all schedules ordered by created_at desc.
 func (r *ScheduleRepository) List() ([]*domain.Schedule, error) {
 	rows, err := r.db.Query(`
-		SELECT id, assistant_id, prompt, cron_expr, enabled, next_fire_at, last_fire_at, last_run_id, last_error, created_at
+		SELECT id, assistant_id, prompt, cron_expr, nl_phrase, enabled, next_fire_at, last_fire_at, last_run_id, last_error, created_at
 		FROM schedules ORDER BY created_at DESC
 	`)
 	if err != nil {
@@ -74,7 +74,7 @@ func (r *ScheduleRepository) List() ([]*domain.Schedule, error) {
 // Used by the scheduler ticker to pick the next batch.
 func (r *ScheduleRepository) DueBefore(t time.Time) ([]*domain.Schedule, error) {
 	rows, err := r.db.Query(`
-		SELECT id, assistant_id, prompt, cron_expr, enabled, next_fire_at, last_fire_at, last_run_id, last_error, created_at
+		SELECT id, assistant_id, prompt, cron_expr, nl_phrase, enabled, next_fire_at, last_fire_at, last_run_id, last_error, created_at
 		FROM schedules WHERE enabled = 1 AND next_fire_at <= ?
 		ORDER BY next_fire_at ASC
 	`, t)
@@ -101,11 +101,11 @@ func (r *ScheduleRepository) Update(s *domain.Schedule) error {
 	}
 	_, err := r.db.Exec(`
 		UPDATE schedules
-		SET assistant_id = ?, prompt = ?, cron_expr = ?, enabled = ?,
+		SET assistant_id = ?, prompt = ?, cron_expr = ?, nl_phrase = ?, enabled = ?,
 		    next_fire_at = ?, last_fire_at = ?, last_run_id = ?, last_error = ?
 		WHERE id = ?
 	`,
-		s.AssistantID, s.Prompt, s.CronExpr, enabled,
+		s.AssistantID, s.Prompt, s.CronExpr, s.NLPhrase, enabled,
 		s.NextFireAt, nullableTime(s.LastFireAt), nullableString(s.LastRunID), nullableString(s.LastError),
 		s.ID,
 	)
@@ -133,7 +133,7 @@ func scanSchedule(row rowScanner) (*domain.Schedule, error) {
 		lastError sql.NullString
 	)
 	err := row.Scan(
-		&s.ID, &s.AssistantID, &s.Prompt, &s.CronExpr, &enabled,
+		&s.ID, &s.AssistantID, &s.Prompt, &s.CronExpr, &s.NLPhrase, &enabled,
 		&s.NextFireAt, &lastFire, &lastRunID, &lastError, &s.CreatedAt,
 	)
 	if err == sql.ErrNoRows {
