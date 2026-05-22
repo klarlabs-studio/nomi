@@ -4,13 +4,13 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Nomi — Your personal AI runtime.</title>
-<meta name="description" content="Local-first runtime for memory-native AI workflows. A daemon for plans, tools, memory, and any model — designed for inspection before execution. Apache 2.0." />
+<meta name="description" content="Local-first AI runtime. A daemon for plans, tools, and persistent memory — designed for inspection before execution. Apache 2.0." />
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
 <link rel="icon" type="image/png" sizes="64x64" href="icons/icon-64.png" />
 <link rel="apple-touch-icon" href="icons/icon-128.png" />
 <meta property="og:title" content="Nomi — Your personal AI runtime." />
-<meta property="og:description" content="Local-first runtime for memory-native AI workflows. Plans, tools, and persistent memory — designed for inspection before execution." />
+<meta property="og:description" content="Local-first AI runtime. Plans, tools, and persistent memory — designed for inspection before execution." />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://felixgeelhaar.github.io/nomi/" />
 <meta property="og:image" content="https://felixgeelhaar.github.io/nomi/media/og-card.png" />
@@ -41,7 +41,7 @@
     <p class="category">Local-first AI runtime.</p>
     <h1>Your personal<br/><span class="accent">AI runtime.</span></h1>
     <p class="lede">
-      A daemon on your machine for plans, tools, memory, and any model — designed for inspection before execution. Every multi-step task lays out a plan you approve, every tool call is gated by an explicit capability, and Mnemos remembers context across runs. Coding is the first flagship workflow; the runtime underneath is general.
+      A daemon on your machine for plans, tools, memory, and any model — designed for inspection before execution. Every multi-step task lays out a plan you approve, every tool call is gated by an explicit capability, and persistent memory carries context across runs. Coding is the first flagship workflow; the runtime underneath is general.
     </p>
     <div class="cta-row">
       <button class="copy" data-copy="brew install --cask felixgeelhaar/tap/nomi" title="Copy command">
@@ -95,7 +95,7 @@
       Cursor, Claude Code, Copilot — they read your repo, run commands, write files the moment the model decides, then forget everything when the session ends. Your code, your shell history, the reasoning behind every decision — all crossing someone else's network, none of it durable, none of it inspectable.
     </p>
     <p>
-      Nomi flips three defaults at once: <strong>plans before execution, capability gates around every tool, and persistent memory you own</strong>. Ollama for fully offline, OpenAI / Anthropic / any OpenAI-compatible API when you want a frontier model. Mnemos keeps context across runs — workspace-scoped, queryable, exportable. Reasoning is replayable; an agent that learns is an agent you can audit.
+      Nomi flips three defaults at once: <strong>plans before execution, capability gates around every tool, and persistent memory you own</strong>. Ollama for fully offline, OpenAI / Anthropic / any OpenAI-compatible API when you want a frontier model. Memory lives in SQLite next to your runs — workspace-scoped, queryable, exportable. Reasoning is replayable; an agent that learns is an agent you can audit. Org-level cognition is one optional plugin away.
     </p>
   </section>
 
@@ -136,8 +136,8 @@
         <p>One assistant gets <code>filesystem.read</code>. Another gets <code>command.exec</code> with confirm. Plugins declare what they need; the runtime enforces it — rules can't be talked around with prompt-engineering. Same primitive whether you're writing code, triaging email, or driving a browser.</p>
       </div>
       <div class="diff-card primary">
-        <h3>Mnemos — the cognitive layer</h3>
-        <p>Persistent, scoped, queryable memory. Workspace-scoped by default — exportable, inspectable, a real SQLite database, not a vector blob. The agent accumulates context across runs so the next task starts with the last one's lineage, not a cold prompt.</p>
+        <h3>Persistent memory you can read</h3>
+        <p>Workspace-scoped SQLite next to your runs — exportable, inspectable, queryable. The agent accumulates context across runs so the next task starts with the last one's lineage, not a cold prompt. For team-scale structured knowledge (decisions, claims, evidence), <a href="https://github.com/felixgeelhaar/mnemos">Mnemos</a> drops in as an optional plugin.</p>
       </div>
       <div class="diff-card">
         <h3>Daemon-not-IDE-plugin</h3>
@@ -171,9 +171,9 @@
       <dt>Claude Code · Cursor agents · Cline</dt>
       <dd>Same goal-driven coding flow (read repo, plan changes, write files, run commands), but every step is laid out as an approveable plan first, every tool call is gated by an explicit capability, and every event is persisted. Point it at Ollama and your repo never leaves your laptop.</dd>
       <dt>Goose · OpenInterpreter · Aider</dt>
-      <dd>Same local-first stance, but with a real state machine (<code>Run → Plan → Step</code>), a real permission engine, multi-step plans the user can edit, persistent memory via Mnemos, and a desktop UI built around the approval moment.</dd>
+      <dd>Same local-first stance, but with a real state machine (<code>Run → Plan → Step</code>), a real permission engine, multi-step plans the user can edit, persistent local memory, and a desktop UI built around the approval moment.</dd>
       <dt>OpenClaw · Hermes Agent</dt>
-      <dd>Same personal-AI-with-memory framing, broader connector list shipping today. Both act the moment the model decides; Nomi inserts a <code>plan_review</code> state before any tool runs and gates every tool through an explicit capability rule. Mnemos is memory you can <em>read</em>, edit, and export — Hermes's "self-improving" memory is opaque by design. Nomi trades connector breadth today for inspectability everywhere.</dd>
+      <dd>Same personal-AI-with-memory framing, broader connector list shipping today. Both act the moment the model decides; Nomi inserts a <code>plan_review</code> state before any tool runs and gates every tool through an explicit capability rule. Nomi's memory is SQLite you can <em>read</em>, edit, and export — Hermes's "self-improving" memory is opaque by design. Nomi trades connector breadth today for inspectability everywhere.</dd>
       <dt>NanoClaw · container-isolation products</dt>
       <dd>NanoClaw isolates agents with Docker / micro-VM / Apple Container — the wall is around the process. Nomi gates at the capability layer — the agent never reaches the tool it shouldn't because the rule blocked the call. The two compose: you could run <code>nomid</code> inside a NanoClaw container and stack both defenses. NanoClaw is Anthropic-SDK-biased; Nomi is provider-agnostic.</dd>
       <dt>Pi (Inflection AI) — category boundary</dt>
@@ -273,9 +273,9 @@
         <p>Type-safe finite state machines for Go. Every Nomi run, plan and step transition is a statekit machine — including the approval pause/resume loop. If you're tired of bool-flag state, start here.</p>
       </a>
       <a class="lib lib-lead" href="https://github.com/felixgeelhaar/mnemos" rel="noopener">
-        <span class="lib-tag">memory</span>
+        <span class="lib-tag">cognition</span>
         <h3>mnemos</h3>
-        <p>Scoped, queryable agent memory. SQLite-backed, schema-versioned, importable. A real database for your agent's context — not a vector blob you can't introspect.</p>
+        <p>Knowledge graph for agent organizations. Events, claims (fact / hypothesis / decision / test_result), evidence links, contradicts/supports relationships, visibility scopes. HTTP service with a typed Go client. Reachable from Nomi via an optional plugin.</p>
       </a>
       <a class="lib" href="https://github.com/felixgeelhaar/scout" rel="noopener">
         <h3>scout</h3>
@@ -290,12 +290,12 @@
 
   <section class="roadmap" id="roadmap">
     <h2>Where this goes next</h2>
-    <p class="section-lede">The runtime + capability engine + Mnemos cognitive layer are shipping today. The next horizons are explicit so you can plan against them.</p>
+    <p class="section-lede">The runtime + capability engine + persistent memory are shipping today. The next horizons are explicit so you can plan against them.</p>
     <div class="roadmap-grid">
       <article class="roadmap-card now">
         <span class="roadmap-tag">Now · shipping</span>
         <h3>Personal AI runtime</h3>
-        <p>What you can install today. <code>nomid</code> daemon, capability-gated tools, plan-review-before-execute, Mnemos memory per workspace, Telegram connector, coding-agent flagship recipe. Your data on your disk, audit chain you can verify.</p>
+        <p>What you can install today. <code>nomid</code> daemon, capability-gated tools, plan-review-before-execute, per-workspace persistent memory, Telegram connector, coding-agent flagship recipe. Your data on your disk, audit chain you can verify.</p>
       </article>
       <article class="roadmap-card next">
         <span class="roadmap-tag">Next · Phase 2-3</span>
@@ -305,7 +305,7 @@
       <article class="roadmap-card later">
         <span class="roadmap-tag">Later · Phase 4</span>
         <h3>Organizational cognition</h3>
-        <p>Mnemos as a separable service (see <a href="https://github.com/felixgeelhaar/nomi/blob/main/docs/adr/0004-nomi-mnemos-cognitive-boundary.md">ADR 0004</a>) — wire contract, embedded + remote implementations, shared memory across desktop and headless <code>nomid</code> instances. From there: team-shared workflows, institutional memory across agents, policy distribution. Self-hosted first; never a forced cloud.</p>
+        <p><a href="https://github.com/felixgeelhaar/mnemos">Mnemos</a> as a plugin (see <a href="https://github.com/felixgeelhaar/nomi/blob/main/docs/adr/0004-nomi-mnemos-cognitive-boundary.md">ADR 0004</a>) — structured knowledge graph (events, claims, evidence, contradictions) reachable via capability-gated tools. Team-shared workflows, institutional memory across agents, visibility scopes (personal/team/org). Self-hosted Mnemos first; never a forced cloud.</p>
       </article>
     </div>
     <p class="muted">Backlog of record: <a href="https://github.com/felixgeelhaar/nomi/blob/main/.roady/spec.yaml"><code>.roady/spec.yaml</code></a> (111 features). Plan / state / events are hash-chained — no roadmap edits in the dark.</p>
@@ -313,7 +313,7 @@
 
   <section class="cta-final">
     <h2>A runtime, not a website. Workflows, not chats. Memory, not amnesia.</h2>
-    <p>Install Nomi, point it at a local Ollama or your favorite API, give it a goal. The plan is yours to read before anything runs — and Mnemos remembers what happened next time.</p>
+    <p>Install Nomi, point it at a local Ollama or your favorite API, give it a goal. The plan is yours to read before anything runs — and persistent memory carries context to the next task.</p>
     <div class="cta-row">
       <button class="copy" data-copy="brew install --cask felixgeelhaar/tap/nomi">
         <code>brew install --cask felixgeelhaar/tap/nomi</code>
@@ -329,7 +329,7 @@
   <div class="footer-grid">
     <div>
       <span class="brand-mark"><img class="mark" src="icons/icon-64.png" alt="" width="20" height="20" /> nomi</span>
-      <p class="muted">Your personal AI runtime. Local-first, memory-native.</p>
+      <p class="muted">Your personal AI runtime. Local-first, plan-reviewed, audited.</p>
     </div>
     <div>
       <h4>Docs</h4>

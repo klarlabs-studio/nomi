@@ -4,6 +4,62 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-05-22 (ADR 0004 revised — Mnemos is a plugin)
+
+Course correction after discovering that real Mnemos
+(`github.com/felixgeelhaar/mnemos`) is a knowledge-graph HTTP service
+with a typed Go client at `mnemos/client`, not a yet-to-be-built
+embedded memory library. The earlier extraction work has been
+reverted; the integration redesign treats Mnemos as a plugin under
+ADR 0001.
+
+### Reverted
+- `9731023 feat(api): migrate REST CRUD memory handlers to mnemos.Client`
+  → revert commit `2f72e34`.
+- `ba4ea22 feat(mnemos): consume external mnemos package (ADR 0004 step 2)`
+  → revert commit `7967e77`. Restores `internal/mnemos` + the prior
+  `internal/memory.EmbeddedClient`, removes the `go.mod` require +
+  local replace directive, restores the `events.run_id` NOT NULL +
+  FK constraints, and rolls migration `000024_events_optional_run_id`
+  off the schema.
+
+### Changed
+- **ADR 0004** revised in place. Status remains Accepted but the
+  decision rewrites from "extract Mnemos package + introduce
+  `mnemos.Client` interface" to "integrate real Mnemos as a plugin
+  per ADR 0001." Two-layer architecture clarified: local
+  `internal/memory.Manager` for per-assistant scratch (unchanged) +
+  optional Mnemos plugin for organizational knowledge graph (claims,
+  evidence, relationships, visibility scopes).
+- **`docs/index.html`** — softens the Mnemos prominence: the
+  "Cognitive layer" primary card becomes "Persistent memory you can
+  read" with Mnemos demoted to "drops in as an optional plugin." OG
+  meta description drops the "memory-native" framing. Phase 4
+  roadmap card explicitly frames Mnemos as a plugin. Built-on lib
+  card describes real Mnemos shape (events / claims / evidence /
+  relationships) instead of the imagined embedded library.
+- **`README.md`** — same softening. Mnemos referenced as an optional
+  plugin for team-scale structured knowledge; per-assistant scratch
+  framed as local SQLite. Architecture diagram updates to "Local
+  memory" instead of "Memory → mnemos."
+
+### Removed
+- The fake local Mnemos repo at
+  `/Users/felixgeelhaar/Developer/projects/open_source/mnemos`
+  (created during the misread; deleted manually).
+
+### Roadmap
+- Roady feature #113 — "Mnemos Plugin (ADR 0001 + ADR 0004 revised)"
+  supersedes the now-stale feature #112. Tracks the actual plugin
+  implementation: tools (`mnemos.events.append`,
+  `mnemos.claims.append`, `mnemos.claims.list`,
+  `mnemos.relationships.list`, `mnemos.embeddings.append`,
+  potentially `mnemos.embeddings.similar`), context source, capability
+  split (`mnemos.read` / `mnemos.write`), connection configuration via
+  the existing `ConnectorConfigRepository`.
+- Feature #112 (Mnemos package extraction) stays in the spec for
+  history but is inactive — superseded by #113.
+
 ## [Unreleased] - 2026-05-22 (ADR 0004 step 1 — mnemos.Client extraction)
 
 Implements step 1 of ADR 0004's migration path: runtime depends on the

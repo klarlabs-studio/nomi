@@ -1770,3 +1770,53 @@ Scope:
 Blocks: future feature "mnemos/remote HTTP client (ADR 0004 Step 3)".
 
 ---
+
+## Mnemos Plugin (ADR 0001 + ADR 0004 revised)
+
+Build the Mnemos integration as a plugin under ADR 0001, not as a runtime subsystem. Supersedes the prior feature #112 ("Mnemos package extraction to standalone repo"), which was based on a misread of what Mnemos is.
+
+Background:
+Real Mnemos already exists at github.com/felixgeelhaar/mnemos (local checkout: projects/business-felix-geelhaar/mnemos). It's an HTTP/gRPC service with a typed Go client at github.com/felixgeelhaar/mnemos/client, not a yet-to-be-built embedded SQLite library. Data model: Events / Claims (fact / hypothesis / decision / test_result) / EvidenceLinks / Relationships (supports / contradicts) / Embeddings, with visibility scopes (personal / team / org) and bearer-token auth.
+
+Prior Nomi commits ba4ea22 and 9731023 built around the misread shape and have been reverted (commits 2f72e34, 7967e77). The internal Nomi-side memory abstraction from ac42baf (internal/mnemos package + internal/memory/EmbeddedClient) stays — it's a useful local typed boundary.
+
+ADR 0004 has been revised to reflect this corrected direction.
+
+Scope:
+1. Plugin package under internal/plugins/mnemos/ (first-party, ships in-tree; future move to .nomi-plugin WASM bundle is a separate decision).
+2. PluginManifest declares no channel role and no trigger role. Tools only, plus an optional context-source.
+3. Tools (with capability strings):
+   - mnemos.events.append (mnemos.write)
+   - mnemos.claims.append (mnemos.write) — accepts claims plus evidence links
+   - mnemos.claims.list (mnemos.read) — query by type / visibility / limit
+   - mnemos.relationships.list (mnemos.read)
+   - mnemos.embeddings.append (mnemos.write)
+   - mnemos.embeddings.similar (mnemos.read) — when upstream client exposes vector recall
+4. Context source: pulls the N most recent claims relevant to the run's goal into the planner context. Gated by capability mnemos.read.
+5. Connection configuration via the existing ConnectorConfigRepository:
+   - id, base_url, token_ref (secret://...), visibility_default
+   - Multiple connections supported (personal + company etc.)
+6. Wraps github.com/felixgeelhaar/mnemos/client.Client directly; no Nomi-side reimplementation of the HTTP wire.
+7. Tool input/output shapes are JSON-schema'd through the existing tools.Registry machinery.
+8. Audit chain: tool.executed events emitted by the runtime as usual; Mnemos's own audit chain stays upstream-side.
+
+Out of scope (do not do here):
+- Replicating Mnemos data shapes inside Nomi.
+- Writing run-by-run scratch memory to Mnemos. The local internal/memory layer keeps that role.
+- Building a remote sync layer for desktop + headless Nomi sharing memory. Different problem.
+- Mnemos server-side changes. Upstream is untouched.
+
+Acceptance:
+- An assistant with mnemos.read + mnemos.write capabilities can append a claim and list claims by type via tool calls, end to end against a running mnemos serve instance.
+- Plugin loads from internal/plugins/mnemos at boot; absent connection config disables the surface (tools return 503-equivalent on call).
+- Capability split holds: mnemos.read-only assistants cannot append.
+- Tool input validation rejects malformed claim shapes before reaching the upstream client.
+- README + landing copy no longer imply Mnemos is a subsystem; references are to the optional plugin.
+
+Depends on:
+- ADR 0004 revised (already accepted on 2026-05-22).
+- Real Mnemos build at github.com/felixgeelhaar/mnemos accessible from CI (either via go.mod direct require or via the existing local checkout for development).
+
+Supersedes: feature #112 (Mnemos package extraction to standalone repo). Mark #112 as superseded in the description if a strikethrough mechanism exists; otherwise leave in the spec for history but treat it as inactive.
+
+---
