@@ -163,16 +163,55 @@ export function MemoryInspector() {
               ))
             )}
           </TabsContent>
-          <TabsContent value="preferences" className="flex-1 overflow-auto space-y-2 mt-2">
+          <TabsContent value="preferences" className="flex-1 overflow-auto space-y-3 mt-2">
             <div className="text-xs text-muted-foreground bg-muted rounded-md p-2">
-              These entries shape future planning behavior. Delete entries that no longer reflect your preferences.
+              These entries shape future planning behavior. Auto-learned entries are extracted
+              after successful runs; you stay in control — delete any that don&apos;t reflect what
+              you actually want. The planner reads from this scope and annotates plans with the
+              preferences that influenced them.
             </div>
             {preferenceMemories.length === 0 ? (
               <div className="text-muted-foreground text-center py-4">No learned preferences yet.</div>
             ) : (
-              preferenceMemories.map((memory) => (
-                <MemoryCard key={memory.id} memory={memory} onDelete={handleDelete} />
-              ))
+              <>
+                {(() => {
+                  const inferred = preferenceMemories.filter((m) =>
+                    m.content.startsWith("Inferred: "),
+                  );
+                  const manual = preferenceMemories.filter(
+                    (m) => !m.content.startsWith("Inferred: "),
+                  );
+                  return (
+                    <>
+                      {inferred.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="text-xs font-medium text-muted-foreground">
+                            Auto-learned ({inferred.length})
+                          </div>
+                          {inferred.map((memory) => (
+                            <MemoryCard
+                              key={memory.id}
+                              memory={memory}
+                              onDelete={handleDelete}
+                              autoLearned
+                            />
+                          ))}
+                        </div>
+                      )}
+                      {manual.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="text-xs font-medium text-muted-foreground">
+                            Manual ({manual.length})
+                          </div>
+                          {manual.map((memory) => (
+                            <MemoryCard key={memory.id} memory={memory} onDelete={handleDelete} />
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+              </>
             )}
           </TabsContent>
         </Tabs>
@@ -181,12 +220,34 @@ export function MemoryInspector() {
   );
 }
 
-function MemoryCard({ memory, onDelete }: { memory: Memory; onDelete: (id: string) => void }) {
+function MemoryCard({
+  memory,
+  onDelete,
+  autoLearned,
+}: {
+  memory: Memory;
+  onDelete: (id: string) => void;
+  autoLearned?: boolean;
+}) {
+  const displayContent = autoLearned
+    ? memory.content.replace(/^Inferred: /, "")
+    : memory.content;
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <Badge variant="outline">{memory.scope}</Badge>
+          <div className="flex items-center gap-1">
+            <Badge variant="outline">{memory.scope}</Badge>
+            {autoLearned && (
+              <Badge
+                variant="secondary"
+                className="text-xs"
+                title="Extracted by Nomi from a successful run"
+              >
+                auto-learned
+              </Badge>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">
               {new Date(memory.created_at).toLocaleString()}
@@ -203,10 +264,10 @@ function MemoryCard({ memory, onDelete }: { memory: Memory; onDelete: (id: strin
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-sm whitespace-pre-wrap">{memory.content}</div>
+        <div className="text-sm whitespace-pre-wrap">{displayContent}</div>
         <div className="mt-2 text-xs text-muted-foreground space-y-1">
           {memory.assistant_id && <div>Assistant: {memory.assistant_id.slice(0, 8)}...</div>}
-          {memory.run_id && <div>Chat: {memory.run_id.slice(0, 8)}...</div>}
+          {memory.run_id && <div>From run: {memory.run_id.slice(0, 8)}...</div>}
         </div>
       </CardContent>
     </Card>
