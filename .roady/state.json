@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 536,
+  "version": 537,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -2179,11 +2179,15 @@
       "elapsed_minutes": 2
     },
     "task-recipe-registry-and-sharing": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "f8ed725 — built-in catalog + REST + Tauri tab + install/export"
+      ],
       "started_at": "2026-05-22T20:02:05.299487+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-22T20:10:51.482048+02:00",
+      "elapsed_minutes": 8
     },
     "task-refactor-chat-interface.tsx-into-chatlist-/-chatdetail-/-chatcomposer": {
       "status": "done",
@@ -2696,5 +2700,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-22T20:02:05.299487+02:00"
+  "updated_at": "2026-05-22T20:10:51.482048+02:00"
 }
