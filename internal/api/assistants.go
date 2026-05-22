@@ -70,6 +70,8 @@ type CreateAssistantRequest struct {
 	MemoryPolicy     domain.MemoryPolicy        `json:"memory_policy,omitempty"`
 	PermissionPolicy domain.PermissionPolicy    `json:"permission_policy,omitempty"`
 	ModelPolicy      *domain.ModelPolicy        `json:"model_policy,omitempty"`
+	ExecutorBackend  string                     `json:"executor_backend,omitempty"`
+	SandboxImage     string                     `json:"sandbox_image,omitempty"`
 }
 
 // ListTemplates returns bundled assistant templates.
@@ -124,6 +126,8 @@ func (s *AssistantServer) CreateAssistant(c *gin.Context) {
 		MemoryPolicy:     req.MemoryPolicy,
 		PermissionPolicy: permPolicy,
 		ModelPolicy:      req.ModelPolicy,
+		ExecutorBackend:  req.ExecutorBackend,
+		SandboxImage:     req.SandboxImage,
 		CreatedAt:        time.Now().UTC(),
 	}
 
@@ -203,6 +207,8 @@ func (s *AssistantServer) UpdateAssistant(c *gin.Context) {
 	assistant.MemoryPolicy = req.MemoryPolicy
 	assistant.PermissionPolicy = req.PermissionPolicy
 	assistant.ModelPolicy = req.ModelPolicy
+	assistant.ExecutorBackend = req.ExecutorBackend
+	assistant.SandboxImage = req.SandboxImage
 
 	if err := s.repo.Update(assistant); err != nil {
 		respondInternal(c, "failed to update assistant", err)

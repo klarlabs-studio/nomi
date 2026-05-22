@@ -254,6 +254,8 @@ export interface Assistant {
   permission_policy?: PermissionPolicy;
   model_policy?: ModelPolicy;
   recommended_bindings?: RecommendedBinding[];
+  executor_backend?: string;
+  sandbox_image?: string;
   created_at: string;
 }
 
@@ -325,6 +327,8 @@ export interface CreateAssistantRequest {
   memory_policy?: MemoryPolicy;
   permission_policy?: PermissionPolicy;
   model_policy?: ModelPolicy;
+  executor_backend?: string;
+  sandbox_image?: string;
 }
 
 export interface Memory {

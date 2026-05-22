@@ -4,6 +4,31 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-05-22 (Sandboxed executor backends — PR5: assistant editor UI)
+
+Exposes the executor backend choice in the desktop app's assistant editor.
+A new Sandbox section sits between Memory and Permissions with a backend
+dropdown and (for container backends) an image input. The dropdown is
+populated from the live runtime — only backends nomid successfully
+probed at startup appear, so a machine without Docker doesn't see
+"docker" as an option.
+
+### Added
+- `GET /runtime/executor-backends` — returns the list of registered
+  backend names (`local` always, plus `docker` and/or `gvisor` when
+  available).
+- `runtimeApi.executorBackends()` in the frontend API client.
+- `Assistant.executor_backend` + `Assistant.sandbox_image` fields on
+  the TypeScript API types and the `CreateAssistantRequest` shape.
+- Sandbox section in the assistant editor: backend dropdown,
+  contextual help describing each backend's isolation properties,
+  conditional image input (hidden for the local backend), and a hint
+  pointing users at the `network.egress` permission rule.
+
+### Changed
+- `internal/api/assistants.go` — request/response shape carries
+  `executor_backend` + `sandbox_image`; UpdateAssistant persists both.
+
 ## [Unreleased] - 2026-05-22 (Sandboxed executor backends — PR4: network.egress + Prometheus)
 
 Wires container-backend network egress through the existing permission

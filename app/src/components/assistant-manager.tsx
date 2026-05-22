@@ -12,7 +12,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ApiError, assistantsApi, toolsApi, connectorsApi, providersApi, settingsApi } from "@/lib/api";
+import { ApiError, assistantsApi, toolsApi, connectorsApi, providersApi, settingsApi, runtimeApi } from "@/lib/api";
 import { AssistantBindingsPanel } from "@/components/assistant-bindings-panel";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import type {
@@ -208,10 +208,13 @@ function AssistantForm({
       preferred: "",
       allow_fallback: true,
     },
+    executor_backend: assistant?.executor_backend || "local",
+    sandbox_image: assistant?.sandbox_image || "",
   });
 
   const [availableConnectors, setAvailableConnectors] = useState<ConnectorConfig[]>([]);
   const [availableProviders, setAvailableProviders] = useState<ProviderProfile[]>([]);
+  const [availableExecutorBackends, setAvailableExecutorBackends] = useState<string[]>(["local"]);
   const [templates, setTemplates] = useState<Assistant[]>([]);
   const [previewData, setPreviewData] = useState<
     Record<number, { tree?: FileNode; stats?: { file_count: number; dir_count: number; total_size: number }; loading: boolean }>
@@ -225,6 +228,14 @@ function AssistantForm({
       .listConfigs()
       .then((data) => setAvailableConnectors(data.connectors.filter((c) => c.enabled)))
       .catch((err) => console.error("Failed to load connectors:", err));
+    runtimeApi
+      .executorBackends()
+      .then((data) => {
+        if (data.backends && data.backends.length > 0) {
+          setAvailableExecutorBackends(data.backends);
+        }
+      })
+      .catch((err) => console.error("Failed to load executor backends:", err));
     if (!assistant) {
       settingsApi
         .getSafetyProfile()
@@ -738,6 +749,68 @@ function AssistantForm({
             </p>
           </div>
         )}
+      </div>
+
+      {/* Sandbox — pick the execution backend for command.exec calls.
+          The backend list is fetched at mount time and only includes
+          backends nomid successfully probed at startup. */}
+      <div className="border rounded-lg p-3 space-y-3">
+        <label className="text-sm font-medium">Sandbox</label>
+        <div className="space-y-2">
+          <label className="text-xs text-muted-foreground">Execution backend</label>
+          <select
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+            value={formData.executor_backend || "local"}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                executor_backend: e.target.value,
+                // Clear image when switching back to local so a leftover
+                // image string doesn't get persisted past its usefulness.
+                sandbox_image: e.target.value === "local" ? "" : formData.sandbox_image,
+              })
+            }
+          >
+            {availableExecutorBackends.map((b) => (
+              <option key={b} value={b}>
+                {b}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">
+            {formData.executor_backend === "local"
+              ? "Commands run directly on the host with process-group isolation. Fastest, no container overhead."
+              : formData.executor_backend === "docker"
+                ? "Commands run inside a rootless container with --network=none, capped memory, and a bind-mounted workspace."
+                : formData.executor_backend === "gvisor"
+                  ? "Commands run inside a container with the runsc (gVisor) runtime — user-space kernel boundary instead of the host kernel."
+                  : "Custom backend."}
+          </p>
+        </div>
+        {formData.executor_backend !== "local" && (
+          <div className="space-y-2">
+            <label className="text-xs text-muted-foreground">Container image</label>
+            <input
+              type="text"
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+              placeholder="e.g. alpine:3.20 or your/image:tag"
+              value={formData.sandbox_image || ""}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  sandbox_image: e.target.value,
+                })
+              }
+            />
+            <p className="text-xs text-muted-foreground">
+              Required for container backends. Choose a minimal image with only the binaries the assistant needs.
+            </p>
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground">
+          Network egress is denied by default. Add a <code className="font-mono">network.egress</code> rule with mode
+          Allow in the Permissions section below to grant outbound access.
+        </p>
       </div>
 
       {/* Permissions */}

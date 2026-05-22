@@ -374,6 +374,16 @@ export const assistantsApi = {
     }),
 };
 
+// Runtime introspection — surfaces what backends nomid registered at
+// boot so the assistant editor can populate its Sandbox dropdown
+// instead of hardcoding ["local", "docker", "gvisor"]. Backends only
+// show up here when nomid successfully probed them at startup, so the
+// dropdown won't offer Docker on a machine where the daemon isn't running.
+export const runtimeApi = {
+  executorBackends: () =>
+    fetchApi<{ backends: string[] }>("/runtime/executor-backends"),
+};
+
 // Event API
 export const eventsApi = {
   list: (params?: { run_id?: string; type?: string; limit?: number }) => {

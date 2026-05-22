@@ -142,6 +142,17 @@ func NewRouter(cfg RouterConfig) *gin.Engine {
 		runs.DELETE("/:id", runServer.DeleteRun)
 	}
 
+	// Runtime introspection — surface the registered executor backends so
+	// the desktop UI can populate the assistant builder dropdown without
+	// hardcoding the list. Returns names sorted alphabetically.
+	if cfg.Runtime != nil {
+		r.GET("/runtime/executor-backends", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{
+				"backends": cfg.Runtime.ExecutorBackends(),
+			})
+		})
+	}
+
 	// Assistant endpoints
 	assistantServer := NewAssistantServer(cfg.DB, cfg.EventBus)
 	assistants := r.Group("/assistants")
