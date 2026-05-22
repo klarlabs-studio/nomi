@@ -1820,3 +1820,146 @@ Depends on:
 Supersedes: feature #112 (Mnemos package extraction to standalone repo). Mark #112 as superseded in the description if a strikethrough mechanism exists; otherwise leave in the spec for history but treat it as inactive.
 
 ---
+
+## Mnemos plugin: drop go.mod replace directive after upstream release
+
+Remove the local replace directive in go.mod that pins github.com/felixgeelhaar/mnemos to a development checkout. Bump the require to a tagged upstream version once Mnemos cuts a release.
+
+Current state (added in commit 0d25839):
+- go.mod has `replace github.com/felixgeelhaar/mnemos => /Users/felixgeelhaar/Developer/projects/business-felix-geelhaar/mnemos`
+- require line reads `github.com/felixgeelhaar/mnemos v0.0.0-00010101000000-000000000000`
+
+Blockers (upstream):
+- Mnemos repo needs a stable release tag (v0.1.0 or v0.2.0 — whatever lines up with current client API stability)
+- The client package surface (Events / Claims / Relationships / Embeddings / Search / Context) should be considered stable enough that Nomi can pin without expecting breakage every minor bump
+
+Scope (this feature, post-release):
+- Remove the `replace` line from go.mod
+- Bump the require to the tagged semver, e.g. `github.com/felixgeelhaar/mnemos v0.1.0`
+- Run `go mod tidy` to regenerate go.sum with content hashes
+- Verify `go build ./...` + `go test -race ./...` still green
+- Update CHANGELOG.md with a "deps: pin Mnemos to vX.Y.Z" entry
+- Update the roady #113 acceptance notes if they reference the local-replace state
+
+Acceptance:
+- No `replace` directive for Mnemos in go.mod
+- `go.sum` contains hash entries for the pinned Mnemos version
+- A fresh `git clone` + `go build ./...` works on a machine without business-felix-geelhaar/mnemos checked out locally
+
+Depends on: tagged release at github.com/felixgeelhaar/mnemos
+Relates to: roady #113 (Mnemos plugin)
+
+---
+
+## Propagate runID through plugins.ContextSource.Query
+
+Refactor the plugins.ContextSource interface so Query receives the current run's ID, not just the goal string. Required for the Mnemos plugin's context source to be useful — upstream client.Context(runID, ...) is the rendered Context Block primitive and it requires runID to do anything.
+
+Current state (internal/plugins/roles.go):
+
+  type ContextSource interface {
+    ConnectionID() string
+    Name() string
+    Query(ctx context.Context, goal string) (string, error)
+  }
+
+The current shape supports the FolderContext use case (path scoped to a Connection, goal scoped to a run) but loses the run identity. Mnemos's context primitive needs the runID to fetch the rendered context block.
+
+The Mnemos plugin's claimsContextSource (commit dd58ae6, internal/plugins/mnemos/context_source.go) is implemented but returns an empty string today because runID isn't reachable. Tools (mnemos.search, mnemos.claims.list) cover the retrieval use case in the meantime.
+
+Scope:
+- Extend the ContextSource.Query signature. Two options to weigh:
+    A) Query(ctx, runID string, goal string) — passes both explicitly
+    B) Query(ctx, request ContextQueryRequest) — request struct with RunID, Goal, optional MaxTokens / Filters
+  B is more forward-compatible but adds a new type. Going with B if a follow-up wants to add per-source query parameters; A if the simpler shape is enough for v1.
+- Update every implementation (folder context, mnemos context source).
+- Update every call site (planner.go where context sources are gathered into the planner prompt).
+- Update mnemos.claimsContextSource to actually call client.Context(runID, ContextOptions{Query: goal}) and return the result instead of returning empty.
+- Tests: a new test that asserts the Mnemos context source returns non-empty when the planner provides a runID.
+
+Out of scope:
+- Vector tuning / token budgets at the context layer — that's a separate optimization.
+- Visibility filtering at the context-source boundary — runs against whatever visibility the connection's bearer token allows; per-source visibility caps come later.
+
+Acceptance:
+- ContextSource.Query receives runID one way or another.
+- Mnemos context source returns the upstream context block, not "".
+- Integration test in internal/runtime asserts that a run with a Mnemos-connected assistant sees Mnemos context appended to its planner prompt.
+- All existing ContextSource implementations updated; no behavior regression for folder context.
+
+Relates to: roady #113 (Mnemos plugin), commit dd58ae6.
+
+---
+
+## Desktop UI: Mnemos connections card in Connections tab
+
+Add a Mnemos card to the desktop app's Connections tab so users can configure one or more Mnemos services without hand-editing connector_configs rows. Sits alongside the existing Telegram / Gmail / Calendar / Slack / GitHub / Obsidian cards.
+
+Backing plugin: internal/plugins/mnemos (commit dd58ae6). Cardinality multi (users can wire personal + company instances).
+
+Scope:
+- New card component in app/src/components/connection-settings.tsx (or split into its own file under app/src/components/connections/mnemos-card.tsx if the existing file is large).
+- Form fields driven by the plugin manifest's Requires.ConfigSchema:
+  - base_url (string, required) — Mnemos server URL
+  - visibility_default (select: personal | team | org, default "team") — fallback visibility for writes
+- Credential field driven by manifest.Requires.Credentials:
+  - bearer_token (password input, optional) — required for write endpoints
+  - "Replace" button + "Configured ✓" pill when secret_configured is true (follow the pattern already established for the OS-keyring migration: hide the input when configured, reveal on Replace)
+- Connection name input (used as connection id; lowercased, slugified for storage)
+- Save / Update / Delete actions hit the existing /connectors endpoints (POST /connectors/:plugin/connections etc.)
+- Status indicator showing the plugin's per-connection ConnectionHealth (Running / LastEventAt / LastError) — wire when the plugin starts reporting health, which today is a no-op (no background workers). Indicator can be a simple "Configured / Not configured" pill in v1.
+- Test connection button: makes a GET /health request through the running plugin and surfaces the response. Optional in v1; skip if it adds too much surface.
+
+Out of scope:
+- A separate /plugins/mnemos/info endpoint or version probe — the manifest already carries Version + Description.
+- Visibility-cap configuration per assistant — separate feature.
+- Multi-account UX (org switcher) — current Cardinality multi suffices because each instance is its own Connection row.
+
+Acceptance:
+- User can add a Mnemos connection from the desktop app UI, supplying base_url + token, and see the connection appear in the registry without restarting nomid.
+- Existing tests for connection-settings.tsx pass; new Playwright e2e covers the create/update/delete path.
+- Saving with an unchanged bearer token does not clobber the stored secret (the secret_ref is preserved by omitting `token_ref` from the request body).
+- UI never renders the raw token or the secret:// URI.
+
+Relates to: roady #113, commit dd58ae6. Pattern mirrors the secret-redaction-in-frontend feature already shipped for provider profiles and other connector tokens.
+
+---
+
+## CI: E2E tests for Mnemos plugin against `mnemos serve`
+
+Add an end-to-end CI workflow that spins up a real Mnemos server via `mnemos serve`, configures the Mnemos plugin in Nomi to point at it, exercises each of the 6 tools + the context source, and asserts the wire shapes round-trip cleanly.
+
+Why now: the Mnemos plugin (commit dd58ae6) wires every tool to the real mnemos/client surface, but no test currently runs the real HTTP path. The 7 unit tests in internal/plugins/mnemos/plugin_test.go cover plugin lifecycle and input validation; they don't catch wire-format drift between the plugin's input parsing and the upstream API.
+
+Scope:
+- New GitHub Actions job in .github/workflows/ — either a new file like `e2e-mnemos.yml` or a job within the existing test workflow.
+- Steps:
+  1. Check out Nomi + the Mnemos repo (set up a matrix or use a script that fetches the latest Mnemos release tag).
+  2. Build `mnemos` and start `mnemos serve` on a free port in the background. Use the in-memory SQLite mode if upstream supports it; otherwise a temp file.
+  3. Generate a bearer token via `mnemos token issue` (or whatever upstream provides).
+  4. Build nomid; configure the Mnemos plugin via the REST API (POST /connectors/com.nomi.mnemos/connections) with the test server's URL + token.
+  5. Run a Go test tag-gated as `e2e_mnemos` (under build tag) that hits each tool end-to-end:
+     - mnemos.events.append → append 3 events, verify accepted=3.
+     - mnemos.claims.append → append 2 claims with evidence to the 3 events, verify accepted=2.
+     - mnemos.claims.list → list with type filter, verify the 2 claims come back.
+     - mnemos.relationships.list → list all (empty is OK for v1).
+     - mnemos.embeddings.append → append 1 embedding with a 1536-dim vector, verify accepted=1.
+     - mnemos.search → query a substring of a claim text, verify the claim appears in resp.Claims.
+  6. Tear down: kill mnemos serve, clean temp files, surface any non-zero exit.
+- New test file: internal/plugins/mnemos/e2e_test.go with `//go:build e2e_mnemos`. Skipped in the default test sweep; run by the CI job and by anyone passing `-tags e2e_mnemos`.
+
+Out of scope:
+- Performance benchmarks.
+- Cross-version compatibility matrix (test against multiple Mnemos versions). Pin to a single tagged version per CI run; matrix is a follow-up.
+- TLS / cert pinning — keep the in-CI server on plain HTTP behind localhost.
+
+Acceptance:
+- A new CI job runs on every PR that touches internal/plugins/mnemos/** or cmd/nomid/main.go.
+- The job passes on a clean checkout with no manual setup.
+- A regression in tool input parsing or upstream wire format fails the job with a clear diff between expected and actual response shape.
+- Total CI runtime adds < 90s (start mnemos, run ~6 tool calls, tear down).
+
+Depends on: a tagged Mnemos release (#114 chain) — easier to pin a known-good version than `go install`-from-main every time.
+Relates to: roady #113, commit dd58ae6.
+
+---
