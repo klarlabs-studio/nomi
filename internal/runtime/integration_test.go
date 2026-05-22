@@ -11,7 +11,7 @@ import (
 	"github.com/felixgeelhaar/nomi/internal/domain"
 	"github.com/felixgeelhaar/nomi/internal/events"
 	"github.com/felixgeelhaar/nomi/internal/memory"
-	"github.com/felixgeelhaar/nomi/internal/mnemos"
+	"github.com/felixgeelhaar/nomi/internal/memstore"
 	"github.com/felixgeelhaar/nomi/internal/permissions"
 	"github.com/felixgeelhaar/nomi/internal/storage/db"
 	"github.com/felixgeelhaar/nomi/internal/tools"
@@ -194,7 +194,7 @@ func TestFullRunLifecycle(t *testing.T) {
 	}
 
 	// Verify memory was stored
-	memories, err := rt.memClient.Retrieve(ctx, mnemos.LocalWorkspace(), mnemos.Query{Limit: 10})
+	memories, err := rt.memClient.Retrieve(ctx, memstore.LocalWorkspace(), memstore.Query{Limit: 10})
 	if err != nil {
 		t.Fatalf("Failed to list memories: %v", err)
 	}

@@ -1,4 +1,4 @@
-package mnemos
+package memstore
 
 import "time"
 

@@ -34,7 +34,7 @@ func TestMemoryExportImportRoundTrip(t *testing.T) {
 		t.Fatalf("export: HTTP %d: %s", wExp.Code, wExp.Body.String())
 	}
 	jsonl := wExp.Body.String()
-	if !strings.Contains(jsonl, `"mnemos.export"`) {
+	if !strings.Contains(jsonl, `"memstore.export"`) {
 		t.Errorf("export missing header line; body=%q", jsonl)
 	}
 	// Header + 3 entries = at least 4 newline-terminated records.

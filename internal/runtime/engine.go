@@ -35,7 +35,7 @@ import (
 	"github.com/felixgeelhaar/nomi/internal/domain"
 	"github.com/felixgeelhaar/nomi/internal/events"
 	"github.com/felixgeelhaar/nomi/internal/llm"
-	"github.com/felixgeelhaar/nomi/internal/mnemos"
+	"github.com/felixgeelhaar/nomi/internal/memstore"
 	"github.com/felixgeelhaar/nomi/internal/metrics"
 	"github.com/felixgeelhaar/nomi/internal/permissions"
 	"github.com/felixgeelhaar/nomi/internal/storage/db"
@@ -56,7 +56,7 @@ type Runtime struct {
 	permEngine     *permissions.Engine
 	approvalMgr    *permissions.Manager
 	toolExecutor   *tools.Executor
-	memClient      mnemos.Client
+	memClient      memstore.Client
 	maxRetries     int
 
 	// rootCtx is the parent context for every background run. Shutdown()
@@ -183,7 +183,7 @@ func NewRuntime(
 	permEngine *permissions.Engine,
 	approvalMgr *permissions.Manager,
 	toolExecutor *tools.Executor,
-	memClient mnemos.Client,
+	memClient memstore.Client,
 	config Config,
 ) *Runtime {
 	rootCtx, rootCancel := context.WithCancel(context.Background())
@@ -229,7 +229,7 @@ func NewRuntime(
 }
 
 // startTombstoneSubscriber wires assistant.deleted / run.deleted events
-// to mnemos.Client.Tombstone calls. Runs in a background goroutine for
+// to memstore.Client.Tombstone calls. Runs in a background goroutine for
 // the lifetime of the runtime; exits when rootCtx is cancelled.
 func (r *Runtime) startTombstoneSubscriber() {
 	sub := r.eventBus.Subscribe(events.EventFilter{
@@ -261,20 +261,20 @@ func (r *Runtime) handleEntityDeleted(ev *domain.Event) {
 	if ev == nil || ev.Payload == nil {
 		return
 	}
-	var ref mnemos.EntityRef
+	var ref memstore.EntityRef
 	switch ev.Type {
 	case domain.EventAssistantDeleted:
 		id, _ := ev.Payload["assistant_id"].(string)
 		if id == "" {
 			return
 		}
-		ref = mnemos.EntityRef{Kind: mnemos.EntityAssistant, ID: id}
+		ref = memstore.EntityRef{Kind: memstore.EntityAssistant, ID: id}
 	case domain.EventRunDeleted:
 		id, _ := ev.Payload["run_id"].(string)
 		if id == "" {
 			return
 		}
-		ref = mnemos.EntityRef{Kind: mnemos.EntityRun, ID: id}
+		ref = memstore.EntityRef{Kind: memstore.EntityRun, ID: id}
 	default:
 		return
 	}
@@ -689,7 +689,7 @@ func (r *Runtime) EditPlan(ctx context.Context, runID string, stepDefs []domain.
 	if oldPlan != nil && r.memClient != nil {
 		assistantID := run.AssistantID
 		now := time.Now().UTC()
-		prefScope := mnemos.LocalPreferences()
+		prefScope := memstore.LocalPreferences()
 
 		// Detect removed steps (rejections)
 		newStepTitles := make(map[string]bool)
@@ -698,7 +698,7 @@ func (r *Runtime) EditPlan(ctx context.Context, runID string, stepDefs []domain.
 		}
 		for _, oldStep := range oldPlan.Steps {
 			if !newStepTitles[oldStep.Title] {
-				entry := &mnemos.Entry{
+				entry := &memstore.Entry{
 					Content:     fmt.Sprintf("User removed step: '%s' (%s). Avoid similar steps for similar goals.", oldStep.Title, oldStep.Description),
 					AssistantID: &assistantID,
 					RunID:       &run.ID,
@@ -709,7 +709,7 @@ func (r *Runtime) EditPlan(ctx context.Context, runID string, stepDefs []domain.
 		}
 
 		// Generic edit summary
-		entry := &mnemos.Entry{
+		entry := &memstore.Entry{
 			Content:     fmt.Sprintf("User edited plan for run %s (from %d steps to %d). Prefer this revised structure for similar goals.", run.ID, len(oldPlan.Steps), len(plan.Steps)),
 			AssistantID: &assistantID,
 			RunID:       &run.ID,

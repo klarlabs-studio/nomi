@@ -753,7 +753,7 @@ func (r *MemoryRepository) Search(query string, limit int) ([]*domain.MemoryEntr
 // NULL FK behavior so the audit value of the memory content survives a
 // delete; the link to the (now-gone) assistant is the only thing
 // dropped. Idempotent — re-running on already-anonymized rows is a
-// no-op. Called by mnemos.Client.Tombstone in response to
+// no-op. Called by memstore.Client.Tombstone in response to
 // assistant.deleted events; see ADR 0004 §6.
 func (r *MemoryRepository) AnonymizeByAssistant(assistantID string) error {
 	_, err := r.db.Exec("UPDATE memory SET assistant_id = NULL WHERE assistant_id = ?", assistantID)

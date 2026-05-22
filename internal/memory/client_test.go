@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/mnemos"
+	"github.com/felixgeelhaar/nomi/internal/memstore"
 	"github.com/felixgeelhaar/nomi/internal/storage/db"
 )
 
@@ -79,8 +79,8 @@ func TestEmbeddedClient_StoreAssignsAndHashes(t *testing.T) {
 	c, _, _, cleanup := newTestClient(t)
 	defer cleanup()
 
-	entry := &mnemos.Entry{Content: "hello world"}
-	if err := c.Store(context.Background(), mnemos.LocalWorkspace(), entry); err != nil {
+	entry := &memstore.Entry{Content: "hello world"}
+	if err := c.Store(context.Background(), memstore.LocalWorkspace(), entry); err != nil {
 		t.Fatalf("Store: %v", err)
 	}
 	if entry.ID == "" {
@@ -103,15 +103,15 @@ func TestEmbeddedClient_RoundTripWorkspace(t *testing.T) {
 	c, _, _, cleanup := newTestClient(t)
 	defer cleanup()
 	ctx := context.Background()
-	scope := mnemos.LocalWorkspace()
+	scope := memstore.LocalWorkspace()
 
 	for _, body := range []string{"alpha", "beta", "gamma"} {
-		if err := c.Store(ctx, scope, &mnemos.Entry{Content: body}); err != nil {
+		if err := c.Store(ctx, scope, &memstore.Entry{Content: body}); err != nil {
 			t.Fatalf("Store %q: %v", body, err)
 		}
 	}
 
-	got, err := c.Retrieve(ctx, scope, mnemos.Query{Limit: 10})
+	got, err := c.Retrieve(ctx, scope, memstore.Query{Limit: 10})
 	if err != nil {
 		t.Fatalf("Retrieve: %v", err)
 	}
@@ -125,14 +125,14 @@ func TestEmbeddedClient_RetrieveDoesNotCrossScopes(t *testing.T) {
 	defer cleanup()
 	ctx := context.Background()
 
-	if err := c.Store(ctx, mnemos.LocalWorkspace(), &mnemos.Entry{Content: "ws"}); err != nil {
+	if err := c.Store(ctx, memstore.LocalWorkspace(), &memstore.Entry{Content: "ws"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := c.Store(ctx, mnemos.LocalProfile(), &mnemos.Entry{Content: "pf"}); err != nil {
+	if err := c.Store(ctx, memstore.LocalProfile(), &memstore.Entry{Content: "pf"}); err != nil {
 		t.Fatal(err)
 	}
 
-	ws, err := c.Retrieve(ctx, mnemos.LocalWorkspace(), mnemos.Query{Limit: 10})
+	ws, err := c.Retrieve(ctx, memstore.LocalWorkspace(), memstore.Query{Limit: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -140,7 +140,7 @@ func TestEmbeddedClient_RetrieveDoesNotCrossScopes(t *testing.T) {
 		t.Errorf("workspace retrieve: %+v", ws)
 	}
 
-	pf, err := c.Retrieve(ctx, mnemos.LocalProfile(), mnemos.Query{Limit: 10})
+	pf, err := c.Retrieve(ctx, memstore.LocalProfile(), memstore.Query{Limit: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -153,20 +153,20 @@ func TestEmbeddedClient_RetrieveQueryFilters(t *testing.T) {
 	c, database, _, cleanup := newTestClient(t)
 	defer cleanup()
 	ctx := context.Background()
-	scope := mnemos.LocalWorkspace()
+	scope := memstore.LocalWorkspace()
 
 	aID := "assistant-A"
 	bID := "assistant-B"
 	seedAssistant(t, database, aID)
 	seedAssistant(t, database, bID)
-	if err := c.Store(ctx, scope, &mnemos.Entry{Content: "from A", AssistantID: &aID}); err != nil {
+	if err := c.Store(ctx, scope, &memstore.Entry{Content: "from A", AssistantID: &aID}); err != nil {
 		t.Fatal(err)
 	}
-	if err := c.Store(ctx, scope, &mnemos.Entry{Content: "from B", AssistantID: &bID}); err != nil {
+	if err := c.Store(ctx, scope, &memstore.Entry{Content: "from B", AssistantID: &bID}); err != nil {
 		t.Fatal(err)
 	}
 
-	got, err := c.Retrieve(ctx, scope, mnemos.Query{AssistantID: &aID, Limit: 10})
+	got, err := c.Retrieve(ctx, scope, memstore.Query{AssistantID: &aID, Limit: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -179,19 +179,19 @@ func TestEmbeddedClient_RetrieveSinceFilter(t *testing.T) {
 	c, _, _, cleanup := newTestClient(t)
 	defer cleanup()
 	ctx := context.Background()
-	scope := mnemos.LocalWorkspace()
+	scope := memstore.LocalWorkspace()
 
-	old := &mnemos.Entry{Content: "old", CreatedAt: time.Now().UTC().Add(-2 * time.Hour)}
+	old := &memstore.Entry{Content: "old", CreatedAt: time.Now().UTC().Add(-2 * time.Hour)}
 	if err := c.Store(ctx, scope, old); err != nil {
 		t.Fatal(err)
 	}
-	fresh := &mnemos.Entry{Content: "fresh"}
+	fresh := &memstore.Entry{Content: "fresh"}
 	if err := c.Store(ctx, scope, fresh); err != nil {
 		t.Fatal(err)
 	}
 
 	cutoff := time.Now().UTC().Add(-1 * time.Hour)
-	got, err := c.Retrieve(ctx, scope, mnemos.Query{Since: &cutoff, Limit: 10})
+	got, err := c.Retrieve(ctx, scope, memstore.Query{Since: &cutoff, Limit: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -204,15 +204,15 @@ func TestEmbeddedClient_SearchSubstring(t *testing.T) {
 	c, _, _, cleanup := newTestClient(t)
 	defer cleanup()
 	ctx := context.Background()
-	scope := mnemos.LocalWorkspace()
+	scope := memstore.LocalWorkspace()
 
 	for _, body := range []string{"AuthN failed", "auth required", "unrelated"} {
-		if err := c.Store(ctx, scope, &mnemos.Entry{Content: body}); err != nil {
+		if err := c.Store(ctx, scope, &memstore.Entry{Content: body}); err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	got, err := c.Search(ctx, scope, "auth", mnemos.SearchOpts{Limit: 10})
+	got, err := c.Search(ctx, scope, "auth", memstore.SearchOpts{Limit: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -225,9 +225,9 @@ func TestEmbeddedClient_ForgetDeletes(t *testing.T) {
 	c, _, _, cleanup := newTestClient(t)
 	defer cleanup()
 	ctx := context.Background()
-	scope := mnemos.LocalWorkspace()
+	scope := memstore.LocalWorkspace()
 
-	entry := &mnemos.Entry{Content: "x"}
+	entry := &memstore.Entry{Content: "x"}
 	if err := c.Store(ctx, scope, entry); err != nil {
 		t.Fatal(err)
 	}
@@ -235,7 +235,7 @@ func TestEmbeddedClient_ForgetDeletes(t *testing.T) {
 		t.Fatalf("Forget: %v", err)
 	}
 
-	got, err := c.Retrieve(ctx, scope, mnemos.Query{Limit: 10})
+	got, err := c.Retrieve(ctx, scope, memstore.Query{Limit: 10})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -248,8 +248,8 @@ func TestEmbeddedClient_ForgetUnknownReturnsNotFound(t *testing.T) {
 	c, _, _, cleanup := newTestClient(t)
 	defer cleanup()
 
-	err := c.Forget(context.Background(), mnemos.LocalWorkspace(), "no-such-id")
-	if !errors.Is(err, mnemos.ErrNotFound) {
+	err := c.Forget(context.Background(), memstore.LocalWorkspace(), "no-such-id")
+	if !errors.Is(err, memstore.ErrNotFound) {
 		t.Errorf("want ErrNotFound, got %v", err)
 	}
 }
@@ -259,13 +259,13 @@ func TestEmbeddedClient_ForgetRejectsScopeMismatch(t *testing.T) {
 	defer cleanup()
 	ctx := context.Background()
 
-	entry := &mnemos.Entry{Content: "x"}
-	if err := c.Store(ctx, mnemos.LocalWorkspace(), entry); err != nil {
+	entry := &memstore.Entry{Content: "x"}
+	if err := c.Store(ctx, memstore.LocalWorkspace(), entry); err != nil {
 		t.Fatal(err)
 	}
 	// Try forgetting from profile scope — should look like not-found.
-	err := c.Forget(ctx, mnemos.LocalProfile(), entry.ID)
-	if !errors.Is(err, mnemos.ErrNotFound) {
+	err := c.Forget(ctx, memstore.LocalProfile(), entry.ID)
+	if !errors.Is(err, memstore.ErrNotFound) {
 		t.Errorf("cross-scope Forget: want ErrNotFound, got %v", err)
 	}
 }
@@ -274,15 +274,15 @@ func TestEmbeddedClient_TombstoneAssistantAnonymizes(t *testing.T) {
 	c, database, repo, cleanup := newTestClient(t)
 	defer cleanup()
 	ctx := context.Background()
-	scope := mnemos.LocalWorkspace()
+	scope := memstore.LocalWorkspace()
 
 	aID := "assistant-to-delete"
 	seedAssistant(t, database, aID)
-	if err := c.Store(ctx, scope, &mnemos.Entry{Content: "keep me", AssistantID: &aID}); err != nil {
+	if err := c.Store(ctx, scope, &memstore.Entry{Content: "keep me", AssistantID: &aID}); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := c.Tombstone(ctx, mnemos.EntityRef{Kind: mnemos.EntityAssistant, ID: aID}); err != nil {
+	if err := c.Tombstone(ctx, memstore.EntityRef{Kind: memstore.EntityAssistant, ID: aID}); err != nil {
 		t.Fatalf("Tombstone: %v", err)
 	}
 
@@ -302,17 +302,17 @@ func TestEmbeddedClient_TombstoneRunAnonymizes(t *testing.T) {
 	c, database, repo, cleanup := newTestClient(t)
 	defer cleanup()
 	ctx := context.Background()
-	scope := mnemos.LocalWorkspace()
+	scope := memstore.LocalWorkspace()
 
 	aID := "assistant-for-run"
 	rID := "run-to-delete"
 	seedAssistant(t, database, aID)
 	seedRun(t, database, rID, aID)
-	if err := c.Store(ctx, scope, &mnemos.Entry{Content: "keep me", RunID: &rID}); err != nil {
+	if err := c.Store(ctx, scope, &memstore.Entry{Content: "keep me", RunID: &rID}); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := c.Tombstone(ctx, mnemos.EntityRef{Kind: mnemos.EntityRun, ID: rID}); err != nil {
+	if err := c.Tombstone(ctx, memstore.EntityRef{Kind: memstore.EntityRun, ID: rID}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -330,7 +330,7 @@ func TestEmbeddedClient_TombstoneIdempotent(t *testing.T) {
 	defer cleanup()
 	ctx := context.Background()
 
-	ref := mnemos.EntityRef{Kind: mnemos.EntityAssistant, ID: "never-existed"}
+	ref := memstore.EntityRef{Kind: memstore.EntityAssistant, ID: "never-existed"}
 	for i := range 3 {
 		if err := c.Tombstone(ctx, ref); err != nil {
 			t.Errorf("Tombstone iter %d: %v", i, err)
@@ -342,8 +342,8 @@ func TestEmbeddedClient_StoreRejectsInvalidScope(t *testing.T) {
 	c, _, _, cleanup := newTestClient(t)
 	defer cleanup()
 
-	err := c.Store(context.Background(), mnemos.Scope{}, &mnemos.Entry{Content: "x"})
-	if !errors.Is(err, mnemos.ErrInvalidScope) {
+	err := c.Store(context.Background(), memstore.Scope{}, &memstore.Entry{Content: "x"})
+	if !errors.Is(err, memstore.ErrInvalidScope) {
 		t.Errorf("want ErrInvalidScope, got %v", err)
 	}
 }
@@ -355,7 +355,7 @@ func TestEmbeddedClient_RetrieveCancelledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	_, err := c.Retrieve(ctx, mnemos.LocalWorkspace(), mnemos.Query{})
+	_, err := c.Retrieve(ctx, memstore.LocalWorkspace(), memstore.Query{})
 	if !errors.Is(err, context.Canceled) {
 		t.Errorf("want context.Canceled, got %v", err)
 	}

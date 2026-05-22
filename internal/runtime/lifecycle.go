@@ -10,26 +10,26 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/mnemos"
+	"github.com/felixgeelhaar/nomi/internal/memstore"
 	"github.com/felixgeelhaar/nomi/internal/tools"
 )
 
 // scopeFromPolicy maps an AssistantDefinition.MemoryPolicy.Scope string
-// to a mnemos.Scope. Empty input defaults to workspace, matching the
+// to a memstore.Scope. Empty input defaults to workspace, matching the
 // behavior of the pre-ADR-0004 code path.
-func scopeFromPolicy(policyScope string) mnemos.Scope {
+func scopeFromPolicy(policyScope string) memstore.Scope {
 	switch policyScope {
 	case "profile":
-		return mnemos.LocalProfile()
+		return memstore.LocalProfile()
 	case "preferences":
-		return mnemos.LocalPreferences()
+		return memstore.LocalPreferences()
 	case "", "workspace":
-		return mnemos.LocalWorkspace()
+		return memstore.LocalWorkspace()
 	default:
 		// Unknown scope — surface as workspace rather than reject. The
 		// validator on the wire boundary catches malformed scopes; this
 		// path is reached only with legacy policy strings.
-		return mnemos.LocalWorkspace()
+		return memstore.LocalWorkspace()
 	}
 }
 
@@ -270,7 +270,7 @@ func (r *Runtime) executeExecutionPhase(ctx context.Context, run *domain.Run, as
 		}
 
 		scope := scopeFromPolicy(assistant.MemoryPolicy.Scope)
-		_ = r.memClient.Store(ctx, scope, &mnemos.Entry{
+		_ = r.memClient.Store(ctx, scope, &memstore.Entry{
 			Content:     memoryContent,
 			AssistantID: &assistant.ID,
 			RunID:       &run.ID,

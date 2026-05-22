@@ -7,7 +7,7 @@ import (
 
 	"github.com/felixgeelhaar/nomi/internal/domain"
 	"github.com/felixgeelhaar/nomi/internal/events"
-	"github.com/felixgeelhaar/nomi/internal/mnemos"
+	"github.com/felixgeelhaar/nomi/internal/memstore"
 	"github.com/felixgeelhaar/nomi/internal/storage/db"
 )
 
@@ -33,10 +33,10 @@ func TestAuditChain_MemoryOps(t *testing.T) {
 	defer sub.Unsubscribe()
 
 	ctx := context.Background()
-	scope := mnemos.LocalWorkspace()
+	scope := memstore.LocalWorkspace()
 
 	// 1. Store → memory.store event with content_hash.
-	entry := &mnemos.Entry{Content: "audit me"}
+	entry := &memstore.Entry{Content: "audit me"}
 	if err := c.Store(ctx, scope, entry); err != nil {
 		t.Fatal(err)
 	}
@@ -60,14 +60,14 @@ func TestAuditChain_MemoryOps(t *testing.T) {
 	}
 
 	// 3. Tombstone → memory.tombstone event.
-	if err := c.Tombstone(ctx, mnemos.EntityRef{Kind: mnemos.EntityAssistant, ID: "missing"}); err != nil {
+	if err := c.Tombstone(ctx, memstore.EntityRef{Kind: memstore.EntityAssistant, ID: "missing"}); err != nil {
 		t.Fatal(err)
 	}
 	ev = waitForEvent(t, sub, 500*time.Millisecond)
 	if ev.Type != domain.EventMemoryTombstone {
 		t.Errorf("event type = %s, want %s", ev.Type, domain.EventMemoryTombstone)
 	}
-	if k, _ := ev.Payload["entity_kind"].(string); k != string(mnemos.EntityAssistant) {
+	if k, _ := ev.Payload["entity_kind"].(string); k != string(memstore.EntityAssistant) {
 		t.Errorf("tombstone event entity_kind = %q", k)
 	}
 }

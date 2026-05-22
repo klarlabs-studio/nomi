@@ -169,7 +169,7 @@ func main() {
 
 	toolExecutor := tools.NewExecutor(toolRegistry)
 
-	// Memory system. Runtime depends on the mnemos.Client interface (ADR
+	// Memory system. Runtime depends on the memstore.Client interface (ADR
 	// 0004 step 1); the REST API still uses *memory.Manager directly for
 	// its CRUD handlers and is wired separately below.
 	memoryRepo := db.NewMemoryRepository(database)

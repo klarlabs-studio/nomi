@@ -12,7 +12,7 @@ import (
 	"github.com/felixgeelhaar/nomi/internal/events"
 	"github.com/felixgeelhaar/nomi/internal/memory"
 	"github.com/felixgeelhaar/nomi/internal/metrics"
-	"github.com/felixgeelhaar/nomi/internal/mnemos"
+	"github.com/felixgeelhaar/nomi/internal/memstore"
 	"github.com/felixgeelhaar/nomi/internal/permissions"
 	"github.com/felixgeelhaar/nomi/internal/plugins"
 	"github.com/felixgeelhaar/nomi/internal/plugins/hub"
@@ -34,7 +34,7 @@ type RouterConfig struct {
 	EventBus   *events.EventBus
 	Approvals  *permissions.Manager
 	Memory     *memory.Manager
-	MemoryClient mnemos.Client // optional; required for /memory/export + /memory/import endpoints (ADR 0004 §8)
+	MemoryClient memstore.Client // optional; required for /memory/export + /memory/import endpoints (ADR 0004 §8)
 	Tools      *tools.Registry
 	Connectors  *connectors.Registry
 	Plugins *plugins.Registry // source of truth for plugin-architecture endpoints

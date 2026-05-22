@@ -321,7 +321,7 @@ const (
 	EventAssistantDeleted EventType = "assistant.deleted"
 	EventRunDeleted       EventType = "run.deleted"
 
-	// Memory audit events emitted by mnemos.Client implementations on
+	// Memory audit events emitted by memstore.Client implementations on
 	// every Store / Forget / Tombstone. Includes content_hash in the
 	// payload so /audit/verify can verify intent without re-reading the
 	// memory store.

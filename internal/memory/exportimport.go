@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/felixgeelhaar/nomi/internal/mnemos"
+	"github.com/felixgeelhaar/nomi/internal/memstore"
 )
 
 // ExportFormatVersion identifies the JSONL wire format. The first line
@@ -22,7 +22,7 @@ const ExportFormatVersion = 1
 type exportHeader struct {
 	Format  string         `json:"format"`
 	Version int            `json:"version"`
-	Scope   mnemos.Scope   `json:"scope"`
+	Scope   memstore.Scope   `json:"scope"`
 	Count   int            `json:"count,omitempty"` // entry count; 0 if streaming
 }
 
@@ -30,7 +30,7 @@ type exportHeader struct {
 // so future fields (signatures, provenance) can land without forcing
 // every consumer to redeploy.
 type exportEntry struct {
-	Entry *mnemos.Entry `json:"entry"`
+	Entry *memstore.Entry `json:"entry"`
 }
 
 // Export writes every entry in scope to w as JSONL. The first line is
@@ -38,15 +38,15 @@ type exportEntry struct {
 // Returns the number of entries written. Streams from the client's
 // Retrieve in pages so the in-memory footprint stays bounded.
 //
-// The export format is stable across implementations of mnemos.Client
+// The export format is stable across implementations of memstore.Client
 // — `mnemos/embedded` and a future `mnemos/remote` produce identical
 // output, which is what makes ADR 0004 §10 (embedded → remote data
 // migration) work.
-func Export(ctx context.Context, client mnemos.Client, scope mnemos.Scope, w io.Writer) (int, error) {
+func Export(ctx context.Context, client memstore.Client, scope memstore.Scope, w io.Writer) (int, error) {
 	if client == nil {
 		return 0, fmt.Errorf("memory.Export: nil client")
 	}
-	if err := mnemos.ValidateScope(scope); err != nil {
+	if err := memstore.ValidateScope(scope); err != nil {
 		return 0, err
 	}
 
@@ -55,7 +55,7 @@ func Export(ctx context.Context, client mnemos.Client, scope mnemos.Scope, w io.
 	enc.SetEscapeHTML(false)
 
 	if err := enc.Encode(exportHeader{
-		Format:  "mnemos.export",
+		Format:  "memstore.export",
 		Version: ExportFormatVersion,
 		Scope:   scope,
 	}); err != nil {
@@ -66,7 +66,7 @@ func Export(ctx context.Context, client mnemos.Client, scope mnemos.Scope, w io.
 	// Since cutoffs. For step 1 a single large limit is sufficient — the
 	// corpora are small. Move to true paging when corpus growth makes
 	// the single-shot fetch wasteful.
-	entries, err := client.Retrieve(ctx, scope, mnemos.Query{Limit: 100_000})
+	entries, err := client.Retrieve(ctx, scope, memstore.Query{Limit: 100_000})
 	if err != nil {
 		return 0, fmt.Errorf("memory.Export: retrieve: %w", err)
 	}
@@ -89,7 +89,7 @@ func Export(ctx context.Context, client mnemos.Client, scope mnemos.Scope, w io.
 // itself — the underlying client decides (the embedded SQLite backend
 // returns a primary-key violation). Callers that want idempotent
 // imports should wipe the target scope first via Forget, or pre-filter.
-func Import(ctx context.Context, client mnemos.Client, r io.Reader) (int, error) {
+func Import(ctx context.Context, client memstore.Client, r io.Reader) (int, error) {
 	if client == nil {
 		return 0, fmt.Errorf("memory.Import: nil client")
 	}
@@ -100,13 +100,13 @@ func Import(ctx context.Context, client mnemos.Client, r io.Reader) (int, error)
 	if err := dec.Decode(&hdr); err != nil {
 		return 0, fmt.Errorf("memory.Import: read header: %w", err)
 	}
-	if hdr.Format != "mnemos.export" {
+	if hdr.Format != "memstore.export" {
 		return 0, fmt.Errorf("memory.Import: unexpected format %q", hdr.Format)
 	}
 	if hdr.Version != ExportFormatVersion {
 		return 0, fmt.Errorf("memory.Import: unsupported export version %d (want %d)", hdr.Version, ExportFormatVersion)
 	}
-	if err := mnemos.ValidateScope(hdr.Scope); err != nil {
+	if err := memstore.ValidateScope(hdr.Scope); err != nil {
 		return 0, fmt.Errorf("memory.Import: header scope: %w", err)
 	}
 

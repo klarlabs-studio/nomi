@@ -14,4 +14,4 @@
 // rippling through the rest of Nomi.
 //
 // See docs/adr/0004-nomi-mnemos-cognitive-boundary.md.
-package mnemos
+package memstore
