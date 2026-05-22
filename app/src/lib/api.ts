@@ -66,7 +66,14 @@ declare global {
 
 function getApiBase(): Promise<string> {
   if (!apiBasePromise) {
+    const inTauri =
+      typeof window !== "undefined" &&
+      typeof (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__ !==
+        "undefined";
     apiBasePromise = (async () => {
+      if (!inTauri) {
+        return API_BASE_FALLBACK;
+      }
       try {
         const url = await invoke<string>("get_api_endpoint");
         return url && url.length > 0 ? url : API_BASE_FALLBACK;
@@ -92,12 +99,26 @@ function resetAuthState(): void {
 
 function getAuthToken(): Promise<string> {
   if (!tokenPromise) {
-    // invoke() may throw SYNCHRONOUSLY in non-Tauri contexts (vite
-    // preview, Playwright) when the @tauri-apps shim has no bridge to
-    // bind to — .catch() only catches rejections, not sync throws.
-    // Wrap in an async IIFE so both failure modes funnel into the
-    // dev-token fallback.
+    // Outside Tauri the bridge global (__TAURI_INTERNALS__) is
+    // missing; some shim versions then hang waiting for a transport
+    // that never replies, which freezes every fetch. Short-circuit
+    // to the dev-token fallback so vite preview / Playwright / Scout
+    // reach the daemon without waiting on a no-op IPC.
+    const inTauri =
+      typeof window !== "undefined" &&
+      typeof (window as unknown as { __TAURI_INTERNALS__?: unknown }).__TAURI_INTERNALS__ !==
+        "undefined";
+
     tokenPromise = (async () => {
+      if (!inTauri) {
+        const devToken =
+          typeof window !== "undefined" ? window.__NOMI_DEV_TOKEN__ : undefined;
+        if (devToken) {
+          return devToken;
+        }
+        tokenPromise = null;
+        throw new Error("no auth token (Tauri bridge unavailable + no dev token)");
+      }
       try {
         return await invoke<string>("get_auth_token");
       } catch (err) {
@@ -106,7 +127,7 @@ function getAuthToken(): Promise<string> {
         if (devToken) {
           return devToken;
         }
-        tokenPromise = null; // allow retry on next call
+        tokenPromise = null;
         throw err;
       }
     })();

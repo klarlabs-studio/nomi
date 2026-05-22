@@ -8,6 +8,28 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Dev-only token bootstrap. Reads ?nomi_dev_token=… or
+      // #nomi_dev_token=… from the URL and stashes it in
+      // window.__NOMI_DEV_TOKEN__ so api.ts can pick it up when the
+      // Tauri bridge isn't available (vite preview, Playwright,
+      // Scout). Stripped to keep the token out of the URL bar after
+      // load; no-op on production Tauri builds because nothing
+      // injects a hash there.
+      (function () {
+        try {
+          var src = window.location.hash.slice(1) || window.location.search.slice(1);
+          var params = new URLSearchParams(src);
+          var t = params.get("nomi_dev_token");
+          if (t) {
+            window.__NOMI_DEV_TOKEN__ = t;
+            params.delete("nomi_dev_token");
+            var rest = params.toString();
+            history.replaceState(null, "", window.location.pathname + (rest ? "?" + rest : ""));
+          }
+        } catch (e) {}
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

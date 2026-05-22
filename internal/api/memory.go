@@ -77,11 +77,16 @@ func (s *MemoryServer) ListMemory(c *gin.Context) {
 	} else if scope != "" {
 		entries, err = s.manager.ListByScope(scope, limit)
 	} else {
-		// List all by defaulting to workspace scope
+		// No scope filter — return the union of every user-visible
+		// scope so the UI's Memory tab can render workspace, profile,
+		// and preferences (learned + manual) without making three
+		// separate calls.
 		entries, err = s.manager.ListByScope("workspace", limit)
 		if err == nil {
 			profileEntries, _ := s.manager.ListByScope("profile", limit)
 			entries = append(entries, profileEntries...)
+			preferenceEntries, _ := s.manager.ListByScope("preferences", limit)
+			entries = append(entries, preferenceEntries...)
 		}
 	}
 
