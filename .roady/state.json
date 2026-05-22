@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 547,
+  "version": 548,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1846,11 +1846,15 @@
       "elapsed_minutes": 2
     },
     "task-llm-driven-skill-synthesis": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "429fc75 — Synthesize + REST + UI \"Generate with AI\" + promote-override threading. Embeddings-based clustering deferred."
+      ],
       "started_at": "2026-05-22T21:00:24.676886+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-22T21:06:19.196801+02:00",
+      "elapsed_minutes": 5
     },
     "task-llm-provider-configuration": {
       "status": "done",
@@ -2735,5 +2739,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-22T21:00:24.676886+02:00"
+  "updated_at": "2026-05-22T21:06:19.196802+02:00"
 }
