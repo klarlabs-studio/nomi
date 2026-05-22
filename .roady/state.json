@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 576,
+  "version": 577,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1671,11 +1671,15 @@
       "elapsed_minutes": 1060
     },
     "task-embeddings-+-auto-learning-loop": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "7590643 — EmbeddingClient + cosine-cluster skill induction + RunCompleted preference extractor. UI surface (Memory tab \"Learned preferences\" panel) deferred to a follow-up."
+      ],
       "started_at": "2026-05-22T23:19:17.865508+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-22T23:29:41.777516+02:00",
+      "elapsed_minutes": 10
     },
     "task-error-message-audit-—-plain-language,-actionable,-non-technical": {
       "status": "done",
@@ -2818,5 +2822,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-22T23:19:17.865508+02:00"
+  "updated_at": "2026-05-22T23:29:41.777517+02:00"
 }
