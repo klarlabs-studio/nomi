@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 563,
+  "version": 571,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1275,8 +1275,14 @@
       "elapsed_minutes": 0
     },
     "task-add-enum/options-support-to-plugins.configfield-for-dropdown-ui": {
-      "status": "pending",
+      "status": "done",
       "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "f89800f — ConfigField Type \"enum\" + Options; mnemos + whatsapp migrated; UI renders select dropdown"
+      ],
+      "started_at": "2026-05-22T21:21:37.984686+02:00",
+      "completed_at": "2026-05-22T21:21:44.14724+02:00",
       "elapsed_minutes": 0
     },
     "task-anthropic-chatstream-+-planner-robustness-(few-shot,-json-mode,-self-repair)": {
@@ -1555,8 +1561,14 @@
       "elapsed_minutes": 0
     },
     "task-decide-fate-of-internal/memstore-+-internal/memory.embeddedclient": {
-      "status": "pending",
+      "status": "done",
       "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "f89800f — ADR 0005 keep decision + memstore/doc.go rewrite"
+      ],
+      "started_at": "2026-05-22T21:21:51.081788+02:00",
+      "completed_at": "2026-05-22T21:21:56.981217+02:00",
       "elapsed_minutes": 0
     },
     "task-desktop-ui-(tauri-+-react-+-shadcn/ui)": {
@@ -2320,8 +2332,14 @@
       "elapsed_minutes": 0
     },
     "task-repositioning:-ai-runtime-+-mnemos-cognitive-layer-narrative": {
-      "status": "pending",
+      "status": "done",
       "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "f89800f — comparison.md refreshed with sandboxed-exec, scheduled-runs, recipe-registry, skill-induction rows. Landing page + README narrative already in place pre-session (commits 9812042 etc.)"
+      ],
+      "started_at": "2026-05-22T21:22:02.053901+02:00",
+      "completed_at": "2026-05-22T21:22:09.431105+02:00",
       "elapsed_minutes": 0
     },
     "task-rest-api-(gin)": {
@@ -2699,16 +2717,20 @@
       "elapsed_minutes": 1
     },
     "task-verify-e2e-mnemos-workflow-once-via-workflow_dispatch": {
-      "status": "pending",
+      "status": "blocked",
       "path": "",
       "elapsed_minutes": 0
     },
     "task-wire-plugins.registry.contextsources()-into-the-planner-prompt": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "f89800f — PluginContextResolver hook + main.go wiring + lifecycle splice + trust tag"
+      ],
       "started_at": "2026-05-22T21:11:48.314927+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-22T21:21:32.636121+02:00",
+      "elapsed_minutes": 9
     },
     "tauri-init": {
       "status": "done",
@@ -2783,5 +2805,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-22T21:11:48.314927+02:00"
+  "updated_at": "2026-05-22T21:22:17.385232+02:00"
 }
