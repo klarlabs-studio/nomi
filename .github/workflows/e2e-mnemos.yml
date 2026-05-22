@@ -71,26 +71,23 @@ jobs:
 
       - name: Start mnemos serve in background
         working-directory: mnemos
-        env:
-          MNEMOS_REGISTRY_PORT: '9099'
-          MNEMOS_REGISTRY_DB: ':memory:'
         run: |
           /tmp/mnemos serve > /tmp/mnemos.log 2>&1 &
           echo "MNEMOS_PID=$!" >> "$GITHUB_ENV"
           # Wait for /health to become responsive (up to 30s).
           for i in $(seq 1 30); do
-            if curl -fsS http://127.0.0.1:9099/health > /dev/null 2>&1; then
+            if curl -fsS http://127.0.0.1:7777/health > /dev/null 2>&1; then
               echo "mnemos serve up after ${i}s"
               break
             fi
             sleep 1
           done
-          curl -fsS http://127.0.0.1:9099/health
+          curl -fsS http://127.0.0.1:7777/health
 
       - name: "Run E2E test suite (tag: e2e_mnemos)"
         working-directory: nomi
         env:
-          MNEMOS_E2E_BASE_URL: http://127.0.0.1:9099
+          MNEMOS_E2E_BASE_URL: http://127.0.0.1:7777
         run: |
           go test -race -count=1 -tags e2e_mnemos -v ./internal/plugins/mnemos/...
 
