@@ -9,6 +9,7 @@ import {
   skillsApi,
   type RecipeCatalogEntry,
   type SkillSuggestion,
+  type SynthesizedRecipe,
 } from "@/lib/api";
 
 // Recipes tab — browse the built-in catalog + imported/exported recipes
@@ -30,6 +31,9 @@ export function RecipesManager() {
   const [suggestionsLoaded, setSuggestionsLoaded] = useState(false);
   const [promoteFor, setPromoteFor] = useState<string | null>(null);
   const [promoteName, setPromoteName] = useState("");
+  const [synthesizing, setSynthesizing] = useState<string | null>(null);
+  const [synthesisFor, setSynthesisFor] = useState<string | null>(null);
+  const [synthesis, setSynthesis] = useState<SynthesizedRecipe | null>(null);
 
   const refreshSuggestions = async () => {
     setSuggestionsLoading(true);
@@ -45,6 +49,22 @@ export function RecipesManager() {
     }
   };
 
+  const synthesize = async (s: SkillSuggestion) => {
+    setSynthesizing(s.id);
+    setError(null);
+    try {
+      const result = await skillsApi.synthesize(s.id);
+      setSynthesis(result.recipe);
+      setSynthesisFor(s.id);
+      setPromoteFor(s.id);
+      setPromoteName(result.recipe.suggested_name);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSynthesizing(null);
+    }
+  };
+
   const promote = async (s: SkillSuggestion) => {
     if (!promoteName.trim()) {
       setError("Choose a name for the new skill before promoting.");
@@ -55,11 +75,15 @@ export function RecipesManager() {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "") || `skill-${s.id}`;
     try {
+      const useSynthesis = synthesisFor === s.id && synthesis;
       const result = await skillsApi.promote({
         suggestion_id: s.id,
         recipe_id: recipeID,
         name: promoteName.trim(),
         source_assistant_id: s.suggested_assistant_id,
+        synthesized_role: useSynthesis ? synthesis?.suggested_role : undefined,
+        synthesized_system_prompt: useSynthesis ? synthesis?.system_prompt : undefined,
+        synthesized_capabilities: useSynthesis ? synthesis?.capabilities : undefined,
       });
       setInstalledRecipeID(result.recipe.id);
       setPromoteFor(null);
@@ -175,19 +199,56 @@ export function RecipesManager() {
                   )}
                 </div>
                 {promoteFor !== s.id ? (
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setPromoteFor(s.id);
-                      setPromoteName(s.common_tokens?.slice(0, 3).join(" ") || "");
-                    }}
-                  >
-                    Promote
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => void synthesize(s)}
+                      disabled={synthesizing === s.id}
+                      title="Use the LLM to draft a reusable system prompt + capabilities from this cluster"
+                    >
+                      {synthesizing === s.id ? "Synthesizing…" : "Generate with AI"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setPromoteFor(s.id);
+                        setPromoteName(s.common_tokens?.slice(0, 3).join(" ") || "");
+                        setSynthesis(null);
+                        setSynthesisFor(null);
+                      }}
+                    >
+                      Promote
+                    </Button>
+                  </div>
                 ) : null}
               </div>
               {promoteFor === s.id && (
                 <div className="space-y-2 border-t pt-2">
+                  {synthesisFor === s.id && synthesis && (
+                    <div className="rounded-md border bg-muted/50 p-2 space-y-1 text-xs">
+                      <div className="font-medium">AI-generated draft</div>
+                      {synthesis.explanation && (
+                        <div className="text-muted-foreground">{synthesis.explanation}</div>
+                      )}
+                      <div>
+                        <span className="text-muted-foreground">Role:</span>{" "}
+                        {synthesis.suggested_role || "—"}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Capabilities:</span>{" "}
+                        {synthesis.capabilities.join(", ")}
+                      </div>
+                      <details>
+                        <summary className="cursor-pointer text-muted-foreground">
+                          System prompt
+                        </summary>
+                        <pre className="mt-1 whitespace-pre-wrap text-xs">
+                          {synthesis.system_prompt}
+                        </pre>
+                      </details>
+                    </div>
+                  )}
                   <Input
                     placeholder="Name for the new skill"
                     value={promoteName}
@@ -200,6 +261,8 @@ export function RecipesManager() {
                       onClick={() => {
                         setPromoteFor(null);
                         setPromoteName("");
+                        setSynthesis(null);
+                        setSynthesisFor(null);
                       }}
                     >
                       Cancel

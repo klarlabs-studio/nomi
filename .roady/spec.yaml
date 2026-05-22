@@ -1955,5 +1955,9 @@ features:
       title: Desktop UI surfaces for schedules, skills, recipe export
       description: 'Ships the deferred Tauri UI panels for three backend features that landed without front-end surfaces: (1) Schedules tab — NL phrase input wired to /schedules/translate with parsed-cron confirmation step before save, schedule list with enable toggle + delete; (2) Skill suggestions panel inside the Recipes tab — fetches /skills/suggestions on demand and surfaces clusters with a one-click promote button that hits /skills/promote; (3) Recipe export button on the assistant editor that calls /recipes/export and opens a dialog with the resulting YAML for copy/download. Each surface is built as a focused component that consumes the existing TypeScript API client; no new backend work.'
       requirements: []
+    - id: llm-driven-skill-synthesis
+      title: LLM-driven skill synthesis
+      description: 'Augment heuristic skill induction with an LLM-driven synthesis step: given a cluster of similar past runs, ask the configured LLM provider to propose a Recipe shape (suggested name, system_prompt extracted as a reusable template, capability set inferred from the runs'' step plans). Output goes through the same JSON-envelope + validation pipeline used by NL cron translation. Surfaces as POST /skills/synthesize/:suggestion_id and a "Generate recipe" button in the skill suggestions panel that pre-fills the promote form. Keeps Jaccard clustering as the cheap default; richer embedding-based clustering is a follow-up that plugs into the same Synthesize path.'
+      requirements: []
 constraints: []
 version: 0.1.0

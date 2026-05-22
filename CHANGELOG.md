@@ -4,6 +4,47 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-05-22 (LLM-driven skill synthesis)
+
+Augments the heuristic skill induction pipeline with an LLM-driven
+synthesis step. Given a cluster of similar past Runs, the configured
+LLM provider proposes a Recipe shape: suggested name, role, reusable
+system prompt extracted from the cluster's goal patterns, and the
+minimum capability set the assistant needs. Output goes through a
+strict JSON envelope with a closed allowlist for capabilities.
+
+### Added
+- `skills.Synthesize(ctx, client, suggestion, sourceGoals)` — runs the
+  LLM call with a deterministic system prompt + JSONMode, parses the
+  envelope leniently (strips code fences), filters proposed
+  capabilities against the runtime's closed allowlist, and falls back
+  to safe read-only defaults if the model returns a zero-capability
+  list.
+- `POST /skills/synthesize` REST endpoint — re-runs induction to
+  locate the cluster, loads source-run goals from the state store,
+  and returns the synthesized recipe. Returns 503 when no LLM
+  provider is configured (graceful-degrade pattern).
+- `skillsApi.synthesize(suggestionID)` TS client method.
+- "Generate with AI" button in the skill suggestions panel — runs
+  synthesis on demand, expands an inline preview showing the
+  proposed role + capabilities + collapsible system-prompt, and
+  pre-fills the promote form's name field with the suggestion. The
+  synthesized fields are threaded through `/skills/promote` so the
+  resulting Recipe + Assistant land with the LLM's authored prompt +
+  capabilities, not the source-assistant copy or the read-only
+  default.
+- `promoteRequest.synthesized_*` fields override source-assistant
+  defaults when present; the order of precedence is explicit
+  (synthesis > source-assistant copy > read-only default).
+
+### Scope notes
+- Capability allowlist is closed: filesystem.read/write, command.exec,
+  network.egress, llm.chat. Hallucinations outside that set are
+  silently dropped.
+- Clustering stays heuristic (Jaccard); embedding-based clustering
+  plugs into the same Synthesize path and is the next pluggable
+  extension.
+
 ## [Unreleased] - 2026-05-22 (Desktop UI surfaces — schedules, skills, recipe export)
 
 Ships the deferred Tauri front-end surfaces for three backend features

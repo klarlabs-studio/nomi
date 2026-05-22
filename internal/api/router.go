@@ -162,11 +162,13 @@ func NewRouter(cfg RouterConfig) *gin.Engine {
 			db.NewRunRepository(cfg.DB),
 			db.NewRecipeRepository(cfg.DB),
 			db.NewAssistantRepository(cfg.DB),
+			cfg.LLMResolver,
 		)
 		skillsGroup := r.Group("/skills")
 		{
 			skillsGroup.GET("/suggestions", skillsServer.ListSuggestions)
 			skillsGroup.POST("/promote", skillsServer.PromoteSuggestion)
+			skillsGroup.POST("/synthesize", skillsServer.Synthesize)
 		}
 	}
 

@@ -510,6 +510,14 @@ export interface SkillSuggestion {
   suggested_assistant_id?: string;
 }
 
+export interface SynthesizedRecipe {
+  suggested_name: string;
+  suggested_role?: string;
+  system_prompt: string;
+  capabilities: string[];
+  explanation?: string;
+}
+
 export const skillsApi = {
   listSuggestions: () =>
     fetchApi<{ suggestions: SkillSuggestion[] }>("/skills/suggestions"),
@@ -519,6 +527,9 @@ export const skillsApi = {
     name: string;
     description?: string;
     source_assistant_id?: string;
+    synthesized_role?: string;
+    synthesized_system_prompt?: string;
+    synthesized_capabilities?: string[];
   }) =>
     fetchApi<{
       recipe: RecipeDocument;
@@ -529,6 +540,14 @@ export const skillsApi = {
       method: "POST",
       body: JSON.stringify(params),
     }),
+  synthesize: (suggestionID: string) =>
+    fetchApi<{ suggestion: SkillSuggestion; recipe: SynthesizedRecipe }>(
+      "/skills/synthesize",
+      {
+        method: "POST",
+        body: JSON.stringify({ suggestion_id: suggestionID }),
+      },
+    ),
 };
 
 // Runtime introspection — surfaces what backends nomid registered at

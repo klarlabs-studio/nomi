@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"github.com/felixgeelhaar/nomi/internal/llm"
 	"github.com/felixgeelhaar/nomi/internal/recipes"
 	"github.com/felixgeelhaar/nomi/internal/skills"
 	"github.com/felixgeelhaar/nomi/internal/storage/db"
@@ -19,11 +20,14 @@ type SkillsServer struct {
 	runs       *db.RunRepository
 	recipes    *db.RecipeRepository
 	assistants *db.AssistantRepository
+	llm        *llm.Resolver
 }
 
-// NewSkillsServer wires the handlers.
-func NewSkillsServer(runs *db.RunRepository, recipes *db.RecipeRepository, assistants *db.AssistantRepository) *SkillsServer {
-	return &SkillsServer{runs: runs, recipes: recipes, assistants: assistants}
+// NewSkillsServer wires the handlers. llmResolver is optional — when
+// nil the /skills/synthesize endpoint returns 503 but the cheaper
+// heuristic-only suggestions + promote paths still work.
+func NewSkillsServer(runs *db.RunRepository, recipes *db.RecipeRepository, assistants *db.AssistantRepository, llmResolver *llm.Resolver) *SkillsServer {
+	return &SkillsServer{runs: runs, recipes: recipes, assistants: assistants, llm: llmResolver}
 }
 
 // ListSuggestions runs an induction pass on demand and returns the
@@ -42,12 +46,20 @@ func (s *SkillsServer) ListSuggestions(c *gin.Context) {
 // caller may pass a source_assistant_id whose capability set is copied
 // into the new recipe; without it the recipe ships with a minimal
 // read-only policy and the user can tighten/widen post-install.
+//
+// The synthesized_* fields, when set, override the defaults derived
+// from source_assistant_id. They carry the LLM synthesis output so a
+// "Generate with AI" pre-fill survives the round-trip into Recipe
+// land without the UI having to call multiple endpoints.
 type promoteRequest struct {
-	SuggestionID     string `json:"suggestion_id" binding:"required"`
-	RecipeID         string `json:"recipe_id" binding:"required"`
-	Name             string `json:"name" binding:"required"`
-	Description      string `json:"description,omitempty"`
-	SourceAssistant  string `json:"source_assistant_id,omitempty"`
+	SuggestionID         string   `json:"suggestion_id" binding:"required"`
+	RecipeID             string   `json:"recipe_id" binding:"required"`
+	Name                 string   `json:"name" binding:"required"`
+	Description          string   `json:"description,omitempty"`
+	SourceAssistant      string   `json:"source_assistant_id,omitempty"`
+	SynthesizedRole      string   `json:"synthesized_role,omitempty"`
+	SynthesizedPrompt    string   `json:"synthesized_system_prompt,omitempty"`
+	SynthesizedCapsList  []string `json:"synthesized_capabilities,omitempty"`
 }
 
 // PromoteSuggestion materialises a Recipe + a new Assistant from a
@@ -95,6 +107,17 @@ func (s *SkillsServer) PromoteSuggestion(c *gin.Context) {
 			spec.ExecutorBackend = src.ExecutorBackend
 			spec.SandboxImage = src.SandboxImage
 		}
+	}
+	// LLM-synthesized fields win over source-assistant defaults — they
+	// came from a deliberate "Generate with AI" the user opted into.
+	if req.SynthesizedRole != "" {
+		spec.Role = req.SynthesizedRole
+	}
+	if req.SynthesizedPrompt != "" {
+		spec.SystemPrompt = req.SynthesizedPrompt
+	}
+	if len(req.SynthesizedCapsList) > 0 {
+		spec.Capabilities = req.SynthesizedCapsList
 	}
 
 	description := req.Description
@@ -151,6 +174,80 @@ func (s *SkillsServer) PromoteSuggestion(c *gin.Context) {
 		"assistant":      assistant,
 		"source_run_ids": target.SourceRunIDs,
 	})
+}
+
+type synthesizeRequest struct {
+	SuggestionID string `json:"suggestion_id" binding:"required"`
+}
+
+// Synthesize (POST /skills/synthesize) calls the LLM to produce a
+// proposed Recipe shape from a Suggestion. Re-runs induction to locate
+// the cluster, fetches the source runs' goals from the state store,
+// and asks the LLM to generalise a reusable system_prompt + capability
+// set. Returns the proposal; the UI pre-fills the promote form with
+// it before the user confirms.
+func (s *SkillsServer) Synthesize(c *gin.Context) {
+	if s.llm == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "no LLM provider configured; configure one in Settings → AI Providers to enable skill synthesis"})
+		return
+	}
+	var req synthesizeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		respondValidationError(c, err.Error())
+		return
+	}
+	suggestions, err := skills.Induce(s.runs, skills.DefaultConfig())
+	if err != nil {
+		respondInternal(c, "induction failed", err)
+		return
+	}
+	var target *skills.Suggestion
+	for i := range suggestions {
+		if suggestions[i].ID == req.SuggestionID {
+			target = &suggestions[i]
+			break
+		}
+	}
+	if target == nil {
+		respondNotFound(c, "suggestion not found — corpus may have shifted; refresh")
+		return
+	}
+
+	goals, err := s.fetchClusterGoals(target.SourceRunIDs)
+	if err != nil {
+		respondInternal(c, "failed to load cluster goals", err)
+		return
+	}
+	client, _, err := s.llm.DefaultClient()
+	if err != nil || client == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "default LLM provider is unavailable"})
+		return
+	}
+	out, err := skills.Synthesize(c.Request.Context(), client, *target, goals)
+	if err != nil {
+		respondInternal(c, "synthesis failed", err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"suggestion": target,
+		"recipe":     out,
+	})
+}
+
+// fetchClusterGoals loads each source run's goal text. Runs that have
+// been deleted since the suggestion was generated are skipped silently
+// — the cluster centroid still has meaning even if a few rows are
+// missing.
+func (s *SkillsServer) fetchClusterGoals(runIDs []string) ([]string, error) {
+	out := make([]string, 0, len(runIDs))
+	for _, id := range runIDs {
+		run, err := s.runs.GetByID(id)
+		if err != nil || run == nil {
+			continue
+		}
+		out = append(out, run.Goal)
+	}
+	return out, nil
 }
 
 func commaJoin(s []string) string {
