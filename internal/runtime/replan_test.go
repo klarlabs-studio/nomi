@@ -160,7 +160,7 @@ func newReplanRuntime(t *testing.T, h http.HandlerFunc) (*Runtime, *db.DB) {
 	toolReg := tools.NewRegistry()
 	_ = tools.RegisterCoreTools(toolReg)
 	_ = toolReg.Register(tools.NewLLMChatTool(resolver))
-	memMgr := memory.NewManager(db.NewMemoryRepository(database))
+	memMgr := memory.NewEmbeddedClient(db.NewMemoryRepository(database))
 
 	rt := NewRuntime(database, bus, permEngine, approvalMgr, tools.NewExecutor(toolReg), memMgr, DefaultConfig())
 	rt.SetLLMResolver(resolver)

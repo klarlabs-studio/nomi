@@ -325,7 +325,7 @@ func (r *EventRepository) create(e execer, event *domain.Event, prevHash string)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`
 	if _, err := e.Exec(query,
-		event.ID, event.Type, event.RunID, event.StepID,
+		event.ID, event.Type, nullableString(event.RunID), event.StepID,
 		payload, event.Timestamp, nullableString(prevHash), entryHash,
 	); err != nil {
 		return fmt.Errorf("failed to create event: %w", err)
@@ -447,8 +447,8 @@ func (r *EventRepository) VerifyChain() (*ChainVerifyResult, error) {
 	count := 0
 	for rows.Next() {
 		var (
-			id, evtType, runID         string
-			stepID                     sql.NullString
+			id, evtType                string
+			runID, stepID              sql.NullString
 			payload                    []byte
 			ts                         time.Time
 			storedPrev, storedEntry    sql.NullString
@@ -467,7 +467,7 @@ func (r *EventRepository) VerifyChain() (*ChainVerifyResult, error) {
 		evt := &domain.Event{
 			ID:        id,
 			Type:      domain.EventType(evtType),
-			RunID:     runID,
+			RunID:     runID.String,
 			Timestamp: ts,
 		}
 		if stepID.Valid {
@@ -573,17 +573,20 @@ func (r *EventRepository) scanEvents(rows *sql.Rows) ([]*domain.Event, error) {
 
 	for rows.Next() {
 		event := &domain.Event{}
-		var stepID sql.NullString
+		var runID, stepID sql.NullString
 		var payload []byte
 
 		err := rows.Scan(
-			&event.ID, &event.Type, &event.RunID, &stepID,
+			&event.ID, &event.Type, &runID, &stepID,
 			&payload, &event.Timestamp,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan event: %w", err)
 		}
 
+		if runID.Valid {
+			event.RunID = runID.String
+		}
 		if stepID.Valid {
 			event.StepID = &stepID.String
 		}
@@ -743,6 +746,31 @@ func (r *MemoryRepository) Search(query string, limit int) ([]*domain.MemoryEntr
 	defer rows.Close()
 
 	return r.scanMemory(rows)
+}
+
+// AnonymizeByAssistant nulls the assistant_id of every memory row that
+// references the deleted assistant. Mirrors the current ON DELETE SET
+// NULL FK behavior so the audit value of the memory content survives a
+// delete; the link to the (now-gone) assistant is the only thing
+// dropped. Idempotent — re-running on already-anonymized rows is a
+// no-op. Called by mnemos.Client.Tombstone in response to
+// assistant.deleted events; see ADR 0004 §6.
+func (r *MemoryRepository) AnonymizeByAssistant(assistantID string) error {
+	_, err := r.db.Exec("UPDATE memory SET assistant_id = NULL WHERE assistant_id = ?", assistantID)
+	if err != nil {
+		return fmt.Errorf("failed to anonymize memory by assistant: %w", err)
+	}
+	return nil
+}
+
+// AnonymizeByRun nulls the run_id of every memory row that references
+// the deleted run. Same semantics as AnonymizeByAssistant.
+func (r *MemoryRepository) AnonymizeByRun(runID string) error {
+	_, err := r.db.Exec("UPDATE memory SET run_id = NULL WHERE run_id = ?", runID)
+	if err != nil {
+		return fmt.Errorf("failed to anonymize memory by run: %w", err)
+	}
+	return nil
 }
 
 // AppSettingsRepository handles database operations for application settings

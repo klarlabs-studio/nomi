@@ -11,6 +11,7 @@ import (
 	"github.com/felixgeelhaar/nomi/internal/domain"
 	"github.com/felixgeelhaar/nomi/internal/llm"
 	"github.com/felixgeelhaar/nomi/internal/metrics"
+	"github.com/felixgeelhaar/nomi/internal/mnemos"
 )
 
 // plannerStep is the planner's intermediate representation, narrower than
@@ -101,13 +102,14 @@ func (r *Runtime) planWithLLMOpts(
 		contextData = wrapUntrusted("workspace_context", contextData)
 	}
 
-	if assistant != nil && r.memManager != nil {
-		if entries, err := r.memManager.ListByAssistant(assistant.ID, 20); err == nil {
+	if assistant != nil && r.memClient != nil {
+		entries, err := r.memClient.Retrieve(ctx, mnemos.LocalPreferences(), mnemos.Query{
+			AssistantID: &assistant.ID,
+			Limit:       20,
+		})
+		if err == nil {
 			prefs := make([]string, 0, 5)
 			for _, e := range entries {
-				if e.Scope != "preferences" {
-					continue
-				}
 				prefs = append(prefs, "- "+e.Content)
 				if len(prefs) >= 20 {
 					break

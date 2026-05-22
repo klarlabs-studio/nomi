@@ -314,6 +314,20 @@ const (
 	// case when not yet installed).
 	EventPluginUpdateAvailable EventType = "plugin.update_available"
 	EventPluginUpdated         EventType = "plugin.updated"
+
+	// Entity-deletion events drive memory tombstones (ADR 0004 §6). Both
+	// are entity-scoped, not run-scoped — they carry the entity ID in the
+	// payload and use a sentinel RunID.
+	EventAssistantDeleted EventType = "assistant.deleted"
+	EventRunDeleted       EventType = "run.deleted"
+
+	// Memory audit events emitted by mnemos.Client implementations on
+	// every Store / Forget / Tombstone. Includes content_hash in the
+	// payload so /audit/verify can verify intent without re-reading the
+	// memory store.
+	EventMemoryStore     EventType = "memory.store"
+	EventMemoryForget    EventType = "memory.forget"
+	EventMemoryTombstone EventType = "memory.tombstone"
 )
 
 // Event represents a significant occurrence in the system

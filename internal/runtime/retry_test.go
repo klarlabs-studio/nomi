@@ -86,7 +86,7 @@ func newRetryHarness(t *testing.T, maxRetries int) *retryHarness {
 	bus := events.NewEventBus(db.NewEventRepository(database))
 	permEngine := permissions.NewEngine()
 	approvalMgr := permissions.NewApprovalManager(db.NewApprovalRepository(database), bus)
-	memMgr := memory.NewManager(db.NewMemoryRepository(database))
+	memMgr := memory.NewEmbeddedClient(db.NewMemoryRepository(database))
 
 	cfg := DefaultConfig()
 	cfg.MaxRetries = maxRetries

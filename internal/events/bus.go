@@ -238,11 +238,28 @@ func validateEvent(event *domain.Event) error {
 	if event.Type == "" {
 		return fmt.Errorf("event type is required")
 	}
-	if event.RunID == "" {
+	if event.RunID == "" && !isEntityScopedEvent(event.Type) {
 		return fmt.Errorf("run ID is required")
 	}
 	if event.Timestamp.IsZero() {
 		return fmt.Errorf("timestamp is required")
 	}
 	return nil
+}
+
+// isEntityScopedEvent reports whether the event type targets an entity
+// other than a run (e.g. an assistant deletion, a memory operation).
+// Such events carry the entity ID in the payload; RunID is left empty.
+// Subscribers filtering by RunID will not see these — they're consumed
+// by global subscribers (e.g. the runtime's Tombstone wiring).
+func isEntityScopedEvent(t domain.EventType) bool {
+	switch t {
+	case domain.EventAssistantDeleted,
+		domain.EventRunDeleted,
+		domain.EventMemoryStore,
+		domain.EventMemoryForget,
+		domain.EventMemoryTombstone:
+		return true
+	}
+	return false
 }

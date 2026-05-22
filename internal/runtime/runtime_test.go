@@ -52,7 +52,7 @@ func setupTestRuntime(t *testing.T) (*Runtime, *db.DB, func()) {
 	}
 	toolExecutor := tools.NewExecutor(toolRegistry)
 	memRepo := db.NewMemoryRepository(database)
-	memManager := memory.NewManager(memRepo)
+	memManager := memory.NewEmbeddedClient(memRepo)
 	rt := NewRuntime(database, eventBus, permEngine, approvalMgr, toolExecutor, memManager, DefaultConfig())
 
 	cleanup := func() {

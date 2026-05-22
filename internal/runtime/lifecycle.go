@@ -10,8 +10,28 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/felixgeelhaar/nomi/internal/domain"
+	"github.com/felixgeelhaar/nomi/internal/mnemos"
 	"github.com/felixgeelhaar/nomi/internal/tools"
 )
+
+// scopeFromPolicy maps an AssistantDefinition.MemoryPolicy.Scope string
+// to a mnemos.Scope. Empty input defaults to workspace, matching the
+// behavior of the pre-ADR-0004 code path.
+func scopeFromPolicy(policyScope string) mnemos.Scope {
+	switch policyScope {
+	case "profile":
+		return mnemos.LocalProfile()
+	case "preferences":
+		return mnemos.LocalPreferences()
+	case "", "workspace":
+		return mnemos.LocalWorkspace()
+	default:
+		// Unknown scope — surface as workspace rather than reject. The
+		// validator on the wire boundary catches malformed scopes; this
+		// path is reached only with legacy policy strings.
+		return mnemos.LocalWorkspace()
+	}
+}
 
 // executeRun manages the run lifecycle: plan → plan_review → execute
 func (r *Runtime) executeRun(ctx context.Context, run *domain.Run, assistant *domain.AssistantDefinition) {
@@ -240,7 +260,7 @@ func (r *Runtime) executeExecutionPhase(ctx context.Context, run *domain.Run, as
 	}
 
 	// Store run result as memory if assistant has memory enabled
-	if assistant.MemoryPolicy.Enabled {
+	if assistant.MemoryPolicy.Enabled && r.memClient != nil {
 		var memoryContent string
 		memoryContent = fmt.Sprintf("Run goal: %s\n", run.Goal)
 		for _, step := range steps {
@@ -249,13 +269,8 @@ func (r *Runtime) executeExecutionPhase(ctx context.Context, run *domain.Run, as
 			}
 		}
 
-		scope := assistant.MemoryPolicy.Scope
-		if scope == "" {
-			scope = "workspace"
-		}
-
-		_ = r.memManager.Save(&domain.MemoryEntry{
-			Scope:       scope,
+		scope := scopeFromPolicy(assistant.MemoryPolicy.Scope)
+		_ = r.memClient.Store(ctx, scope, &mnemos.Entry{
 			Content:     memoryContent,
 			AssistantID: &assistant.ID,
 			RunID:       &run.ID,

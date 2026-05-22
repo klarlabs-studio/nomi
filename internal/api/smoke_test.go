@@ -104,18 +104,21 @@ func newHarness(t *testing.T) *harness {
 	}
 	toolExec := tools.NewExecutor(toolReg)
 
-	memMgr := memory.NewManager(db.NewMemoryRepository(database))
-	rt := runtime.NewRuntime(database, bus, permEngine, approvalMgr, toolExec, memMgr, runtime.DefaultConfig())
+	memRepo := db.NewMemoryRepository(database)
+	memClient := memory.NewEmbeddedClient(memRepo)
+	memMgr := memory.NewManager(memRepo)
+	rt := runtime.NewRuntime(database, bus, permEngine, approvalMgr, toolExec, memClient, runtime.DefaultConfig())
 
 	connReg := connectors.NewRegistry()
 	secretStore := newMemorySecretStore()
 
 	router := NewRouter(RouterConfig{
-		Runtime:    rt,
-		DB:         database,
-		EventBus:   bus,
-		Approvals:  approvalMgr,
-		Memory:     memMgr,
+		Runtime:      rt,
+		DB:           database,
+		EventBus:     bus,
+		Approvals:    approvalMgr,
+		Memory:       memMgr,
+		MemoryClient: memClient,
 		Tools:      toolReg,
 		Connectors: connReg,
 		Secrets:    secretStore,

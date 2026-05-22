@@ -169,12 +169,15 @@ func main() {
 
 	toolExecutor := tools.NewExecutor(toolRegistry)
 
-	// Memory system
+	// Memory system. Runtime depends on the mnemos.Client interface (ADR
+	// 0004 step 1); the REST API still uses *memory.Manager directly for
+	// its CRUD handlers and is wired separately below.
 	memoryRepo := db.NewMemoryRepository(database)
 	memManager := memory.NewManager(memoryRepo)
+	memClient := memory.NewEmbeddedClient(memoryRepo).WithEventBus(eventBus)
 
 	// Runtime
-	rt := runtime.NewRuntime(database, eventBus, permEngine, approvalMgr, toolExecutor, memManager, runtime.DefaultConfig())
+	rt := runtime.NewRuntime(database, eventBus, permEngine, approvalMgr, toolExecutor, memClient, runtime.DefaultConfig())
 	rt.SetLLMResolver(llmResolver)
 
 	// Plugin system (ADR 0001). plugins.Registry is now the source of truth
@@ -612,6 +615,7 @@ func main() {
 		EventBus:       eventBus,
 		Approvals:      approvalMgr,
 		Memory:         memManager,
+		MemoryClient:   memClient,
 		Tools:          toolRegistry,
 		Connectors:     connRegistry,
 		Plugins:        pluginRegistry,

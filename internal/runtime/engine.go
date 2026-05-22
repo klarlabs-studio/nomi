@@ -35,7 +35,7 @@ import (
 	"github.com/felixgeelhaar/nomi/internal/domain"
 	"github.com/felixgeelhaar/nomi/internal/events"
 	"github.com/felixgeelhaar/nomi/internal/llm"
-	"github.com/felixgeelhaar/nomi/internal/memory"
+	"github.com/felixgeelhaar/nomi/internal/mnemos"
 	"github.com/felixgeelhaar/nomi/internal/metrics"
 	"github.com/felixgeelhaar/nomi/internal/permissions"
 	"github.com/felixgeelhaar/nomi/internal/storage/db"
@@ -56,7 +56,7 @@ type Runtime struct {
 	permEngine     *permissions.Engine
 	approvalMgr    *permissions.Manager
 	toolExecutor   *tools.Executor
-	memManager     *memory.Manager
+	memClient      mnemos.Client
 	maxRetries     int
 
 	// rootCtx is the parent context for every background run. Shutdown()
@@ -183,7 +183,7 @@ func NewRuntime(
 	permEngine *permissions.Engine,
 	approvalMgr *permissions.Manager,
 	toolExecutor *tools.Executor,
-	memManager *memory.Manager,
+	memClient mnemos.Client,
 	config Config,
 ) *Runtime {
 	rootCtx, rootCancel := context.WithCancel(context.Background())
@@ -200,7 +200,7 @@ func NewRuntime(
 		permEngine:     permEngine,
 		approvalMgr:    approvalMgr,
 		toolExecutor:   toolExecutor,
-		memManager:     memManager,
+		memClient:      memClient,
 		maxRetries:     config.MaxRetries,
 		rootCtx:        rootCtx,
 		rootCancel:     rootCancel,
@@ -217,7 +217,70 @@ func NewRuntime(
 	// dispatch path. Bound after the struct so it can capture the
 	// already-built attachmentRepo + executor.
 	rt.enrichment = NewEnrichmentService(attachmentRepo, toolExecutor, nil)
+
+	// ADR 0004 §6 — subscribe to entity-deletion events so the memory
+	// layer can drop or anonymize associated rows. Best-effort goroutine;
+	// shutdown is driven by rootCtx cancellation propagating into the
+	// subscription channel via Unsubscribe in the deferred cleanup.
+	if memClient != nil {
+		rt.startTombstoneSubscriber()
+	}
 	return rt
+}
+
+// startTombstoneSubscriber wires assistant.deleted / run.deleted events
+// to mnemos.Client.Tombstone calls. Runs in a background goroutine for
+// the lifetime of the runtime; exits when rootCtx is cancelled.
+func (r *Runtime) startTombstoneSubscriber() {
+	sub := r.eventBus.Subscribe(events.EventFilter{
+		EventTypes: []domain.EventType{
+			domain.EventAssistantDeleted,
+			domain.EventRunDeleted,
+		},
+	})
+	go func() {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case <-r.rootCtx.Done():
+				return
+			case ev, ok := <-sub.Events():
+				if !ok {
+					return
+				}
+				r.handleEntityDeleted(ev)
+			}
+		}
+	}()
+}
+
+// handleEntityDeleted maps an entity-deletion event payload to a
+// Tombstone call. Logs and continues on error — orphaned memory is
+// recoverable via a future sweep, a panicking subscriber is not.
+func (r *Runtime) handleEntityDeleted(ev *domain.Event) {
+	if ev == nil || ev.Payload == nil {
+		return
+	}
+	var ref mnemos.EntityRef
+	switch ev.Type {
+	case domain.EventAssistantDeleted:
+		id, _ := ev.Payload["assistant_id"].(string)
+		if id == "" {
+			return
+		}
+		ref = mnemos.EntityRef{Kind: mnemos.EntityAssistant, ID: id}
+	case domain.EventRunDeleted:
+		id, _ := ev.Payload["run_id"].(string)
+		if id == "" {
+			return
+		}
+		ref = mnemos.EntityRef{Kind: mnemos.EntityRun, ID: id}
+	default:
+		return
+	}
+	if err := r.memClient.Tombstone(r.rootCtx, ref); err != nil {
+		slog.Warn("tombstone subscriber: failed", "event", ev.Type, "err", err)
+	}
 }
 
 // Shutdown cancels the runtime root context so in-flight runs, tool
@@ -623,15 +686,10 @@ func (r *Runtime) EditPlan(ctx context.Context, runID string, stepDefs []domain.
 	}
 
 	// Capture plan-edit preference memory so future planning can adapt.
-	if oldPlan != nil && r.memManager != nil {
+	if oldPlan != nil && r.memClient != nil {
 		assistantID := run.AssistantID
 		now := time.Now().UTC()
-
-		// Build map of old steps by title for comparison
-		oldStepTitles := make(map[string]domain.StepDefinition)
-		for _, s := range oldPlan.Steps {
-			oldStepTitles[s.Title] = s
-		}
+		prefScope := mnemos.LocalPreferences()
 
 		// Detect removed steps (rejections)
 		newStepTitles := make(map[string]bool)
@@ -640,26 +698,24 @@ func (r *Runtime) EditPlan(ctx context.Context, runID string, stepDefs []domain.
 		}
 		for _, oldStep := range oldPlan.Steps {
 			if !newStepTitles[oldStep.Title] {
-				entry := &domain.MemoryEntry{
-					Scope:       "preferences",
+				entry := &mnemos.Entry{
 					Content:     fmt.Sprintf("User removed step: '%s' (%s). Avoid similar steps for similar goals.", oldStep.Title, oldStep.Description),
 					AssistantID: &assistantID,
 					RunID:       &run.ID,
 					CreatedAt:   now,
 				}
-				_ = r.memManager.Save(entry)
+				_ = r.memClient.Store(ctx, prefScope, entry)
 			}
 		}
 
 		// Generic edit summary
-		entry := &domain.MemoryEntry{
-			Scope:       "preferences",
+		entry := &mnemos.Entry{
 			Content:     fmt.Sprintf("User edited plan for run %s (from %d steps to %d). Prefer this revised structure for similar goals.", run.ID, len(oldPlan.Steps), len(plan.Steps)),
 			AssistantID: &assistantID,
 			RunID:       &run.ID,
 			CreatedAt:   now,
 		}
-		_ = r.memManager.Save(entry)
+		_ = r.memClient.Store(ctx, prefScope, entry)
 	}
 
 	return nil
@@ -1024,7 +1080,15 @@ func (r *Runtime) CancelRun(ctx context.Context, runID string) error {
 // DeleteRun deletes a run and its associated data.
 func (r *Runtime) DeleteRun(runID string) error {
 	r.limiter.ForgetRun(runID)
-	return r.runRepo.Delete(runID)
+	if err := r.runRepo.Delete(runID); err != nil {
+		return err
+	}
+	// ADR 0004 §6 — publish so the memory tombstone subscriber can null
+	// out any rows still referencing this run. Best-effort.
+	_, _ = r.eventBus.Publish(r.rootCtx, domain.EventRunDeleted, "", nil, map[string]interface{}{
+		"run_id": runID,
+	})
+	return nil
 }
 
 // strPtr is a helper to create a string pointer; used across lifecycle files

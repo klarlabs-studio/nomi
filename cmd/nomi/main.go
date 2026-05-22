@@ -90,6 +90,8 @@ func main() {
 		os.Exit(exportCmd(common, args))
 	case "import":
 		os.Exit(importCmd(common, args))
+	case "memory":
+		os.Exit(memoryCmd(common, args))
 	case "version", "--version", "-v":
 		info := buildinfo.Current()
 		fmt.Printf("nomi cli v%s (%s, %s)\n", info.Version, info.Commit, info.BuildDate)

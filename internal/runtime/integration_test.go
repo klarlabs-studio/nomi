@@ -11,12 +11,13 @@ import (
 	"github.com/felixgeelhaar/nomi/internal/domain"
 	"github.com/felixgeelhaar/nomi/internal/events"
 	"github.com/felixgeelhaar/nomi/internal/memory"
+	"github.com/felixgeelhaar/nomi/internal/mnemos"
 	"github.com/felixgeelhaar/nomi/internal/permissions"
 	"github.com/felixgeelhaar/nomi/internal/storage/db"
 	"github.com/felixgeelhaar/nomi/internal/tools"
 )
 
-func setupTestRuntimeWithMemory(t *testing.T) (*Runtime, *db.DB, *memory.Manager, func()) {
+func setupTestRuntimeWithMemory(t *testing.T) (*Runtime, *db.DB, *memory.EmbeddedClient, func()) {
 	// Use temp file database instead of :memory: for connection stability
 	tmpFile, err := os.CreateTemp("", "nomi-integration-*.db")
 	if err != nil {
@@ -48,7 +49,7 @@ func setupTestRuntimeWithMemory(t *testing.T) (*Runtime, *db.DB, *memory.Manager
 	}
 	toolExecutor := tools.NewExecutor(toolRegistry)
 	memRepo := db.NewMemoryRepository(database)
-	memManager := memory.NewManager(memRepo)
+	memManager := memory.NewEmbeddedClient(memRepo)
 
 	rt := NewRuntime(database, eventBus, permEngine, approvalMgr, toolExecutor, memManager, DefaultConfig())
 
@@ -193,7 +194,7 @@ func TestFullRunLifecycle(t *testing.T) {
 	}
 
 	// Verify memory was stored
-	memories, err := rt.memManager.ListByScope("workspace", 10)
+	memories, err := rt.memClient.Retrieve(ctx, mnemos.LocalWorkspace(), mnemos.Query{Limit: 10})
 	if err != nil {
 		t.Fatalf("Failed to list memories: %v", err)
 	}

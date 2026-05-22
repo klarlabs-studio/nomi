@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/felixgeelhaar/nomi/internal/domain"
+	"github.com/felixgeelhaar/nomi/internal/events"
 	"github.com/felixgeelhaar/nomi/internal/permissions"
 	"github.com/felixgeelhaar/nomi/internal/storage/db"
 	assistanttemplates "github.com/felixgeelhaar/nomi/templates"
@@ -16,13 +17,17 @@ import (
 type AssistantServer struct {
 	repo         *db.AssistantRepository
 	settingsRepo *db.AppSettingsRepository
+	eventBus     *events.EventBus
 }
 
-// NewAssistantServer creates a new assistant server
-func NewAssistantServer(database *db.DB) *AssistantServer {
+// NewAssistantServer creates a new assistant server. eventBus may be
+// nil in tests that don't exercise the deletion path; the production
+// router always wires one.
+func NewAssistantServer(database *db.DB, eventBus *events.EventBus) *AssistantServer {
 	return &AssistantServer{
 		repo:         db.NewAssistantRepository(database),
 		settingsRepo: db.NewAppSettingsRepository(database),
+		eventBus:     eventBus,
 	}
 }
 
@@ -218,6 +223,16 @@ func (s *AssistantServer) DeleteAssistant(c *gin.Context) {
 	if err := s.repo.Delete(id); err != nil {
 		respondInternal(c, "failed to delete assistant", err)
 		return
+	}
+
+	// Publish entity-scoped event so the runtime can tombstone any memory
+	// rows still referencing this assistant (ADR 0004 §6). Best-effort —
+	// failure to publish does not surface as a delete failure, but it does
+	// leave orphaned memory until the next sweep.
+	if s.eventBus != nil {
+		_, _ = s.eventBus.Publish(c.Request.Context(), domain.EventAssistantDeleted, "", nil, map[string]interface{}{
+			"assistant_id": id,
+		})
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": "deleted"})

@@ -4,6 +4,133 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-05-22 (ADR 0004 step 1 — mnemos.Client extraction)
+
+Implements step 1 of ADR 0004's migration path: runtime depends on the
+`mnemos.Client` interface instead of `*memory.Manager`. Foundation for
+step 2 (extract package to standalone Mnemos repo with its own SQLite
+file) and step 3 (HTTP-backed `mnemos/remote`). Zero behavior change
+for the laptop user; full repo test suite (40 packages) green under
+`-race`.
+
+### Added
+- **`internal/mnemos`** — wire-shaped types and interface. `Scope`
+  (owner_id, kind, key) replaces flat string scope; `ScopeKind` enum
+  covers workspace/profile/session/org/preferences. `Client` interface:
+  Store, Retrieve, Search, Forget, Tombstone. Sentinel errors
+  (`ErrNotFound`, `ErrInvalidScope`, `ErrScopeMismatch`).
+  `ValidateScope` enforces kind/key well-formedness. Helpers
+  `LocalWorkspace()`, `LocalProfile()`, `LocalPreferences()`.
+- **`internal/memory.EmbeddedClient`** — in-process implementation over
+  the existing `*db.MemoryRepository`. SHA-256 `ContentHash` computed
+  on Store. Scope-isolated Forget rejects cross-scope IDs as
+  `ErrNotFound`. Tombstone routes to `AnonymizeByAssistant` /
+  `AnonymizeByRun`. Optional `WithEventBus(bus)` enables audit
+  emission.
+- **Audit events** — new `EventMemoryStore`, `EventMemoryForget`,
+  `EventMemoryTombstone` event types. `EmbeddedClient` emits with
+  `content_hash` populated; events feed into the existing
+  hash-chained audit log via the same `EventBus.Publish` path used by
+  every other domain event.
+- **Tombstone wiring** — new `EventAssistantDeleted` /
+  `EventRunDeleted` event types. `Runtime.DeleteRun` and
+  `api.AssistantServer.DeleteAssistant` publish them; runtime
+  subscribes at boot in `startTombstoneSubscriber` and routes to
+  `Client.Tombstone`. `AssistantServer` constructor extended to take
+  an `*events.EventBus`.
+- **`AnonymizeByAssistant` / `AnonymizeByRun`** on `MemoryRepository`
+  — mirrors today's `ON DELETE SET NULL` FK behavior. Idempotent.
+- **JSONL export/import** — `memory.Export(ctx, client, scope, w)` and
+  `memory.Import(ctx, client, r)` with versioned header
+  (`mnemos.export` v1). REST: `GET /memory/export?scope=&key=` streams
+  JSONL with `application/x-ndjson` + Content-Disposition; `POST
+  /memory/import` returns `{"imported": N}`. CLI: `nomi memory export
+  [--scope] [--key] [-o file]` and `nomi memory import file|-`.
+- **Migration `000024_events_optional_run_id`** — makes `events.run_id`
+  nullable and drops the FK to `runs(id)`, enabling entity-scoped
+  events (assistant/run deletion + memory ops) to persist. Down
+  migration aborts if NULL rows present.
+
+### Changed
+- `Runtime.memManager *memory.Manager` → `Runtime.memClient
+  mnemos.Client`. Constructor signature updated. All four runtime call
+  sites (`lifecycle.go:257`, `engine.go:650+662`, `planner.go:104`)
+  rewritten to use Client methods. `scopeFromPolicy()` helper maps
+  legacy `MemoryPolicy.Scope` strings to typed `mnemos.Scope`.
+- `events.validateEvent` relaxed via `isEntityScopedEvent` allowlist —
+  events targeting an entity other than a run (assistant.deleted,
+  run.deleted, memory.*) may carry empty RunID.
+- `cmd/nomid/main.go` constructs both `*memory.Manager` (for the REST
+  CRUD endpoints that haven't migrated yet) and `*memory.EmbeddedClient`
+  (for the runtime + the new export/import endpoints).
+- 9 test files updated: `memory.NewManager(repo)` →
+  `memory.NewEmbeddedClient(repo)`; `setupTestRuntimeWithMemory` return
+  type widened; one assertion `rt.memManager.ListByScope(...)` rewritten
+  as `rt.memClient.Retrieve(ctx, mnemos.LocalWorkspace(), Query{})`.
+
+### Tests
+- `internal/mnemos/client_test.go` — 9 ValidateScope cases (happy
+  paths, missing owner, unknown kind, kind/key mismatch).
+- `internal/memory/client_test.go` — 14 cases: ID/CreatedAt/ContentHash
+  assignment, round-trip, scope isolation, query filters
+  (assistant/run/since), substring search, Forget happy/unknown/
+  cross-scope, Tombstone assistant/run/idempotent, invalid-scope
+  reject, context-cancel reject.
+- `internal/memory/exportimport_test.go` — 5 cases: round-trip,
+  unknown format reject, bad version reject, invalid scope in header,
+  invalid scope on export.
+- `internal/memory/audit_integration_test.go` — verifies
+  memory.store/forget/tombstone events fire with `content_hash`.
+- `internal/api/memory_export_test.go` — REST round-trip + 400 on
+  invalid scope.
+
+### Roadmap
+- Roady feature #112 (next) — extract `internal/mnemos` +
+  `EmbeddedClient` to `github.com/felixgeelhaar/mnemos` standalone
+  repo; introduce separate `mnemos.db` SQLite file; data-migration on
+  first boot post-upgrade (ADR 0004 step 2).
+
+## [Unreleased] - 2026-05-22 (narrative & positioning)
+
+Repositioning pass: Nomi reframed from "local-first coding agent" to
+"personal AI runtime with persistent cognition (Mnemos)." Coding stays
+as the flagship workflow; the runtime + capability engine + memory
+architecture is now the category claim.
+
+### Changed
+- **Landing page (`docs/index.html`)** — new hero ("Your personal AI
+  runtime"), problem section reframed around stateless-and-confident
+  agents, diff grid restructured to "Runtime + capability engine +
+  memory" with Mnemos promoted to a primary card and a new
+  "Daemon-not-IDE-plugin" card, Compared section expanded.
+- **`README.md`** — hero rewritten to match; "Why Nomi" leads with the
+  runtime/cognitive-layer framing; Compared-to table extended.
+- **`docs/comparison.md`** — new "Personal AI assistant category"
+  section comparing Nomi to OpenClaw, NanoClaw, Hermes Agent (Nous
+  Research), and Pi (Inflection AI) with feature matrix + per-product
+  detail subsections. Threat-model row added.
+
+### Added
+- **ADR 0004 — Nomi ↔ Mnemos Cognitive Boundary** (Accepted 2026-05-22).
+  Defines `mnemos.Client` interface, embedded vs remote implementations,
+  separate-DB decision with event-driven cleanup for FK loss, scope
+  isolation honesty (advisory in embedded, authoritative in remote),
+  three-step migration path, audit-chain mitigation, performance and
+  failure-mode budgets, acceptance criteria.
+- **`docs/context-budget.md`** — auto-loaded files table, model
+  windows, on-demand reference sizes. Current auto-load ~43K tokens
+  (~22% of 200K window). Review cadence quarterly.
+- **`docs/vendor-notes.md`** — append-only gotchas log: Tauri WKWebView
+  SSE workaround, Vite port mismatch (5173 vs 4173), SQLite FK pragma
+  trap, golang-migrate up+down pair requirement, Playwright needs
+  `nomid` running, Gin CORS posture, Ollama port detection, shadcn
+  primitives are vendored.
+
+### Roadmap
+- Roady feature #110 — "Repositioning: AI Runtime + Mnemos Cognitive
+  Layer Narrative" tracks remaining narrative work (OG image verify,
+  Phase 4 org-cognition copy, ADR 0004 acceptance).
+
 ## [Unreleased] - 2026-05-09 (post-v0.1 cycle 2)
 
 Two rounds of expert review (product + ai expert agents) drove this

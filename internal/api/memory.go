@@ -1,22 +1,26 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/felixgeelhaar/nomi/internal/domain"
 	"github.com/felixgeelhaar/nomi/internal/memory"
+	"github.com/felixgeelhaar/nomi/internal/mnemos"
 )
 
 // MemoryServer handles memory-related endpoints
 type MemoryServer struct {
 	manager *memory.Manager
+	client  mnemos.Client // optional; powers /export and /import (ADR 0004 §8)
 }
 
-// NewMemoryServer creates a new memory server
-func NewMemoryServer(manager *memory.Manager) *MemoryServer {
-	return &MemoryServer{manager: manager}
+// NewMemoryServer creates a new memory server. client may be nil; the
+// /export and /import endpoints return 503 when it is.
+func NewMemoryServer(manager *memory.Manager, client mnemos.Client) *MemoryServer {
+	return &MemoryServer{manager: manager, client: client}
 }
 
 // CreateMemoryRequest represents a request to create a memory entry
@@ -120,4 +124,77 @@ func (s *MemoryServer) DeleteMemory(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": "deleted"})
+}
+
+// ExportMemory streams a Mnemos JSONL export of the requested scope.
+// Query params:
+//
+//	scope — workspace | profile | preferences (default: workspace)
+//	key   — workspace key (default: "default" for workspace; empty for
+//	        profile/preferences which take no key)
+//
+// Content-Type is application/x-ndjson; the first line is the export
+// header, subsequent lines are entries.
+func (s *MemoryServer) ExportMemory(c *gin.Context) {
+	if s.client == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "memory export unavailable: no mnemos.Client wired"})
+		return
+	}
+	scope, err := parseScopeQuery(c)
+	if err != nil {
+		respondValidationError(c, err.Error())
+		return
+	}
+	c.Header("Content-Type", "application/x-ndjson")
+	c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="mnemos-%s.jsonl"`, scope.Kind))
+	if _, err := memory.Export(c.Request.Context(), s.client, scope, c.Writer); err != nil {
+		// Body may already be partly written; can't switch status code.
+		// Trailer-style error is unfortunate but matches streaming endpoints.
+		_, _ = fmt.Fprintf(c.Writer, "\n# export error: %s\n", err.Error())
+		return
+	}
+}
+
+// ImportMemory reads a Mnemos JSONL stream from the request body and
+// stores every entry through the configured client. Returns the count
+// imported. Body must start with a valid header line; mismatched
+// format/version is a 400.
+func (s *MemoryServer) ImportMemory(c *gin.Context) {
+	if s.client == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "memory import unavailable: no mnemos.Client wired"})
+		return
+	}
+	n, err := memory.Import(c.Request.Context(), s.client, c.Request.Body)
+	if err != nil {
+		respondValidationError(c, err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"imported": n})
+}
+
+// parseScopeQuery builds a mnemos.Scope from the request's scope/key
+// query params, applying the embedded-mode defaults. Returns an error
+// rather than panicking so the handler can surface a 400.
+func parseScopeQuery(c *gin.Context) (mnemos.Scope, error) {
+	kindStr := c.DefaultQuery("scope", string(mnemos.ScopeWorkspace))
+	kind := mnemos.ScopeKind(kindStr)
+	if !kind.IsValid() {
+		return mnemos.Scope{}, fmt.Errorf("invalid scope %q", kindStr)
+	}
+	key := c.Query("key")
+	scope := mnemos.Scope{OwnerID: mnemos.LocalOwnerID, Kind: kind, Key: key}
+	// Fill in canonical defaults for kinds that require a key when none
+	// was supplied — keeps the CLI ergonomics simple for the common case.
+	switch kind {
+	case mnemos.ScopeWorkspace, mnemos.ScopeSession, mnemos.ScopeOrg:
+		if scope.Key == "" {
+			scope.Key = mnemos.DefaultWorkspaceKey
+		}
+	case mnemos.ScopeProfile, mnemos.ScopePreferences:
+		scope.Key = ""
+	}
+	if err := mnemos.ValidateScope(scope); err != nil {
+		return mnemos.Scope{}, err
+	}
+	return scope, nil
 }

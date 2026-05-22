@@ -34,7 +34,7 @@ func TestDetermineToolRoutesViaStepDefinition(t *testing.T) {
 	toolReg := tools.NewRegistry()
 	_ = tools.RegisterCoreTools(toolReg)
 	toolExec := tools.NewExecutor(toolReg)
-	memMgr := memory.NewManager(db.NewMemoryRepository(database))
+	memMgr := memory.NewEmbeddedClient(db.NewMemoryRepository(database))
 
 	rt := NewRuntime(database, bus, permEngine, approvalMgr, toolExec, memMgr, DefaultConfig())
 	defer rt.Shutdown()
@@ -117,7 +117,7 @@ func TestDetermineToolFallsBackToCommandExecForLegacySteps(t *testing.T) {
 		permissions.NewEngine(),
 		permissions.NewApprovalManager(db.NewApprovalRepository(database), bus),
 		tools.NewExecutor(tools.NewRegistry()),
-		memory.NewManager(db.NewMemoryRepository(database)),
+		memory.NewEmbeddedClient(db.NewMemoryRepository(database)),
 		DefaultConfig(),
 	)
 	defer rt.Shutdown()

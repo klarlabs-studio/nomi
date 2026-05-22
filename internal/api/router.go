@@ -12,6 +12,7 @@ import (
 	"github.com/felixgeelhaar/nomi/internal/events"
 	"github.com/felixgeelhaar/nomi/internal/memory"
 	"github.com/felixgeelhaar/nomi/internal/metrics"
+	"github.com/felixgeelhaar/nomi/internal/mnemos"
 	"github.com/felixgeelhaar/nomi/internal/permissions"
 	"github.com/felixgeelhaar/nomi/internal/plugins"
 	"github.com/felixgeelhaar/nomi/internal/plugins/hub"
@@ -33,6 +34,7 @@ type RouterConfig struct {
 	EventBus   *events.EventBus
 	Approvals  *permissions.Manager
 	Memory     *memory.Manager
+	MemoryClient mnemos.Client // optional; required for /memory/export + /memory/import endpoints (ADR 0004 §8)
 	Tools      *tools.Registry
 	Connectors  *connectors.Registry
 	Plugins *plugins.Registry // source of truth for plugin-architecture endpoints
@@ -141,7 +143,7 @@ func NewRouter(cfg RouterConfig) *gin.Engine {
 	}
 
 	// Assistant endpoints
-	assistantServer := NewAssistantServer(cfg.DB)
+	assistantServer := NewAssistantServer(cfg.DB, cfg.EventBus)
 	assistants := r.Group("/assistants")
 	{
 		assistants.POST("", assistantServer.CreateAssistant)
@@ -171,11 +173,13 @@ func NewRouter(cfg RouterConfig) *gin.Engine {
 	}
 
 	// Memory endpoints
-	memoryServer := NewMemoryServer(cfg.Memory)
+	memoryServer := NewMemoryServer(cfg.Memory, cfg.MemoryClient)
 	memories := r.Group("/memory")
 	{
 		memories.POST("", memoryServer.CreateMemory)
 		memories.GET("", memoryServer.ListMemory)
+		memories.GET("/export", memoryServer.ExportMemory)
+		memories.POST("/import", memoryServer.ImportMemory)
 		memories.GET("/:id", memoryServer.GetMemory)
 		memories.DELETE("/:id", memoryServer.DeleteMemory)
 	}

@@ -120,7 +120,7 @@ func TestRunRoutesThroughLLMWhenProviderConfigured(t *testing.T) {
 	}
 	toolExec := tools.NewExecutor(toolReg)
 
-	memMgr := memory.NewManager(db.NewMemoryRepository(database))
+	memMgr := memory.NewEmbeddedClient(db.NewMemoryRepository(database))
 	rt := NewRuntime(database, bus, permEngine, approvalMgr, toolExec, memMgr, DefaultConfig())
 	rt.SetLLMResolver(resolver)
 	defer rt.Shutdown()
@@ -265,7 +265,7 @@ func TestPlannerSelfRepairsOnInvalidArguments(t *testing.T) {
 	_ = tools.RegisterCoreTools(toolReg)
 	resolver := llm.NewResolver(providerRepo, settings, secretStore)
 	_ = toolReg.Register(tools.NewLLMChatTool(resolver))
-	memMgr := memory.NewManager(db.NewMemoryRepository(database))
+	memMgr := memory.NewEmbeddedClient(db.NewMemoryRepository(database))
 
 	rt := NewRuntime(database, bus, permEngine, approvalMgr, tools.NewExecutor(toolReg), memMgr, DefaultConfig())
 	rt.SetLLMResolver(resolver)
@@ -367,7 +367,7 @@ func TestMultiStepPlannerProducesMultipleSteps(t *testing.T) {
 	_ = tools.RegisterCoreTools(toolReg)
 	resolver := llm.NewResolver(providerRepo, settings, secretStore)
 	_ = toolReg.Register(tools.NewLLMChatTool(resolver))
-	memMgr := memory.NewManager(db.NewMemoryRepository(database))
+	memMgr := memory.NewEmbeddedClient(db.NewMemoryRepository(database))
 
 	rt := NewRuntime(database, bus, permEngine, approvalMgr, tools.NewExecutor(toolReg), memMgr, DefaultConfig())
 	rt.SetLLMResolver(resolver)
