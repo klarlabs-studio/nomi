@@ -2101,3 +2101,33 @@ Depends on: nothing. The workflow + test are already in main as of commit 62a99e
 Relates to: roady #117. Not blocking any other feature; pure CI hygiene.
 
 ---
+
+## Sandboxed executor backends
+
+Pluggable execution backend for `command.exec` and tool side-effects. Current implementation runs on the host with approval gating only — competitors (NanoClaw, Hermes) provide container isolation. Introduce `Executor` interface with backends: `local` (current behavior, default), `docker` (rootless container per-run with bind-mounted workspace, network policy, CPU/mem limits), and `gvisor` (kernel-isolated runtime for stronger boundary). Each Run pins a backend via assistant config or run override. Backend choice surfaces in event stream and audit log so approval reviewers see isolation level. Filesystem writes constrained to the bind-mount; outbound network gated by `network.egress` capability rules in `PermissionPolicy`. Includes Tauri settings UI for backend selection, golden tests verifying container cleanup, and Prometheus metrics per backend (exec duration, exit codes, OOM kills). Closes the biggest security gap vs NanoClaw/Hermes while preserving the local-first deployment story.
+
+---
+
+## Connector parity wave — Discord, Slack, WhatsApp
+
+Ship three additional messaging connectors via the existing `connectors.Connector` plugin SDK to close the integration gap vs Hermes (6+ messengers), OpenClaw, and NanoClaw. Implement `discord` (bot user + slash commands + threads → Run), `slack` (Events API + Socket Mode + per-channel assistant binding), and `whatsapp` (Cloud API w/ webhook receiver + media handling). Each connector: persists config via `ConnectorConfigRepository` (no env vars), implements message→Run mapping with assistant routing rules, surfaces in Settings → Connections tab w/ OAuth/token flow, emits domain events through `eventBus.Publish`, supports outbound replies w/ rate limiting + retry/backoff, and ships e2e tests against a recorded fixture. Includes a shared `messaging` helper package for common concerns (attachment download, signed-webhook verification, idempotent dedupe of inbound messages by provider message ID).
+
+---
+
+## Scheduled runs with natural-language cron
+
+First-class `Schedule` aggregate that triggers Runs on cron or natural-language cadences ("every weekday at 8am", "first Monday of the month"). Matches Hermes Agent's flagship feature for always-on workflows. Adds `schedules` table (id, assistant_id, prompt, cron_expr, nl_phrase, next_fire_at, last_fire_at, enabled, created_at), repository, REST endpoints (`POST/GET/PATCH/DELETE /schedules`), and a background ticker in `nomid` that scans `next_fire_at <= now` every 30s and triggers Runs through the runtime with `triggered_by: schedule`. NL→cron translation via a small LLM call w/ allowlisted output grammar + human confirmation in the Tauri settings UI before save. Schedules respect the assistant's `PermissionPolicy` — schedules cannot bypass approval gates. Includes pause/resume, missed-fire policy (skip vs catch-up), Prometheus counters per schedule, audit log entries, and timezone handling tied to the host TZ.
+
+---
+
+## Recipe registry and sharing
+
+Promote `examples/coding-agent` to a first-class artifact: a `Recipe` is a versioned bundle of (assistant config, permission policy, tool registrations, planner prompts, optional folder context shape). Add `recipes` table + REST endpoints (`GET /recipes`, `POST /recipes/install`, `POST /recipes/export`), a Tauri "Recipes" tab to browse/install/export, signed manifest format (`recipe.yaml` + SHA-256), and a small built-in catalog (coding-agent, research-assistant, ops-runbook). Install flow creates assistant + applies permission policy + registers any recipe-shipped tools, with a preview-diff step so the user sees exactly what the recipe grants before confirming. Export bundles the current assistant's config for shareable distribution. Establishes the surface that future skill-induction (separate feature) will publish into.
+
+---
+
+## Skill induction from run history
+
+Hermes-style auto-generated skills: mine successful Runs in Mnemos memory + state store, cluster by goal embedding similarity + tool-call shape, and synthesize reusable Recipe candidates with parameterized prompts and named slots for variable inputs. Surfaces "Suggested skills" panel in the Assistants tab — user reviews extracted skill, can edit prompts/policies, then promotes to a Recipe via the registry. Includes guardrails: minimum N successful runs per cluster before suggestion, no PII/secret leakage (scan parameterized slots against secret patterns), and provenance trail linking the skill back to the source Runs. Optional periodic background job (gated by a setting) re-mines weekly. Depends on the recipe registry feature.
+
+---

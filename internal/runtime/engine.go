@@ -31,15 +31,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/felixgeelhaar/nomi/internal/domain"
 	"github.com/felixgeelhaar/nomi/internal/events"
 	"github.com/felixgeelhaar/nomi/internal/llm"
 	"github.com/felixgeelhaar/nomi/internal/memstore"
 	"github.com/felixgeelhaar/nomi/internal/metrics"
 	"github.com/felixgeelhaar/nomi/internal/permissions"
+	"github.com/felixgeelhaar/nomi/internal/runtime/executor"
 	"github.com/felixgeelhaar/nomi/internal/storage/db"
 	"github.com/felixgeelhaar/nomi/internal/tools"
+	"github.com/google/uuid"
 )
 
 // Runtime orchestrates runs, steps, and tool execution.
@@ -58,6 +59,12 @@ type Runtime struct {
 	toolExecutor   *tools.Executor
 	memClient      memstore.Client
 	maxRetries     int
+
+	// executorRegistry resolves a per-assistant subprocess execution
+	// backend. The default backend (local) is pre-registered; future
+	// backends (docker, gvisor) register through SetExecutorBackend at
+	// boot. command.exec consults this on every step.
+	executorRegistry *executor.Registry
 
 	// rootCtx is the parent context for every background run. Shutdown()
 	// cancels it, which propagates into in-flight tool executions
@@ -120,6 +127,26 @@ type ConnectorManifestLookup func(name string) (capabilities []string, ok bool)
 // manifest ∩ assistant-policy at tool-execution time.
 func (r *Runtime) SetConnectorManifestLookup(fn ConnectorManifestLookup) {
 	r.connectorManifest = fn
+}
+
+// RegisterExecutorBackend adds an additional execution backend (docker,
+// gvisor, …) to the runtime's registry. The local backend is registered by
+// default during NewRuntime; main() calls this for any extra backends
+// detected at boot (e.g. when a Docker daemon is present).
+func (r *Runtime) RegisterExecutorBackend(b executor.Backend) {
+	if r.executorRegistry == nil {
+		r.executorRegistry = executor.NewRegistry()
+	}
+	r.executorRegistry.Register(b)
+}
+
+// ExecutorBackends returns the names of every registered execution backend.
+// Used by the settings API to populate the assistant builder dropdown.
+func (r *Runtime) ExecutorBackends() []string {
+	if r.executorRegistry == nil {
+		return nil
+	}
+	return r.executorRegistry.Names()
 }
 
 // SetLLMResolver installs the LLM resolver used by planSteps to decide
@@ -188,25 +215,28 @@ func NewRuntime(
 ) *Runtime {
 	rootCtx, rootCancel := context.WithCancel(context.Background())
 	attachmentRepo := db.NewRunAttachmentRepository(database)
+	execReg := executor.NewRegistry()
+	execReg.Register(executor.NewLocal())
 	rt := &Runtime{
-		db:             database,
-		runRepo:        db.NewRunRepository(database),
-		stepRepo:       db.NewStepRepository(database),
-		planRepo:       db.NewPlanRepository(database),
-		assistantRepo:  db.NewAssistantRepository(database),
-		settingsRepo:   db.NewAppSettingsRepository(database),
-		attachmentRepo: attachmentRepo,
-		eventBus:       eventBus,
-		permEngine:     permEngine,
-		approvalMgr:    approvalMgr,
-		toolExecutor:   toolExecutor,
-		memClient:      memClient,
-		maxRetries:     config.MaxRetries,
-		rootCtx:        rootCtx,
-		rootCancel:     rootCancel,
-		planApprovals:  make(map[string]chan struct{}),
-		pauseSignals:   make(map[string]chan struct{}),
-		replanCounts:   make(map[string]int),
+		db:               database,
+		runRepo:          db.NewRunRepository(database),
+		stepRepo:         db.NewStepRepository(database),
+		planRepo:         db.NewPlanRepository(database),
+		assistantRepo:    db.NewAssistantRepository(database),
+		settingsRepo:     db.NewAppSettingsRepository(database),
+		attachmentRepo:   attachmentRepo,
+		eventBus:         eventBus,
+		permEngine:       permEngine,
+		approvalMgr:      approvalMgr,
+		toolExecutor:     toolExecutor,
+		memClient:        memClient,
+		maxRetries:       config.MaxRetries,
+		executorRegistry: execReg,
+		rootCtx:          rootCtx,
+		rootCancel:       rootCancel,
+		planApprovals:    make(map[string]chan struct{}),
+		pauseSignals:     make(map[string]chan struct{}),
+		replanCounts:     make(map[string]int),
 		limiter: newRateLimiter(
 			config.RunsPerMinutePerSource, config.RunsBurst,
 			config.ToolCallsPerMinutePerRun, config.ToolCallsBurst,

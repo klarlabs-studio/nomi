@@ -3,16 +3,17 @@ package tools
 import (
 	"context"
 	"fmt"
-	"os/exec"
 	"path/filepath"
 	"time"
 
 	"github.com/felixgeelhaar/nomi/internal/domain"
+	"github.com/felixgeelhaar/nomi/internal/runtime/executor"
 )
 
-// CommandExecTool executes shell commands with strict parsing, a clean env,
-// and process-group isolation. It does NOT invoke a shell; metacharacters in
-// the argv are refused.
+// CommandExecTool executes shell commands with strict argv parsing and a
+// clean environment. The actual process spawn is delegated to an
+// executor.Backend supplied by the runtime via input["__sandbox"]; falls
+// back to a fresh LocalBackend for direct test invocations.
 type CommandExecTool struct{}
 
 // NewCommandExecTool creates a new CommandExecTool
@@ -60,7 +61,6 @@ func (t *CommandExecTool) Execute(ctx context.Context, input map[string]interfac
 		return nil, err
 	}
 
-	// Optional binary allowlist.
 	if rawList, ok := input["allowed_binaries"].([]interface{}); ok && len(rawList) > 0 {
 		binary := filepath.Base(tokens[0])
 		permitted := false
@@ -85,8 +85,6 @@ func (t *CommandExecTool) Execute(ctx context.Context, input map[string]interfac
 		return nil, err
 	}
 
-	// Resolve working directory. If both root and working_directory are set,
-	// the directory must live inside the root.
 	workDir := ""
 	if raw, ok := input["working_directory"].(string); ok && raw != "" {
 		if workRoot != "" {
@@ -96,8 +94,6 @@ func (t *CommandExecTool) Execute(ctx context.Context, input map[string]interfac
 			}
 			workDir = resolved
 		} else {
-			// No root declared: keep legacy behavior of accepting an absolute
-			// path, but only after filepath.Clean to collapse traversal.
 			workDir = filepath.Clean(raw)
 		}
 	} else if workRoot != "" {
@@ -110,13 +106,6 @@ func (t *CommandExecTool) Execute(ctx context.Context, input map[string]interfac
 	} else if v, ok := input["timeout"].(int); ok {
 		timeout = v
 	}
-	cmdCtx, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
-	defer cancel()
-
-	cmd := exec.CommandContext(cmdCtx, tokens[0], tokens[1:]...)
-	if workDir != "" {
-		cmd.Dir = workDir
-	}
 
 	overrides := map[string]string{}
 	if rawEnv, ok := input["env"].(map[string]interface{}); ok {
@@ -124,23 +113,32 @@ func (t *CommandExecTool) Execute(ctx context.Context, input map[string]interfac
 			overrides[k] = fmt.Sprintf("%v", v)
 		}
 	}
-	cmd.Env = BuildSandboxEnv(overrides)
-	cmd.SysProcAttr = sandboxSysProcAttr()
 
-	output, runErr := cmd.CombinedOutput()
+	backend := backendFromInput(input)
+
+	req := executor.Request{
+		Argv:    tokens,
+		WorkDir: workDir,
+		Env:     BuildSandboxEnv(overrides),
+		Timeout: time.Duration(timeout) * time.Second,
+	}
+
+	execResult, runErr := backend.Run(ctx, req)
+	if execResult == nil {
+		execResult = &executor.Result{ExitCode: -1}
+	}
 
 	result := map[string]interface{}{
 		"command":   rawCommand,
 		"argv":      tokens,
-		"output":    string(output),
-		"exit_code": 0,
+		"output":    string(execResult.Output),
+		"exit_code": execResult.ExitCode,
 		"work_dir":  workDir,
-		"timed_out": false,
+		"timed_out": execResult.TimedOut,
+		"backend":   backend.Name(),
 	}
 
-	if cmdCtx.Err() == context.DeadlineExceeded {
-		result["timed_out"] = true
-		result["exit_code"] = -1
+	if execResult.TimedOut {
 		return result, &domain.UserError{
 			Code:    domain.ErrCodeCommandTimeout,
 			Title:   "Command took too long",
@@ -149,14 +147,23 @@ func (t *CommandExecTool) Execute(ctx context.Context, input map[string]interfac
 	}
 
 	if runErr != nil {
-		if exitErr, ok := runErr.(*exec.ExitError); ok {
-			result["exit_code"] = exitErr.ExitCode()
-		} else {
-			result["exit_code"] = -1
-		}
 		result["error"] = runErr.Error()
 		return result, nil
 	}
 
+	if execResult.ExitCode != 0 {
+		result["error"] = fmt.Sprintf("exit status %d", execResult.ExitCode)
+	}
+
 	return result, nil
+}
+
+// backendFromInput resolves the executor backend the runtime injected into
+// the tool input. Falls back to a fresh local backend so direct test calls
+// (without a runtime in front) still work.
+func backendFromInput(input map[string]interface{}) executor.Backend {
+	if b, ok := input["__sandbox"].(executor.Backend); ok && b != nil {
+		return b
+	}
+	return executor.NewLocal()
 }

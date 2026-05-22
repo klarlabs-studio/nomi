@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 528,
+  "version": 530,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1274,6 +1274,11 @@
       "completed_at": "2026-05-09T07:51:19.566831+02:00",
       "elapsed_minutes": 0
     },
+    "task-add-enum/options-support-to-plugins.configfield-for-dropdown-ui": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
     "task-anthropic-chatstream-+-planner-robustness-(few-shot,-json-mode,-self-repair)": {
       "status": "done",
       "path": "",
@@ -1395,6 +1400,11 @@
       "completed_at": "2026-05-07T22:11:34.134529+02:00",
       "elapsed_minutes": 1462
     },
+    "task-ci:-e2e-tests-for-mnemos-plugin-against-`mnemos-serve`": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
     "task-coding-agent-as-onboarding-default-+-qwen2.5-coder-preference": {
       "status": "done",
       "path": "",
@@ -1472,6 +1482,11 @@
       "completed_at": "2026-05-09T07:56:54.249728+02:00",
       "elapsed_minutes": 5
     },
+    "task-connector-parity-wave-—-discord,-slack,-whatsapp": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
     "task-connector-plugin-architecture": {
       "status": "done",
       "path": "",
@@ -1527,6 +1542,11 @@
       "completed_at": "2026-04-26T14:31:52.137027+02:00",
       "elapsed_minutes": 0
     },
+    "task-decide-fate-of-internal/memstore-+-internal/memory.embeddedclient": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
     "task-desktop-ui-(tauri-+-react-+-shadcn/ui)": {
       "status": "done",
       "path": "",
@@ -1536,6 +1556,11 @@
       ],
       "started_at": "2026-04-26T14:32:54.133011+02:00",
       "completed_at": "2026-04-26T14:33:15.655882+02:00",
+      "elapsed_minutes": 0
+    },
+    "task-desktop-ui:-mnemos-connections-card-in-connections-tab": {
+      "status": "pending",
+      "path": "",
       "elapsed_minutes": 0
     },
     "task-deterministic-fake-llm-fixture-for-e2e-+-plan-review-e2e-coverage": {
@@ -1869,6 +1894,26 @@
       "completed_at": "2026-05-09T07:45:21.345475+02:00",
       "elapsed_minutes": 0
     },
+    "task-mnemos-package-extraction-to-standalone-repo-(adr-0004-step-2)": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
+    "task-mnemos-plugin-(adr-0001-+-adr-0004-revised)": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
+    "task-mnemos-plugin:-drop-go.mod-replace-directive-after-upstream-release": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
+    "task-mnemos.client-interface-extraction-(adr-0004-step-1)": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
     "task-multi-step-planning": {
       "status": "done",
       "path": "",
@@ -2111,6 +2156,11 @@
       "completed_at": "2026-05-09T09:08:59.572676+02:00",
       "elapsed_minutes": 2
     },
+    "task-propagate-runid-through-plugins.contextsource.query": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
     "task-provider/model-matrix-evals-+-adversarial-fixtures-+-threshold-enforcement": {
       "status": "done",
       "path": "",
@@ -2121,6 +2171,11 @@
       "started_at": "2026-05-09T17:28:06.294653+02:00",
       "completed_at": "2026-05-09T17:30:22.573637+02:00",
       "elapsed_minutes": 2
+    },
+    "task-recipe-registry-and-sharing": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
     },
     "task-refactor-chat-interface.tsx-into-chatlist-/-chatdetail-/-chatcomposer": {
       "status": "done",
@@ -2175,6 +2230,11 @@
       ],
       "started_at": "2026-05-09T07:41:55.809899+02:00",
       "completed_at": "2026-05-09T07:42:03.970228+02:00",
+      "elapsed_minutes": 0
+    },
+    "task-repositioning:-ai-runtime-+-mnemos-cognitive-layer-narrative": {
+      "status": "pending",
+      "path": "",
       "elapsed_minutes": 0
     },
     "task-rest-api-(gin)": {
@@ -2265,6 +2325,18 @@
       "completed_at": "2026-04-24T16:38:50.129752+02:00",
       "elapsed_minutes": 33
     },
+    "task-sandboxed-executor-backends": {
+      "status": "in_progress",
+      "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-22T18:14:55.519905+02:00",
+      "elapsed_minutes": 0
+    },
+    "task-scheduled-runs-with-natural-language-cron": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
     "task-scope-discipline:-cut-overhang,-stop-polling,-prune-e2e-journeys-to-wedge-icp": {
       "status": "done",
       "path": "",
@@ -2296,6 +2368,11 @@
       ],
       "started_at": "2026-04-28T08:04:11.78615+02:00",
       "completed_at": "2026-04-28T08:04:24.391238+02:00",
+      "elapsed_minutes": 0
+    },
+    "task-skill-induction-from-run-history": {
+      "status": "pending",
+      "path": "",
       "elapsed_minutes": 0
     },
     "task-slack-plugin-(channel-+-tool)": {
@@ -2518,6 +2595,16 @@
       "completed_at": "2026-05-07T23:50:37.609167+02:00",
       "elapsed_minutes": 1
     },
+    "task-verify-e2e-mnemos-workflow-once-via-workflow_dispatch": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
+    "task-wire-plugins.registry.contextsources()-into-the-planner-prompt": {
+      "status": "pending",
+      "path": "",
+      "elapsed_minutes": 0
+    },
     "tauri-init": {
       "status": "done",
       "path": "",
@@ -2591,5 +2678,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-09T17:35:33.465077+02:00"
+  "updated_at": "2026-05-22T18:14:55.519905+02:00"
 }

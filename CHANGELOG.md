@@ -4,6 +4,47 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-05-22 (Sandboxed executor backends — PR1: interface + local)
+
+Introduces a pluggable execution-backend interface so future
+container-isolated runtimes (Docker, gVisor) can replace the host-exec
+path without touching the tool layer. PR1 ships the interface and
+extracts current host-exec behavior into a `local` backend; zero
+behavior change.
+
+### Added
+- `internal/runtime/executor` package — `Backend` interface,
+  `Request`/`Result` types, `Registry` keyed by backend name,
+  `LocalBackend` preserving the prior `os/exec.CommandContext` +
+  `Setsid`/new-process-group behavior. Backend selection per-assistant
+  via the new `AssistantDefinition.ExecutorBackend` field (default
+  `"local"`).
+- Migration `000025_assistant_executor_backend` — adds
+  `executor_backend TEXT NOT NULL DEFAULT 'local'` to `assistants`.
+- `Runtime.RegisterExecutorBackend` + `Runtime.ExecutorBackends()`
+  hooks for future docker/gvisor backend registration at boot.
+
+### Changed
+- `tools/command.go` now delegates the actual process spawn to the
+  backend the runtime injects via a reserved `__sandbox` key on the
+  tool input (matching the existing `__on_delta` escape-hatch pattern).
+  Validation (argv parsing, allowed_binaries, workspace_root,
+  env allowlist) stays in the tool layer. Result map now includes a
+  `"backend"` field naming which backend ran the command.
+
+### Removed
+- `internal/tools/sandbox_unix.go` + `sandbox_windows.go` — the
+  platform-specific `sandboxSysProcAttr` helpers move into the new
+  `executor` package alongside the local backend.
+
+### Roadmap
+- Roady feature "Sandboxed executor backends" — PR1 (this change)
+  lays the interface + local default. PR2 will add the docker backend
+  (rootless containers, bind-mounted workspace, CPU/mem limits,
+  `network.egress` capability). PR3 adds gVisor (runsc) variant.
+  PR4 adds the `network.egress` permission rule and Prometheus
+  counters. PR5 adds the Tauri settings UI dropdown.
+
 ## [Unreleased] - 2026-05-22 (ADR 0004 revised — Mnemos is a plugin)
 
 Course correction after discovering that real Mnemos

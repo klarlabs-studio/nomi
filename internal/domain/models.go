@@ -110,13 +110,13 @@ type Step struct {
 
 // StepDefinition represents a planned step in a Plan
 type StepDefinition struct {
-	ID                 string    `json:"id"`
-	PlanID             string    `json:"plan_id"`
-	Title              string    `json:"title"`
-	Description        string    `json:"description,omitempty"`
-	ExpectedTool       string    `json:"expected_tool,omitempty"`
-	ExpectedCapability string    `json:"expected_capability,omitempty"`
-	Why                string    `json:"why,omitempty"` // Why this step was planned (e.g., "Based on your preference for...")
+	ID                 string `json:"id"`
+	PlanID             string `json:"plan_id"`
+	Title              string `json:"title"`
+	Description        string `json:"description,omitempty"`
+	ExpectedTool       string `json:"expected_tool,omitempty"`
+	ExpectedCapability string `json:"expected_capability,omitempty"`
+	Why                string `json:"why,omitempty"` // Why this step was planned (e.g., "Based on your preference for...")
 	// Arguments is a tool-specific keyed payload the planner emits so the
 	// runtime can call structured tools (filesystem.write needs path+content,
 	// command.exec needs command, etc.) without the planner having to
@@ -274,6 +274,7 @@ type AssistantDefinition struct {
 	PermissionPolicy    PermissionPolicy     `json:"permission_policy,omitempty"`
 	ModelPolicy         *ModelPolicy         `json:"model_policy,omitempty"`
 	RecommendedBindings []RecommendedBinding `json:"recommended_bindings,omitempty"`
+	ExecutorBackend     string               `json:"executor_backend,omitempty"`
 	CreatedAt           time.Time            `json:"created_at"`
 }
 
@@ -308,7 +309,7 @@ const (
 	// Conversation events (ADR 0001 §8).
 	EventConversationCreated EventType = "conversation.created"
 	EventConversationTouched EventType = "conversation.touched"
-	EventConversationDeleted  EventType = "conversation.deleted"
+	EventConversationDeleted EventType = "conversation.deleted"
 	// Plugin lifecycle events (lifecycle-10). Payload carries
 	// plugin_id, from_version, to_version (omitted for the available
 	// case when not yet installed).

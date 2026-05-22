@@ -60,19 +60,24 @@ func (r *AssistantRepository) Create(assistant *domain.AssistantDefinition) erro
 		return fmt.Errorf("failed to marshal channel configs: %w", err)
 	}
 
+	executorBackend := assistant.ExecutorBackend
+	if executorBackend == "" {
+		executorBackend = "local"
+	}
+
 	query := `
 		INSERT INTO assistants (
 			id, template_id, name, tagline, role, best_for, not_for, suggested_model,
 			system_prompt, channels, channel_configs, capabilities, contexts, memory_policy,
-			permission_policy, model_policy, created_at
+			permission_policy, model_policy, executor_backend, created_at
 		)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 	_, err = r.db.Exec(query,
 		assistant.ID, assistant.TemplateID, assistant.Name, assistant.Tagline,
 		assistant.Role, assistant.BestFor, assistant.NotFor, assistant.SuggestedModel, assistant.SystemPrompt,
 		channels, channelConfigs, capabilities, contexts, memoryPolicy, permissionPolicy, modelPolicy,
-		assistant.CreatedAt,
+		executorBackend, assistant.CreatedAt,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create assistant: %w", err)
@@ -84,7 +89,8 @@ func (r *AssistantRepository) Create(assistant *domain.AssistantDefinition) erro
 func (r *AssistantRepository) GetByID(id string) (*domain.AssistantDefinition, error) {
 	query := `
 		SELECT id, template_id, name, tagline, role, best_for, not_for, suggested_model, system_prompt,
-		       channels, channel_configs, capabilities, contexts, memory_policy, permission_policy, model_policy, created_at
+		       channels, channel_configs, capabilities, contexts, memory_policy, permission_policy, model_policy,
+		       executor_backend, created_at
 		FROM assistants WHERE id = ?
 	`
 	assistant := &domain.AssistantDefinition{}
@@ -95,7 +101,7 @@ func (r *AssistantRepository) GetByID(id string) (*domain.AssistantDefinition, e
 		&assistant.ID, &assistant.TemplateID, &assistant.Name, &assistant.Tagline,
 		&assistant.Role, &assistant.BestFor, &assistant.NotFor, &assistant.SuggestedModel, &assistant.SystemPrompt,
 		&channels, &channelConfigs, &capabilities, &contexts, &memoryPolicy, &permissionPolicy, &modelPolicy,
-		&assistant.CreatedAt,
+		&assistant.ExecutorBackend, &assistant.CreatedAt,
 	)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("assistant not found: %s", id)
@@ -171,18 +177,23 @@ func (r *AssistantRepository) Update(assistant *domain.AssistantDefinition) erro
 		return fmt.Errorf("failed to marshal channel configs: %w", err)
 	}
 
+	executorBackend := assistant.ExecutorBackend
+	if executorBackend == "" {
+		executorBackend = "local"
+	}
+
 	query := `
 		UPDATE assistants
 		SET template_id = ?, name = ?, tagline = ?, role = ?, best_for = ?, not_for = ?, suggested_model = ?,
 		    system_prompt = ?, channels = ?, channel_configs = ?, capabilities = ?, contexts = ?,
-		    memory_policy = ?, permission_policy = ?, model_policy = ?
+		    memory_policy = ?, permission_policy = ?, model_policy = ?, executor_backend = ?
 		WHERE id = ?
 	`
 	_, err = r.db.Exec(query,
 		assistant.TemplateID, assistant.Name, assistant.Tagline, assistant.Role, assistant.BestFor, assistant.NotFor,
 		assistant.SuggestedModel, assistant.SystemPrompt,
 		channels, channelConfigs, capabilities, contexts, memoryPolicy, permissionPolicy, modelPolicy,
-		assistant.ID,
+		executorBackend, assistant.ID,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to update assistant: %w", err)
@@ -194,7 +205,8 @@ func (r *AssistantRepository) Update(assistant *domain.AssistantDefinition) erro
 func (r *AssistantRepository) List(limit, offset int) ([]*domain.AssistantDefinition, error) {
 	query := `
 		SELECT id, template_id, name, tagline, role, best_for, not_for, suggested_model, system_prompt,
-		       channels, channel_configs, capabilities, contexts, memory_policy, permission_policy, model_policy, created_at
+		       channels, channel_configs, capabilities, contexts, memory_policy, permission_policy, model_policy,
+		       executor_backend, created_at
 		FROM assistants ORDER BY created_at DESC LIMIT ? OFFSET ?
 	`
 	rows, err := r.db.Query(query, limit, offset)
@@ -218,7 +230,7 @@ func (r *AssistantRepository) scanAssistants(rows *sql.Rows) ([]*domain.Assistan
 			&assistant.ID, &assistant.TemplateID, &assistant.Name, &assistant.Tagline,
 			&assistant.Role, &assistant.BestFor, &assistant.NotFor, &assistant.SuggestedModel, &assistant.SystemPrompt,
 			&channels, &channelConfigs, &capabilities, &contexts, &memoryPolicy, &permissionPolicy, &modelPolicy,
-			&assistant.CreatedAt,
+			&assistant.ExecutorBackend, &assistant.CreatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan assistant: %w", err)
@@ -447,11 +459,11 @@ func (r *EventRepository) VerifyChain() (*ChainVerifyResult, error) {
 	count := 0
 	for rows.Next() {
 		var (
-			id, evtType                string
-			runID, stepID              sql.NullString
-			payload                    []byte
-			ts                         time.Time
-			storedPrev, storedEntry    sql.NullString
+			id, evtType             string
+			runID, stepID           sql.NullString
+			payload                 []byte
+			ts                      time.Time
+			storedPrev, storedEntry sql.NullString
 		)
 		if err := rows.Scan(&id, &evtType, &runID, &stepID, &payload, &ts, &storedPrev, &storedEntry); err != nil {
 			return nil, fmt.Errorf("scan: %w", err)

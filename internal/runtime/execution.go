@@ -303,6 +303,16 @@ func (r *Runtime) executeStep(ctx context.Context, run *domain.Run, step *domain
 		}
 	}
 
+	// Resolve the sandbox backend for command.exec — picks the assistant's
+	// configured backend (default local) and injects it via a reserved
+	// __sandbox key, matching the __on_delta escape-hatch pattern. Skipped
+	// at signature time so the approval signature isn't a backend pointer.
+	if toolName == "command.exec" && r.executorRegistry != nil {
+		if backend := r.executorRegistry.Resolve(assistant.ExecutorBackend); backend != nil {
+			toolInput["__sandbox"] = backend
+		}
+	}
+
 	// Retry loop. Transient failures (network timeouts, 5xx from upstream,
 	// rate limits) retry with exponential backoff up to Runtime.maxRetries.
 	// Deterministic failures (permission denied, missing binary, refused

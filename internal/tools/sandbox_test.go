@@ -4,7 +4,6 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 )
@@ -149,20 +148,3 @@ func TestBuildSandboxEnvOverrideWins(t *testing.T) {
 	t.Fatal("HOME not present in env")
 }
 
-func TestSandboxSysProcAttrNonNil(t *testing.T) {
-	attr := sandboxSysProcAttr()
-	if attr == nil {
-		t.Fatal("expected non-nil SysProcAttr")
-	}
-	// Platform-specific sanity: on Unix Setsid must be true; on Windows
-	// CreationFlags must include the new-process-group bit.
-	switch runtime.GOOS {
-	case "windows":
-		// Windows field is CreationFlags uint32; check non-zero via a cheap
-		// reflection-free path (we just ensure we returned something).
-	default:
-		// Unix: Setsid should be set. We can't directly read across
-		// platforms without cgo; the compile-time build-tag files ensure
-		// the right variant is selected.
-	}
-}
