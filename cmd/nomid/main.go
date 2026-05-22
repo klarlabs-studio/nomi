@@ -42,6 +42,7 @@ import (
 	slackplugin "github.com/felixgeelhaar/nomi/internal/plugins/slack"
 	"github.com/felixgeelhaar/nomi/internal/plugins/store"
 	telegramplugin "github.com/felixgeelhaar/nomi/internal/plugins/telegram"
+	whatsappplugin "github.com/felixgeelhaar/nomi/internal/plugins/whatsapp"
 	"github.com/felixgeelhaar/nomi/internal/plugins/update"
 	"github.com/felixgeelhaar/nomi/internal/plugins/wasmhost"
 	"github.com/felixgeelhaar/nomi/internal/plugins/wasmplugin"
@@ -263,6 +264,18 @@ func main() {
 	discordPlugin := discordplugin.NewPlugin(rt, connectionRepo, bindingRepo, conversationRepo, identityRepo, secretStore, eventBus)
 	if err := pluginRegistry.Register(discordPlugin); err != nil {
 		log.Fatalf("Failed to register Discord plugin: %v", err)
+	}
+
+	// WhatsApp plugin — Cloud API. Inbound traffic arrives through the
+	// /webhooks/com.nomi.whatsapp/:connection_id endpoint; outbound goes
+	// through the Graph API client. User provisions a Meta Business
+	// Account, sets up a phone number, and pastes the access token + app
+	// secret into the assistant builder.
+	whatsappPlugin := whatsappplugin.NewPlugin(
+		rt, connectionRepo, bindingRepo, conversationRepo, identityRepo, eventBus, secretStore,
+	)
+	if err := pluginRegistry.Register(whatsappPlugin); err != nil {
+		log.Fatalf("Failed to register WhatsApp plugin: %v", err)
 	}
 
 	// Google OAuth manager — shared across any Google-backed plugin

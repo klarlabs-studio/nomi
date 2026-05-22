@@ -4,6 +4,39 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-05-22 (WhatsApp Cloud API plugin)
+
+Adds the WhatsApp plugin (roady #123) under `com.nomi.whatsapp`.
+Inbound traffic arrives through the existing `/webhooks/:plugin_id/:connection_id`
+path with HMAC-SHA256 signature verification (X-Hub-Signature-256
+against the Meta App Secret). Outbound replies go through the
+WhatsApp Cloud API via the new `whatsapp.send_message` tool.
+
+This closes the messaging connector parity gap vs Hermes / OpenClaw /
+NanoClaw — Telegram, Slack, Discord, and WhatsApp are now all
+first-class channel providers.
+
+### Added
+- `internal/plugins/whatsapp` package implementing
+  `plugins.Plugin`, `plugins.WebhookReceiver`, `plugins.ToolProvider`,
+  and `plugins.ConnectionHealthReporter`.
+- WhatsApp Cloud API outbound client (`SendText`) at
+  `graph.facebook.com/v18.0/{phone_number_id}/messages` — pinned to
+  v18.0 because the body shape is stable; bumps go through a manual
+  schema-diff check.
+- Webhook verifier for plugin IDs containing "whatsapp" (HMAC-SHA256
+  with the `sha256=` prefix, identical scheme to GitHub but a distinct
+  verifier so the event-type extraction can evolve independently).
+- Boot wire in `cmd/nomid/main.go` registers the plugin alongside
+  Slack, Discord, Telegram.
+
+### Scope notes
+- v1 handles text messages only. Media (images, audio), interactive
+  templates, and message-status callbacks (`delivered`/`read`) are
+  out of scope but additive without changing the wire contract.
+- Identity allowlist enforcement is via the existing
+  `channel_identities` mechanism — same shape as Slack/Discord.
+
 ## [Unreleased] - 2026-05-22 (Scheduled runs)
 
 First cut of cron-driven scheduled runs (roady #124). A Schedule fires

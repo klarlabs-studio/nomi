@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 533,
+  "version": 534,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1483,8 +1483,10 @@
       "elapsed_minutes": 5
     },
     "task-connector-parity-wave-—-discord,-slack,-whatsapp": {
-      "status": "pending",
+      "status": "in_progress",
       "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-22T19:51:37.34742+02:00",
       "elapsed_minutes": 0
     },
     "task-connector-plugin-architecture": {
@@ -2688,5 +2690,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-22T19:50:37.62508+02:00"
+  "updated_at": "2026-05-22T19:51:37.34742+02:00"
 }

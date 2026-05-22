@@ -24,6 +24,8 @@ func chooseVerifier(pluginID string, headers map[string]string) Verifier {
 		return &githubVerifier{}
 	case strings.Contains(pluginID, "slack"):
 		return &slackVerifier{}
+	case strings.Contains(pluginID, "whatsapp"):
+		return &whatsappVerifier{}
 	default:
 		return &genericHMACVerifier{}
 	}
@@ -95,6 +97,45 @@ func (v *slackVerifier) EventType(headers map[string]string, body []byte) string
 	// Slack event type is in the JSON body under "type" or "event.type"
 	// For simplicity, return the body type field.
 	return "slack_event"
+}
+
+// ---------------------------------------------------------------------------
+// WhatsApp verifier — X-Hub-Signature-256 (HMAC-SHA256 hex with sha256= prefix),
+// signed with the Meta App Secret. Same signature scheme as GitHub; the
+// event-type extraction differs and the secret comes from a different
+// connection key, so it gets its own verifier rather than aliasing.
+// ---------------------------------------------------------------------------
+
+type whatsappVerifier struct{}
+
+func (v *whatsappVerifier) Verify(body []byte, secret string, headers map[string]string) error {
+	sig := headers["X-Hub-Signature-256"]
+	if sig == "" {
+		return fmt.Errorf("missing X-Hub-Signature-256 header")
+	}
+	const prefix = "sha256="
+	if !strings.HasPrefix(sig, prefix) {
+		return fmt.Errorf("invalid signature format")
+	}
+	expectedHex := strings.TrimPrefix(sig, prefix)
+
+	mac := hmac.New(sha256.New, []byte(secret))
+	mac.Write(body)
+	expected, err := hex.DecodeString(expectedHex)
+	if err != nil {
+		return fmt.Errorf("invalid signature hex: %w", err)
+	}
+	if !hmac.Equal(mac.Sum(nil), expected) {
+		return fmt.Errorf("signature mismatch")
+	}
+	return nil
+}
+
+func (v *whatsappVerifier) EventType(headers map[string]string, body []byte) string {
+	// WhatsApp Cloud API webhooks carry the event kind under
+	// entry[].changes[].field. "messages" is the only field we care
+	// about today; future code can split out "statuses" etc.
+	return "whatsapp_event"
 }
 
 // ---------------------------------------------------------------------------
