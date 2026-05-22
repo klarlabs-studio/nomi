@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 544,
+  "version": 545,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1565,11 +1565,15 @@
       "elapsed_minutes": 0
     },
     "task-desktop-ui-surfaces-for-schedules,-skills,-recipe-export": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "84061ce — Schedules tab + skill suggestions panel + recipe export button"
+      ],
       "started_at": "2026-05-22T20:39:12.9359+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-22T20:44:41.17155+02:00",
+      "elapsed_minutes": 5
     },
     "task-desktop-ui:-mnemos-connections-card-in-connections-tab": {
       "status": "pending",
@@ -2724,5 +2728,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-22T20:39:12.9359+02:00"
+  "updated_at": "2026-05-22T20:44:41.171551+02:00"
 }
