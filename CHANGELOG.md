@@ -4,6 +4,43 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-05-22 (Recipe registry + sharing)
+
+Adds the Recipe registry (roady #125). A Recipe is a versioned,
+shareable bundle of assistant config + permission policy + executor
+backend pin. Three recipes ship in the built-in catalog:
+coding-agent, research-assistant, ops-runbook. Users can install any
+of them as a fresh assistant with one click, or export an existing
+assistant as a Recipe YAML for sharing.
+
+### Added
+- `internal/recipes` package — Recipe document, YAML parse/marshal,
+  SHA-256 hashing, FromAssistant export, ToAssistantDefinition install,
+  built-in catalog loader (`//go:embed builtin/*.yaml`).
+- Built-in catalog: coding-agent, research-assistant, ops-runbook —
+  each with a curated capability set + permission policy.
+- Migration #28 + `recipes` table for imported/exported recipes.
+- `db.RecipeRepository` CRUD with Upsert semantics keyed on recipe ID.
+- REST endpoints:
+  - `GET /recipes` — union of built-in catalog + local rows
+  - `GET /recipes/:id` — full document + sha256 + source
+  - `GET /recipes/:id/preview` — assistant preview for the UI's
+    confirmation step
+  - `POST /recipes/install` — creates an assistant from a recipe; the
+    optional `expected_sha256` field pins the version a caller saw
+    during preview against catalog drift
+  - `POST /recipes/export` — bundles an existing assistant into a
+    Recipe YAML and stores it locally tagged `source=exported`
+- Desktop `Recipes` tab — browses the catalog, shows version + author
+  + tags + truncated sha256, install button with confirmation prompt.
+
+### Scope notes
+- Real cryptographic signing (Ed25519) is reserved for a follow-up;
+  v1 establishes integrity via SHA-256 over the canonical YAML.
+- Recipes capture assistant + permission policy + executor backend.
+  Tool registrations and planner-prompt overrides are tracked as
+  follow-up additions to the schema without changing the wire format.
+
 ## [Unreleased] - 2026-05-22 (WhatsApp Cloud API plugin)
 
 Adds the WhatsApp plugin (roady #123) under `com.nomi.whatsapp`.

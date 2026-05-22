@@ -148,6 +148,21 @@ func NewRouter(cfg RouterConfig) *gin.Engine {
 		runs.DELETE("/:id", runServer.DeleteRun)
 	}
 
+	// Recipe registry (roady #125). The built-in catalog ships with the
+	// binary; user-imported and exported recipes live in the recipes
+	// table. AssistantRepo is required for install + export.
+	if cfg.DB != nil {
+		recipeServer := NewRecipeServer(db.NewRecipeRepository(cfg.DB), db.NewAssistantRepository(cfg.DB))
+		recipesGroup := r.Group("/recipes")
+		{
+			recipesGroup.GET("", recipeServer.ListRecipes)
+			recipesGroup.GET("/:id", recipeServer.GetRecipe)
+			recipesGroup.GET("/:id/preview", recipeServer.PreviewInstall)
+			recipesGroup.POST("/install", recipeServer.InstallRecipe)
+			recipesGroup.POST("/export", recipeServer.ExportRecipe)
+		}
+	}
+
 	// Schedule endpoints (roady #124). The scheduler dependency is
 	// optional — when nil, the routes still register but every handler
 	// short-circuits with a 503 so the UI degrades gracefully on a

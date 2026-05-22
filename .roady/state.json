@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 535,
+  "version": 536,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -2179,8 +2179,10 @@
       "elapsed_minutes": 2
     },
     "task-recipe-registry-and-sharing": {
-      "status": "pending",
+      "status": "in_progress",
       "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-22T20:02:05.299487+02:00",
       "elapsed_minutes": 0
     },
     "task-refactor-chat-interface.tsx-into-chatlist-/-chatdetail-/-chatcomposer": {
@@ -2694,5 +2696,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-22T19:58:16.722827+02:00"
+  "updated_at": "2026-05-22T20:02:05.299487+02:00"
 }

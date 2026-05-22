@@ -374,6 +374,73 @@ export const assistantsApi = {
     }),
 };
 
+// Recipe registry API (roady #125). The built-in catalog ships with
+// the daemon binary; user-imported and exported recipes live in the
+// recipes table on the SQLite store. Install creates a fresh
+// assistant from the recipe; export bundles an existing assistant
+// back into a shareable YAML manifest.
+export interface RecipeCatalogEntry {
+  id: string;
+  name: string;
+  version: string;
+  author?: string;
+  description?: string;
+  tags?: string[];
+  source: "builtin" | "imported" | "exported";
+  sha256?: string;
+}
+
+export interface RecipeAssistantSpec {
+  name: string;
+  tagline?: string;
+  role: string;
+  best_for?: string;
+  not_for?: string;
+  suggested_model?: string;
+  system_prompt: string;
+  capabilities?: string[];
+  memory_policy?: unknown;
+  permission_policy?: unknown;
+  executor_backend?: string;
+  sandbox_image?: string;
+}
+
+export interface RecipeDocument {
+  schema_version: number;
+  id: string;
+  name: string;
+  version: string;
+  author?: string;
+  description?: string;
+  tags?: string[];
+  assistant: RecipeAssistantSpec;
+}
+
+export const recipesApi = {
+  list: () => fetchApi<{ recipes: RecipeCatalogEntry[] }>("/recipes"),
+  get: (id: string) =>
+    fetchApi<{ recipe: RecipeDocument; sha256: string; source: string }>(`/recipes/${id}`),
+  preview: (id: string) =>
+    fetchApi<{
+      recipe: RecipeDocument;
+      sha256: string;
+      assistant_preview: Record<string, unknown>;
+    }>(`/recipes/${id}/preview`),
+  install: (id: string, expected_sha256?: string) =>
+    fetchApi<{ assistant: Assistant; recipe_id: string; sha256: string }>("/recipes/install", {
+      method: "POST",
+      body: JSON.stringify({ id, expected_sha256 }),
+    }),
+  export: (assistantId: string, id?: string, version?: string) =>
+    fetchApi<{ recipe: RecipeDocument; sha256: string; yaml: string }>(
+      `/recipes/export?assistant_id=${encodeURIComponent(assistantId)}`,
+      {
+        method: "POST",
+        body: JSON.stringify({ id, version }),
+      },
+    ),
+};
+
 // Runtime introspection — surfaces what backends nomid registered at
 // boot so the assistant editor can populate its Sandbox dropdown
 // instead of hardcoding ["local", "docker", "gvisor"]. Backends only
