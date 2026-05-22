@@ -17,7 +17,8 @@ import (
 // implementing Backend, registering it at boot, and exposing it in the
 // assistant builder UI.
 const (
-	BackendLocal = "local"
+	BackendLocal  = "local"
+	BackendDocker = "docker"
 )
 
 // DefaultBackend is used when an assistant has no explicit choice or the
@@ -27,11 +28,17 @@ const DefaultBackend = BackendLocal
 // Request describes a single subprocess invocation. Validation (binary
 // allowlist, argv parsing, workspace_root, env allowlist) happens in the
 // tool layer; the backend only runs what it is given.
+//
+// WorkspaceRoot and Image are backend-specific: the local backend ignores
+// both; container backends bind-mount WorkspaceRoot at a fixed path inside
+// the container and require Image to know what to run.
 type Request struct {
-	Argv    []string
-	WorkDir string
-	Env     []string
-	Timeout time.Duration
+	Argv          []string
+	WorkDir       string
+	WorkspaceRoot string
+	Image         string
+	Env           []string
+	Timeout       time.Duration
 }
 
 // Result reports how the process ended. ExitCode is -1 when the process

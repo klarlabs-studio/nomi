@@ -116,11 +116,15 @@ func (t *CommandExecTool) Execute(ctx context.Context, input map[string]interfac
 
 	backend := backendFromInput(input)
 
+	image, _ := input["__sandbox_image"].(string)
+
 	req := executor.Request{
-		Argv:    tokens,
-		WorkDir: workDir,
-		Env:     BuildSandboxEnv(overrides),
-		Timeout: time.Duration(timeout) * time.Second,
+		Argv:          tokens,
+		WorkDir:       workDir,
+		WorkspaceRoot: workRoot,
+		Image:         image,
+		Env:           BuildSandboxEnv(overrides),
+		Timeout:       time.Duration(timeout) * time.Second,
 	}
 
 	execResult, runErr := backend.Run(ctx, req)

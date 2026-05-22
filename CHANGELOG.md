@@ -4,6 +4,48 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-05-22 (Sandboxed executor backends — PR2: docker)
+
+Adds the Docker execution backend. Containers are rootless on the host
+side (--user is image-default for now), pinned to --network=none,
+--memory/--memory-swap equal so OOMKilled fires deterministically,
+--cpus and --pids-limit bounded, --init reaping zombies, and
+--rm so containers don't accumulate. Workspace bind-mounts at /workspace
+and the container working directory translates host paths into the
+mount. Exit code 137 is heuristically classified as OOM under the pinned
+memory + swap config.
+
+### Added
+- `executor.DockerBackend` implementing `Backend` via the `docker` CLI
+  (no SDK dependency).
+- `executor.DockerBackend.Available(ctx)` boot probe — checks `docker`
+  on PATH and `docker info` reachability.
+- `executor.Request.WorkspaceRoot` + `executor.Request.Image` — backend-
+  specific fields that the local backend ignores and container backends
+  consume.
+- Migration `000026_assistant_sandbox_image` — adds `sandbox_image TEXT
+  NOT NULL DEFAULT ''` to `assistants`.
+- `AssistantDefinition.SandboxImage` field + repo CRUD.
+- `cmd/nomid/main.go` probes Docker availability at boot with a 3s
+  timeout and registers the backend when present. Absence is normal
+  (logged at debug level only when present).
+- Live integration test `TestDockerLiveEcho` runs against the real
+  daemon when available; skipped automatically without docker.
+
+### Changed
+- `tools/command.go` now forwards `workspace_root` and the runtime-
+  injected `__sandbox_image` to the backend via `executor.Request`.
+- `execution.go` injects `__sandbox_image` alongside `__sandbox` when
+  the assistant has a SandboxImage configured.
+
+### Roadmap
+- PR3: gVisor (runsc) backend — reuses the docker code path with
+  `--runtime=runsc`.
+- PR4: `network.egress` capability, restricted bridge with domain
+  allowlist, Prometheus counters per backend.
+- PR5: Tauri Settings UI dropdown + image input + "Test sandbox"
+  probe button.
+
 ## [Unreleased] - 2026-05-22 (Sandboxed executor backends — PR1: interface + local)
 
 Introduces a pluggable execution-backend interface so future

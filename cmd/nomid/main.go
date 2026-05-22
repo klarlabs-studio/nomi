@@ -17,10 +17,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/felixgeelhaar/nomi/internal/api"
 	"github.com/felixgeelhaar/nomi/internal/buildinfo"
 	"github.com/felixgeelhaar/nomi/internal/connectors"
+	"github.com/felixgeelhaar/nomi/internal/domain"
 	"github.com/felixgeelhaar/nomi/internal/events"
 	"github.com/felixgeelhaar/nomi/internal/integrations/google"
 	"github.com/felixgeelhaar/nomi/internal/llm"
@@ -29,30 +29,31 @@ import (
 	"github.com/felixgeelhaar/nomi/internal/plugins"
 	browserplugin "github.com/felixgeelhaar/nomi/internal/plugins/browser"
 	calendarplugin "github.com/felixgeelhaar/nomi/internal/plugins/calendar"
+	"github.com/felixgeelhaar/nomi/internal/plugins/devloader"
 	discordplugin "github.com/felixgeelhaar/nomi/internal/plugins/discord"
 	emailplugin "github.com/felixgeelhaar/nomi/internal/plugins/email"
 	githubplugin "github.com/felixgeelhaar/nomi/internal/plugins/github"
 	gmailplugin "github.com/felixgeelhaar/nomi/internal/plugins/gmail"
-	mediaplugin "github.com/felixgeelhaar/nomi/internal/plugins/media"
-	obsidianplugin "github.com/felixgeelhaar/nomi/internal/plugins/obsidian"
-	slackplugin "github.com/felixgeelhaar/nomi/internal/plugins/slack"
-	mnemosplugin "github.com/felixgeelhaar/nomi/internal/plugins/mnemos"
-	telegramplugin "github.com/felixgeelhaar/nomi/internal/plugins/telegram"
-	"github.com/felixgeelhaar/nomi/internal/plugins/devloader"
 	"github.com/felixgeelhaar/nomi/internal/plugins/hub"
+	mediaplugin "github.com/felixgeelhaar/nomi/internal/plugins/media"
+	mnemosplugin "github.com/felixgeelhaar/nomi/internal/plugins/mnemos"
+	obsidianplugin "github.com/felixgeelhaar/nomi/internal/plugins/obsidian"
 	"github.com/felixgeelhaar/nomi/internal/plugins/signing"
+	slackplugin "github.com/felixgeelhaar/nomi/internal/plugins/slack"
 	"github.com/felixgeelhaar/nomi/internal/plugins/store"
+	telegramplugin "github.com/felixgeelhaar/nomi/internal/plugins/telegram"
 	"github.com/felixgeelhaar/nomi/internal/plugins/update"
 	"github.com/felixgeelhaar/nomi/internal/plugins/wasmhost"
 	"github.com/felixgeelhaar/nomi/internal/plugins/wasmplugin"
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"sync"
 	"github.com/felixgeelhaar/nomi/internal/runtime"
+	"github.com/felixgeelhaar/nomi/internal/runtime/executor"
 	"github.com/felixgeelhaar/nomi/internal/secrets"
 	"github.com/felixgeelhaar/nomi/internal/seed"
 	"github.com/felixgeelhaar/nomi/internal/storage/db"
 	"github.com/felixgeelhaar/nomi/internal/tools"
 	"github.com/felixgeelhaar/nomi/internal/tunnel"
+	"github.com/gin-gonic/gin"
+	"sync"
 )
 
 func main() {
@@ -180,6 +181,18 @@ func main() {
 	// Runtime
 	rt := runtime.NewRuntime(database, eventBus, permEngine, approvalMgr, toolExecutor, memClient, runtime.DefaultConfig())
 	rt.SetLLMResolver(llmResolver)
+
+	// Probe optional execution backends and register any that are available.
+	// The local backend is always registered by NewRuntime. Docker is
+	// detected best-effort; absence is normal and means the UI just won't
+	// offer the "Docker" choice in the assistant builder.
+	probeCtx, probeCancel := context.WithTimeout(context.Background(), 3*time.Second)
+	dockerBackend := executor.NewDocker()
+	if dockerBackend.Available(probeCtx) {
+		rt.RegisterExecutorBackend(dockerBackend)
+		log.Printf("executor: docker backend registered")
+	}
+	probeCancel()
 
 	// Plugin system (ADR 0001). plugins.Registry is now the source of truth
 	// for channels/tools/triggers/context_sources. connectors.Registry
@@ -621,19 +634,19 @@ func main() {
 	// expose the daemon (which can execute arbitrary commands) to the local
 	// network, so this is a hard default, not a setting.
 	router := api.NewRouter(api.RouterConfig{
-		Runtime:        rt,
-		DB:             database,
-		EventBus:       eventBus,
-		Approvals:      approvalMgr,
-		Memory:         memManager,
-		MemoryClient:   memClient,
-		Tools:          toolRegistry,
-		Connectors:     connRegistry,
-		Plugins:        pluginRegistry,
-		Secrets:        secretStore,
-		AuthToken:      authToken,
-		AuthTokenStore: api.NewTokenStore(authToken, tokenPath),
-		Tunnel:         tunnelAdapter,
+		Runtime:         rt,
+		DB:              database,
+		EventBus:        eventBus,
+		Approvals:       approvalMgr,
+		Memory:          memManager,
+		MemoryClient:    memClient,
+		Tools:           toolRegistry,
+		Connectors:      connRegistry,
+		Plugins:         pluginRegistry,
+		Secrets:         secretStore,
+		AuthToken:       authToken,
+		AuthTokenStore:  api.NewTokenStore(authToken, tokenPath),
+		Tunnel:          tunnelAdapter,
 		PluginStore:     pluginStore,
 		PluginVerifier:  pluginVerifier,
 		WASMLoader:      wasmLoader,

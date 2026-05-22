@@ -69,15 +69,15 @@ func (r *AssistantRepository) Create(assistant *domain.AssistantDefinition) erro
 		INSERT INTO assistants (
 			id, template_id, name, tagline, role, best_for, not_for, suggested_model,
 			system_prompt, channels, channel_configs, capabilities, contexts, memory_policy,
-			permission_policy, model_policy, executor_backend, created_at
+			permission_policy, model_policy, executor_backend, sandbox_image, created_at
 		)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 	_, err = r.db.Exec(query,
 		assistant.ID, assistant.TemplateID, assistant.Name, assistant.Tagline,
 		assistant.Role, assistant.BestFor, assistant.NotFor, assistant.SuggestedModel, assistant.SystemPrompt,
 		channels, channelConfigs, capabilities, contexts, memoryPolicy, permissionPolicy, modelPolicy,
-		executorBackend, assistant.CreatedAt,
+		executorBackend, assistant.SandboxImage, assistant.CreatedAt,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create assistant: %w", err)
@@ -90,7 +90,7 @@ func (r *AssistantRepository) GetByID(id string) (*domain.AssistantDefinition, e
 	query := `
 		SELECT id, template_id, name, tagline, role, best_for, not_for, suggested_model, system_prompt,
 		       channels, channel_configs, capabilities, contexts, memory_policy, permission_policy, model_policy,
-		       executor_backend, created_at
+		       executor_backend, sandbox_image, created_at
 		FROM assistants WHERE id = ?
 	`
 	assistant := &domain.AssistantDefinition{}
@@ -101,7 +101,7 @@ func (r *AssistantRepository) GetByID(id string) (*domain.AssistantDefinition, e
 		&assistant.ID, &assistant.TemplateID, &assistant.Name, &assistant.Tagline,
 		&assistant.Role, &assistant.BestFor, &assistant.NotFor, &assistant.SuggestedModel, &assistant.SystemPrompt,
 		&channels, &channelConfigs, &capabilities, &contexts, &memoryPolicy, &permissionPolicy, &modelPolicy,
-		&assistant.ExecutorBackend, &assistant.CreatedAt,
+		&assistant.ExecutorBackend, &assistant.SandboxImage, &assistant.CreatedAt,
 	)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("assistant not found: %s", id)
@@ -186,14 +186,14 @@ func (r *AssistantRepository) Update(assistant *domain.AssistantDefinition) erro
 		UPDATE assistants
 		SET template_id = ?, name = ?, tagline = ?, role = ?, best_for = ?, not_for = ?, suggested_model = ?,
 		    system_prompt = ?, channels = ?, channel_configs = ?, capabilities = ?, contexts = ?,
-		    memory_policy = ?, permission_policy = ?, model_policy = ?, executor_backend = ?
+		    memory_policy = ?, permission_policy = ?, model_policy = ?, executor_backend = ?, sandbox_image = ?
 		WHERE id = ?
 	`
 	_, err = r.db.Exec(query,
 		assistant.TemplateID, assistant.Name, assistant.Tagline, assistant.Role, assistant.BestFor, assistant.NotFor,
 		assistant.SuggestedModel, assistant.SystemPrompt,
 		channels, channelConfigs, capabilities, contexts, memoryPolicy, permissionPolicy, modelPolicy,
-		executorBackend, assistant.ID,
+		executorBackend, assistant.SandboxImage, assistant.ID,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to update assistant: %w", err)
@@ -206,7 +206,7 @@ func (r *AssistantRepository) List(limit, offset int) ([]*domain.AssistantDefini
 	query := `
 		SELECT id, template_id, name, tagline, role, best_for, not_for, suggested_model, system_prompt,
 		       channels, channel_configs, capabilities, contexts, memory_policy, permission_policy, model_policy,
-		       executor_backend, created_at
+		       executor_backend, sandbox_image, created_at
 		FROM assistants ORDER BY created_at DESC LIMIT ? OFFSET ?
 	`
 	rows, err := r.db.Query(query, limit, offset)
@@ -230,7 +230,7 @@ func (r *AssistantRepository) scanAssistants(rows *sql.Rows) ([]*domain.Assistan
 			&assistant.ID, &assistant.TemplateID, &assistant.Name, &assistant.Tagline,
 			&assistant.Role, &assistant.BestFor, &assistant.NotFor, &assistant.SuggestedModel, &assistant.SystemPrompt,
 			&channels, &channelConfigs, &capabilities, &contexts, &memoryPolicy, &permissionPolicy, &modelPolicy,
-			&assistant.ExecutorBackend, &assistant.CreatedAt,
+			&assistant.ExecutorBackend, &assistant.SandboxImage, &assistant.CreatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan assistant: %w", err)

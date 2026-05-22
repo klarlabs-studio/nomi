@@ -275,6 +275,7 @@ type AssistantDefinition struct {
 	ModelPolicy         *ModelPolicy         `json:"model_policy,omitempty"`
 	RecommendedBindings []RecommendedBinding `json:"recommended_bindings,omitempty"`
 	ExecutorBackend     string               `json:"executor_backend,omitempty"`
+	SandboxImage        string               `json:"sandbox_image,omitempty"`
 	CreatedAt           time.Time            `json:"created_at"`
 }
 

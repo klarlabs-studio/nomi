@@ -310,6 +310,9 @@ func (r *Runtime) executeStep(ctx context.Context, run *domain.Run, step *domain
 	if toolName == "command.exec" && r.executorRegistry != nil {
 		if backend := r.executorRegistry.Resolve(assistant.ExecutorBackend); backend != nil {
 			toolInput["__sandbox"] = backend
+			if assistant.SandboxImage != "" {
+				toolInput["__sandbox_image"] = assistant.SandboxImage
+			}
 		}
 	}
 
