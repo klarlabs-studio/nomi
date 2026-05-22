@@ -108,14 +108,16 @@ func TestE2E_FullRoundTrip(t *testing.T) {
 	ctx := context.Background()
 	runID := fmt.Sprintf("nomi-e2e-%d", time.Now().UnixNano())
 
-	// 1. Append 3 events.
+	// 1. Append 3 events. Mnemos requires a stable event id per row; we
+	// derive predictable ones from the run id so reruns in the same
+	// process don't collide.
 	eventsAppend := findTool(t, p, ToolEventsAppend)
 	out, err := eventsAppend.Execute(ctx, map[string]interface{}{
 		"connection_id": "e2e",
 		"events": []interface{}{
-			map[string]interface{}{"run_id": runID, "content": "observed: API latency spike at 14:02"},
-			map[string]interface{}{"run_id": runID, "content": "observed: error rate normal across all regions"},
-			map[string]interface{}{"run_id": runID, "content": "decision rationale: rollback canary"},
+			map[string]interface{}{"id": runID + "-evt-1", "run_id": runID, "content": "observed: API latency spike at 14:02"},
+			map[string]interface{}{"id": runID + "-evt-2", "run_id": runID, "content": "observed: error rate normal across all regions"},
+			map[string]interface{}{"id": runID + "-evt-3", "run_id": runID, "content": "decision rationale: rollback canary"},
 		},
 	})
 	if err != nil {
