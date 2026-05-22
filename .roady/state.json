@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 539,
+  "version": 542,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1942,6 +1942,17 @@
       "completed_at": "2026-05-04T14:24:21.260219+02:00",
       "elapsed_minutes": 32
     },
+    "task-natural-language-cron-translation": {
+      "status": "done",
+      "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "6b9b56b — translator + REST + JSON-mode prompt + cron-validator gate + nl_phrase column + TS client; UI translate-and-confirm follow-up."
+      ],
+      "started_at": "2026-05-22T20:35:00.200584+02:00",
+      "completed_at": "2026-05-22T20:35:09.171476+02:00",
+      "elapsed_minutes": 0
+    },
     "task-obsidian-plugin-(tool-+-context-source)": {
       "status": "done",
       "path": "",
@@ -2706,5 +2717,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-22T20:16:27.642711+02:00"
+  "updated_at": "2026-05-22T20:35:09.171477+02:00"
 }

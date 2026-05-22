@@ -1389,716 +1389,26 @@
       "source": {}
     },
     {
-      "id": "connector-registry",
-      "title": "Implement ConnectorRegistry",
-      "description": "Create ConnectorRegistry that manages connector lifecycle: Register(), StartAll(), StopAll(), RouteMessage(). Store connector instances and handle graceful startup/shutdown.",
-      "priority": "high",
-      "estimate": "30m",
-      "depends_on": [
-        "connector-interface"
-      ],
-      "feature_id": "connector-plugin-architecture",
-      "source": {}
-    },
-    {
-      "id": "task-v1-hardening-05-ux-coherence",
-      "title": "Assistant/Policy UX Coherence Pass",
-      "description": "Run UX coherence pass across assistant builder, policy, and approval surfaces with progressive disclosure and plain-language, actionable guidance.",
-      "priority": "medium",
-      "estimate": "4d",
-      "depends_on": [
-        "task-v1-hardening-01-error-envelope"
-      ],
-      "feature_id": "v1-hardening-program-(multi-expert-30/60/90)",
-      "source": {}
-    },
-    {
-      "id": "error-message-audit-runtime",
-      "title": "Audit runtime errors (ceiling, policy, approvals, retries, planner)",
-      "description": "Rewrite runtime-level error messages: capability ceiling violations, policy denials, approval rejections, retry-budget exhaustion, plan-validation failures, tool not found, schema mismatch, step timeout, run cancellation.",
-      "priority": "high",
-      "estimate": "1h",
-      "depends_on": [
-        "error-message-audit"
-      ],
-      "feature_id": "error-message-audit-—-plain-language,-actionable,-non-technical",
-      "source": {}
-    },
-    {
-      "id": "plugin-lifecycle-08-dev-plugin-loader",
-      "title": "Dev plugin loader (~/.nomi/plugins-dev/)",
-      "description": "Settings flag dev_plugins_enabled (default false in production builds). When enabled, daemon loads unsigned .nomi-plugin bundles from ~/.nomi/plugins-dev/ at boot. UI surfaces dev-loaded plugins with a red 'unsigned, development build' banner. Allows plugin authors to iterate locally without going through NomiHub. Must NOT auto-load when the flag flips back to false (require restart). Test: drop a fixture bundle in the dev dir, flip the flag, verify it loads with the warning badge.",
+      "id": "task-natural-language-cron-translation",
+      "title": "Implement Natural-language cron translation",
+      "description": "Implement the feature: Natural-language cron translation. LLM-driven translator from natural-language schedule phrases (\"every weekday at 8am\", \"first Monday of the month\") to standard 5-field cron expressions, gated by the scheduler's cron parser before persistence. Closes the gap vs Hermes Agent's flagship scheduling UX. Adds `POST /schedules/translate` returning the parsed cron + a human-readable explanation, plus an `nl_phrase` column on the schedules table so the UI can re-display the original phrase next to the persisted cron. Validation is two-stage: the LLM is asked for a strict JSON object via the existing structured-output prompt pattern, then the returned cron_expr is verified with the same robfig/cron parser the scheduler uses at fire time. Confidence + explanation surface in the UI so the user can confirm before save.",
       "priority": "medium",
       "estimate": "",
-      "depends_on": [
-        "plugin-lifecycle-03-wasm-runtime-spike"
-      ],
-      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
-      "source": {}
-    },
-    {
-      "id": "plugin-ui-02-agent-builder",
-      "title": "Assistant edit view: build-my-agent composer",
-      "description": "Assistant edit view gains grouped-by-plugin checklist of Connections, filterable by role. Default 1-per-slot with 'Add another' that reveals primary marker + per-connection policy override dropdown. Edits persist to assistant_connection_bindings; save triggers re-intersection of manifest permissions.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "plugin-ui-01-plugins-tab",
-        "plugin-core-05-policy-overrides"
-      ],
-      "feature_id": "plugin-ui-reshape",
-      "source": {}
-    },
-    {
-      "id": "llm-ui-providers",
-      "title": "Provider profile settings UI",
-      "description": "Build settings page UI for managing provider profiles: list, create, edit, delete provider profiles with form fields for name, type, endpoint, models, credentials.",
-      "priority": "medium",
-      "estimate": "45m",
-      "depends_on": [
-        "llm-api"
-      ],
-      "feature_id": "llm-provider-configuration",
-      "source": {}
-    },
-    {
-      "id": "gmail-02-tools",
-      "title": "Gmail ToolProvider: send/search/read/label/archive",
-      "description": "Tools: gmail.send (richer than SMTP: inline attachments, HTML, drafts), gmail.search_threads, gmail.read_thread, gmail.label, gmail.archive. Uses Gmail API rather than SMTP/IMAP for API-specific operations.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "gmail-01-oauth-shared"
-      ],
-      "feature_id": "gmail-plugin-(tool-+-trigger)",
-      "source": {}
-    },
-    {
-      "id": "tool-interface",
-      "title": "Tool interface and registry",
-      "description": "Define Tool interface (Name, Execute). Create ToolRegistry for tool discovery and lookup. Implement tool registration and capability mapping. Add tool execution wrapper with logging and error handling.",
-      "priority": "high",
-      "estimate": "1h",
-      "depends_on": [
-        "domain-models",
-        "event-system"
-      ],
-      "feature_id": "tool-system",
-      "source": {}
-    },
-    {
-      "id": "llm-db-providers",
-      "title": "Add provider_profiles table migration",
-      "description": "Create provider_profiles table migration with id, name, type, endpoint, model_ids JSON, secret_ref, enabled, created_at columns.",
-      "priority": "high",
-      "estimate": "20m",
       "depends_on": [],
-      "feature_id": "llm-provider-configuration",
+      "feature_id": "natural-language-cron-translation",
+      "origin": "heuristic",
       "source": {}
     },
     {
-      "id": "plugin-lifecycle-05-bundle-format",
-      "title": ".nomi-plugin bundle format",
-      "description": "Define the gzipped-tar bundle layout: manifest.json + plugin.wasm + README.md + signature.ed25519 + publisher.json. Bundle reader package internal/plugins/bundle/ that opens, validates structural integrity (required files present, manifest parseable, content-addressed bundle hash matches), and returns the parsed manifest + WASM bytes for downstream loaders. publisher.json carries publisher name + their public key fingerprint chained to the NomiHub root key. Test fixtures: a hand-built valid bundle, a bundle with a corrupt manifest, a bundle missing the signature.",
+      "id": "email-03-tool-role",
+      "title": "Email ToolProvider: send, search, read",
+      "description": "Tools: email.send (connection_id, to, subject, body, cc?, bcc?, attachments?), email.search (IMAP SEARCH with operators), email.read_message (full message with attachments). Capabilities registered in permission engine.",
       "priority": "medium",
       "estimate": "",
       "depends_on": [
-        "plugin-lifecycle-04-wasm-host-imports"
-      ],
-      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
-      "source": {}
-    },
-    {
-      "id": "slack-02-channel-role",
-      "title": "Slack ChannelProvider + Block Kit approvals",
-      "description": "DM to bot → Conversation + Run. Threaded replies via thread_ts. Approval rendering as Block Kit interactive buttons; approval resolution via button click posts back through the same socket. Identity allowlist integration.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "slack-01-socket-mode",
-        "conversation-02-runtime-wiring",
-        "identity-01-entity"
-      ],
-      "feature_id": "slack-plugin-(channel-+-tool)",
-      "source": {}
-    },
-    {
-      "id": "folder-context-e2e-test",
-      "title": "End-to-end test of folder context flow",
-      "description": "Verify that creating an assistant with folder context, then starting a run, correctly loads the folder tree into the run. Check events and step output.",
-      "priority": "medium",
-      "estimate": "30m",
-      "depends_on": [
-        "folder-context-runtime"
-      ],
-      "feature_id": "folder-context-attachment",
-      "source": {}
-    },
-    {
-      "id": "folder-context-api",
-      "title": "Add folder context preview endpoint",
-      "description": "POST /tools/filesystem.context/preview endpoint that takes a path and returns the folder tree without requiring a run. Used by the UI for preview before saving assistant.",
-      "priority": "high",
-      "estimate": "30m",
-      "depends_on": null,
-      "feature_id": "folder-context-attachment",
-      "source": {}
-    },
-    {
-      "id": "browser-03-sessions-approval",
-      "title": "Browser session persistence + approval gating",
-      "description": "Browser sessions scoped to (assistant_id, session_id); cleaned up after idle timeout. browser.navigate + browser.interact default to confirm mode with per-domain override (e.g. allow google.com navigate but confirm bank.example.com). URL-to-capability mapping for fine-grained gating.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "browser-02-tools"
-      ],
-      "feature_id": "browser-system-plugin-(tool)",
-      "source": {}
-    },
-    {
-      "id": "plugin-core-02-registry",
-      "title": "plugins.Registry + role-view projections",
-      "description": "plugins.Registry as source of truth. Role-view registries (channels, tools, triggers) are projections built via type-assertion at Register time. Register a plugin that plays multiple roles and verify its contributions fan out.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "plugin-core-01-interfaces"
-      ],
-      "feature_id": "plugin-architecture-core-refactor",
-      "source": {}
-    },
-    {
-      "id": "obsidian-02-tools",
-      "title": "Obsidian ToolProvider: create/update/search/link",
-      "description": "Tools: obsidian.create_note (respects frontmatter templates), obsidian.update_note, obsidian.search_notes (text + tag + link-graph search), obsidian.link_notes (create [[wikilink]] between two notes).",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "obsidian-01-vault"
-      ],
-      "feature_id": "obsidian-plugin-(tool-+-context-source)",
-      "source": {}
-    },
-    {
-      "id": "llm-test",
-      "title": "Integration tests for provider configuration",
-      "description": "Integration test verifying provider profile CRUD, global default setting, and assistant model policy storage.",
-      "priority": "low",
-      "estimate": "25m",
-      "depends_on": [
-        "llm-domain-repo"
-      ],
-      "feature_id": "llm-provider-configuration",
-      "source": {}
-    },
-    {
-      "id": "connector-ui-channels",
-      "title": "Add channel/connector selection to assistant UI",
-      "description": "Update assistant form UI to show available connectors as channel options. Multi-select checkboxes or badges for selecting which connectors an assistant uses.",
-      "priority": "medium",
-      "estimate": "30m",
-      "depends_on": [
-        "connector-api"
-      ],
-      "feature_id": "connector-plugin-architecture",
-      "source": {}
-    },
-    {
-      "id": "plugin-core-04-telegram-migration",
-      "title": "Migrate Telegram to plugins/telegram/",
-      "description": "Port internal/connectors/telegram.go to internal/plugins/telegram/ implementing Plugin + ChannelProvider. One-shot SQLite migration: existing connector_configs.config Connections → plugin_connections rows (preserving ids + default_assistant_id). Existing DefaultAssistantID becomes a role=channel binding. No behavior change for existing Telegram users.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "plugin-core-03-connection-domain"
-      ],
-      "feature_id": "plugin-architecture-core-refactor",
-      "source": {}
-    },
-    {
-      "id": "media-06-inbound-attachment-capture",
-      "title": "Inbound attachment capture on channels",
-      "description": "Extend each channel plugin's inbound handler to capture attachment metadata (kind, filename, content-type, url/bytes) on received messages. Plumb into the Run's initial input via a new RunInput.Attachments field (or via a sidecar table keyed by run_id if the runtime avoids growing Run row shape). Channel plugins don't fetch the bytes eagerly; they pass references that the inbound-enrichment pass resolves on demand.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "media-01-outbound-contract"
-      ],
-      "feature_id": "rich-media-channel-contract",
-      "source": {}
-    },
-    {
-      "id": "obsidian-03-context",
-      "title": "Obsidian ContextSourceProvider: vault indexing",
-      "description": "At plan time, expose relevant notes based on the assistant's current goal. Follows [[wikilinks]], filters by frontmatter tags, respects .obsidianignore. Similar shape to today's folder context but vault-aware.",
-      "priority": "low",
-      "estimate": "",
-      "depends_on": [
-        "obsidian-02-tools"
-      ],
-      "feature_id": "obsidian-plugin-(tool-+-context-source)",
-      "source": {}
-    },
-    {
-      "id": "email-05-provider-presets",
-      "title": "Provider presets + Plugins-tab UX",
-      "description": "UI presets for Gmail OAuth, Outlook OAuth, Fastmail app-password, iCloud, Yahoo, and generic IMAP/SMTP. Preset wizard derives IMAP/SMTP hosts from the email address when possible. OAuth flows via internal/integrations/ where applicable.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "email-02-channel-role",
-        "plugin-ui-01-plugins-tab"
+        "email-01-imap-smtp"
       ],
       "feature_id": "email-plugin-(channel-+-tool-+-trigger)",
-      "source": {}
-    },
-    {
-      "id": "domain-models",
-      "title": "Core domain model definitions",
-      "description": "Define Go structs for Run, Step, AssistantDefinition, ContextAttachment, PermissionPolicy, PermissionRule, MemoryEntry, Event. Include JSON marshaling and validation. Create enum types for RunStatus, StepStatus, EventType.",
-      "priority": "high",
-      "estimate": "1h",
-      "depends_on": [
-        "scaffold-project"
-      ],
-      "feature_id": "core-runtime-engine",
-      "source": {}
-    },
-    {
-      "id": "discord-01-gateway",
-      "title": "Discord bot + Gateway WebSocket",
-      "description": "Discord bot token auth. Gateway WebSocket for real-time events (messages, slash commands, button interactions). Per-bot connection model.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "plugin-core-05-policy-overrides"
-      ],
-      "feature_id": "discord-plugin-(channel-+-tool)",
-      "source": {}
-    },
-    {
-      "id": "github-02-tools",
-      "title": "GitHub ToolProvider: PRs/issues/code",
-      "description": "Tools: github.open_pr, github.comment_pr, github.comment_issue, github.create_issue, github.search_code, github.read_file. All scoped to the connection's installed repos.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "github-01-app-auth"
-      ],
-      "feature_id": "github-plugin-(tool-+-trigger)",
-      "source": {}
-    },
-    {
-      "id": "llm-api",
-      "title": "Provider profile REST API",
-      "description": "REST API endpoints: GET/POST/PUT/DELETE /provider-profiles, GET/PUT /settings/llm-default. Include validation and proper error handling.",
-      "priority": "high",
-      "estimate": "30m",
-      "depends_on": [
-        "llm-domain-repo"
-      ],
-      "feature_id": "llm-provider-configuration",
-      "source": {}
-    },
-    {
-      "id": "slack-03-tool-role",
-      "title": "Slack ToolProvider: post/search/react",
-      "description": "Tools: slack.post_message (to channel or user, with threading), slack.search_messages (across workspace subject to app scopes), slack.react_to_message (add/remove reactions).",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "slack-01-socket-mode"
-      ],
-      "feature_id": "slack-plugin-(channel-+-tool)",
-      "source": {}
-    },
-    {
-      "id": "folder-context",
-      "title": "Folder context attachment implementation",
-      "description": "Implement folder context scanning and indexing. Add context attachment to runs. Build file tree representation for UI. Integrate with filesystem tools.",
-      "priority": "medium",
-      "estimate": "2h",
-      "depends_on": [
-        "core-tools",
-        "ui-assistant-manager"
-      ],
-      "feature_id": "core-runtime-engine",
-      "source": {}
-    },
-    {
-      "id": "folder-context-ui-preview",
-      "title": "Add file-tree preview component",
-      "description": "Reusable component that calls the preview endpoint and displays a collapsible file tree for a given folder path. Used in assistant form and potentially run detail view.",
-      "priority": "medium",
-      "estimate": "30m",
-      "depends_on": [
-        "folder-context-ui-picker"
-      ],
-      "feature_id": "folder-context-attachment",
-      "source": {}
-    },
-    {
-      "id": "discord-02-channel-role",
-      "title": "Discord ChannelProvider + slash commands",
-      "description": "DM + guild channel mentions → Conversation + Run. Replies in-thread. Slash-command surface for common operations (/nomi-new, /nomi-approve). Identity allowlist integration.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "discord-01-gateway",
-        "conversation-02-runtime-wiring",
-        "identity-01-entity"
-      ],
-      "feature_id": "discord-plugin-(channel-+-tool)",
-      "source": {}
-    },
-    {
-      "id": "gmail-01-oauth-shared",
-      "title": "Port Google OAuth to internal/integrations/google/",
-      "description": "Move google.OAuthManager + refresh-token handling out of internal/connectors/google/ into internal/integrations/google/. Shared by Gmail and Calendar plugins. Device-flow endpoints move to a plugin-agnostic Google-connection flow reused by both plugins.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "plugin-core-05-policy-overrides"
-      ],
-      "feature_id": "gmail-plugin-(tool-+-trigger)",
-      "source": {}
-    },
-    {
-      "id": "plugin-lifecycle-01-state-table",
-      "title": "plugin_state table + per-plugin enable/disable",
-      "description": "New SQLite table tracking (plugin_id, distribution, installed, enabled, version, source_url, signature_fingerprint, installed_at). On first boot seed with one row per system plugin marked distribution=system, installed=true, enabled=true. pluginRegistry.StartAll consults enabled=true before invoking Plugin.Start(). New REST endpoints: PATCH /plugins/:id/state {enabled: bool}, GET /plugins/:id/state. Frontend: top-level enable toggle on each plugin card. System plugins surface the toggle as disabled with a 'system plugin, always available' tooltip. Smallest user-visible win and answers the original 'can I stop plugins?' question; ships independently before any WASM work.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [],
-      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
-      "source": {}
-    },
-    {
-      "id": "integration-testing",
-      "title": "Integration testing and end-to-end validation",
-      "description": "Write integration tests for the full flow: create run → execute steps → approval → completion. Test tool execution, permission evaluation, and event emission. Validate API endpoints.",
-      "priority": "medium",
-      "estimate": "3h",
-      "depends_on": [
-        "rest-api-runs",
-        "rest-api-assistants",
-        "ui-run-timeline"
-      ],
-      "feature_id": "core-foundation",
-      "source": {}
-    },
-    {
-      "id": "connector-interface",
-      "title": "Define Connector interface and Manifest types",
-      "description": "Define Connector interface with Start(), Stop(), SendMessage(), Name(), Manifest() methods. Define ConnectorManifest with name, version, capabilities, config schema.",
-      "priority": "high",
-      "estimate": "20m",
-      "depends_on": [],
-      "feature_id": "connector-plugin-architecture",
-      "source": {}
-    },
-    {
-      "id": "media-08-piper-tts",
-      "title": "Piper TTS backend for media.speak",
-      "description": "Implement media.speak using Piper ONNX runtime. Input: text + optional voice model id. Output: audio bytes (wav or ogg). Model files live under ~/.nomi/models/piper/*.onnx; plugin handles download on first use with a progress event. Runs as a subprocess via internal/tools/sandbox so the plugin never shells out unsandboxed.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "media-07-media-plugin-scaffold"
-      ],
-      "feature_id": "rich-media-channel-contract",
-      "source": {}
-    },
-    {
-      "id": "calendar-01-providers",
-      "title": "Calendar provider abstraction (Google + Outlook)",
-      "description": "Common Calendar provider interface. Google implementation via internal/integrations/google/. Outlook implementation via MS Graph OAuth. Per-connection selects provider at creation time.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "gmail-01-oauth-shared"
-      ],
-      "feature_id": "calendar-plugin-(tool-+-trigger)",
-      "source": {}
-    },
-    {
-      "id": "signing-04-ci-release-workflow",
-      "title": "GitHub Actions tag-driven release workflow",
-      "description": "New `.github/workflows/release.yml` triggered on `v*.*.*` tags. Matrix: macos-14 (universal binary via lipo of arm64 + x86_64), ubuntu-latest, windows-latest. Per-job: install Go + Node + pnpm/npm, run `make build` (Go daemon) + `make app-build` (Tauri bundle). Outputs uploaded as workflow artifacts in this task — signing + publishing happens in 05/07/08. Creates the GitHub Release as a draft on tag push; subsequent platform jobs attach binaries. Concurrency group ensures only one release run per tag. High priority — every other distribution task depends on it.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "signing-01-version-command"
-      ],
-      "feature_id": "signed-desktop-builds-+-distribution",
-      "source": {}
-    },
-    {
-      "id": "state-machine",
-      "title": "Run and Step state machines",
-      "description": "Implement state machine logic for Run and Step lifecycles. Define valid transitions and guard conditions. Create StateMachine interface and implementations. Include transition validation and error handling.",
-      "priority": "high",
-      "estimate": "2h",
-      "depends_on": [
-        "domain-models",
-        "event-system"
-      ],
-      "feature_id": "core-runtime-engine",
-      "source": {}
-    },
-    {
-      "id": "signing-05-macos-sign-notarize",
-      "title": "macOS codesign + notarization + universal binary",
-      "description": "Apple Developer ID Application cert imported into the macos-14 runner via encrypted GitHub secret (APPLE_CERTIFICATE_P12 + APPLE_CERTIFICATE_PASSWORD). Build universal binary with `lipo -create` of arm64 + x86_64 builds. `codesign --deep --options=runtime --entitlements app/src-tauri/entitlements.plist` over the .app bundle. Submit to Apple notarytool with APPLE_ID + APPLE_TEAM_ID + APPLE_APP_PASSWORD secrets; staple ticket on success. Hard gate: Gatekeeper-approved on a fresh macOS install with no warnings. Blocked-until: Apple Developer Program enrollment ($99/yr) is in place — flag the task description if the cert isn't yet provisioned.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "signing-04-ci-release-workflow"
-      ],
-      "feature_id": "signed-desktop-builds-+-distribution",
-      "source": {}
-    },
-    {
-      "id": "connector-telegram-real",
-      "title": "Implement real Telegram connector",
-      "description": "Replace the mock Telegram connector with a real implementation using go-telegram-bot-api or tgbot library. Implement polling loop, message handling, and SendMessage with real HTTP calls to Telegram Bot API.",
-      "priority": "high",
-      "estimate": "45m",
-      "depends_on": [
-        "connector-interface"
-      ],
-      "feature_id": "connector-plugin-architecture",
-      "source": {}
-    },
-    {
-      "id": "plugin-lifecycle-13-ui-marketplace-browser",
-      "title": "UI: NomiHub marketplace browser",
-      "description": "New 'Browse plugins' button in the Plugins tab opens a dedicated panel that lists the NomiHub catalog. Search by name / capability / publisher. Each catalog entry is a card with name + description + publisher + capability badges + 'Install' button. Already-installed plugins show 'Installed' instead of 'Install' with a link back to their card. Consumes GET /plugins/marketplace. Lives in app/src/components/plugin-marketplace.tsx.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "plugin-lifecycle-09-nomihub-catalog"
-      ],
-      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
-      "source": {}
-    },
-    {
-      "id": "email-02-channel-role",
-      "title": "Email ChannelProvider + threading",
-      "description": "Email plugin registers as ChannelProvider per enabled connection. Inbound mail → Conversation (keyed by Message-ID / References chain) → Run. Outbound replies use In-Reply-To + References to keep threading. Identity allowlist integration.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "email-01-imap-smtp",
-        "conversation-02-runtime-wiring",
-        "identity-01-entity"
-      ],
-      "feature_id": "email-plugin-(channel-+-tool-+-trigger)",
-      "source": {}
-    },
-    {
-      "id": "github-06-poll-triggers",
-      "title": "Polling-based issue/PR event triggers",
-      "description": "GitHub plugin background loop polls each enabled Connection's repo allowlist every 60s for new issues + PR review-requests. Emits trigger.fired events that the runtime ingests via the existing trigger framework (same path Calendar/Slack use). Polling state (last_etag, last_seen_id per repo) persists in plugin-private rows so a daemon restart doesn't replay 30-day-old issues as new. Webhook-receiver path is the V2 upgrade — flagged in the manifest under `triggers[].mode = 'polling'` for the UI to surface; switching to webhooks happens once we have a tunneled receiver story. Conditional-request If-None-Match cuts API quota by ~80% in the steady state.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "github-03-issues-tools",
-        "github-04-pulls-tools"
-      ],
-      "feature_id": "github-connector",
-      "source": {}
-    },
-    {
-      "id": "signing-09-update-e2e-test",
-      "title": "Auto-update end-to-end smoke test",
-      "description": "Script that builds version vN, installs it on a fresh runner (macOS + Windows + Linux matrix where possible), publishes vN+1 to a fixture release, and asserts that the running app detects the update, downloads it, and the relaunched binary reports the new version via `nomid --version`. Lives in `.github/workflows/update-e2e.yml` triggered manually + on release. Catches regressions in the updater plugin config, manifest format, or signature verification path. Acceptance: green CI run that exercises the full update path on at least macOS.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "signing-03-update-manifest-and-ux",
-        "signing-05-macos-sign-notarize"
-      ],
-      "feature_id": "signed-desktop-builds-+-distribution",
-      "source": {}
-    },
-    {
-      "id": "error-message-audit",
-      "title": "Error Message Audit — Plain-Language, Actionable, Non-Technical",
-      "description": "Cross-cutting V1.3 audit: rewrite every user-visible error message to explain (a) what went wrong in non-technical language, (b) why it happened, and (c) what the user can do next. Add structured code/title/body/action envelope where missing.",
-      "priority": "high",
-      "estimate": "3h",
-      "depends_on": [],
-      "feature_id": "error-message-audit-—-plain-language,-actionable,-non-technical",
-      "source": {}
-    },
-    {
-      "id": "identity-03-ui",
-      "title": "Identity allowlist UI + first-contact review",
-      "description": "Per-connection identities list in the Plugins tab with add/remove. First-contact policy toggle per connection (drop silently | reply 'request access' | queue approval). Approval queue view for pending first-contact requests.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "identity-02-api-events"
-      ],
-      "feature_id": "channel-identity-allowlist",
-      "source": {}
-    },
-    {
-      "id": "plugin-lifecycle-14-ui-update-notifications",
-      "title": "UI: update notifications + per-plugin update button",
-      "description": "When plugin_state.available_version \u003e version, the plugin card shows an 'Update available: vX.Y.Z' banner with a button. Clicking surfaces a diff modal (changes since installed version pulled from the catalog's release notes) and an 'Update now' confirm. Calls POST /plugins/:id/update. Globally, the Plugins tab nav-item shows a small dot when ANY plugin has an update pending. Mirrors the SSE-driven invalidation pattern so multiple windows stay in sync.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "plugin-lifecycle-10-update-flow"
-      ],
-      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
-      "source": {}
-    },
-    {
-      "id": "plugin-lifecycle-11-ui-enable-toggle",
-      "title": "UI: top-level plugin enable toggle",
-      "description": "Plugins-tab card gains a top-level enable/disable toggle (separate from per-connection toggles). Disabled plugins show greyed cards with the description amended: 'no inbound polling, no outbound capability'. System plugins render the toggle as locked-on with a 'system plugin, always available' tooltip. Lives in app/src/components/plugins-manager.tsx; consumes PATCH /plugins/:id/state. Mutation invalidates the plugins query so other clients see the change immediately via SSE-driven cache.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "plugin-lifecycle-01-state-table"
-      ],
-      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
-      "source": {}
-    },
-    {
-      "id": "media-02-telegram-outbound",
-      "title": "Telegram rich-media outbound",
-      "description": "Extend Telegram's Channel.Send to dispatch attachments through the right Bot API method per Attachment.Kind: sendPhoto (image), sendDocument (doc/other), sendVoice (audio with is_voice=true), sendVideo (video). Caption handled via the caption field. Preserve threading via reply_to_message_id when an external conversation id maps to a prior message.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "media-01-outbound-contract"
-      ],
-      "feature_id": "rich-media-channel-contract",
-      "source": {}
-    },
-    {
-      "id": "calendar-03-triggers",
-      "title": "Calendar TriggerProvider: pre-meeting + event lifecycle",
-      "description": "Triggers: pre-meeting (fire N minutes before an event), event-created, event-cancelled. Uses provider's push notifications where available (Google Calendar watch) otherwise polling.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "calendar-02-tools"
-      ],
-      "feature_id": "calendar-plugin-(tool-+-trigger)",
-      "source": {}
-    },
-    {
-      "id": "github-08-code-reviewer-template",
-      "title": "Code Reviewer assistant template + acceptance e2e",
-      "description": "templates/code-reviewer.json: assistant template defaulting to a GitHub Connection, allowed tools = github.pulls.{list,get,comment,review} + llm.chat, system prompt focused on PR-review craft (what to flag, how to phrase, when to approve vs request-changes). UI Browse Templates gains the entry. End-to-end test (manual or e2e harness) walks the spec acceptance: user connects a PAT against a fixture repo, asks the Code Reviewer 'review the latest open PR on \u003crepo\u003e', the run reaches plan_review showing the planned tools, after approval the run produces a review comment draft pending user approval before posting via github.pulls.comment. Validates the full chain (auth → list → get → analyze → comment-as-write).",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "github-03-issues-tools",
-        "github-04-pulls-tools",
-        "github-07-connections-ui"
-      ],
-      "feature_id": "github-connector",
-      "source": {}
-    },
-    {
-      "id": "obsidian-01-vault",
-      "title": "Vault discovery + FS sandboxing",
-      "description": "Per-Connection vault path. Filesystem sandboxing prevents writes outside the declared vault root (uses existing ResolveWithinRoot helper). Vault metadata: detected .obsidian config, note count, tag list.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "plugin-core-05-policy-overrides"
-      ],
-      "feature_id": "obsidian-plugin-(tool-+-context-source)",
-      "source": {}
-    },
-    {
-      "id": "plugin-core-03-connection-domain",
-      "title": "Connection + AssistantConnectionBinding entities",
-      "description": "New domain entities Connection and AssistantConnectionBinding. SQLite migrations (up + down). Repositories with CRUD + queries (list connections by plugin, list bindings by assistant, lookup connection by id). Secrets live in secrets.Store; plugin_connections holds only CredentialRefs.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "plugin-core-02-registry"
-      ],
-      "feature_id": "plugin-architecture-core-refactor",
-      "source": {}
-    },
-    {
-      "id": "core-tools",
-      "title": "Core tool implementations",
-      "description": "Implement filesystem.read, filesystem.write, and command.exec tools. Add proper error handling, input validation, and capability tags. Test tools with temporary directories. Ensure sandboxing for command execution.",
-      "priority": "high",
-      "estimate": "2h",
-      "depends_on": [
-        "tool-interface"
-      ],
-      "feature_id": "tool-system",
-      "source": {}
-    },
-    {
-      "id": "gmail-03-triggers",
-      "title": "Gmail TriggerProvider: label/from/query watch",
-      "description": "Triggers: label-watch (fire when a message gets a label), from-watch (fire on messages from specific senders), query-watch (fire on arbitrary Gmail-search-syntax matches). Uses Gmail history API for efficient delta polling.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "gmail-02-tools"
-      ],
-      "feature_id": "gmail-plugin-(tool-+-trigger)",
-      "source": {}
-    },
-    {
-      "id": "llm-ui-types",
-      "title": "Frontend API types and client for providers",
-      "description": "Add provider API client functions to frontend api.ts. Add ProviderProfile and ModelPolicy types to api.ts.",
-      "priority": "medium",
-      "estimate": "15m",
-      "depends_on": [
-        "llm-api"
-      ],
-      "feature_id": "llm-provider-configuration",
-      "source": {}
-    },
-    {
-      "id": "email-04-trigger-role",
-      "title": "Email TriggerProvider: filtered inbox watch",
-      "description": "Inbox-watch triggers fire runs on inbound messages matching user-defined filters (from, subject contains, label). Per-connection trigger rules persisted. Rate-limited so a mail storm can't flood the run queue.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "email-02-channel-role"
-      ],
-      "feature_id": "email-plugin-(channel-+-tool-+-trigger)",
-      "source": {}
-    },
-    {
-      "id": "scaffold-project",
-      "title": "Project scaffolding and directory structure",
-      "description": "Initialize Go module (nomid), create directory structure (cmd/, internal/, pkg/, migrations/, web/), set up Tauri project in app/ directory. Create Makefile with common commands. Add .gitignore and basic README.",
-      "priority": "high",
-      "estimate": "1h",
-      "depends_on": [],
-      "feature_id": "core-foundation",
-      "source": {}
-    },
-    {
-      "id": "media-03-slack-outbound",
-      "title": "Slack rich-media outbound (files.uploadV2)",
-      "description": "Extend Slack's Channel.Send to upload attachments via files.uploadV2 into the target channel (+ thread_ts for threading). Falls back to slack.MsgOptionText when there are no attachments.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "media-01-outbound-contract"
-      ],
-      "feature_id": "rich-media-channel-contract",
       "source": {}
     },
     {
@@ -2118,289 +1428,16 @@
       "source": {}
     },
     {
-      "id": "email-03-tool-role",
-      "title": "Email ToolProvider: send, search, read",
-      "description": "Tools: email.send (connection_id, to, subject, body, cc?, bcc?, attachments?), email.search (IMAP SEARCH with operators), email.read_message (full message with attachments). Capabilities registered in permission engine.",
-      "priority": "medium",
-      "estimate": "",
+      "id": "storage-repository",
+      "title": "Repository pattern for SQLite operations",
+      "description": "Implement repository layer for each domain: RunRepository, StepRepository, AssistantRepository, EventRepository, MemoryRepository. Include CRUD operations and transaction support. Write tests for repositories.",
+      "priority": "high",
+      "estimate": "3h",
       "depends_on": [
-        "email-01-imap-smtp"
-      ],
-      "feature_id": "email-plugin-(channel-+-tool-+-trigger)",
-      "source": {}
-    },
-    {
-      "id": "templates",
-      "title": "Assistant templates (2-3 built-in)",
-      "description": "Create 2-3 built-in assistant templates: General Assistant (file operations, commands), Code Reviewer (git context, code analysis), DevOps Helper (command execution, file editing). Store as JSON files.",
-      "priority": "medium",
-      "estimate": "1h",
-      "depends_on": [
+        "sqlite-migrations",
         "domain-models"
       ],
-      "feature_id": "core-foundation",
-      "source": {}
-    },
-    {
-      "id": "plugin-lifecycle-12-ui-install-dialog",
-      "title": "UI: install confirmation dialog",
-      "description": "When the user picks a marketplace plugin (or drag-drops a local .nomi-plugin), a modal surfaces: plugin name + publisher + version, README.md rendering, capability list (each capability is a chip with hover-card explaining what it grants), NetworkAllowlist (chip list of host patterns), signature trust status (green checkmark for hub-signed, red banner for unsigned dev bundles, yellow for signed-but-unknown-publisher). Install button calls POST /plugins/install. Cancel discards. Lives in app/src/components/plugin-install-dialog.tsx.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "plugin-lifecycle-07-install-uninstall-api"
-      ],
-      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
-      "source": {}
-    },
-    {
-      "id": "github-07-connections-ui",
-      "title": "GitHub Connections UI",
-      "description": "Connections tab gains a 'Add GitHub' card. Two paths: (a) PAT — opens the GitHub fine-grained PAT generation page in the system browser, user pastes the token, frontend POSTs to /plugins/github/connections with token + selected repo allowlist; backend stores via secrets.Store and round-trips the result. (b) GitHub App install — uses github-01's installation flow (open https://github.com/apps/\u003cappname\u003e/installations/new in browser, capture redirect with installation_id). Per-connection: org/login chip, repo allowlist editor, polling enable toggle, last-poll-success indicator. Lives in app/src/components/connections/github.tsx + a useGithubConnections query hook.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "github-02-plugin-scaffold"
-      ],
-      "feature_id": "github-connector",
-      "source": {}
-    },
-    {
-      "id": "media-04-discord-outbound",
-      "title": "Discord rich-media outbound (message attachments)",
-      "description": "Extend Discord's Channel.Send to use ChannelMessageSendComplex with MessageSend.Files populated from OutboundMessage.Attachments. In-message captions go into the Content field alongside.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "media-01-outbound-contract"
-      ],
-      "feature_id": "rich-media-channel-contract",
-      "source": {}
-    },
-    {
-      "id": "llm-assistant-policy",
-      "title": "Add ModelPolicy to assistant definition",
-      "description": "Add ModelPolicy to AssistantDefinition with mode, preferred model, fallback, local_only, allow_fallback fields. Update assistant API to accept model_policy.",
-      "priority": "medium",
-      "estimate": "20m",
-      "depends_on": [
-        "llm-api"
-      ],
-      "feature_id": "llm-provider-configuration",
-      "source": {}
-    },
-    {
-      "id": "plugin-ui-01-plugins-tab",
-      "title": "Plugins tab (replaces Connections)",
-      "description": "New Plugins tab in Settings. Per-plugin card shows manifest (name, version, roles), connection list, 'Add connection' button. Per-plugin auth flows: OAuth device flow (Google), OAuth web redirect (Slack/Discord/GitHub), bot token entry (Telegram), IMAP credentials (Email generic).",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "plugin-core-05-policy-overrides"
-      ],
-      "feature_id": "plugin-ui-reshape",
-      "source": {}
-    },
-    {
-      "id": "github-04-pulls-tools",
-      "title": "github.pulls tools",
-      "description": "Implement github.pulls.list / get / comment / review. .review submits a PR review (approve / request changes / comment); .comment leaves a single inline or top-level comment. Review-as-an-action is permission-gated, comment is permission-gated separately so users can grant comment-but-not-approve. .get returns the unified diff + linked issue refs + checkrun status so a Code Reviewer assistant has everything it needs in one round-trip without the agent re-asking for the diff. Tests assert pagination behavior on .list (\u003e30 PRs returns full set), and that .review with `body: ''` doesn't accidentally submit an empty 'approve'.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "github-02-plugin-scaffold"
-      ],
-      "feature_id": "github-connector",
-      "source": {}
-    },
-    {
-      "id": "plugin-core-01-interfaces",
-      "title": "Plugin + role interfaces",
-      "description": "Define Plugin interface, role interfaces (ChannelProvider, ToolProvider, TriggerProvider, ContextSourceProvider), PluginManifest, Contributions types in new internal/plugins/ package. No registry yet — just the types.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [],
-      "feature_id": "plugin-architecture-core-refactor",
-      "source": {}
-    },
-    {
-      "id": "assistant-builder-ui-validation",
-      "title": "Builder inline validation for ceiling violations",
-      "description": "Add client-side validation in assistant-manager.tsx: when a policy rule references a capability family not in the ceiling, show inline error 'Tick the {Family} box above to allow this rule to take effect' and highlight the relevant capability checkbox.",
-      "priority": "high",
-      "estimate": "1h",
-      "depends_on": [
-        "assistant-builder-ceiling-validation"
-      ],
-      "feature_id": "assistant-builder-—-capability-ceiling-and-policy-coherence",
-      "source": {}
-    },
-    {
-      "id": "identity-02-api-events",
-      "title": "Identity REST + audit events",
-      "description": "REST endpoints: list/create/update/delete identities per connection. Event emissions for identity lifecycle and first-contact events (allowlist_matched, first_contact_dropped, first_contact_approval_queued) so the UI can show activity.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "identity-01-entity"
-      ],
-      "feature_id": "channel-identity-allowlist",
-      "source": {}
-    },
-    {
-      "id": "github-03-triggers",
-      "title": "GitHub TriggerProvider: webhook routing",
-      "description": "Webhook receiver endpoint (validates X-Hub-Signature-256), routes events to trigger subscriptions: pr_opened, issue_commented, push, workflow_failed. Per-connection allowlist of event types.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "github-02-tools"
-      ],
-      "feature_id": "github-plugin-(tool-+-trigger)",
-      "source": {}
-    },
-    {
-      "id": "media-09-whisper-stt",
-      "title": "Whisper STT backend for media.transcribe",
-      "description": "Implement media.transcribe using whisper.cpp. Input: audio bytes + language hint. Output: transcript text. Models live under ~/.nomi/models/whisper/; plugin handles download with progress events. Sandboxed subprocess. Auto-invoked by the inbound-enrichment pass on voice attachments.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "media-07-media-plugin-scaffold"
-      ],
-      "feature_id": "rich-media-channel-contract",
-      "source": {}
-    },
-    {
-      "id": "folder-context-ui-picker",
-      "title": "Add folder picker to assistant form UI",
-      "description": "Add a folder path input (with directory picker button using Tauri dialog API) to the assistant creation/management form. Allow attaching multiple folders, showing path + name.",
-      "priority": "high",
-      "estimate": "45m",
-      "depends_on": null,
-      "feature_id": "folder-context-attachment",
-      "source": {}
-    },
-    {
-      "id": "plugin-lifecycle-15-dogfood-marketplace-calendar",
-      "title": "Promote Calendar to marketplace as dogfooding test",
-      "description": "Repackage the Calendar plugin (currently bundled as system) as a WASM .nomi-plugin bundle published to NomiHub. Validates the entire pipeline end-to-end: WASM compilation of a real plugin with HTTP + OAuth needs, signing on the GitHub Actions side, install via UI, capability + NetworkAllowlist intersection at runtime, version-bump via update flow. Calendar stays bundled for users who don't want NomiHub-fetched plugins; the marketplace version is the canonical update target going forward. Acceptance: user with a fresh install can search 'calendar' in the marketplace browser, install it, configure a Google account, list events — all without rebuilding the daemon.",
-      "priority": "low",
-      "estimate": "",
-      "depends_on": [
-        "plugin-lifecycle-09-nomihub-catalog",
-        "plugin-lifecycle-13-ui-marketplace-browser"
-      ],
-      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
-      "source": {}
-    },
-    {
-      "id": "conversation-02-runtime-wiring",
-      "title": "Wire conversation_id through runtime + SSE + REST",
-      "description": "Runtime attaches conversation_id to runs created via CreateRunFromSource. Domain events include conversation_id so SSE subscribers can filter. REST endpoints: list conversations, get conversation with runs, delete conversation.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "conversation-01-entity"
-      ],
-      "feature_id": "multi-turn-conversation-model",
-      "source": {}
-    },
-    {
-      "id": "connector-integration-test",
-      "title": "Integration test for connector registry",
-      "description": "Integration test that verifies connector registry starts/stops connectors correctly and routes messages.",
-      "priority": "medium",
-      "estimate": "20m",
-      "depends_on": [
-        "connector-main-wire",
-        "connector-ui-channels"
-      ],
-      "feature_id": "connector-plugin-architecture",
-      "source": {}
-    },
-    {
-      "id": "llm-ui-assistant",
-      "title": "Assistant advanced mode model override UI",
-      "description": "Update assistant form with advanced mode toggle. When advanced mode is enabled, show ModelPolicy configuration: preferred provider/model selection, fallback options, local-only toggle.",
-      "priority": "medium",
-      "estimate": "30m",
-      "depends_on": [
-        "llm-assistant-policy"
-      ],
-      "feature_id": "llm-provider-configuration",
-      "source": {}
-    },
-    {
-      "id": "signing-07-windows-sign-msi-distribution",
-      "title": "Windows MSI build + EV/OV codesign + Scoop/winget",
-      "description": "Tauri WiX MSI target on the windows-latest runner. Codesign with EV or OV cert (DigiCert / Sectigo) imported via WINDOWS_CERTIFICATE_P12 + password secrets, using `signtool sign /tr http://timestamp.digicert.com /td sha256 /fd sha256`. Publish manifests: Scoop bucket (separate repo `nomiai/scoop-bucket` with auto-bumped manifest), winget submission (PR to microsoft/winget-pkgs with the new version). Blocked-until: Windows code-signing cert procurement ($200–$700/yr depending on EV vs OV + vendor). Acceptance: `scoop install nomi` works on a clean Windows 11 VM with no SmartScreen warning.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "signing-04-ci-release-workflow"
-      ],
-      "feature_id": "signed-desktop-builds-+-distribution",
-      "source": {}
-    },
-    {
-      "id": "signing-06-macos-dmg-homebrew-cask",
-      "title": "DMG bundle + Homebrew Cask publish",
-      "description": "Tauri produces a notarized .dmg via `tauri build --target universal-apple-darwin` after signing-05. New repo `nomiai/homebrew-tap` (or PR to homebrew-cask) with a `Casks/nomi.rb` cask file: url to the GitHub Release .dmg, sha256, version. Auto-bump cask on release via a small workflow that opens a PR to the tap repo with the new version + sha. Acceptance: `brew tap nomiai/tap \u0026\u0026 brew install --cask nomi` succeeds end-to-end on fresh macOS, app launches without Gatekeeper prompt.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "signing-05-macos-sign-notarize"
-      ],
-      "feature_id": "signed-desktop-builds-+-distribution",
-      "source": {}
-    },
-    {
-      "id": "github-03-issues-tools",
-      "title": "github.issues tools",
-      "description": "Implement four issue-shaped tools on the GitHub plugin: github.issues.list (filterable by repo / state / assignee / labels, paginated), github.issues.get (single issue with body + comments), github.issues.create (new issue; permission-gated since it's a write), github.issues.comment (append comment; permission-gated). Each tool ResolvesPermission against the connection's PAT/App scope at call time so a token without `issues: write` cleanly errors instead of producing a 403 from upstream. Table-driven tests cover 200/403/404/422 GitHub API responses + rate-limit headers (X-RateLimit-Remaining=0 surfaces as a typed RateLimitError so the runtime can back off rather than fail the run).",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "github-02-plugin-scaffold"
-      ],
-      "feature_id": "github-connector",
-      "source": {}
-    },
-    {
-      "id": "email-01-imap-smtp",
-      "title": "IMAP receive loop + SMTP send client",
-      "description": "Generic IMAP receive loop with IDLE support (fall back to polling when IDLE unsupported). SMTP send with STARTTLS + implicit TLS. Per-connection credentials via secrets.Store. No plugin wiring yet — just the transport layer in internal/plugins/email/transport/.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "plugin-core-05-policy-overrides"
-      ],
-      "feature_id": "email-plugin-(channel-+-tool-+-trigger)",
-      "source": {}
-    },
-    {
-      "id": "sqlite-migrations",
-      "title": "SQLite schema design and golang-migrate setup",
-      "description": "Create migration files for all tables: runs, steps, assistants, events, memory, permissions. Set up golang-migrate in the project. Create migration runner in Go. Include indexes and foreign keys. Create db package with connection management.",
-      "priority": "high",
-      "estimate": "2h",
-      "depends_on": [
-        "scaffold-project"
-      ],
       "feature_id": "sqlite-storage-layer",
-      "source": {}
-    },
-    {
-      "id": "signing-03-update-manifest-and-ux",
-      "title": "latest.json manifest format + silent download + relaunch banner",
-      "description": "Define the Tauri updater `latest.json` manifest schema (version, notes, pub_date, platforms.{darwin-aarch64,darwin-x86_64,linux-x86_64,windows-x86_64}.{signature, url}). Implement the React update UX: useUpdater hook checks on app boot + every 6h, downloads silently in the background, shows a non-modal banner 'New version ready. Relaunch now?' with Relaunch / Later buttons. Defer is sticky for 24h. Lives in `app/src/components/update-banner.tsx` + `app/src/lib/updater.ts`. Acceptance: a manually-edited fake `latest.json` triggers the banner end-to-end against a local file:// URL.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "signing-02-update-keys-and-config"
-      ],
-      "feature_id": "signed-desktop-builds-+-distribution",
       "source": {}
     },
     {
@@ -2416,28 +1453,63 @@
       "source": {}
     },
     {
-      "id": "task-v1-hardening-04-reliability-evals",
-      "title": "Reliability Eval Suite and Failure Tests",
-      "description": "Build planner/tool reliability eval harness with failure taxonomy, cross-plugin contract tests, and end-to-end failure-mode scenarios with regression gates.",
+      "id": "gmail-02-tools",
+      "title": "Gmail ToolProvider: send/search/read/label/archive",
+      "description": "Tools: gmail.send (richer than SMTP: inline attachments, HTML, drafts), gmail.search_threads, gmail.read_thread, gmail.label, gmail.archive. Uses Gmail API rather than SMTP/IMAP for API-specific operations.",
       "priority": "medium",
-      "estimate": "6d",
+      "estimate": "",
       "depends_on": [
-        "task-v1-hardening-03-observability"
+        "gmail-01-oauth-shared"
       ],
-      "feature_id": "v1-hardening-program-(multi-expert-30/60/90)",
+      "feature_id": "gmail-plugin-(tool-+-trigger)",
       "source": {}
     },
     {
-      "id": "task-v1-hardening-06-security-consistency",
-      "title": "Security Consistency and Threat Model Refresh",
-      "description": "Perform focused threat-model refresh and control review for plugin install/update/uninstall, identity allowlists, secrets handling, and runtime tool boundaries; produce prioritized remediations.",
-      "priority": "medium",
-      "estimate": "4d",
+      "id": "signing-05-macos-sign-notarize",
+      "title": "macOS codesign + notarization + universal binary",
+      "description": "Apple Developer ID Application cert imported into the macos-14 runner via encrypted GitHub secret (APPLE_CERTIFICATE_P12 + APPLE_CERTIFICATE_PASSWORD). Build universal binary with `lipo -create` of arm64 + x86_64 builds. `codesign --deep --options=runtime --entitlements app/src-tauri/entitlements.plist` over the .app bundle. Submit to Apple notarytool with APPLE_ID + APPLE_TEAM_ID + APPLE_APP_PASSWORD secrets; staple ticket on success. Hard gate: Gatekeeper-approved on a fresh macOS install with no warnings. Blocked-until: Apple Developer Program enrollment ($99/yr) is in place — flag the task description if the cert isn't yet provisioned.",
+      "priority": "high",
+      "estimate": "",
       "depends_on": [
-        "task-v1-hardening-02-roady-governance",
-        "task-v1-hardening-03-observability"
+        "signing-04-ci-release-workflow"
       ],
-      "feature_id": "v1-hardening-program-(multi-expert-30/60/90)",
+      "feature_id": "signed-desktop-builds-+-distribution",
+      "source": {}
+    },
+    {
+      "id": "media-02-telegram-outbound",
+      "title": "Telegram rich-media outbound",
+      "description": "Extend Telegram's Channel.Send to dispatch attachments through the right Bot API method per Attachment.Kind: sendPhoto (image), sendDocument (doc/other), sendVoice (audio with is_voice=true), sendVideo (video). Caption handled via the caption field. Preserve threading via reply_to_message_id when an external conversation id maps to a prior message.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "media-01-outbound-contract"
+      ],
+      "feature_id": "rich-media-channel-contract",
+      "source": {}
+    },
+    {
+      "id": "core-tools",
+      "title": "Core tool implementations",
+      "description": "Implement filesystem.read, filesystem.write, and command.exec tools. Add proper error handling, input validation, and capability tags. Test tools with temporary directories. Ensure sandboxing for command execution.",
+      "priority": "high",
+      "estimate": "2h",
+      "depends_on": [
+        "tool-interface"
+      ],
+      "feature_id": "tool-system",
+      "source": {}
+    },
+    {
+      "id": "email-04-trigger-role",
+      "title": "Email TriggerProvider: filtered inbox watch",
+      "description": "Inbox-watch triggers fire runs on inbound messages matching user-defined filters (from, subject contains, label). Per-connection trigger rules persisted. Rate-limited so a mail storm can't flood the run queue.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "email-02-channel-role"
+      ],
+      "feature_id": "email-plugin-(channel-+-tool-+-trigger)",
       "source": {}
     },
     {
@@ -2453,335 +1525,15 @@
       "source": {}
     },
     {
-      "id": "plugin-lifecycle-02-network-allowlist",
-      "title": "NetworkAllowlist on manifest + per-capability constraint enforcement",
-      "description": "Add Requirements.NetworkAllowlist []string to PluginManifest. Bundled plugins gain explicit lists (Telegram: api.telegram.org + *.t.me; Slack: slack.com + *.slack.com + *.slack-edge.com; Discord: discord.com + *.discord.com + *.discordapp.net; Calendar: www.googleapis.com + oauth2.googleapis.com; Email: empty, runtime supplements with per-Connection imap_host/smtp_host). Wildcard matching mirrors permissions.matchWildcard (leading-dot anchor; *.slack.com does NOT match slack.com.attacker.com). For bundled plugins this is informational + surfaces in the install/info dialog; for marketplace WASM plugins it gates host_http_request at the WASM boundary in lifecycle-04.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [],
-      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
-      "source": {}
-    },
-    {
-      "id": "assistant-builder-ceiling-validation",
-      "title": "Assistant Builder — Capability Ceiling and Policy Coherence",
-      "description": "Prevent silent-deny trap: when a user adds a policy rule (allow/confirm) for a capability whose family is not in the assistant's declared capabilities ceiling, the runtime silently denies. Implement builder validation + API guard to make this failure loud at write time.",
-      "priority": "high",
-      "estimate": "2h",
-      "depends_on": [],
-      "feature_id": "assistant-builder-—-capability-ceiling-and-policy-coherence",
-      "source": {}
-    },
-    {
-      "id": "conversation-03-chats-ui",
-      "title": "Chats tab: one tab per Conversation",
-      "description": "Chats tab lists Conversations grouped by plugin+connection. Selecting one shows the run history within that thread. Desktop-initiated runs without a conversation stay in a 'Local' group for backward compatibility.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "conversation-02-runtime-wiring"
-      ],
-      "feature_id": "multi-turn-conversation-model",
-      "source": {}
-    },
-    {
-      "id": "plugin-lifecycle-10-update-flow",
-      "title": "Update detection + explicit update action",
-      "description": "Daemon polls NomiHub catalog daily (configurable via app_settings). plugin_state gains available_version + last_checked_at columns; populated when catalog has a higher semver than installed. New event types plugin.update_available + plugin.updated. POST /plugins/:id/update fetches the latest bundle, verifies signature, atomically swaps the installed module (drains any in-flight tool calls first), and bumps plugin_state.version. Explicit only — no silent updates. Tests cover: catalog has newer version → flagged; user triggers update → swap succeeds; signature failure → swap aborted with installed version preserved.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "plugin-lifecycle-09-nomihub-catalog"
-      ],
-      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
-      "source": {}
-    },
-    {
-      "id": "connector-main-wire",
-      "title": "Wire connectors into application lifecycle",
-      "description": "Wire ConnectorRegistry into main.go lifecycle: instantiate registry, register Telegram connector, StartAll() after API server, StopAll() on shutdown signal.",
-      "priority": "high",
-      "estimate": "20m",
-      "depends_on": [
-        "connector-registry",
-        "connector-telegram-real"
-      ],
-      "feature_id": "connector-plugin-architecture",
-      "source": {}
-    },
-    {
-      "id": "storage-repository",
-      "title": "Repository pattern for SQLite operations",
-      "description": "Implement repository layer for each domain: RunRepository, StepRepository, AssistantRepository, EventRepository, MemoryRepository. Include CRUD operations and transaction support. Write tests for repositories.",
-      "priority": "high",
-      "estimate": "3h",
-      "depends_on": [
-        "sqlite-migrations",
-        "domain-models"
-      ],
-      "feature_id": "sqlite-storage-layer",
-      "source": {}
-    },
-    {
-      "id": "connector-api",
-      "title": "Add connector REST API endpoints",
-      "description": "Add REST endpoints for connector management: GET /connectors (list available), GET /connectors/:name/status, POST /connectors/:name/configure.",
+      "id": "folder-context-ui-preview",
+      "title": "Add file-tree preview component",
+      "description": "Reusable component that calls the preview endpoint and displays a collapsible file tree for a given folder path. Used in assistant form and potentially run detail view.",
       "priority": "medium",
       "estimate": "30m",
       "depends_on": [
-        "connector-registry",
-        "connector-telegram-real"
+        "folder-context-ui-picker"
       ],
-      "feature_id": "connector-plugin-architecture",
-      "source": {}
-    },
-    {
-      "id": "media-07-media-plugin-scaffold",
-      "title": "com.nomi.media plugin scaffold + manifest",
-      "description": "New tool-only plugin at internal/plugins/media/. Manifest declares tools: media.speak (TTS), media.transcribe (STT), media.describe_image (vision), with capability strings media.tts / media.stt / media.vision. Cardinality single — one install, no per-connection account concept. ConfigSchema fields for backend selection (tts_backend, stt_model_path, etc.) so users configure all media once in one card.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "media-01-outbound-contract"
-      ],
-      "feature_id": "rich-media-channel-contract",
-      "source": {}
-    },
-    {
-      "id": "plugin-lifecycle-07-install-uninstall-api",
-      "title": "Install / uninstall REST endpoints",
-      "description": "POST /plugins/install accepting either a URL (fetch from NomiHub or arbitrary HTTPS) or a multipart-uploaded local .nomi-plugin file. Body validates via lifecycle-05 + lifecycle-06; on success the bundle is unpacked into ~/.nomi/plugins/\u003cid\u003e/, plugin_state row inserted with distribution=marketplace + installed=true + enabled=false, plugin module loaded into the registry. DELETE /plugins/:id with optional cascade=true query param: cascade=false (default) keeps plugin_connections + bindings + identities so reinstall reattaches; cascade=true removes everything including credentials in secrets.Store. System plugins refuse uninstall with 409. Tests cover happy path (install → enable → disable → uninstall), cascade vs non-cascade uninstall, signature failure, and version-conflict-on-reinstall.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "plugin-lifecycle-06-signing-verify"
-      ],
-      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
-      "source": {}
-    },
-    {
-      "id": "llm-domain-repo",
-      "title": "ProviderProfile domain model and repository",
-      "description": "Create ProviderProfile domain model, repository with CRUD operations, and global settings storage for default provider.",
-      "priority": "high",
-      "estimate": "30m",
-      "depends_on": [
-        "llm-db-providers"
-      ],
-      "feature_id": "llm-provider-configuration",
-      "source": {}
-    },
-    {
-      "id": "signing-08-linux-packages",
-      "title": "Linux AppImage + .deb + SHA256SUMS",
-      "description": "Tauri builds AppImage + .deb on ubuntu-latest. Generate SHA256SUMS file containing checksums for every artifact in the release (cross-platform). No code signing — Linux distros rely on package-manager trust + checksums. Publish .deb via a simple GitHub-Pages-hosted apt repo at apt.nomi.ai (Phase 4) or skip apt repo for v1 and rely on direct .deb download from GitHub Releases. AppImage is the primary path — single-file, executable, no install required. SHA256SUMS attached to the release.",
-      "priority": "low",
-      "estimate": "",
-      "depends_on": [
-        "signing-04-ci-release-workflow"
-      ],
-      "feature_id": "signed-desktop-builds-+-distribution",
-      "source": {}
-    },
-    {
-      "id": "media-10-inbound-enrichment",
-      "title": "Runtime auto-enrichment pass for inbound attachments",
-      "description": "Before planning starts, if the Run has attachments, the runtime consults per-kind enrichment config (e.g. audio → media.transcribe, image → media.describe_image) and invokes the configured tools to append their outputs into the Run's initial goal/input. Skips when the media plugin isn't installed. User-facing behavior: an inbound Telegram voice note becomes goal 'Alice: [voice transcript] ...' automatically.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "media-06-inbound-attachment-capture",
-        "media-09-whisper-stt"
-      ],
-      "feature_id": "rich-media-channel-contract",
-      "source": {}
-    },
-    {
-      "id": "calendar-02-tools",
-      "title": "Calendar ToolProvider: list/create/update/delete/find_free",
-      "description": "Tools: calendar.list_upcoming (range-filtered), calendar.create_event, calendar.update_event, calendar.delete_event, calendar.find_free_slot (duration + participants → candidate slots).",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "calendar-01-providers"
-      ],
-      "feature_id": "calendar-plugin-(tool-+-trigger)",
-      "source": {}
-    },
-    {
-      "id": "task-v1-hardening-01-error-envelope",
-      "title": "Canonical Error Envelope Everywhere",
-      "description": "Standardize all API/UI error responses to a canonical shape (code/title/message/action/details), remove ad-hoc payloads, and enforce deterministic rendering across core flows.",
-      "priority": "high",
-      "estimate": "5d",
-      "depends_on": [],
-      "feature_id": "v1-hardening-program-(multi-expert-30/60/90)",
-      "source": {}
-    },
-    {
-      "id": "error-message-audit-ui",
-      "title": "Audit UI error surfaces (API errors, network, toasts)",
-      "description": "Rewrite frontend error messages: network errors reaching daemon, vite preview vs Tauri bridge mismatch, plugin install corrupted bundle, signature verification failed, generic API error fallbacks.",
-      "priority": "high",
-      "estimate": "1h",
-      "depends_on": [
-        "error-message-audit"
-      ],
-      "feature_id": "error-message-audit-—-plain-language,-actionable,-non-technical",
-      "source": {}
-    },
-    {
-      "id": "github-02-plugin-scaffold",
-      "title": "GitHub plugin scaffold + manifest",
-      "description": "Scaffold internal/plugins/github/ as a system-tier plugin: manifest declares network.outgoing (api.github.com, raw.githubusercontent.com), filesystem.write (workspace-scoped only, for clone tools), and per-Connection auth slot. Plugin registers in cmd/nomid/main.go alongside other tier-1 plugins (Telegram, Slack, Discord, Calendar, Gmail). Connection table mirrors the existing pattern: plugin_connections row holds either an encrypted PAT or a GitHub App installation_id (signed off in github-01). DB migration adds github_connections sub-table for App-flavor metadata (org login, repo allowlist) since plugin_connections.metadata is JSON-blob-y. Empty tools list at this stage; subsequent tasks fill it in.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "github-01-app-auth"
-      ],
-      "feature_id": "github-connector",
-      "source": {}
-    },
-    {
-      "id": "identity-01-entity",
-      "title": "ChannelIdentity entity + enforcement",
-      "description": "New ChannelIdentity entity with (id, plugin_id, connection_id, external_identifier, display_name, allowed_assistants, enabled). SQLite migration. Enforcement hook at channel-plugin inbound: unknown sender → check first-contact policy for this connection.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "plugin-core-03-connection-domain"
-      ],
-      "feature_id": "channel-identity-allowlist",
-      "source": {}
-    },
-    {
-      "id": "plugin-lifecycle-03-wasm-runtime-spike",
-      "title": "Wazero integration + smoke-test WASM plugin",
-      "description": "Add github.com/tetratelabs/wazero. New internal/plugins/wasmhost/ package wraps a wazero runtime + module loader. Define the WASM ABI (plugin_manifest, plugin_configure, plugin_start, plugin_stop + per-role tools/channels/triggers/context_sources + dispatch tool_execute/channel_send/trigger_start). Build a tiny example WASM plugin (TinyGo or AssemblyScript) implementing a single 'echo' tool — round-trip a string through the host. Lives at examples/wasm-plugin-echo/. Validates the ABI shape end-to-end before lifecycle-05 freezes it.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [],
-      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
-      "source": {}
-    },
-    {
-      "id": "github-05-repos-tools",
-      "title": "github.repos.file_read + clone tools",
-      "description": "Two read-shaped tools: (1) github.repos.file_read fetches a single file via the contents API at a given ref (default: main); permission-gated as 'read remote contents' since the auth scope already implies the user trusted us with read access. Streams + size-caps at 1MiB to keep agents from accidentally swallowing a 100MiB CSV. (2) github.repos.clone shells out to `git clone --depth 1` into the assistant's workspace (filesystem.write capability + workspace_root sandboxing — same path-resolution helper used by Obsidian/folder-context). file_read covers ~80% of code-reading flows without paying the clone overhead; clone is the escape hatch for cross-file reasoning.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "github-02-plugin-scaffold"
-      ],
-      "feature_id": "github-connector",
-      "source": {}
-    },
-    {
-      "id": "browser-02-tools",
-      "title": "Browser ToolProvider: navigate/observe/interact/extract",
-      "description": "Tools: browser.navigate, browser.observe (returns labeled DOM snapshot), browser.click, browser.type, browser.screenshot, browser.extract (CSS-selector-based text/attribute extraction). Stateless per call; optional session id for multi-step flows.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "browser-01-driver"
-      ],
-      "feature_id": "browser-system-plugin-(tool)",
-      "source": {}
-    },
-    {
-      "id": "discord-03-tool-role",
-      "title": "Discord ToolProvider: post/react/manage_roles",
-      "description": "Tools: discord.post_message (channel/user), discord.react (emoji reactions), discord.manage_roles (add/remove roles, subject to bot scope + guild permissions).",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "discord-01-gateway"
-      ],
-      "feature_id": "discord-plugin-(channel-+-tool)",
-      "source": {}
-    },
-    {
-      "id": "plugin-ui-03-status-badges",
-      "title": "Per-connection health status + event-driven badges",
-      "description": "Plugins-tab cards show per-connection status: auth healthy, last-event timestamp, error-since-last-event count. Badges driven by SSE events (connection_auth_failed, connection_event_received, connection_error) rather than polling.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "plugin-ui-01-plugins-tab"
-      ],
-      "feature_id": "plugin-ui-reshape",
-      "source": {}
-    },
-    {
-      "id": "media-01-outbound-contract",
-      "title": "OutboundMessage + Attachment types; Channel.Send signature change",
-      "description": "Introduce plugins.OutboundMessage carrying Text + []Attachment. Change Channel.Send signature to accept OutboundMessage. Update every existing channel plugin (Telegram/Email/Slack/Discord) at the call-site level to accept the new signature — implementations keep the current behavior (text-only) until their respective tasks below land the attachment handling. Add a small SendText(ctx, id, text) convenience so runtime callers that don't yet build attachments have a one-line call path.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [],
-      "feature_id": "rich-media-channel-contract",
-      "source": {}
-    },
-    {
-      "id": "plugin-core-05-policy-overrides",
-      "title": "Per-connection policy + rate limits + approval copy",
-      "description": "Extend PermissionPolicy with per_connection_overrides map. Extend ratelimit.go with per-connection budgets (in addition to per-run). Approval payload and plain-language copy include connection display name. Remove the Gmail-as-connector stub from internal/connectors/google/ (oauth.go migrates to internal/integrations/google/ in Gmail plugin task). connection_not_bound error at tool-call time when assistant lacks a binding.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "plugin-core-04-telegram-migration"
-      ],
-      "feature_id": "plugin-architecture-core-refactor",
-      "source": {}
-    },
-    {
-      "id": "event-system",
-      "title": "Event system implementation",
-      "description": "Create event bus with SQLite persistence. Implement EventPublisher and EventSubscriber interfaces. Support filtering by event type and run ID. Include event struct validation.",
-      "priority": "high",
-      "estimate": "2h",
-      "depends_on": [
-        "domain-models",
-        "storage-repository"
-      ],
-      "feature_id": "core-runtime-engine",
-      "source": {}
-    },
-    {
-      "id": "browser-01-driver",
-      "title": "Headless-browser driver choice + sandbox",
-      "description": "Evaluate chromedp vs playwright-go vs reusing Tauri WebView for automation. Sandbox design: separate process, isolated profile per assistant, no access to user's real browser cookies. Spike + decision doc before implementation.",
-      "priority": "medium",
-      "estimate": "",
-      "depends_on": [
-        "plugin-core-05-policy-overrides"
-      ],
-      "feature_id": "browser-system-plugin-(tool)",
-      "source": {}
-    },
-    {
-      "id": "signing-10-cert-rotation-runbook",
-      "title": "Cert custody + rotation runbook",
-      "description": "New `docs/runbooks/signing-certs.md` documenting: (1) Apple Developer ID Application cert renewal cadence (yearly), revocation procedure, where the .p12 + password live (1Password vault path), how to roll the GitHub Actions secrets without breaking in-flight releases. (2) Windows EV/OV cert renewal + rotation. (3) Ed25519 update signing key custody — who has the private key, what happens if it's lost (forced re-install for all users, plan a rotation strategy now). Includes a calendar reminder template and an incident playbook for 'cert leaked' / 'cert expired during release'. Cheap to write, expensive to skip.",
-      "priority": "low",
-      "estimate": "",
-      "depends_on": [
-        "signing-05-macos-sign-notarize",
-        "signing-07-windows-sign-msi-distribution"
-      ],
-      "feature_id": "signed-desktop-builds-+-distribution",
-      "source": {}
-    },
-    {
-      "id": "plugin-lifecycle-04-wasm-host-imports",
-      "title": "Capability-gated WASM host imports",
-      "description": "Implement host_log, host_http_request (gated by network.outgoing + NetworkAllowlist intersection), host_filesystem_read/write (gated by filesystem.read/write + workspace_root), host_command_exec (gated by command.exec + allowed_binaries), host_secrets_get (gated by secrets.read), host_emit_event (always available). Imports the plugin's manifest doesn't declare are simply unavailable — the WASM module fails to load, surfaced as a clear install-time error. Per-call gate routes through permEngine.Evaluate so the user's PermissionPolicy still has the final say. Tests cover the deny path (manifest declared but policy denied), the allow path, and the missing-import path (plugin tries to call something the manifest didn't ask for).",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [
-        "plugin-lifecycle-03-wasm-runtime-spike"
-      ],
-      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
+      "feature_id": "folder-context-attachment",
       "source": {}
     },
     {
@@ -2809,35 +1561,292 @@
       "source": {}
     },
     {
-      "id": "signing-01-version-command",
-      "title": "nomid --version + Tauri build-time version injection",
-      "description": "Add `nomid --version` flag to cmd/nomid/main.go that prints semver + commit hash + build date. Wire commit/version through ldflags in Makefile (`-ldflags=\"-X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.buildDate=$(DATE)\"`). On the Tauri side, expose the same via a `app_version` Tauri command consumed by an About panel in Settings. Required by the auto-update flow (signing-03) and the release workflow (signing-04) so users and CI can both ask 'what version is this binary?'. No external dependencies; lowest-cost starting task.",
+      "id": "github-02-tools",
+      "title": "GitHub ToolProvider: PRs/issues/code",
+      "description": "Tools: github.open_pr, github.comment_pr, github.comment_issue, github.create_issue, github.search_code, github.read_file. All scoped to the connection's installed repos.",
       "priority": "medium",
       "estimate": "",
-      "depends_on": [],
-      "feature_id": "signed-desktop-builds-+-distribution",
+      "depends_on": [
+        "github-01-app-auth"
+      ],
+      "feature_id": "github-plugin-(tool-+-trigger)",
       "source": {}
     },
     {
-      "id": "signing-02-update-keys-and-config",
-      "title": "Ed25519 update signing keypair + Tauri updater plugin config",
-      "description": "Generate the Ed25519 keypair used to sign Tauri update manifests (`tauri signer generate -w ~/.tauri/nomi.key`). Document custody: private key stored in 1Password / equivalent; public key embedded in `app/src-tauri/tauri.conf.json` under `plugins.updater.pubkey`. Install + configure `tauri-plugin-updater` v2 in `app/src-tauri/Cargo.toml` and the corresponding JS bridge in `app/src/`. Endpoint URL points at GitHub Releases (`https://github.com/felixgeelhaar/nomi/releases/latest/download/latest.json`). High priority because it gates the entire update flow.",
-      "priority": "high",
-      "estimate": "",
-      "depends_on": [],
-      "feature_id": "signed-desktop-builds-+-distribution",
-      "source": {}
-    },
-    {
-      "id": "folder-context-runtime",
-      "title": "Wire folder context into runtime execution",
-      "description": "In runtime.CreateRun or executeStep, read assistant.Contexts, invoke FolderContextTool for any 'folder' attachments, and inject the tree into the run's initial step context or system prompt.",
+      "id": "connector-telegram-real",
+      "title": "Implement real Telegram connector",
+      "description": "Replace the mock Telegram connector with a real implementation using go-telegram-bot-api or tgbot library. Implement polling loop, message handling, and SendMessage with real HTTP calls to Telegram Bot API.",
       "priority": "high",
       "estimate": "45m",
       "depends_on": [
-        "folder-context-api"
+        "connector-interface"
       ],
-      "feature_id": "folder-context-attachment",
+      "feature_id": "connector-plugin-architecture",
+      "source": {}
+    },
+    {
+      "id": "plugin-lifecycle-07-install-uninstall-api",
+      "title": "Install / uninstall REST endpoints",
+      "description": "POST /plugins/install accepting either a URL (fetch from NomiHub or arbitrary HTTPS) or a multipart-uploaded local .nomi-plugin file. Body validates via lifecycle-05 + lifecycle-06; on success the bundle is unpacked into ~/.nomi/plugins/\u003cid\u003e/, plugin_state row inserted with distribution=marketplace + installed=true + enabled=false, plugin module loaded into the registry. DELETE /plugins/:id with optional cascade=true query param: cascade=false (default) keeps plugin_connections + bindings + identities so reinstall reattaches; cascade=true removes everything including credentials in secrets.Store. System plugins refuse uninstall with 409. Tests cover happy path (install → enable → disable → uninstall), cascade vs non-cascade uninstall, signature failure, and version-conflict-on-reinstall.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "plugin-lifecycle-06-signing-verify"
+      ],
+      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
+      "source": {}
+    },
+    {
+      "id": "browser-01-driver",
+      "title": "Headless-browser driver choice + sandbox",
+      "description": "Evaluate chromedp vs playwright-go vs reusing Tauri WebView for automation. Sandbox design: separate process, isolated profile per assistant, no access to user's real browser cookies. Spike + decision doc before implementation.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "plugin-core-05-policy-overrides"
+      ],
+      "feature_id": "browser-system-plugin-(tool)",
+      "source": {}
+    },
+    {
+      "id": "llm-domain-repo",
+      "title": "ProviderProfile domain model and repository",
+      "description": "Create ProviderProfile domain model, repository with CRUD operations, and global settings storage for default provider.",
+      "priority": "high",
+      "estimate": "30m",
+      "depends_on": [
+        "llm-db-providers"
+      ],
+      "feature_id": "llm-provider-configuration",
+      "source": {}
+    },
+    {
+      "id": "plugin-ui-01-plugins-tab",
+      "title": "Plugins tab (replaces Connections)",
+      "description": "New Plugins tab in Settings. Per-plugin card shows manifest (name, version, roles), connection list, 'Add connection' button. Per-plugin auth flows: OAuth device flow (Google), OAuth web redirect (Slack/Discord/GitHub), bot token entry (Telegram), IMAP credentials (Email generic).",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "plugin-core-05-policy-overrides"
+      ],
+      "feature_id": "plugin-ui-reshape",
+      "source": {}
+    },
+    {
+      "id": "error-message-audit-ui",
+      "title": "Audit UI error surfaces (API errors, network, toasts)",
+      "description": "Rewrite frontend error messages: network errors reaching daemon, vite preview vs Tauri bridge mismatch, plugin install corrupted bundle, signature verification failed, generic API error fallbacks.",
+      "priority": "high",
+      "estimate": "1h",
+      "depends_on": [
+        "error-message-audit"
+      ],
+      "feature_id": "error-message-audit-—-plain-language,-actionable,-non-technical",
+      "source": {}
+    },
+    {
+      "id": "plugin-core-01-interfaces",
+      "title": "Plugin + role interfaces",
+      "description": "Define Plugin interface, role interfaces (ChannelProvider, ToolProvider, TriggerProvider, ContextSourceProvider), PluginManifest, Contributions types in new internal/plugins/ package. No registry yet — just the types.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [],
+      "feature_id": "plugin-architecture-core-refactor",
+      "source": {}
+    },
+    {
+      "id": "obsidian-02-tools",
+      "title": "Obsidian ToolProvider: create/update/search/link",
+      "description": "Tools: obsidian.create_note (respects frontmatter templates), obsidian.update_note, obsidian.search_notes (text + tag + link-graph search), obsidian.link_notes (create [[wikilink]] between two notes).",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "obsidian-01-vault"
+      ],
+      "feature_id": "obsidian-plugin-(tool-+-context-source)",
+      "source": {}
+    },
+    {
+      "id": "obsidian-01-vault",
+      "title": "Vault discovery + FS sandboxing",
+      "description": "Per-Connection vault path. Filesystem sandboxing prevents writes outside the declared vault root (uses existing ResolveWithinRoot helper). Vault metadata: detected .obsidian config, note count, tag list.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "plugin-core-05-policy-overrides"
+      ],
+      "feature_id": "obsidian-plugin-(tool-+-context-source)",
+      "source": {}
+    },
+    {
+      "id": "media-09-whisper-stt",
+      "title": "Whisper STT backend for media.transcribe",
+      "description": "Implement media.transcribe using whisper.cpp. Input: audio bytes + language hint. Output: transcript text. Models live under ~/.nomi/models/whisper/; plugin handles download with progress events. Sandboxed subprocess. Auto-invoked by the inbound-enrichment pass on voice attachments.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "media-07-media-plugin-scaffold"
+      ],
+      "feature_id": "rich-media-channel-contract",
+      "source": {}
+    },
+    {
+      "id": "email-02-channel-role",
+      "title": "Email ChannelProvider + threading",
+      "description": "Email plugin registers as ChannelProvider per enabled connection. Inbound mail → Conversation (keyed by Message-ID / References chain) → Run. Outbound replies use In-Reply-To + References to keep threading. Identity allowlist integration.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "email-01-imap-smtp",
+        "conversation-02-runtime-wiring",
+        "identity-01-entity"
+      ],
+      "feature_id": "email-plugin-(channel-+-tool-+-trigger)",
+      "source": {}
+    },
+    {
+      "id": "plugin-ui-03-status-badges",
+      "title": "Per-connection health status + event-driven badges",
+      "description": "Plugins-tab cards show per-connection status: auth healthy, last-event timestamp, error-since-last-event count. Badges driven by SSE events (connection_auth_failed, connection_event_received, connection_error) rather than polling.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "plugin-ui-01-plugins-tab"
+      ],
+      "feature_id": "plugin-ui-reshape",
+      "source": {}
+    },
+    {
+      "id": "slack-02-channel-role",
+      "title": "Slack ChannelProvider + Block Kit approvals",
+      "description": "DM to bot → Conversation + Run. Threaded replies via thread_ts. Approval rendering as Block Kit interactive buttons; approval resolution via button click posts back through the same socket. Identity allowlist integration.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "slack-01-socket-mode",
+        "conversation-02-runtime-wiring",
+        "identity-01-entity"
+      ],
+      "feature_id": "slack-plugin-(channel-+-tool)",
+      "source": {}
+    },
+    {
+      "id": "plugin-core-04-telegram-migration",
+      "title": "Migrate Telegram to plugins/telegram/",
+      "description": "Port internal/connectors/telegram.go to internal/plugins/telegram/ implementing Plugin + ChannelProvider. One-shot SQLite migration: existing connector_configs.config Connections → plugin_connections rows (preserving ids + default_assistant_id). Existing DefaultAssistantID becomes a role=channel binding. No behavior change for existing Telegram users.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "plugin-core-03-connection-domain"
+      ],
+      "feature_id": "plugin-architecture-core-refactor",
+      "source": {}
+    },
+    {
+      "id": "signing-09-update-e2e-test",
+      "title": "Auto-update end-to-end smoke test",
+      "description": "Script that builds version vN, installs it on a fresh runner (macOS + Windows + Linux matrix where possible), publishes vN+1 to a fixture release, and asserts that the running app detects the update, downloads it, and the relaunched binary reports the new version via `nomid --version`. Lives in `.github/workflows/update-e2e.yml` triggered manually + on release. Catches regressions in the updater plugin config, manifest format, or signature verification path. Acceptance: green CI run that exercises the full update path on at least macOS.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "signing-03-update-manifest-and-ux",
+        "signing-05-macos-sign-notarize"
+      ],
+      "feature_id": "signed-desktop-builds-+-distribution",
+      "source": {}
+    },
+    {
+      "id": "llm-db-providers",
+      "title": "Add provider_profiles table migration",
+      "description": "Create provider_profiles table migration with id, name, type, endpoint, model_ids JSON, secret_ref, enabled, created_at columns.",
+      "priority": "high",
+      "estimate": "20m",
+      "depends_on": [],
+      "feature_id": "llm-provider-configuration",
+      "source": {}
+    },
+    {
+      "id": "github-03-triggers",
+      "title": "GitHub TriggerProvider: webhook routing",
+      "description": "Webhook receiver endpoint (validates X-Hub-Signature-256), routes events to trigger subscriptions: pr_opened, issue_commented, push, workflow_failed. Per-connection allowlist of event types.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "github-02-tools"
+      ],
+      "feature_id": "github-plugin-(tool-+-trigger)",
+      "source": {}
+    },
+    {
+      "id": "plugin-core-05-policy-overrides",
+      "title": "Per-connection policy + rate limits + approval copy",
+      "description": "Extend PermissionPolicy with per_connection_overrides map. Extend ratelimit.go with per-connection budgets (in addition to per-run). Approval payload and plain-language copy include connection display name. Remove the Gmail-as-connector stub from internal/connectors/google/ (oauth.go migrates to internal/integrations/google/ in Gmail plugin task). connection_not_bound error at tool-call time when assistant lacks a binding.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "plugin-core-04-telegram-migration"
+      ],
+      "feature_id": "plugin-architecture-core-refactor",
+      "source": {}
+    },
+    {
+      "id": "discord-02-channel-role",
+      "title": "Discord ChannelProvider + slash commands",
+      "description": "DM + guild channel mentions → Conversation + Run. Replies in-thread. Slash-command surface for common operations (/nomi-new, /nomi-approve). Identity allowlist integration.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "discord-01-gateway",
+        "conversation-02-runtime-wiring",
+        "identity-01-entity"
+      ],
+      "feature_id": "discord-plugin-(channel-+-tool)",
+      "source": {}
+    },
+    {
+      "id": "error-message-audit",
+      "title": "Error Message Audit — Plain-Language, Actionable, Non-Technical",
+      "description": "Cross-cutting V1.3 audit: rewrite every user-visible error message to explain (a) what went wrong in non-technical language, (b) why it happened, and (c) what the user can do next. Add structured code/title/body/action envelope where missing.",
+      "priority": "high",
+      "estimate": "3h",
+      "depends_on": [],
+      "feature_id": "error-message-audit-—-plain-language,-actionable,-non-technical",
+      "source": {}
+    },
+    {
+      "id": "media-07-media-plugin-scaffold",
+      "title": "com.nomi.media plugin scaffold + manifest",
+      "description": "New tool-only plugin at internal/plugins/media/. Manifest declares tools: media.speak (TTS), media.transcribe (STT), media.describe_image (vision), with capability strings media.tts / media.stt / media.vision. Cardinality single — one install, no per-connection account concept. ConfigSchema fields for backend selection (tts_backend, stt_model_path, etc.) so users configure all media once in one card.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "media-01-outbound-contract"
+      ],
+      "feature_id": "rich-media-channel-contract",
+      "source": {}
+    },
+    {
+      "id": "domain-models",
+      "title": "Core domain model definitions",
+      "description": "Define Go structs for Run, Step, AssistantDefinition, ContextAttachment, PermissionPolicy, PermissionRule, MemoryEntry, Event. Include JSON marshaling and validation. Create enum types for RunStatus, StepStatus, EventType.",
+      "priority": "high",
+      "estimate": "1h",
+      "depends_on": [
+        "scaffold-project"
+      ],
+      "feature_id": "core-runtime-engine",
+      "source": {}
+    },
+    {
+      "id": "slack-03-tool-role",
+      "title": "Slack ToolProvider: post/search/react",
+      "description": "Tools: slack.post_message (to channel or user, with threading), slack.search_messages (across workspace subject to app scopes), slack.react_to_message (add/remove reactions).",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "slack-01-socket-mode"
+      ],
+      "feature_id": "slack-plugin-(channel-+-tool)",
       "source": {}
     },
     {
@@ -2853,6 +1862,44 @@
       "source": {}
     },
     {
+      "id": "tool-interface",
+      "title": "Tool interface and registry",
+      "description": "Define Tool interface (Name, Execute). Create ToolRegistry for tool discovery and lookup. Implement tool registration and capability mapping. Add tool execution wrapper with logging and error handling.",
+      "priority": "high",
+      "estimate": "1h",
+      "depends_on": [
+        "domain-models",
+        "event-system"
+      ],
+      "feature_id": "tool-system",
+      "source": {}
+    },
+    {
+      "id": "plugin-core-03-connection-domain",
+      "title": "Connection + AssistantConnectionBinding entities",
+      "description": "New domain entities Connection and AssistantConnectionBinding. SQLite migrations (up + down). Repositories with CRUD + queries (list connections by plugin, list bindings by assistant, lookup connection by id). Secrets live in secrets.Store; plugin_connections holds only CredentialRefs.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "plugin-core-02-registry"
+      ],
+      "feature_id": "plugin-architecture-core-refactor",
+      "source": {}
+    },
+    {
+      "id": "plugin-lifecycle-15-dogfood-marketplace-calendar",
+      "title": "Promote Calendar to marketplace as dogfooding test",
+      "description": "Repackage the Calendar plugin (currently bundled as system) as a WASM .nomi-plugin bundle published to NomiHub. Validates the entire pipeline end-to-end: WASM compilation of a real plugin with HTTP + OAuth needs, signing on the GitHub Actions side, install via UI, capability + NetworkAllowlist intersection at runtime, version-bump via update flow. Calendar stays bundled for users who don't want NomiHub-fetched plugins; the marketplace version is the canonical update target going forward. Acceptance: user with a fresh install can search 'calendar' in the marketplace browser, install it, configure a Google account, list events — all without rebuilding the daemon.",
+      "priority": "low",
+      "estimate": "",
+      "depends_on": [
+        "plugin-lifecycle-09-nomihub-catalog",
+        "plugin-lifecycle-13-ui-marketplace-browser"
+      ],
+      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
+      "source": {}
+    },
+    {
       "id": "plugin-lifecycle-06-signing-verify",
       "title": "Ed25519 signing + verification chain",
       "description": "Embed NomiHub root public key (Ed25519) in the daemon binary at build time via go:embed. Bundle reader verifies signature.ed25519 over the canonical SHA-256 of (manifest.json || plugin.wasm). Publisher keys are signed by the root key — verifier walks the chain publisher → root before trusting the bundle. Defends against compromised hub.nomi.ai serving altered bytes via content-addressed hashes recorded in the catalog. Reject expired publisher keys. Cosign/Sigstore deferred per ADR open question; revisit when plugin volume grows.",
@@ -2860,6 +1907,632 @@
       "estimate": "",
       "depends_on": [
         "plugin-lifecycle-05-bundle-format"
+      ],
+      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
+      "source": {}
+    },
+    {
+      "id": "plugin-lifecycle-14-ui-update-notifications",
+      "title": "UI: update notifications + per-plugin update button",
+      "description": "When plugin_state.available_version \u003e version, the plugin card shows an 'Update available: vX.Y.Z' banner with a button. Clicking surfaces a diff modal (changes since installed version pulled from the catalog's release notes) and an 'Update now' confirm. Calls POST /plugins/:id/update. Globally, the Plugins tab nav-item shows a small dot when ANY plugin has an update pending. Mirrors the SSE-driven invalidation pattern so multiple windows stay in sync.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "plugin-lifecycle-10-update-flow"
+      ],
+      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
+      "source": {}
+    },
+    {
+      "id": "identity-02-api-events",
+      "title": "Identity REST + audit events",
+      "description": "REST endpoints: list/create/update/delete identities per connection. Event emissions for identity lifecycle and first-contact events (allowlist_matched, first_contact_dropped, first_contact_approval_queued) so the UI can show activity.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "identity-01-entity"
+      ],
+      "feature_id": "channel-identity-allowlist",
+      "source": {}
+    },
+    {
+      "id": "event-system",
+      "title": "Event system implementation",
+      "description": "Create event bus with SQLite persistence. Implement EventPublisher and EventSubscriber interfaces. Support filtering by event type and run ID. Include event struct validation.",
+      "priority": "high",
+      "estimate": "2h",
+      "depends_on": [
+        "domain-models",
+        "storage-repository"
+      ],
+      "feature_id": "core-runtime-engine",
+      "source": {}
+    },
+    {
+      "id": "email-01-imap-smtp",
+      "title": "IMAP receive loop + SMTP send client",
+      "description": "Generic IMAP receive loop with IDLE support (fall back to polling when IDLE unsupported). SMTP send with STARTTLS + implicit TLS. Per-connection credentials via secrets.Store. No plugin wiring yet — just the transport layer in internal/plugins/email/transport/.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "plugin-core-05-policy-overrides"
+      ],
+      "feature_id": "email-plugin-(channel-+-tool-+-trigger)",
+      "source": {}
+    },
+    {
+      "id": "signing-02-update-keys-and-config",
+      "title": "Ed25519 update signing keypair + Tauri updater plugin config",
+      "description": "Generate the Ed25519 keypair used to sign Tauri update manifests (`tauri signer generate -w ~/.tauri/nomi.key`). Document custody: private key stored in 1Password / equivalent; public key embedded in `app/src-tauri/tauri.conf.json` under `plugins.updater.pubkey`. Install + configure `tauri-plugin-updater` v2 in `app/src-tauri/Cargo.toml` and the corresponding JS bridge in `app/src/`. Endpoint URL points at GitHub Releases (`https://github.com/felixgeelhaar/nomi/releases/latest/download/latest.json`). High priority because it gates the entire update flow.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [],
+      "feature_id": "signed-desktop-builds-+-distribution",
+      "source": {}
+    },
+    {
+      "id": "plugin-lifecycle-11-ui-enable-toggle",
+      "title": "UI: top-level plugin enable toggle",
+      "description": "Plugins-tab card gains a top-level enable/disable toggle (separate from per-connection toggles). Disabled plugins show greyed cards with the description amended: 'no inbound polling, no outbound capability'. System plugins render the toggle as locked-on with a 'system plugin, always available' tooltip. Lives in app/src/components/plugins-manager.tsx; consumes PATCH /plugins/:id/state. Mutation invalidates the plugins query so other clients see the change immediately via SSE-driven cache.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "plugin-lifecycle-01-state-table"
+      ],
+      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
+      "source": {}
+    },
+    {
+      "id": "task-v1-hardening-01-error-envelope",
+      "title": "Canonical Error Envelope Everywhere",
+      "description": "Standardize all API/UI error responses to a canonical shape (code/title/message/action/details), remove ad-hoc payloads, and enforce deterministic rendering across core flows.",
+      "priority": "high",
+      "estimate": "5d",
+      "depends_on": [],
+      "feature_id": "v1-hardening-program-(multi-expert-30/60/90)",
+      "source": {}
+    },
+    {
+      "id": "media-06-inbound-attachment-capture",
+      "title": "Inbound attachment capture on channels",
+      "description": "Extend each channel plugin's inbound handler to capture attachment metadata (kind, filename, content-type, url/bytes) on received messages. Plumb into the Run's initial input via a new RunInput.Attachments field (or via a sidecar table keyed by run_id if the runtime avoids growing Run row shape). Channel plugins don't fetch the bytes eagerly; they pass references that the inbound-enrichment pass resolves on demand.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "media-01-outbound-contract"
+      ],
+      "feature_id": "rich-media-channel-contract",
+      "source": {}
+    },
+    {
+      "id": "email-05-provider-presets",
+      "title": "Provider presets + Plugins-tab UX",
+      "description": "UI presets for Gmail OAuth, Outlook OAuth, Fastmail app-password, iCloud, Yahoo, and generic IMAP/SMTP. Preset wizard derives IMAP/SMTP hosts from the email address when possible. OAuth flows via internal/integrations/ where applicable.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "email-02-channel-role",
+        "plugin-ui-01-plugins-tab"
+      ],
+      "feature_id": "email-plugin-(channel-+-tool-+-trigger)",
+      "source": {}
+    },
+    {
+      "id": "plugin-lifecycle-12-ui-install-dialog",
+      "title": "UI: install confirmation dialog",
+      "description": "When the user picks a marketplace plugin (or drag-drops a local .nomi-plugin), a modal surfaces: plugin name + publisher + version, README.md rendering, capability list (each capability is a chip with hover-card explaining what it grants), NetworkAllowlist (chip list of host patterns), signature trust status (green checkmark for hub-signed, red banner for unsigned dev bundles, yellow for signed-but-unknown-publisher). Install button calls POST /plugins/install. Cancel discards. Lives in app/src/components/plugin-install-dialog.tsx.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "plugin-lifecycle-07-install-uninstall-api"
+      ],
+      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
+      "source": {}
+    },
+    {
+      "id": "conversation-02-runtime-wiring",
+      "title": "Wire conversation_id through runtime + SSE + REST",
+      "description": "Runtime attaches conversation_id to runs created via CreateRunFromSource. Domain events include conversation_id so SSE subscribers can filter. REST endpoints: list conversations, get conversation with runs, delete conversation.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "conversation-01-entity"
+      ],
+      "feature_id": "multi-turn-conversation-model",
+      "source": {}
+    },
+    {
+      "id": "media-04-discord-outbound",
+      "title": "Discord rich-media outbound (message attachments)",
+      "description": "Extend Discord's Channel.Send to use ChannelMessageSendComplex with MessageSend.Files populated from OutboundMessage.Attachments. In-message captions go into the Content field alongside.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "media-01-outbound-contract"
+      ],
+      "feature_id": "rich-media-channel-contract",
+      "source": {}
+    },
+    {
+      "id": "calendar-02-tools",
+      "title": "Calendar ToolProvider: list/create/update/delete/find_free",
+      "description": "Tools: calendar.list_upcoming (range-filtered), calendar.create_event, calendar.update_event, calendar.delete_event, calendar.find_free_slot (duration + participants → candidate slots).",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "calendar-01-providers"
+      ],
+      "feature_id": "calendar-plugin-(tool-+-trigger)",
+      "source": {}
+    },
+    {
+      "id": "discord-03-tool-role",
+      "title": "Discord ToolProvider: post/react/manage_roles",
+      "description": "Tools: discord.post_message (channel/user), discord.react (emoji reactions), discord.manage_roles (add/remove roles, subject to bot scope + guild permissions).",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "discord-01-gateway"
+      ],
+      "feature_id": "discord-plugin-(channel-+-tool)",
+      "source": {}
+    },
+    {
+      "id": "identity-03-ui",
+      "title": "Identity allowlist UI + first-contact review",
+      "description": "Per-connection identities list in the Plugins tab with add/remove. First-contact policy toggle per connection (drop silently | reply 'request access' | queue approval). Approval queue view for pending first-contact requests.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "identity-02-api-events"
+      ],
+      "feature_id": "channel-identity-allowlist",
+      "source": {}
+    },
+    {
+      "id": "plugin-lifecycle-03-wasm-runtime-spike",
+      "title": "Wazero integration + smoke-test WASM plugin",
+      "description": "Add github.com/tetratelabs/wazero. New internal/plugins/wasmhost/ package wraps a wazero runtime + module loader. Define the WASM ABI (plugin_manifest, plugin_configure, plugin_start, plugin_stop + per-role tools/channels/triggers/context_sources + dispatch tool_execute/channel_send/trigger_start). Build a tiny example WASM plugin (TinyGo or AssemblyScript) implementing a single 'echo' tool — round-trip a string through the host. Lives at examples/wasm-plugin-echo/. Validates the ABI shape end-to-end before lifecycle-05 freezes it.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [],
+      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
+      "source": {}
+    },
+    {
+      "id": "media-01-outbound-contract",
+      "title": "OutboundMessage + Attachment types; Channel.Send signature change",
+      "description": "Introduce plugins.OutboundMessage carrying Text + []Attachment. Change Channel.Send signature to accept OutboundMessage. Update every existing channel plugin (Telegram/Email/Slack/Discord) at the call-site level to accept the new signature — implementations keep the current behavior (text-only) until their respective tasks below land the attachment handling. Add a small SendText(ctx, id, text) convenience so runtime callers that don't yet build attachments have a one-line call path.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [],
+      "feature_id": "rich-media-channel-contract",
+      "source": {}
+    },
+    {
+      "id": "llm-ui-assistant",
+      "title": "Assistant advanced mode model override UI",
+      "description": "Update assistant form with advanced mode toggle. When advanced mode is enabled, show ModelPolicy configuration: preferred provider/model selection, fallback options, local-only toggle.",
+      "priority": "medium",
+      "estimate": "30m",
+      "depends_on": [
+        "llm-assistant-policy"
+      ],
+      "feature_id": "llm-provider-configuration",
+      "source": {}
+    },
+    {
+      "id": "plugin-lifecycle-10-update-flow",
+      "title": "Update detection + explicit update action",
+      "description": "Daemon polls NomiHub catalog daily (configurable via app_settings). plugin_state gains available_version + last_checked_at columns; populated when catalog has a higher semver than installed. New event types plugin.update_available + plugin.updated. POST /plugins/:id/update fetches the latest bundle, verifies signature, atomically swaps the installed module (drains any in-flight tool calls first), and bumps plugin_state.version. Explicit only — no silent updates. Tests cover: catalog has newer version → flagged; user triggers update → swap succeeds; signature failure → swap aborted with installed version preserved.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "plugin-lifecycle-09-nomihub-catalog"
+      ],
+      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
+      "source": {}
+    },
+    {
+      "id": "identity-01-entity",
+      "title": "ChannelIdentity entity + enforcement",
+      "description": "New ChannelIdentity entity with (id, plugin_id, connection_id, external_identifier, display_name, allowed_assistants, enabled). SQLite migration. Enforcement hook at channel-plugin inbound: unknown sender → check first-contact policy for this connection.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "plugin-core-03-connection-domain"
+      ],
+      "feature_id": "channel-identity-allowlist",
+      "source": {}
+    },
+    {
+      "id": "github-05-repos-tools",
+      "title": "github.repos.file_read + clone tools",
+      "description": "Two read-shaped tools: (1) github.repos.file_read fetches a single file via the contents API at a given ref (default: main); permission-gated as 'read remote contents' since the auth scope already implies the user trusted us with read access. Streams + size-caps at 1MiB to keep agents from accidentally swallowing a 100MiB CSV. (2) github.repos.clone shells out to `git clone --depth 1` into the assistant's workspace (filesystem.write capability + workspace_root sandboxing — same path-resolution helper used by Obsidian/folder-context). file_read covers ~80% of code-reading flows without paying the clone overhead; clone is the escape hatch for cross-file reasoning.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "github-02-plugin-scaffold"
+      ],
+      "feature_id": "github-connector",
+      "source": {}
+    },
+    {
+      "id": "sqlite-migrations",
+      "title": "SQLite schema design and golang-migrate setup",
+      "description": "Create migration files for all tables: runs, steps, assistants, events, memory, permissions. Set up golang-migrate in the project. Create migration runner in Go. Include indexes and foreign keys. Create db package with connection management.",
+      "priority": "high",
+      "estimate": "2h",
+      "depends_on": [
+        "scaffold-project"
+      ],
+      "feature_id": "sqlite-storage-layer",
+      "source": {}
+    },
+    {
+      "id": "github-02-plugin-scaffold",
+      "title": "GitHub plugin scaffold + manifest",
+      "description": "Scaffold internal/plugins/github/ as a system-tier plugin: manifest declares network.outgoing (api.github.com, raw.githubusercontent.com), filesystem.write (workspace-scoped only, for clone tools), and per-Connection auth slot. Plugin registers in cmd/nomid/main.go alongside other tier-1 plugins (Telegram, Slack, Discord, Calendar, Gmail). Connection table mirrors the existing pattern: plugin_connections row holds either an encrypted PAT or a GitHub App installation_id (signed off in github-01). DB migration adds github_connections sub-table for App-flavor metadata (org login, repo allowlist) since plugin_connections.metadata is JSON-blob-y. Empty tools list at this stage; subsequent tasks fill it in.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "github-01-app-auth"
+      ],
+      "feature_id": "github-connector",
+      "source": {}
+    },
+    {
+      "id": "assistant-builder-ui-validation",
+      "title": "Builder inline validation for ceiling violations",
+      "description": "Add client-side validation in assistant-manager.tsx: when a policy rule references a capability family not in the ceiling, show inline error 'Tick the {Family} box above to allow this rule to take effect' and highlight the relevant capability checkbox.",
+      "priority": "high",
+      "estimate": "1h",
+      "depends_on": [
+        "assistant-builder-ceiling-validation"
+      ],
+      "feature_id": "assistant-builder-—-capability-ceiling-and-policy-coherence",
+      "source": {}
+    },
+    {
+      "id": "connector-ui-channels",
+      "title": "Add channel/connector selection to assistant UI",
+      "description": "Update assistant form UI to show available connectors as channel options. Multi-select checkboxes or badges for selecting which connectors an assistant uses.",
+      "priority": "medium",
+      "estimate": "30m",
+      "depends_on": [
+        "connector-api"
+      ],
+      "feature_id": "connector-plugin-architecture",
+      "source": {}
+    },
+    {
+      "id": "github-03-issues-tools",
+      "title": "github.issues tools",
+      "description": "Implement four issue-shaped tools on the GitHub plugin: github.issues.list (filterable by repo / state / assignee / labels, paginated), github.issues.get (single issue with body + comments), github.issues.create (new issue; permission-gated since it's a write), github.issues.comment (append comment; permission-gated). Each tool ResolvesPermission against the connection's PAT/App scope at call time so a token without `issues: write` cleanly errors instead of producing a 403 from upstream. Table-driven tests cover 200/403/404/422 GitHub API responses + rate-limit headers (X-RateLimit-Remaining=0 surfaces as a typed RateLimitError so the runtime can back off rather than fail the run).",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "github-02-plugin-scaffold"
+      ],
+      "feature_id": "github-connector",
+      "source": {}
+    },
+    {
+      "id": "templates",
+      "title": "Assistant templates (2-3 built-in)",
+      "description": "Create 2-3 built-in assistant templates: General Assistant (file operations, commands), Code Reviewer (git context, code analysis), DevOps Helper (command execution, file editing). Store as JSON files.",
+      "priority": "medium",
+      "estimate": "1h",
+      "depends_on": [
+        "domain-models"
+      ],
+      "feature_id": "core-foundation",
+      "source": {}
+    },
+    {
+      "id": "github-07-connections-ui",
+      "title": "GitHub Connections UI",
+      "description": "Connections tab gains a 'Add GitHub' card. Two paths: (a) PAT — opens the GitHub fine-grained PAT generation page in the system browser, user pastes the token, frontend POSTs to /plugins/github/connections with token + selected repo allowlist; backend stores via secrets.Store and round-trips the result. (b) GitHub App install — uses github-01's installation flow (open https://github.com/apps/\u003cappname\u003e/installations/new in browser, capture redirect with installation_id). Per-connection: org/login chip, repo allowlist editor, polling enable toggle, last-poll-success indicator. Lives in app/src/components/connections/github.tsx + a useGithubConnections query hook.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "github-02-plugin-scaffold"
+      ],
+      "feature_id": "github-connector",
+      "source": {}
+    },
+    {
+      "id": "plugin-lifecycle-02-network-allowlist",
+      "title": "NetworkAllowlist on manifest + per-capability constraint enforcement",
+      "description": "Add Requirements.NetworkAllowlist []string to PluginManifest. Bundled plugins gain explicit lists (Telegram: api.telegram.org + *.t.me; Slack: slack.com + *.slack.com + *.slack-edge.com; Discord: discord.com + *.discord.com + *.discordapp.net; Calendar: www.googleapis.com + oauth2.googleapis.com; Email: empty, runtime supplements with per-Connection imap_host/smtp_host). Wildcard matching mirrors permissions.matchWildcard (leading-dot anchor; *.slack.com does NOT match slack.com.attacker.com). For bundled plugins this is informational + surfaces in the install/info dialog; for marketplace WASM plugins it gates host_http_request at the WASM boundary in lifecycle-04.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [],
+      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
+      "source": {}
+    },
+    {
+      "id": "conversation-03-chats-ui",
+      "title": "Chats tab: one tab per Conversation",
+      "description": "Chats tab lists Conversations grouped by plugin+connection. Selecting one shows the run history within that thread. Desktop-initiated runs without a conversation stay in a 'Local' group for backward compatibility.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "conversation-02-runtime-wiring"
+      ],
+      "feature_id": "multi-turn-conversation-model",
+      "source": {}
+    },
+    {
+      "id": "signing-06-macos-dmg-homebrew-cask",
+      "title": "DMG bundle + Homebrew Cask publish",
+      "description": "Tauri produces a notarized .dmg via `tauri build --target universal-apple-darwin` after signing-05. New repo `nomiai/homebrew-tap` (or PR to homebrew-cask) with a `Casks/nomi.rb` cask file: url to the GitHub Release .dmg, sha256, version. Auto-bump cask on release via a small workflow that opens a PR to the tap repo with the new version + sha. Acceptance: `brew tap nomiai/tap \u0026\u0026 brew install --cask nomi` succeeds end-to-end on fresh macOS, app launches without Gatekeeper prompt.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "signing-05-macos-sign-notarize"
+      ],
+      "feature_id": "signed-desktop-builds-+-distribution",
+      "source": {}
+    },
+    {
+      "id": "signing-01-version-command",
+      "title": "nomid --version + Tauri build-time version injection",
+      "description": "Add `nomid --version` flag to cmd/nomid/main.go that prints semver + commit hash + build date. Wire commit/version through ldflags in Makefile (`-ldflags=\"-X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.buildDate=$(DATE)\"`). On the Tauri side, expose the same via a `app_version` Tauri command consumed by an About panel in Settings. Required by the auto-update flow (signing-03) and the release workflow (signing-04) so users and CI can both ask 'what version is this binary?'. No external dependencies; lowest-cost starting task.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [],
+      "feature_id": "signed-desktop-builds-+-distribution",
+      "source": {}
+    },
+    {
+      "id": "plugin-lifecycle-05-bundle-format",
+      "title": ".nomi-plugin bundle format",
+      "description": "Define the gzipped-tar bundle layout: manifest.json + plugin.wasm + README.md + signature.ed25519 + publisher.json. Bundle reader package internal/plugins/bundle/ that opens, validates structural integrity (required files present, manifest parseable, content-addressed bundle hash matches), and returns the parsed manifest + WASM bytes for downstream loaders. publisher.json carries publisher name + their public key fingerprint chained to the NomiHub root key. Test fixtures: a hand-built valid bundle, a bundle with a corrupt manifest, a bundle missing the signature.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "plugin-lifecycle-04-wasm-host-imports"
+      ],
+      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
+      "source": {}
+    },
+    {
+      "id": "connector-interface",
+      "title": "Define Connector interface and Manifest types",
+      "description": "Define Connector interface with Start(), Stop(), SendMessage(), Name(), Manifest() methods. Define ConnectorManifest with name, version, capabilities, config schema.",
+      "priority": "high",
+      "estimate": "20m",
+      "depends_on": [],
+      "feature_id": "connector-plugin-architecture",
+      "source": {}
+    },
+    {
+      "id": "plugin-lifecycle-13-ui-marketplace-browser",
+      "title": "UI: NomiHub marketplace browser",
+      "description": "New 'Browse plugins' button in the Plugins tab opens a dedicated panel that lists the NomiHub catalog. Search by name / capability / publisher. Each catalog entry is a card with name + description + publisher + capability badges + 'Install' button. Already-installed plugins show 'Installed' instead of 'Install' with a link back to their card. Consumes GET /plugins/marketplace. Lives in app/src/components/plugin-marketplace.tsx.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "plugin-lifecycle-09-nomihub-catalog"
+      ],
+      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
+      "source": {}
+    },
+    {
+      "id": "discord-01-gateway",
+      "title": "Discord bot + Gateway WebSocket",
+      "description": "Discord bot token auth. Gateway WebSocket for real-time events (messages, slash commands, button interactions). Per-bot connection model.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "plugin-core-05-policy-overrides"
+      ],
+      "feature_id": "discord-plugin-(channel-+-tool)",
+      "source": {}
+    },
+    {
+      "id": "media-03-slack-outbound",
+      "title": "Slack rich-media outbound (files.uploadV2)",
+      "description": "Extend Slack's Channel.Send to upload attachments via files.uploadV2 into the target channel (+ thread_ts for threading). Falls back to slack.MsgOptionText when there are no attachments.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "media-01-outbound-contract"
+      ],
+      "feature_id": "rich-media-channel-contract",
+      "source": {}
+    },
+    {
+      "id": "state-machine",
+      "title": "Run and Step state machines",
+      "description": "Implement state machine logic for Run and Step lifecycles. Define valid transitions and guard conditions. Create StateMachine interface and implementations. Include transition validation and error handling.",
+      "priority": "high",
+      "estimate": "2h",
+      "depends_on": [
+        "domain-models",
+        "event-system"
+      ],
+      "feature_id": "core-runtime-engine",
+      "source": {}
+    },
+    {
+      "id": "llm-ui-types",
+      "title": "Frontend API types and client for providers",
+      "description": "Add provider API client functions to frontend api.ts. Add ProviderProfile and ModelPolicy types to api.ts.",
+      "priority": "medium",
+      "estimate": "15m",
+      "depends_on": [
+        "llm-api"
+      ],
+      "feature_id": "llm-provider-configuration",
+      "source": {}
+    },
+    {
+      "id": "scaffold-project",
+      "title": "Project scaffolding and directory structure",
+      "description": "Initialize Go module (nomid), create directory structure (cmd/, internal/, pkg/, migrations/, web/), set up Tauri project in app/ directory. Create Makefile with common commands. Add .gitignore and basic README.",
+      "priority": "high",
+      "estimate": "1h",
+      "depends_on": [],
+      "feature_id": "core-foundation",
+      "source": {}
+    },
+    {
+      "id": "signing-07-windows-sign-msi-distribution",
+      "title": "Windows MSI build + EV/OV codesign + Scoop/winget",
+      "description": "Tauri WiX MSI target on the windows-latest runner. Codesign with EV or OV cert (DigiCert / Sectigo) imported via WINDOWS_CERTIFICATE_P12 + password secrets, using `signtool sign /tr http://timestamp.digicert.com /td sha256 /fd sha256`. Publish manifests: Scoop bucket (separate repo `nomiai/scoop-bucket` with auto-bumped manifest), winget submission (PR to microsoft/winget-pkgs with the new version). Blocked-until: Windows code-signing cert procurement ($200–$700/yr depending on EV vs OV + vendor). Acceptance: `scoop install nomi` works on a clean Windows 11 VM with no SmartScreen warning.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "signing-04-ci-release-workflow"
+      ],
+      "feature_id": "signed-desktop-builds-+-distribution",
+      "source": {}
+    },
+    {
+      "id": "connector-main-wire",
+      "title": "Wire connectors into application lifecycle",
+      "description": "Wire ConnectorRegistry into main.go lifecycle: instantiate registry, register Telegram connector, StartAll() after API server, StopAll() on shutdown signal.",
+      "priority": "high",
+      "estimate": "20m",
+      "depends_on": [
+        "connector-registry",
+        "connector-telegram-real"
+      ],
+      "feature_id": "connector-plugin-architecture",
+      "source": {}
+    },
+    {
+      "id": "plugin-lifecycle-08-dev-plugin-loader",
+      "title": "Dev plugin loader (~/.nomi/plugins-dev/)",
+      "description": "Settings flag dev_plugins_enabled (default false in production builds). When enabled, daemon loads unsigned .nomi-plugin bundles from ~/.nomi/plugins-dev/ at boot. UI surfaces dev-loaded plugins with a red 'unsigned, development build' banner. Allows plugin authors to iterate locally without going through NomiHub. Must NOT auto-load when the flag flips back to false (require restart). Test: drop a fixture bundle in the dev dir, flip the flag, verify it loads with the warning badge.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "plugin-lifecycle-03-wasm-runtime-spike"
+      ],
+      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
+      "source": {}
+    },
+    {
+      "id": "assistant-builder-ceiling-validation",
+      "title": "Assistant Builder — Capability Ceiling and Policy Coherence",
+      "description": "Prevent silent-deny trap: when a user adds a policy rule (allow/confirm) for a capability whose family is not in the assistant's declared capabilities ceiling, the runtime silently denies. Implement builder validation + API guard to make this failure loud at write time.",
+      "priority": "high",
+      "estimate": "2h",
+      "depends_on": [],
+      "feature_id": "assistant-builder-—-capability-ceiling-and-policy-coherence",
+      "source": {}
+    },
+    {
+      "id": "task-v1-hardening-06-security-consistency",
+      "title": "Security Consistency and Threat Model Refresh",
+      "description": "Perform focused threat-model refresh and control review for plugin install/update/uninstall, identity allowlists, secrets handling, and runtime tool boundaries; produce prioritized remediations.",
+      "priority": "medium",
+      "estimate": "4d",
+      "depends_on": [
+        "task-v1-hardening-02-roady-governance",
+        "task-v1-hardening-03-observability"
+      ],
+      "feature_id": "v1-hardening-program-(multi-expert-30/60/90)",
+      "source": {}
+    },
+    {
+      "id": "browser-02-tools",
+      "title": "Browser ToolProvider: navigate/observe/interact/extract",
+      "description": "Tools: browser.navigate, browser.observe (returns labeled DOM snapshot), browser.click, browser.type, browser.screenshot, browser.extract (CSS-selector-based text/attribute extraction). Stateless per call; optional session id for multi-step flows.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "browser-01-driver"
+      ],
+      "feature_id": "browser-system-plugin-(tool)",
+      "source": {}
+    },
+    {
+      "id": "folder-context-e2e-test",
+      "title": "End-to-end test of folder context flow",
+      "description": "Verify that creating an assistant with folder context, then starting a run, correctly loads the folder tree into the run. Check events and step output.",
+      "priority": "medium",
+      "estimate": "30m",
+      "depends_on": [
+        "folder-context-runtime"
+      ],
+      "feature_id": "folder-context-attachment",
+      "source": {}
+    },
+    {
+      "id": "calendar-01-providers",
+      "title": "Calendar provider abstraction (Google + Outlook)",
+      "description": "Common Calendar provider interface. Google implementation via internal/integrations/google/. Outlook implementation via MS Graph OAuth. Per-connection selects provider at creation time.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "gmail-01-oauth-shared"
+      ],
+      "feature_id": "calendar-plugin-(tool-+-trigger)",
+      "source": {}
+    },
+    {
+      "id": "task-v1-hardening-05-ux-coherence",
+      "title": "Assistant/Policy UX Coherence Pass",
+      "description": "Run UX coherence pass across assistant builder, policy, and approval surfaces with progressive disclosure and plain-language, actionable guidance.",
+      "priority": "medium",
+      "estimate": "4d",
+      "depends_on": [
+        "task-v1-hardening-01-error-envelope"
+      ],
+      "feature_id": "v1-hardening-program-(multi-expert-30/60/90)",
+      "source": {}
+    },
+    {
+      "id": "llm-test",
+      "title": "Integration tests for provider configuration",
+      "description": "Integration test verifying provider profile CRUD, global default setting, and assistant model policy storage.",
+      "priority": "low",
+      "estimate": "25m",
+      "depends_on": [
+        "llm-domain-repo"
+      ],
+      "feature_id": "llm-provider-configuration",
+      "source": {}
+    },
+    {
+      "id": "github-08-code-reviewer-template",
+      "title": "Code Reviewer assistant template + acceptance e2e",
+      "description": "templates/code-reviewer.json: assistant template defaulting to a GitHub Connection, allowed tools = github.pulls.{list,get,comment,review} + llm.chat, system prompt focused on PR-review craft (what to flag, how to phrase, when to approve vs request-changes). UI Browse Templates gains the entry. End-to-end test (manual or e2e harness) walks the spec acceptance: user connects a PAT against a fixture repo, asks the Code Reviewer 'review the latest open PR on \u003crepo\u003e', the run reaches plan_review showing the planned tools, after approval the run produces a review comment draft pending user approval before posting via github.pulls.comment. Validates the full chain (auth → list → get → analyze → comment-as-write).",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "github-03-issues-tools",
+        "github-04-pulls-tools",
+        "github-07-connections-ui"
+      ],
+      "feature_id": "github-connector",
+      "source": {}
+    },
+    {
+      "id": "connector-api",
+      "title": "Add connector REST API endpoints",
+      "description": "Add REST endpoints for connector management: GET /connectors (list available), GET /connectors/:name/status, POST /connectors/:name/configure.",
+      "priority": "medium",
+      "estimate": "30m",
+      "depends_on": [
+        "connector-registry",
+        "connector-telegram-real"
+      ],
+      "feature_id": "connector-plugin-architecture",
+      "source": {}
+    },
+    {
+      "id": "plugin-lifecycle-04-wasm-host-imports",
+      "title": "Capability-gated WASM host imports",
+      "description": "Implement host_log, host_http_request (gated by network.outgoing + NetworkAllowlist intersection), host_filesystem_read/write (gated by filesystem.read/write + workspace_root), host_command_exec (gated by command.exec + allowed_binaries), host_secrets_get (gated by secrets.read), host_emit_event (always available). Imports the plugin's manifest doesn't declare are simply unavailable — the WASM module fails to load, surfaced as a clear install-time error. Per-call gate routes through permEngine.Evaluate so the user's PermissionPolicy still has the final say. Tests cover the deny path (manifest declared but policy denied), the allow path, and the missing-import path (plugin tries to call something the manifest didn't ask for).",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "plugin-lifecycle-03-wasm-runtime-spike"
       ],
       "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
       "source": {}
@@ -2877,6 +2550,272 @@
       "source": {}
     },
     {
+      "id": "media-08-piper-tts",
+      "title": "Piper TTS backend for media.speak",
+      "description": "Implement media.speak using Piper ONNX runtime. Input: text + optional voice model id. Output: audio bytes (wav or ogg). Model files live under ~/.nomi/models/piper/*.onnx; plugin handles download on first use with a progress event. Runs as a subprocess via internal/tools/sandbox so the plugin never shells out unsandboxed.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "media-07-media-plugin-scaffold"
+      ],
+      "feature_id": "rich-media-channel-contract",
+      "source": {}
+    },
+    {
+      "id": "connector-registry",
+      "title": "Implement ConnectorRegistry",
+      "description": "Create ConnectorRegistry that manages connector lifecycle: Register(), StartAll(), StopAll(), RouteMessage(). Store connector instances and handle graceful startup/shutdown.",
+      "priority": "high",
+      "estimate": "30m",
+      "depends_on": [
+        "connector-interface"
+      ],
+      "feature_id": "connector-plugin-architecture",
+      "source": {}
+    },
+    {
+      "id": "llm-api",
+      "title": "Provider profile REST API",
+      "description": "REST API endpoints: GET/POST/PUT/DELETE /provider-profiles, GET/PUT /settings/llm-default. Include validation and proper error handling.",
+      "priority": "high",
+      "estimate": "30m",
+      "depends_on": [
+        "llm-domain-repo"
+      ],
+      "feature_id": "llm-provider-configuration",
+      "source": {}
+    },
+    {
+      "id": "folder-context",
+      "title": "Folder context attachment implementation",
+      "description": "Implement folder context scanning and indexing. Add context attachment to runs. Build file tree representation for UI. Integrate with filesystem tools.",
+      "priority": "medium",
+      "estimate": "2h",
+      "depends_on": [
+        "core-tools",
+        "ui-assistant-manager"
+      ],
+      "feature_id": "core-runtime-engine",
+      "source": {}
+    },
+    {
+      "id": "llm-assistant-policy",
+      "title": "Add ModelPolicy to assistant definition",
+      "description": "Add ModelPolicy to AssistantDefinition with mode, preferred model, fallback, local_only, allow_fallback fields. Update assistant API to accept model_policy.",
+      "priority": "medium",
+      "estimate": "20m",
+      "depends_on": [
+        "llm-api"
+      ],
+      "feature_id": "llm-provider-configuration",
+      "source": {}
+    },
+    {
+      "id": "connector-integration-test",
+      "title": "Integration test for connector registry",
+      "description": "Integration test that verifies connector registry starts/stops connectors correctly and routes messages.",
+      "priority": "medium",
+      "estimate": "20m",
+      "depends_on": [
+        "connector-main-wire",
+        "connector-ui-channels"
+      ],
+      "feature_id": "connector-plugin-architecture",
+      "source": {}
+    },
+    {
+      "id": "media-10-inbound-enrichment",
+      "title": "Runtime auto-enrichment pass for inbound attachments",
+      "description": "Before planning starts, if the Run has attachments, the runtime consults per-kind enrichment config (e.g. audio → media.transcribe, image → media.describe_image) and invokes the configured tools to append their outputs into the Run's initial goal/input. Skips when the media plugin isn't installed. User-facing behavior: an inbound Telegram voice note becomes goal 'Alice: [voice transcript] ...' automatically.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "media-06-inbound-attachment-capture",
+        "media-09-whisper-stt"
+      ],
+      "feature_id": "rich-media-channel-contract",
+      "source": {}
+    },
+    {
+      "id": "browser-03-sessions-approval",
+      "title": "Browser session persistence + approval gating",
+      "description": "Browser sessions scoped to (assistant_id, session_id); cleaned up after idle timeout. browser.navigate + browser.interact default to confirm mode with per-domain override (e.g. allow google.com navigate but confirm bank.example.com). URL-to-capability mapping for fine-grained gating.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "browser-02-tools"
+      ],
+      "feature_id": "browser-system-plugin-(tool)",
+      "source": {}
+    },
+    {
+      "id": "obsidian-03-context",
+      "title": "Obsidian ContextSourceProvider: vault indexing",
+      "description": "At plan time, expose relevant notes based on the assistant's current goal. Follows [[wikilinks]], filters by frontmatter tags, respects .obsidianignore. Similar shape to today's folder context but vault-aware.",
+      "priority": "low",
+      "estimate": "",
+      "depends_on": [
+        "obsidian-02-tools"
+      ],
+      "feature_id": "obsidian-plugin-(tool-+-context-source)",
+      "source": {}
+    },
+    {
+      "id": "gmail-01-oauth-shared",
+      "title": "Port Google OAuth to internal/integrations/google/",
+      "description": "Move google.OAuthManager + refresh-token handling out of internal/connectors/google/ into internal/integrations/google/. Shared by Gmail and Calendar plugins. Device-flow endpoints move to a plugin-agnostic Google-connection flow reused by both plugins.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "plugin-core-05-policy-overrides"
+      ],
+      "feature_id": "gmail-plugin-(tool-+-trigger)",
+      "source": {}
+    },
+    {
+      "id": "signing-04-ci-release-workflow",
+      "title": "GitHub Actions tag-driven release workflow",
+      "description": "New `.github/workflows/release.yml` triggered on `v*.*.*` tags. Matrix: macos-14 (universal binary via lipo of arm64 + x86_64), ubuntu-latest, windows-latest. Per-job: install Go + Node + pnpm/npm, run `make build` (Go daemon) + `make app-build` (Tauri bundle). Outputs uploaded as workflow artifacts in this task — signing + publishing happens in 05/07/08. Creates the GitHub Release as a draft on tag push; subsequent platform jobs attach binaries. Concurrency group ensures only one release run per tag. High priority — every other distribution task depends on it.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "signing-01-version-command"
+      ],
+      "feature_id": "signed-desktop-builds-+-distribution",
+      "source": {}
+    },
+    {
+      "id": "github-06-poll-triggers",
+      "title": "Polling-based issue/PR event triggers",
+      "description": "GitHub plugin background loop polls each enabled Connection's repo allowlist every 60s for new issues + PR review-requests. Emits trigger.fired events that the runtime ingests via the existing trigger framework (same path Calendar/Slack use). Polling state (last_etag, last_seen_id per repo) persists in plugin-private rows so a daemon restart doesn't replay 30-day-old issues as new. Webhook-receiver path is the V2 upgrade — flagged in the manifest under `triggers[].mode = 'polling'` for the UI to surface; switching to webhooks happens once we have a tunneled receiver story. Conditional-request If-None-Match cuts API quota by ~80% in the steady state.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "github-03-issues-tools",
+        "github-04-pulls-tools"
+      ],
+      "feature_id": "github-connector",
+      "source": {}
+    },
+    {
+      "id": "folder-context-ui-picker",
+      "title": "Add folder picker to assistant form UI",
+      "description": "Add a folder path input (with directory picker button using Tauri dialog API) to the assistant creation/management form. Allow attaching multiple folders, showing path + name.",
+      "priority": "high",
+      "estimate": "45m",
+      "depends_on": null,
+      "feature_id": "folder-context-attachment",
+      "source": {}
+    },
+    {
+      "id": "plugin-ui-02-agent-builder",
+      "title": "Assistant edit view: build-my-agent composer",
+      "description": "Assistant edit view gains grouped-by-plugin checklist of Connections, filterable by role. Default 1-per-slot with 'Add another' that reveals primary marker + per-connection policy override dropdown. Edits persist to assistant_connection_bindings; save triggers re-intersection of manifest permissions.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "plugin-ui-01-plugins-tab",
+        "plugin-core-05-policy-overrides"
+      ],
+      "feature_id": "plugin-ui-reshape",
+      "source": {}
+    },
+    {
+      "id": "signing-03-update-manifest-and-ux",
+      "title": "latest.json manifest format + silent download + relaunch banner",
+      "description": "Define the Tauri updater `latest.json` manifest schema (version, notes, pub_date, platforms.{darwin-aarch64,darwin-x86_64,linux-x86_64,windows-x86_64}.{signature, url}). Implement the React update UX: useUpdater hook checks on app boot + every 6h, downloads silently in the background, shows a non-modal banner 'New version ready. Relaunch now?' with Relaunch / Later buttons. Defer is sticky for 24h. Lives in `app/src/components/update-banner.tsx` + `app/src/lib/updater.ts`. Acceptance: a manually-edited fake `latest.json` triggers the banner end-to-end against a local file:// URL.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "signing-02-update-keys-and-config"
+      ],
+      "feature_id": "signed-desktop-builds-+-distribution",
+      "source": {}
+    },
+    {
+      "id": "folder-context-runtime",
+      "title": "Wire folder context into runtime execution",
+      "description": "In runtime.CreateRun or executeStep, read assistant.Contexts, invoke FolderContextTool for any 'folder' attachments, and inject the tree into the run's initial step context or system prompt.",
+      "priority": "high",
+      "estimate": "45m",
+      "depends_on": [
+        "folder-context-api"
+      ],
+      "feature_id": "folder-context-attachment",
+      "source": {}
+    },
+    {
+      "id": "folder-context-api",
+      "title": "Add folder context preview endpoint",
+      "description": "POST /tools/filesystem.context/preview endpoint that takes a path and returns the folder tree without requiring a run. Used by the UI for preview before saving assistant.",
+      "priority": "high",
+      "estimate": "30m",
+      "depends_on": null,
+      "feature_id": "folder-context-attachment",
+      "source": {}
+    },
+    {
+      "id": "signing-10-cert-rotation-runbook",
+      "title": "Cert custody + rotation runbook",
+      "description": "New `docs/runbooks/signing-certs.md` documenting: (1) Apple Developer ID Application cert renewal cadence (yearly), revocation procedure, where the .p12 + password live (1Password vault path), how to roll the GitHub Actions secrets without breaking in-flight releases. (2) Windows EV/OV cert renewal + rotation. (3) Ed25519 update signing key custody — who has the private key, what happens if it's lost (forced re-install for all users, plan a rotation strategy now). Includes a calendar reminder template and an incident playbook for 'cert leaked' / 'cert expired during release'. Cheap to write, expensive to skip.",
+      "priority": "low",
+      "estimate": "",
+      "depends_on": [
+        "signing-05-macos-sign-notarize",
+        "signing-07-windows-sign-msi-distribution"
+      ],
+      "feature_id": "signed-desktop-builds-+-distribution",
+      "source": {}
+    },
+    {
+      "id": "llm-ui-providers",
+      "title": "Provider profile settings UI",
+      "description": "Build settings page UI for managing provider profiles: list, create, edit, delete provider profiles with form fields for name, type, endpoint, models, credentials.",
+      "priority": "medium",
+      "estimate": "45m",
+      "depends_on": [
+        "llm-api"
+      ],
+      "feature_id": "llm-provider-configuration",
+      "source": {}
+    },
+    {
+      "id": "calendar-03-triggers",
+      "title": "Calendar TriggerProvider: pre-meeting + event lifecycle",
+      "description": "Triggers: pre-meeting (fire N minutes before an event), event-created, event-cancelled. Uses provider's push notifications where available (Google Calendar watch) otherwise polling.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "calendar-02-tools"
+      ],
+      "feature_id": "calendar-plugin-(tool-+-trigger)",
+      "source": {}
+    },
+    {
+      "id": "plugin-core-02-registry",
+      "title": "plugins.Registry + role-view projections",
+      "description": "plugins.Registry as source of truth. Role-view registries (channels, tools, triggers) are projections built via type-assertion at Register time. Register a plugin that plays multiple roles and verify its contributions fan out.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "plugin-core-01-interfaces"
+      ],
+      "feature_id": "plugin-architecture-core-refactor",
+      "source": {}
+    },
+    {
+      "id": "gmail-03-triggers",
+      "title": "Gmail TriggerProvider: label/from/query watch",
+      "description": "Triggers: label-watch (fire when a message gets a label), from-watch (fire on messages from specific senders), query-watch (fire on arbitrary Gmail-search-syntax matches). Uses Gmail history API for efficient delta polling.",
+      "priority": "medium",
+      "estimate": "",
+      "depends_on": [
+        "gmail-02-tools"
+      ],
+      "feature_id": "gmail-plugin-(tool-+-trigger)",
+      "source": {}
+    },
+    {
       "id": "slack-01-socket-mode",
       "title": "Slack app integration (Socket Mode)",
       "description": "Slack app auth: bot token + app-level token. Events API delivered via Socket Mode WebSocket (no inbound webhook hosting needed). Per-workspace connection model.",
@@ -2887,9 +2826,81 @@
       ],
       "feature_id": "slack-plugin-(channel-+-tool)",
       "source": {}
+    },
+    {
+      "id": "error-message-audit-runtime",
+      "title": "Audit runtime errors (ceiling, policy, approvals, retries, planner)",
+      "description": "Rewrite runtime-level error messages: capability ceiling violations, policy denials, approval rejections, retry-budget exhaustion, plan-validation failures, tool not found, schema mismatch, step timeout, run cancellation.",
+      "priority": "high",
+      "estimate": "1h",
+      "depends_on": [
+        "error-message-audit"
+      ],
+      "feature_id": "error-message-audit-—-plain-language,-actionable,-non-technical",
+      "source": {}
+    },
+    {
+      "id": "task-v1-hardening-04-reliability-evals",
+      "title": "Reliability Eval Suite and Failure Tests",
+      "description": "Build planner/tool reliability eval harness with failure taxonomy, cross-plugin contract tests, and end-to-end failure-mode scenarios with regression gates.",
+      "priority": "medium",
+      "estimate": "6d",
+      "depends_on": [
+        "task-v1-hardening-03-observability"
+      ],
+      "feature_id": "v1-hardening-program-(multi-expert-30/60/90)",
+      "source": {}
+    },
+    {
+      "id": "integration-testing",
+      "title": "Integration testing and end-to-end validation",
+      "description": "Write integration tests for the full flow: create run → execute steps → approval → completion. Test tool execution, permission evaluation, and event emission. Validate API endpoints.",
+      "priority": "medium",
+      "estimate": "3h",
+      "depends_on": [
+        "rest-api-runs",
+        "rest-api-assistants",
+        "ui-run-timeline"
+      ],
+      "feature_id": "core-foundation",
+      "source": {}
+    },
+    {
+      "id": "github-04-pulls-tools",
+      "title": "github.pulls tools",
+      "description": "Implement github.pulls.list / get / comment / review. .review submits a PR review (approve / request changes / comment); .comment leaves a single inline or top-level comment. Review-as-an-action is permission-gated, comment is permission-gated separately so users can grant comment-but-not-approve. .get returns the unified diff + linked issue refs + checkrun status so a Code Reviewer assistant has everything it needs in one round-trip without the agent re-asking for the diff. Tests assert pagination behavior on .list (\u003e30 PRs returns full set), and that .review with `body: ''` doesn't accidentally submit an empty 'approve'.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [
+        "github-02-plugin-scaffold"
+      ],
+      "feature_id": "github-connector",
+      "source": {}
+    },
+    {
+      "id": "signing-08-linux-packages",
+      "title": "Linux AppImage + .deb + SHA256SUMS",
+      "description": "Tauri builds AppImage + .deb on ubuntu-latest. Generate SHA256SUMS file containing checksums for every artifact in the release (cross-platform). No code signing — Linux distros rely on package-manager trust + checksums. Publish .deb via a simple GitHub-Pages-hosted apt repo at apt.nomi.ai (Phase 4) or skip apt repo for v1 and rely on direct .deb download from GitHub Releases. AppImage is the primary path — single-file, executable, no install required. SHA256SUMS attached to the release.",
+      "priority": "low",
+      "estimate": "",
+      "depends_on": [
+        "signing-04-ci-release-workflow"
+      ],
+      "feature_id": "signed-desktop-builds-+-distribution",
+      "source": {}
+    },
+    {
+      "id": "plugin-lifecycle-01-state-table",
+      "title": "plugin_state table + per-plugin enable/disable",
+      "description": "New SQLite table tracking (plugin_id, distribution, installed, enabled, version, source_url, signature_fingerprint, installed_at). On first boot seed with one row per system plugin marked distribution=system, installed=true, enabled=true. pluginRegistry.StartAll consults enabled=true before invoking Plugin.Start(). New REST endpoints: PATCH /plugins/:id/state {enabled: bool}, GET /plugins/:id/state. Frontend: top-level enable toggle on each plugin card. System plugins surface the toggle as disabled with a 'system plugin, always available' tooltip. Smallest user-visible win and answers the original 'can I stop plugins?' question; ships independently before any WASM work.",
+      "priority": "high",
+      "estimate": "",
+      "depends_on": [],
+      "feature_id": "plugin-distribution-+-lifecycle-(install/uninstall/update)",
+      "source": {}
     }
   ],
   "approval_status": "approved",
   "created_at": "2026-04-23T09:29:13.201119+02:00",
-  "updated_at": "2026-05-22T17:37:28.619983+02:00"
+  "updated_at": "2026-05-22T20:34:41.204928+02:00"
 }
