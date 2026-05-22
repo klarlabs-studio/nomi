@@ -49,7 +49,12 @@ jobs:
         with:
           repository: felixgeelhaar/mnemos
           path: mnemos
-          ref: ${{ inputs.mnemos-ref || 'v0.15.3' }}
+          # workflow_dispatch passes a ref via inputs.mnemos-ref; push +
+          # pull_request runs fall back to the pinned default. Using a
+          # `||` fallback inside the YAML expression keeps a single step
+          # working across all three event types because `inputs` is
+          # null on push but the expression coerces cleanly.
+          ref: ${{ github.event.inputs.mnemos-ref || 'v0.15.3' }}
 
       - name: Setup Go
         uses: actions/setup-go@v5
