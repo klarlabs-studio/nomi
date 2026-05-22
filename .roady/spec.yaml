@@ -1484,5 +1484,76 @@ features:
 
         Acceptance: Grafana query `planner_calls_total{provider="anthropic",outcome="ok"}` returns non-zero distinct from {provider="openai"}; planner_edit_distance histogram emits when a user edits a plan; step_failed_total{tool="filesystem.patch"} graphable separately from other tools.
       requirements: []
+    - id: repositioning:-ai-runtime-+-mnemos-cognitive-layer-narrative
+      title: 'Repositioning: AI Runtime + Mnemos Cognitive Layer Narrative'
+      description: |-
+        Shift the product narrative from "local-first coding agent" to "personal AI runtime with persistent cognition (Mnemos)." Coding stays as the flagship workflow on the landing page; the runtime + capability engine + memory architecture becomes the category claim.
+
+        Background:
+        Current framing collapses Nomi into a Cursor/Claude-Code alternative and hides the runtime+memory architecture that is the actual moat. Mnemos is positioned as a feature bullet ("memory that's portable") instead of as the cognitive layer that distinguishes Nomi from stateless agent frameworks. The strategic insight from 2026-05-21 product review: the moat is accumulated semantic operational memory + a capability-gated runtime, not the coding-agent UX.
+
+        Already landed (2026-05-21, this cycle):
+        - docs/index.html hero rewritten: "Your personal AI runtime" / "Local-first AI runtime" category / new lede mentioning Mnemos and inspection-before-execution.
+        - docs/index.html diff section restructured: "Runtime + capability engine + memory" headline, Mnemos elevated to primary card ("Mnemos — the cognitive layer"), new "Daemon-not-IDE-plugin" card, capability framed as general primitive not coding safety knob.
+        - docs/index.html problem + compared + final-CTA + footer copy refreshed to match.
+        - README.md hero + Why Nomi section rewritten to lead with the runtime/cognitive-layer framing and link to Mnemos as the cognitive layer.
+        - docs/adr/0004-nomi-mnemos-cognitive-boundary.md drafted: defines mnemos.Client interface, embedded vs remote implementations, scope-ownership migration, three-step extraction path.
+
+        Pending (this feature):
+        - Update meta tags / OG image to match new positioning (current OG image is plan-review screenshot — still valid but verify it carries the new narrative).
+        - Refresh docs/comparison.md to include the NanoClaw / agent-sandbox row added on the landing page.
+        - Update CHANGELOG.md with a "Narrative & positioning" entry under unreleased.
+        - Decide whether to rename docs/index.html title from "Ship code without leaking your repo" usage elsewhere (social cards, GitHub social preview).
+        - Implement ADR 0004 step 1 (define mnemos.Client interface in Nomi; refactor internal/memory to depend on the interface). Tracked as follow-on feature once narrative changes settle.
+        - Phase 4 / org-cognition roadmap copy: add a section to the landing page or a separate page describing the hosted-Mnemos / organizational cognition story as roadmap, not present-tense.
+
+        Acceptance:
+        - All public-facing surfaces (landing page, README, social cards, comparison table) use the runtime + cognitive-layer framing consistently.
+        - The coding-agent wedge survives as the flagship example, not as the category claim.
+        - ADR 0004 reviewed and accepted, with the implementation feature (mnemos.Client extraction) added to the backlog separately.
+        - No claims about hosted Mnemos / organizational memory in present tense — only roadmap.
+      requirements: []
+    - id: mnemos.client-interface-extraction-(adr-0004-step-1)
+      title: mnemos.Client Interface Extraction (ADR 0004 Step 1)
+      description: |-
+        Implement step 1 of ADR 0004's migration path: introduce mnemos.Client as a Go interface that the Nomi runtime depends on, with the current internal/memory package becoming the in-process implementation behind that interface. Zero behavior change for the user; sets the foundation for steps 2 (extract embedded to Mnemos repo) and 3 (ship mnemos/remote).
+
+        ADR reference: docs/adr/0004-nomi-mnemos-cognitive-boundary.md (Proposed).
+
+        Scope:
+        - Define mnemos.Client interface in a new package (initially internal/mnemos in Nomi; will move to github.com/felixgeelhaar/mnemos in step 2):
+          - Store(ctx, scope, entry) error
+          - Retrieve(ctx, scope, query) ([]Entry, error)
+          - Search(ctx, scope, q, opts) ([]Entry, error)
+          - Forget(ctx, scope, id) error
+          - Tombstone(ctx, ref EntityRef) error  // for FK-loss cleanup
+        - Define Scope tuple: (owner_id, kind, key). Replace today's flat "profile" | "workspace" string. In embedded mode owner_id is hardcoded "local"; the field exists so the wire shape is forward-compatible.
+        - Refactor internal/memory/manager.go to implement mnemos.Client. Adapt internal/runtime/lifecycle.go:257 (memManager.Save call site) to go through the interface.
+        - Wire assistant.deleted and run.deleted event subscribers in internal/runtime that call Client.Tombstone. This replaces the current ON DELETE SET NULL FK behavior, preparing for step 2's separate-DB extraction.
+        - Add nomid memory export and nomid memory import CLI commands writing/reading Mnemos JSONL wire format. Required as a pre-condition for step 2's data migration (ADR 0004 §8). Round-trip test: full export → wipe memory table → import → row-count + content match.
+        - Audit chain: emit memory.op event for every Store/Forget/Tombstone with content_hash populated. Hooks into the existing event bus + /audit/verify chain.
+        - Tests:
+          - Fake mnemos.Client implementation for runtime tests (replaces today's direct memManager mocks).
+          - Tombstone path tested: delete assistant → orphaned memory rows tombstoned within one event cycle.
+          - Export/import round-trip test in internal/storage/db.
+          - Existing memory_test.go suite continues to pass against the new interface.
+
+        Out of scope (deferred to follow-up features):
+        - mnemos/remote HTTP client (step 3 of ADR 0004).
+        - Extraction of the package to a separate repo (step 2).
+        - LLM-based summarization using MemoryPolicy.SummaryTemplate (still string-concat in lifecycle.go).
+        - Vector retrieval / embedding store.
+        - Multi-tenant remote Mnemos auth.
+
+        Acceptance criteria (from ADR 0004):
+        - internal/memory depends only on mnemos.Client interface; no other Nomi package imports concrete memory types directly.
+        - nomid memory export round-trips through nomid memory import with zero data loss.
+        - assistant.deleted and run.deleted drive Mnemos tombstone calls; integration test asserts orphaned memory rows are gone within one sweep cycle.
+        - Audit log includes memory.op event for every Store/Forget/Tombstone with content_hash populated.
+        - go test -race ./... green; existing behavior unchanged for the laptop user.
+
+        Depends on: ADR 0004 moving from Proposed to Accepted.
+        Blocks: future features "mnemos.Client extraction to Mnemos repo" (step 2), "mnemos/remote HTTP client" (step 3).
+      requirements: []
 constraints: []
 version: 0.1.0

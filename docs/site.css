@@ -504,6 +504,38 @@ button.copy code { background: transparent; border: 0; padding: 0; }
 .diff-card h3 { color: var(--accent); }
 .diff-card p { color: var(--fg-muted); font-size: 15px; margin: 0; }
 
+/* roadmap */
+.roadmap { padding: 64px 0; }
+.roadmap-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--gap);
+  margin: 30px 0 18px;
+}
+@media (max-width: 900px) { .roadmap-grid { grid-template-columns: 1fr; } }
+.roadmap-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  position: relative;
+}
+.roadmap-card.now    { border-color: var(--accent); }
+.roadmap-card.next   { border-color: var(--border); }
+.roadmap-card.later  { border-color: var(--border); opacity: 0.92; }
+.roadmap-tag {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  margin-bottom: 10px;
+}
+.roadmap-card.now .roadmap-tag { color: var(--accent); }
+.roadmap-card h3 { color: var(--fg); margin: 0 0 10px; }
+.roadmap-card p  { color: var(--fg-muted); font-size: 15px; margin: 0; }
+.roadmap-card a  { color: var(--accent); }
+
 /* screenshot grid */
 .screenshot-grid {
   display: grid;

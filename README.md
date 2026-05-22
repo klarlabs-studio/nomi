@@ -1,10 +1,11 @@
 <h1 align="center">Nomi</h1>
 
 <p align="center">
-  <strong>Ship code without leaking your repo.</strong><br />
-  Local-first coding agent that plans every step, asks before it
-  touches your filesystem, runs on your machine against the LLM you
-  pick. Your repo never leaves your laptop unless you decide otherwise.
+  <strong>Your personal AI runtime.</strong><br />
+  Local-first daemon for plans, tools, memory, and any model — designed
+  for inspection before execution. Multi-step plans you approve,
+  capability-gated tools, and persistent memory via Mnemos. Coding is
+  the first flagship workflow; the runtime underneath is general.
 </p>
 
 <p align="center">
@@ -43,11 +44,14 @@
 
 ## Why Nomi
 
-Cloud coding agents read your repo, run shell commands, and write files
-the moment the model is confident — and the model is always confident.
-Nomi makes every step a contract: a plan you approve, tools that ask
-before they act, memory you can read and edit. Open-source all the way
-down. Runs entirely on your laptop, against any LLM you point it at.
+Most agents are stateless execution engines. They read your context,
+run tools, then forget everything when the session ends. The reasoning,
+the decisions, the operational knowledge — gone. Nomi treats that as a
+category mistake. The product is a **runtime**: a daemon that holds
+durable state, gates tools through an explicit capability engine, and
+remembers across runs via [Mnemos](https://github.com/felixgeelhaar/mnemos).
+Coding is the first high-frequency workflow — the same primitives carry
+the next ones.
 
 - **Local-first by default — self-hosted by choice.** On a laptop the
   data, conversations, and secrets stay on your machine (SQLite, OS
@@ -56,31 +60,39 @@ down. Runs entirely on your laptop, against any LLM you point it at.
   see [`docs/headless.md`](docs/headless.md).
 - **Plan review before execution.** Every multi-step task is laid out
   in full before any tool runs. You see the plan; you approve the plan.
-- **Capability-gated tools.** `filesystem.write`, `command.exec`,
-  `network.outgoing` — every tool is bound by an explicit permission
-  rule. Allow, confirm, or deny. Per-assistant.
+  Inspectable, editable, replayable.
+- **Capability engine, not a coding-safety knob.** `filesystem.write`,
+  `command.exec`, `network.outgoing`, custom capabilities from plugins
+  — every tool is bound by an explicit permission rule. Allow, confirm,
+  or deny. Per-assistant. Same primitive whether you're writing code,
+  triaging email, or driving a browser.
+- **Mnemos — the cognitive layer.** Workspace-scoped, queryable,
+  exportable memory persisted to SQLite. A real database, not a vector
+  blob. The agent accumulates context across runs so the next task
+  starts with the last one's lineage.
 - **Bring any LLM.** Ollama for free + private. Anthropic / OpenAI when
   you want frontier models. LM Studio, vLLM, Together — anything that
   speaks the OpenAI or Anthropic wire format. Per-assistant overrides
   ship out of the box.
-- **Real plugins, real isolation.** Telegram ships today as a
-  first-party connector, with the WASM plugin marketplace next.
-  Connectors for Email, Calendar, GitHub, Slack, Discord, Obsidian,
-  Browser automation, and TTS/STT are on the
-  [roadmap](https://github.com/felixgeelhaar/nomi/blob/main/.roady/spec.yaml) —
-  every one will be gated through the same permission engine, with no
-  bypass paths.
+- **Daemon-not-IDE-plugin.** `nomid` is a long-running runtime, not a
+  sidecar. Desktop UI, CLI, headless server — all clients of the same
+  daemon. Real plugins (Telegram today, WASM marketplace next), real
+  isolation, no bypass paths.
 
 ## Compared to
 
-The wedge is **Claude Code with local Ollama** — same coding-agent UX,
-but the agent asks before it touches your filesystem and your code never
-crosses your network unless you point it at a remote provider.
+Nomi is a **runtime + interaction model**, not another coding-agent.
+The coding wedge today is **Claude Code with local Ollama** — but the
+same daemon, capability engine, and Mnemos memory layer underneath
+every other workflow you'll run next.
 
 | Alternative | What's different about Nomi |
 |---|---|
 | **Claude Code / Cursor agents / Cline** | Same goal-driven coding flow (read repo, plan changes, write files, run commands), but every step is laid out as an approveable plan first, every tool call is gated by an explicit capability, and every event is persisted to a hash-chained audit log. Point it at Ollama and your repo never leaves your laptop. |
 | **Goose / OpenInterpreter / Aider** | Same local-first stance, but with a real state machine (`Run → Plan → Step`), a real permission engine, real multi-step plans the user can edit, and a desktop UI built around the approval moment instead of around the chat box. |
+| **OpenClaw / Hermes Agent** | Same personal-AI-with-memory framing, broader connector list shipping today. Both act the moment the model decides; Nomi inserts a `plan_review` state before any tool runs and gates every tool through an explicit capability rule. Mnemos is memory you can **read**, edit, and export — Hermes's "self-improving" memory is opaque by design. Nomi trades connector breadth today for inspectability everywhere. |
+| **NanoClaw / container-isolation products** | NanoClaw isolates agents with Docker / micro-VM / Apple Container — the wall is around the process. Nomi gates at the capability layer — the agent never reaches the tool it shouldn't because the rule blocked the call. The two compose: you could run `nomid` inside a NanoClaw container and stack both defenses. NanoClaw is Anthropic-SDK-biased; Nomi is provider-agnostic. |
+| **Pi (Inflection AI)** | Category boundary. Pi is a thoughtful conversational companion — cloud-only, closed, no tool execution. Use Pi when you want an AI to talk to. Use Nomi when you want an AI that takes action you approved. |
 | **LangChain / AutoGPT / CrewAI** | Those are kits — you assemble the agent. Nomi is the finished product: a working state machine, a permission engine, a memory subsystem, a Tauri shell, all wired up. |
 | **Bespoke agent stacks** | Stop reinventing scaffolding. The runtime, the audit trail, the approval workflow, and the plugin model all ship today. Bring your assistants and your prompts. |
 
