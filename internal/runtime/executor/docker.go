@@ -144,9 +144,14 @@ func (d DockerBackend) buildArgs(req Request) ([]string, error) {
 		return nil, err
 	}
 
+	netMode := req.NetworkMode
+	if netMode == "" {
+		netMode = NetworkNone
+	}
+
 	args := []string{
 		"run", "--rm",
-		"--network=none",
+		"--network=" + string(netMode),
 		"--memory=" + memory,
 		"--memory-swap=" + memory,
 		"--cpus=" + cpus,

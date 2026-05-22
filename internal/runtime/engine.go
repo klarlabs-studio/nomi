@@ -132,12 +132,58 @@ func (r *Runtime) SetConnectorManifestLookup(fn ConnectorManifestLookup) {
 // RegisterExecutorBackend adds an additional execution backend (docker,
 // gvisor, …) to the runtime's registry. The local backend is registered by
 // default during NewRuntime; main() calls this for any extra backends
-// detected at boot (e.g. when a Docker daemon is present).
+// detected at boot (e.g. when a Docker daemon is present). All registered
+// backends are wrapped with a Prometheus-instrumented decorator so
+// per-backend counters and duration histograms populate consistently.
 func (r *Runtime) RegisterExecutorBackend(b executor.Backend) {
 	if r.executorRegistry == nil {
 		r.executorRegistry = executor.NewRegistry()
 	}
-	r.executorRegistry.Register(b)
+	r.executorRegistry.Register(instrumentedBackend{inner: b})
+}
+
+// instrumentedBackend wraps an executor.Backend with Prometheus metric
+// emission so every Run call updates nomi_executor_runs_total,
+// nomi_executor_duration_seconds, and nomi_executor_oom_total without
+// the executor package taking a metrics dependency.
+type instrumentedBackend struct {
+	inner executor.Backend
+}
+
+func (b instrumentedBackend) Name() string { return b.inner.Name() }
+
+func (b instrumentedBackend) Run(ctx context.Context, req executor.Request) (*executor.Result, error) {
+	name := b.inner.Name()
+	start := time.Now()
+	res, err := b.inner.Run(ctx, req)
+	metrics.ExecutorDurationSeconds.WithLabelValues(name).Observe(time.Since(start).Seconds())
+	metrics.ExecutorRunsTotal.WithLabelValues(name, classifyExecutorOutcome(res, err)).Inc()
+	if res != nil && res.OOM {
+		metrics.ExecutorOOMTotal.WithLabelValues(name).Inc()
+	}
+	return res, err
+}
+
+// classifyExecutorOutcome maps a backend Run result into the small fixed
+// label set used by the executor counters: success | exit_nonzero | oom |
+// timeout | error.
+func classifyExecutorOutcome(res *executor.Result, err error) string {
+	if err != nil {
+		return "error"
+	}
+	if res == nil {
+		return "error"
+	}
+	if res.TimedOut {
+		return "timeout"
+	}
+	if res.OOM {
+		return "oom"
+	}
+	if res.ExitCode != 0 {
+		return "exit_nonzero"
+	}
+	return "success"
 }
 
 // ExecutorBackends returns the names of every registered execution backend.
@@ -216,7 +262,7 @@ func NewRuntime(
 	rootCtx, rootCancel := context.WithCancel(context.Background())
 	attachmentRepo := db.NewRunAttachmentRepository(database)
 	execReg := executor.NewRegistry()
-	execReg.Register(executor.NewLocal())
+	execReg.Register(instrumentedBackend{inner: executor.NewLocal()})
 	rt := &Runtime{
 		db:               database,
 		runRepo:          db.NewRunRepository(database),

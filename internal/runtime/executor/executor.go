@@ -26,13 +26,32 @@ const (
 // requested backend is not registered. Preserves pre-sandboxing behavior.
 const DefaultBackend = BackendLocal
 
+// NetworkMode controls outbound connectivity for container backends. Local
+// backend ignores this field. "" defaults to NetworkNone — the deny-by-
+// default posture a permission policy with no explicit network.egress
+// rule should produce.
+type NetworkMode string
+
+const (
+	// NetworkNone disables outbound networking entirely. Maps to
+	// `docker run --network=none`.
+	NetworkNone NetworkMode = "none"
+
+	// NetworkBridge enables full outbound networking through the host's
+	// default docker bridge. Maps to `docker run --network=bridge`.
+	// Domain-allowlist enforcement is not yet implemented; the rule's
+	// constraint is informational only at this stage.
+	NetworkBridge NetworkMode = "bridge"
+)
+
 // Request describes a single subprocess invocation. Validation (binary
 // allowlist, argv parsing, workspace_root, env allowlist) happens in the
 // tool layer; the backend only runs what it is given.
 //
 // WorkspaceRoot and Image are backend-specific: the local backend ignores
 // both; container backends bind-mount WorkspaceRoot at a fixed path inside
-// the container and require Image to know what to run.
+// the container and require Image to know what to run. NetworkMode is also
+// container-only.
 type Request struct {
 	Argv          []string
 	WorkDir       string
@@ -40,6 +59,7 @@ type Request struct {
 	Image         string
 	Env           []string
 	Timeout       time.Duration
+	NetworkMode   NetworkMode
 }
 
 // Result reports how the process ended. ExitCode is -1 when the process

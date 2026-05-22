@@ -4,6 +4,38 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - 2026-05-22 (Sandboxed executor backends — PR4: network.egress + Prometheus)
+
+Wires container-backend network egress through the existing permission
+engine and emits per-backend Prometheus counters and duration
+histograms. Deny-by-default holds: a container backend without an
+explicit Allow on `network.egress` runs with `--network=none`. An
+Allow rule promotes the container to `--network=bridge` (full
+outbound). Domain allowlist enforcement at the bridge is reserved for
+a follow-up — needs a userland firewall (eBPF or DNS allowlist) and
+isn't shippable through `docker run` flags alone.
+
+### Added
+- `executor.NetworkMode` (`none` | `bridge`) on `Request`. Local
+  backend ignores; container backends apply via `--network=<mode>`.
+- Runtime evaluates the assistant's policy for `network.egress` at
+  step time and injects the mode through `__network_mode`. Allow →
+  bridge; everything else (Confirm/Deny/absent) → none.
+- `nomi_executor_runs_total{backend,outcome}` counter — outcomes:
+  `success` | `exit_nonzero` | `oom` | `timeout` | `error`.
+- `nomi_executor_duration_seconds{backend}` histogram with buckets
+  spanning sub-second (local exec) through 60s (container coldstart).
+- `nomi_executor_oom_total{backend}` counter.
+- `runtime.instrumentedBackend` decorator wraps every registered
+  backend so metric emission is uniform and the executor package
+  doesn't take a metrics dependency.
+
+### Security
+- `network.egress` is the first capability gated at the backend-
+  config layer rather than tool-call layer. Confirm mode is treated
+  as deny here since there's no approval UX for "should this run be
+  allowed network access?" outside the existing tool-approval flow.
+
 ## [Unreleased] - 2026-05-22 (Sandboxed executor backends — PR3: gVisor)
 
 Adds the gVisor (runsc) execution backend. Reuses the Docker code path

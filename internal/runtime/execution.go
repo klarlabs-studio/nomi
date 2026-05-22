@@ -13,6 +13,7 @@ import (
 
 	"github.com/felixgeelhaar/nomi/internal/domain"
 	"github.com/felixgeelhaar/nomi/internal/permissions"
+	"github.com/felixgeelhaar/nomi/internal/runtime/executor"
 	"github.com/felixgeelhaar/nomi/internal/tools"
 )
 
@@ -313,6 +314,16 @@ func (r *Runtime) executeStep(ctx context.Context, run *domain.Run, step *domain
 			if assistant.SandboxImage != "" {
 				toolInput["__sandbox_image"] = assistant.SandboxImage
 			}
+			// Network egress is deny-by-default; only an explicit Allow
+			// rule on network.egress flips the container to a bridge
+			// network. Confirm/Deny/absent all collapse to "none" since
+			// approval at the backend-config layer doesn't have a UI
+			// surface yet — operators should approve at the tool layer.
+			netMode := executor.NetworkNone
+			if r.permEngine.Evaluate(assistant.PermissionPolicy, "network.egress") == domain.PermissionAllow {
+				netMode = executor.NetworkBridge
+			}
+			toolInput["__network_mode"] = string(netMode)
 		}
 	}
 

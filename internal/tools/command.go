@@ -117,6 +117,7 @@ func (t *CommandExecTool) Execute(ctx context.Context, input map[string]interfac
 	backend := backendFromInput(input)
 
 	image, _ := input["__sandbox_image"].(string)
+	netMode, _ := input["__network_mode"].(string)
 
 	req := executor.Request{
 		Argv:          tokens,
@@ -125,6 +126,7 @@ func (t *CommandExecTool) Execute(ctx context.Context, input map[string]interfac
 		Image:         image,
 		Env:           BuildSandboxEnv(overrides),
 		Timeout:       time.Duration(timeout) * time.Second,
+		NetworkMode:   executor.NetworkMode(netMode),
 	}
 
 	execResult, runErr := backend.Run(ctx, req)

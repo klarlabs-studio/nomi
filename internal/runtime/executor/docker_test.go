@@ -22,7 +22,7 @@ func TestDockerBuildArgs(t *testing.T) {
 
 	want := []string{
 		"run", "--rm",
-		"--network=none",
+		"--network=" + string(NetworkNone),
 		"--memory=512m",
 		"--memory-swap=512m",
 		"--cpus=1.0",
@@ -62,6 +62,22 @@ func TestDockerBuildArgsSubdirWorkdir(t *testing.T) {
 	wIdx := indexOf(args, "-w")
 	if args[wIdx+1] != "/workspace/pkg" {
 		t.Errorf("workdir: got %q, want %q", args[wIdx+1], "/workspace/pkg")
+	}
+}
+
+func TestDockerBuildArgsNetworkBridge(t *testing.T) {
+	d := NewDocker()
+	args, err := d.buildArgs(Request{
+		Argv:          []string{"true"},
+		WorkspaceRoot: "/host/work",
+		Image:         "alpine:3.20",
+		NetworkMode:   NetworkBridge,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !contains(args, "--network=bridge") {
+		t.Fatalf("expected --network=bridge, got %v", args)
 	}
 }
 

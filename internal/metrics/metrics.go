@@ -107,6 +107,31 @@ var (
 		Name: "nomi_planner_edit_distance_total",
 		Help: "Step-level edits applied during plan review, partitioned by provider and edit kind.",
 	}, []string{"provider", "edit_kind"})
+
+	// ExecutorRunsTotal counts subprocess invocations through each
+	// execution backend, split by outcome. outcome ∈
+	// {success, exit_nonzero, oom, timeout, error}.
+	ExecutorRunsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "nomi_executor_runs_total",
+		Help: "Subprocess invocations grouped by execution backend and outcome.",
+	}, []string{"backend", "outcome"})
+
+	// ExecutorDurationSeconds tracks wall-clock duration per backend. Wide
+	// buckets — local exec is sub-second, container backends incur cold-
+	// start cost in the seconds range.
+	ExecutorDurationSeconds = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "nomi_executor_duration_seconds",
+		Help:    "Wall-clock duration of a subprocess execution, by backend.",
+		Buckets: []float64{0.01, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60},
+	}, []string{"backend"})
+
+	// ExecutorOOMTotal counts OOM-killed processes per backend. Local is
+	// always zero (host OOM is opaque); container backends report based
+	// on the runtime's OOMKilled signal or the exit-137 heuristic.
+	ExecutorOOMTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "nomi_executor_oom_total",
+		Help: "OOM-killed subprocess executions by backend.",
+	}, []string{"backend"})
 )
 
 func init() {
@@ -121,5 +146,8 @@ func init() {
 		PlannerLatencySeconds,
 		ApprovalWaitSeconds,
 		PlannerEditDistance,
+		ExecutorRunsTotal,
+		ExecutorDurationSeconds,
+		ExecutorOOMTotal,
 	)
 }
