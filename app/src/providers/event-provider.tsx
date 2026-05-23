@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, useState } from "react";
 import { hasTauriBridge, useTauriEvents } from "@/hooks/use-tauri-events";
 import { queryKeys } from "@/lib/query-keys";
+import { notifyApprovalRequested } from "@/lib/notifications";
 import { appendStreamDelta, clearStreamDelta, dropStream } from "@/lib/streaming";
 import type { Event as NomiEvent } from "@/types/api";
 
@@ -132,6 +133,18 @@ function handleEventInvalidations(
   if (ev.type.startsWith("approval.")) {
     qc.invalidateQueries({ queryKey: queryKeys.approvals.list() });
     qc.invalidateQueries({ queryKey: queryKeys.runs.approvals(ev.run_id) });
+    if (ev.type === "approval.requested") {
+      // Fire OS notification when an agent pauses for approval.
+      // Async + no-await: a slow OS permission prompt must NOT block
+      // the rest of the event-provider's invalidation work.
+      void notifyApprovalRequested({
+        capability:
+          (ev.payload && (ev.payload.capability as string | undefined)) || "an action",
+        approvalID:
+          ev.payload && (ev.payload.approval_id as string | undefined),
+        runID: ev.run_id,
+      });
+    }
     return;
   }
 

@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 582,
+  "version": 585,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1770,11 +1770,15 @@
       "elapsed_minutes": 78
     },
     "task-fts5-memory-search": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "4962500 — memory_fts virtual table + triggers + bm25 ranking + LIKE fallback + 5 unit tests"
+      ],
       "started_at": "2026-05-23T08:41:06.445985+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-23T08:46:04.937545+02:00",
+      "elapsed_minutes": 4
     },
     "task-github-connector": {
       "status": "done",
@@ -2282,6 +2286,13 @@
       "started_at": "2026-05-09T17:28:06.294653+02:00",
       "completed_at": "2026-05-09T17:30:22.573637+02:00",
       "elapsed_minutes": 2
+    },
+    "task-push-notifications-for-pending-approvals": {
+      "status": "in_progress",
+      "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-23T08:51:54.674305+02:00",
+      "elapsed_minutes": 0
     },
     "task-recipe-catalog-expansion-—-6-new-built-in-recipes": {
       "status": "done",
@@ -2840,5 +2851,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-23T08:41:06.445985+02:00"
+  "updated_at": "2026-05-23T08:51:54.674305+02:00"
 }

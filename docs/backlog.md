@@ -2167,3 +2167,9 @@ Ships six new built-in Recipes covering prosumer + small-team workflows the wedg
 Replace the current case-insensitive LIKE substring scan in `memory.Manager.Search` / `*db.MemoryRepository.Search` with SQLite FTS5. Adds a `memory_fts` virtual table (contentless, indexed on `content`) with INSERT/UPDATE/DELETE triggers that keep it in sync with `memory`. Search uses `MATCH` and falls back to LIKE when the FTS index is unavailable (in-memory DB without FTS5 module, broken trigger state on legacy rows). Honor `Query.Limit`. Add an indexer migration that backfills the FTS table from existing rows on first boot post-upgrade. Cosmetic UX: ranking by `bm25(memory_fts)` so the most relevant entries surface first instead of newest-first when a query is present.
 
 ---
+
+## Push notifications for pending approvals
+
+Surface approval requests through OS notifications so the user doesn't need the Nomi window focused to see when an agent is asking. Adds tauri-plugin-notification (built-in for Tauri 2.x) wired to a new useApprovalNotifications hook that subscribes to approval.requested events and fires a notification with the capability + assistant name + a click-to-focus action. Falls back to the Web Notification API outside Tauri (vite preview / Playwright). Includes a per-app permission prompt on first run + a Settings toggle to disable notifications. Closes the loop: "agents that ask before they act" works much better when the user knows when the agent is asking.
+
+---

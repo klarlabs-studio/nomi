@@ -4,6 +4,34 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - OS notifications for pending approvals
+
+Closes the "agents that ask before they act" loop on the user side.
+When an agent pauses for approval, Nomi now fires an OS notification
+(macOS Notification Center, Linux org.freedesktop, Windows toast)
+so the user can respond without keeping the Nomi window focused.
+
+### Added
+- `tauri-plugin-notification` 2.x wired in `app/src-tauri/src/main.rs`,
+  capability declared in `capabilities/default.json`, JS binding via
+  `@tauri-apps/plugin-notification`.
+- `app/src/lib/notifications.ts` — notification helper. Tauri path
+  via the plugin; non-Tauri fallback (vite preview / Playwright /
+  Scout) via the Notification Web API. Lazy permission request on
+  the first approval event so a fresh tab doesn't pop a permission
+  prompt before any agent activity.
+- Event-provider hook on `approval.requested` events — fires the
+  notification asynchronously so a slow OS permission dialog doesn't
+  block other event-driven invalidations.
+- New "Approval notifications" card in the Safety settings tab with
+  a toggle backed by `localStorage` (`nomi.notifications.disabled`).
+
+### Behavior notes
+- Toggle defaults to enabled. Permission state is OS-managed; users
+  who deny at the OS prompt can re-enable via system settings.
+- Notification click focuses the Nomi window (best-effort in browser
+  fallback; no-op in headless).
+
 ## [Unreleased] - FTS5 memory search
 
 `MemoryRepository.Search` switches from the substring `LIKE` scan to

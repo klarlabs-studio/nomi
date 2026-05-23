@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ToggleSwitch } from "@/components/ui/toggle-switch";
 import { settingsApi } from "@/lib/api";
+import { notificationsEnabled, setNotificationsEnabled } from "@/lib/notifications";
 import type { SafetyProfile } from "@/types/api";
 
 const DEFAULT_PROFILE: SafetyProfile = "balanced";
@@ -120,6 +122,34 @@ export function SafetySettings() {
           {error && <p className="text-sm text-destructive">{error}</p>}
         </CardContent>
       </Card>
+
+      <NotificationsSection />
     </div>
+  );
+}
+
+function NotificationsSection() {
+  const [enabled, setEnabled] = useState<boolean>(() => notificationsEnabled());
+  const toggle = (next: boolean) => {
+    setEnabled(next);
+    setNotificationsEnabled(next);
+  };
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Approval notifications</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          When an assistant pauses for approval, Nomi fires an OS notification so you can
+          respond without keeping the window focused. Permission is requested once on the
+          first approval.
+        </p>
+        <label className="flex items-center justify-between gap-3 text-sm">
+          <span>OS notifications when approval is needed</span>
+          <ToggleSwitch checked={enabled} onChange={toggle} />
+        </label>
+      </CardContent>
+    </Card>
   );
 }
