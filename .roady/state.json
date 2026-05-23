@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 595,
+  "version": 597,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1946,6 +1946,13 @@
       "completed_at": "2026-05-09T07:49:57.535278+02:00",
       "elapsed_minutes": 0
     },
+    "task-mcp-client-plugin-generic-+-scout-integration": {
+      "status": "in_progress",
+      "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-23T10:59:38.851784+02:00",
+      "elapsed_minutes": 0
+    },
     "task-memory-system-(mnemos)": {
       "status": "done",
       "path": "",
@@ -2888,5 +2895,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-23T09:22:40.027479+02:00"
+  "updated_at": "2026-05-23T10:59:38.851784+02:00"
 }

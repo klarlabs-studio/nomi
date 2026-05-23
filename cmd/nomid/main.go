@@ -40,6 +40,7 @@ import (
 	mediaplugin "github.com/felixgeelhaar/nomi/internal/plugins/media"
 	mnemosplugin "github.com/felixgeelhaar/nomi/internal/plugins/mnemos"
 	obsidianplugin "github.com/felixgeelhaar/nomi/internal/plugins/obsidian"
+	scoutplugin "github.com/felixgeelhaar/nomi/internal/plugins/scout"
 	"github.com/felixgeelhaar/nomi/internal/plugins/signing"
 	slackplugin "github.com/felixgeelhaar/nomi/internal/plugins/slack"
 	"github.com/felixgeelhaar/nomi/internal/plugins/store"
@@ -287,6 +288,16 @@ func main() {
 	)
 	if err := pluginRegistry.Register(whatsappPlugin); err != nil {
 		log.Fatalf("Failed to register WhatsApp plugin: %v", err)
+	}
+
+	// Scout plugin — browser automation via MCP. Spawns the `scout`
+	// binary as a stdio subprocess (or talks to a remote HTTP+SSE
+	// scout instance) and exposes navigate / observe / click / type /
+	// screenshot / extract as Nomi tools gated by the scout.browse
+	// capability.
+	scoutPlugin := scoutplugin.NewPlugin(connectionRepo, bindingRepo, secretStore)
+	if err := pluginRegistry.Register(scoutPlugin); err != nil {
+		log.Fatalf("Failed to register Scout plugin: %v", err)
 	}
 
 	// Google OAuth manager — shared across any Google-backed plugin

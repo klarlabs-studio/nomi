@@ -4,6 +4,42 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - Scout browser plugin
+
+First-party browser automation. Nomi connects to a Scout MCP server
+(stdio subprocess or HTTP+SSE) via `github.com/felixgeelhaar/mcp-go`
+and exposes six browser primitives through the existing tool +
+capability + plan-review surface.
+
+### Added
+- `internal/plugins/scout` — Plugin + ToolProvider +
+  ConnectionHealthReporter. Lazy client construction (first tool
+  call wakes the subprocess), cached per connection so the stdio
+  process doesn't restart per invocation. Stop() closes every
+  cached client.
+- Six tools, each gated by capability `scout.browse`:
+  `scout.navigate`, `scout.observe`, `scout.click`, `scout.type`,
+  `scout.screenshot`, `scout.extract`. They map to the upstream
+  Scout MCP server's `navigate` / `annotated_screenshot` / `click`
+  / `type` / `screenshot` / `extract` tools.
+- Connection config schema covers both transports:
+  - `transport=stdio` (default): `command` (default `scout`),
+    `args` (default `mcp`, comma- or space-separated).
+  - `transport=http`: `endpoint` + optional `token` credential
+    (Bearer auth) resolved through the secrets store.
+
+### Behaviour notes
+- Connection isn't established at boot — a missing or broken
+  `scout` binary doesn't fail `nomid` startup. The first tool
+  invocation surfaces the connection error.
+- Reserved input keys (`connection_id`, anything `__*`) are
+  stripped before forwarding to the Scout server.
+- Tool output flattens the MCP ContentItem array into `text` +
+  optional `image_data` for screenshot endpoints; raw structured
+  content stays available under the `content` key.
+- The any-MCP-server generic plugin (not just Scout) remains on
+  the roady backlog — the client glue here is reusable.
+
 ## [0.2.2] - 2026-05-23 — Polish wave
 
 Five user-visible improvements on top of v0.2.1. Each entry below

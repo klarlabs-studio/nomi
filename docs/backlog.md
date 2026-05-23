@@ -2191,3 +2191,9 @@ Wire Shiki into the two surfaces that render code: DiffPreview (hunk bodies in b
 Run the existing planner golden corpus + adversarial fixtures against real LLM providers and emit a per-provider pass-rate report. Adds `TestPlannerGoldenSet_Live` (build-tag-free; env-gated) that enumerates known providers — Ollama, OpenAI, Anthropic — and runs each only when its endpoint/key envs are set. Per-provider threshold via `NOMI_GOLDEN_THRESHOLD_<PROVIDER>` overrides the global default. New make target `eval-live-providers` documents the run path. Output format mirrors the fake-LLM logger so existing CI parsers don't need changes.
 
 ---
+
+## MCP-client plugin generic + Scout integration
+
+Add a first-party MCP-client plugin generic — Nomi connects to any MCP server (stdio or HTTP+SSE transport) via `github.com/felixgeelhaar/mcp-go/client`, advertises the server's tools through the existing `plugins.ToolProvider` surface, and routes invocations through the runtime's capability engine. First concrete consumer is Scout (browser automation via `mcp__scout__*`), giving Nomi a real navigate/observe/click/type/screenshot/extract capability without us re-implementing browser drivers. Plugin manifest declares `mcp.<server>.read` + `mcp.<server>.act` capability split so a `read-only` assistant can observe pages but not click. Connection config holds: server type (stdio | http), command + args (for stdio), endpoint + bearer token (for http+sse). Multi-cardinality so users wire personal + work Scout instances. Skips silently when the configured server is unreachable — same graceful-degrade pattern as the WhatsApp / Telegram plugins.
+
+---
