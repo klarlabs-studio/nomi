@@ -1,11 +1,11 @@
 <h1 align="center">Nomi</h1>
 
 <p align="center">
-  <strong>Your personal AI runtime.</strong><br />
-  Local-first daemon for plans, tools, memory, and any model — designed
-  for inspection before execution. Multi-step plans you approve,
-  capability-gated tools, and persistent local memory. Coding is the
-  first flagship workflow; the runtime underneath is general.
+  <strong>Agents that ask before they act.</strong><br />
+  Configure in a UI, preview the plan, approve. Multi-step automation
+  across Telegram / Slack / Discord / WhatsApp / files / shell — gated
+  by capability, sandboxed in containers or gVisor, audited end-to-end.
+  No CLI required.
 </p>
 
 <p align="center">
@@ -44,16 +44,19 @@
 
 ## Why Nomi
 
-Most agents are stateless execution engines. They read your context,
-run tools, then forget everything when the session ends. The reasoning,
-the decisions, the operational knowledge — gone. Nomi treats that as a
-category mistake. The product is a **runtime**: a daemon that holds
-durable state, gates tools through an explicit capability engine, and
-remembers across runs in local SQLite. For team-scale structured
-knowledge ([Mnemos](https://github.com/felixgeelhaar/mnemos)
-— events, claims, evidence, contradictions) drops in as an optional
-plugin. Coding is the first high-frequency workflow — the same
-primitives carry the next ones.
+Today's agents are split between two failure modes. Autonomous ones
+(Hermes, OpenClaw) act first and explain later — sometimes never.
+CLI-only ones (Claude Code, Pi) demand a terminal and yaml. Neither
+shows you what the agent is *about* to do.
+
+Nomi is **reviewable agents**: a desktop platform that always surfaces
+the plan before any tool fires, gates every call through a capability
+engine, sandboxes execution in containers or gVisor, schedules runs
+in plain English, and learns with your approval. Set up an agent in a
+form, install a recipe with one click, or watch Nomi propose a new
+skill from your own runs. For team-scale structured knowledge,
+[Mnemos](https://github.com/felixgeelhaar/mnemos) drops in as an
+optional plugin.
 
 - **Local-first by default — self-hosted by choice.** On a laptop the
   data, conversations, and secrets stay on your machine (SQLite, OS

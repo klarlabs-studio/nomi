@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Nomi — Your personal AI runtime.</title>
-<meta name="description" content="Local-first AI runtime. A daemon for plans, tools, and persistent memory — designed for inspection before execution. Apache 2.0." />
+<title>Nomi — Agents that ask before they act.</title>
+<meta name="description" content="Reviewable agents. Configure in a UI, preview the plan, approve. Multi-step automation across Telegram, Slack, Discord, WhatsApp, files, and shell — gated by capability and audited end-to-end. Apache 2.0." />
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32.png" />
 <link rel="icon" type="image/png" sizes="64x64" href="icons/icon-64.png" />
 <link rel="apple-touch-icon" href="icons/icon-128.png" />
-<meta property="og:title" content="Nomi — Your personal AI runtime." />
-<meta property="og:description" content="Local-first AI runtime. Plans, tools, and persistent memory — designed for inspection before execution." />
+<meta property="og:title" content="Nomi — Agents that ask before they act." />
+<meta property="og:description" content="Reviewable agents. Configure in a UI, preview the plan, approve. Multi-step automation gated by capability and audited end-to-end." />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://felixgeelhaar.github.io/nomi/" />
 <meta property="og:image" content="https://felixgeelhaar.github.io/nomi/media/og-card.png" />
@@ -37,11 +37,11 @@
 <main id="top">
 
   <section class="hero">
-    <div class="kicker">Open source · Apache 2.0 · v0.1.3</div>
-    <p class="category">Local-first AI runtime.</p>
-    <h1>Your personal<br/><span class="accent">AI runtime.</span></h1>
+    <div class="kicker">Open source · Apache 2.0 · v0.2.0</div>
+    <p class="category">Reviewable agents.</p>
+    <h1>Agents that ask<br/><span class="accent">before they act.</span></h1>
     <p class="lede">
-      A daemon on your machine for plans, tools, memory, and any model — designed for inspection before execution. Every multi-step task lays out a plan you approve, every tool call is gated by an explicit capability, and persistent memory carries context across runs. Coding is the first flagship workflow; the runtime underneath is general.
+      Configure in a UI, preview the plan, approve. Nomi is a desktop agent platform that always shows you what it's about to do — and learns with your approval. Multi-step automation across Telegram, Slack, Discord, WhatsApp, files, and shell, gated by capability and audited end-to-end. No CLI required.
     </p>
     <div class="cta-row">
       <button class="copy" data-copy="brew install --cask felixgeelhaar/tap/nomi" title="Copy command">
@@ -90,12 +90,12 @@
   </section>
 
   <section class="problem" id="problem">
-    <h2>Agents today are stateless and always confident. That's the problem.</h2>
+    <h2>Today's agents act first and explain later. Or never.</h2>
     <p>
-      Cursor, Claude Code, Copilot — they read your repo, run commands, write files the moment the model decides, then forget everything when the session ends. Your code, your shell history, the reasoning behind every decision — all crossing someone else's network, none of it durable, none of it inspectable.
+      Hermes, OpenClaw, the autonomous-agent crowd — they read your inbox, run shell commands, send messages the moment the model decides, then "learn" in ways you can't inspect. Most prosumers and small teams looked at that and quietly backed away. The agent that does what you want without asking is also the one that doesn't ask before doing what you don't.
     </p>
     <p>
-      Nomi flips three defaults at once: <strong>plans before execution, capability gates around every tool, and persistent memory you own</strong>. Ollama for fully offline, OpenAI / Anthropic / any OpenAI-compatible API when you want a frontier model. Memory lives in SQLite next to your runs — workspace-scoped, queryable, exportable. Reasoning is replayable; an agent that learns is an agent you can audit. Org-level cognition is one optional plugin away.
+      Nomi flips four defaults: <strong>every multi-step task surfaces its plan before any tool fires, every tool call is gated by an explicit capability, every learned preference + auto-generated skill goes through your review, and the entire run is hash-chain audited</strong>. Ollama for fully offline, OpenAI / Anthropic / any OpenAI-compatible API when you want a frontier model. Set up your agent in the desktop UI — no YAML, no CLI. Schedule it with "every weekday at 8am" instead of cron. Install pre-built skills with one click, or watch Nomi propose new ones from your own runs.
     </p>
   </section>
 
@@ -125,31 +125,51 @@
   </section>
 
   <section class="diff" id="diff">
-    <h2>Runtime + capability engine + memory. The three primitives.</h2>
+    <h2>Six primitives. Every one of them reviewable.</h2>
     <div class="diff-grid">
       <div class="diff-card primary">
         <h3>Plan → Approve → Run</h3>
-        <p>Every task is a finite-state machine. The agent proposes a plan; you approve, edit or reject it. Nothing dangerous fires without your sign-off. <strong>The wedge no other tool ships.</strong></p>
+        <p>Every multi-step task is a finite-state machine. The agent proposes the plan; you approve, edit or reject it. Nothing dangerous fires without your sign-off. <strong>The wedge no autonomous-agent tool ships.</strong></p>
       </div>
       <div class="diff-card primary">
-        <h3>Capability engine, not just a coding safety knob</h3>
+        <h3>Capability engine, not a vibes-based safety knob</h3>
         <p>One assistant gets <code>filesystem.read</code>. Another gets <code>command.exec</code> with confirm. Plugins declare what they need; the runtime enforces it — rules can't be talked around with prompt-engineering. Same primitive whether you're writing code, triaging email, or driving a browser.</p>
       </div>
       <div class="diff-card primary">
+        <h3>Sandboxed execution backends</h3>
+        <p>Pick <code>local</code> for speed, <code>docker</code> for rootless containers with network policy and CPU/mem caps, or <code>gvisor</code> for a user-space kernel boundary. Per-assistant, picked from a UI dropdown — not a config file. Untrusted scripts run in a box.</p>
+      </div>
+      <div class="diff-card primary">
+        <h3>Recipes — one-click skills, shareable</h3>
+        <p>Versioned, SHA-256-signed YAML bundles: assistant config + permission policy + executor backend, all in one shareable file. Built-in catalog ships coding-agent, research-assistant, ops-runbook. Install in a click; export any of your own. <strong>No other agent tool ships shareable bundles.</strong></p>
+      </div>
+      <div class="diff-card primary">
+        <h3>Learns with your approval</h3>
+        <p>After successful runs, Nomi extracts short preference statements ("Run tests before committing") into a Preferences memory the planner reads. Looks for repeated work and proposes new Recipes via embedding-based clustering + LLM synthesis. Every learned preference and proposed skill is visible — and deletable — in the Memory tab. Self-improving without going opaque.</p>
+      </div>
+      <div class="diff-card primary">
+        <h3>Schedules in plain English</h3>
+        <p>"Every weekday at 8am." "First Monday of the month." The configured LLM translates to cron; the parser validates before save; the ticker fires Runs through the same audit + approval surface as any manual run. Hermes flagship feature, ours by way of the same review pipeline.</p>
+      </div>
+      <div class="diff-card">
+        <h3>Bring any model</h3>
+        <p>Ollama for fully offline. OpenAI, Anthropic, Mistral, Groq, vLLM, LM Studio — anything OpenAI-compatible. Embeddings via the same providers. Per-assistant model override; no provider lock.</p>
+      </div>
+      <div class="diff-card">
+        <h3>Four messaging channels (and counting)</h3>
+        <p>Telegram, Slack, Discord, WhatsApp — all first-party plugins. Send a message, your assistant replies. The full plan-review + approval surface works inside the chat thread.</p>
+      </div>
+      <div class="diff-card">
         <h3>Persistent memory you can read</h3>
-        <p>Workspace-scoped SQLite next to your runs — exportable, inspectable, queryable. The agent accumulates context across runs so the next task starts with the last one's lineage, not a cold prompt. For team-scale structured knowledge (decisions, claims, evidence), <a href="https://github.com/felixgeelhaar/mnemos">Mnemos</a> drops in as an optional plugin.</p>
+        <p>Workspace-scoped SQLite next to your runs — exportable, inspectable, queryable. The agent accumulates context across runs so the next task starts with the last one's lineage. For team-scale structured knowledge (claims, evidence, relationships), <a href="https://github.com/felixgeelhaar/mnemos">Mnemos</a> drops in as an optional plugin.</p>
       </div>
       <div class="diff-card">
         <h3>Daemon-not-IDE-plugin</h3>
         <p><code>nomid</code> is a long-running local runtime, not a sidecar. Desktop UI, CLI, browser tab, headless server — all clients of the same daemon. Your workflows live on your machine, not in one editor's plugin tab.</p>
       </div>
       <div class="diff-card">
-        <h3>Bring any model</h3>
-        <p>Ollama for offline. OpenAI, Anthropic, Mistral, Groq, vLLM — anything OpenAI-compatible. Per-assistant model override; no provider lock.</p>
-      </div>
-      <div class="diff-card">
         <h3>Your data stays on disk</h3>
-        <p>SQLite at <code>~/Library/Application Support/Nomi</code>. Runs, plans, approvals, memory — local files, your backups, your encryption. Hash-chained audit log; reasoning is replayable. No telemetry, ever.</p>
+        <p>SQLite at <code>~/Library/Application Support/Nomi</code>. Runs, plans, approvals, memory — local files, your backups, your encryption. Hash-chained audit log via <code>GET /audit/verify</code>; reasoning is replayable. No telemetry, ever.</p>
       </div>
     </div>
 

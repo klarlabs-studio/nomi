@@ -4,6 +4,80 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] - 2026-05-23 — "Reviewable agents"
+
+Major feature release. Repositions Nomi from "personal AI runtime" to
+**reviewable agents** — a desktop agent platform that always shows you
+the plan before it runs and learns with your approval. Every entry
+below is shipped, tested, and visible in the UI. Migrations land
+automatically on first boot of `nomid` 0.2.0.
+
+### Headline features
+
+- **Sandboxed executor backends** — pick `local`, `docker`
+  (rootless, --network=none, capped memory + CPU + PIDs, --init), or
+  `gvisor` (runsc — user-space kernel) per assistant from a UI
+  dropdown. Boot-time probe; only registered backends appear.
+- **Recipe registry + sharing** — versioned, SHA-256-signed YAML
+  bundles. Built-in catalog (coding-agent, research-assistant,
+  ops-runbook), one-click install, export-as-recipe button on every
+  assistant.
+- **Scheduled runs + NL cron** — `POST /schedules/translate` turns
+  "every weekday at 8am" into a cron expression via the configured
+  LLM, gated by the same cron parser the ticker uses. Background
+  scheduler fires Runs on cadence through the existing audit + plan
+  review surface.
+- **Skill induction with LLM synthesis** — heuristic Jaccard
+  clustering OR embedding-based cosine clustering (cosine ≥ 0.78) over
+  past successful Runs surfaces candidate Recipes; "Generate with AI"
+  uses the LLM to propose `system_prompt` + capability set from the
+  cluster; user reviews + promotes.
+- **Auto-learning loop** — `RunCompleted` event subscriber asks the
+  LLM for short preference statements ("Run tests before
+  committing"), writes them to `LocalPreferences` memory the planner
+  already reads on every new Run. Closed loop, fully reviewable in
+  Memory tab.
+- **Embeddings provider integration** — `llm.EmbeddingClient`
+  interface + OpenAI-compat impl. Provider profile gains
+  `embedding_model_id` (migration #30); resolver builds embedding
+  clients on demand.
+- **WhatsApp Cloud API plugin** — closes connector parity vs
+  Hermes/OpenClaw. Now four first-party channels: Telegram + Slack +
+  Discord + WhatsApp.
+- **Plugin ContextSource consumption in planner** — bindings with
+  `role=context_source` now feed the planner prompt under a
+  `plugin_context` trust tag; Mnemos's claims context source +
+  Obsidian's vault context source actually fire instead of sitting
+  dormant.
+- **Enum ConfigField type** — plugin manifests can declare
+  fixed-choice config fields; UI renders a `<select>` dropdown.
+- **Desktop UI surfaces** — new "Schedules" tab, "Recipes" tab,
+  "Sandbox" section in assistant editor, "Suggested skills" panel in
+  Recipes (with Generate with AI), "Auto-learned" vs "Manual" split
+  in Memory's Preferences subtab.
+- **Browser-only UI sessions** — dev-token URL bootstrap in
+  `app/index.html` + Tauri-bridge short-circuit in `api.ts` so vite
+  preview / Playwright / Scout can drive the UI without the desktop
+  shell.
+
+### Operational
+
+- Hash-chained audit log + `/audit/verify` walks the chain; reasoning
+  is replayable.
+- Prometheus per-executor-backend metrics
+  (`nomi_executor_runs_total{backend,outcome}`,
+  `nomi_executor_duration_seconds{backend}`,
+  `nomi_executor_oom_total{backend}`).
+- `network.egress` capability gates outbound from container backends.
+- All previous Mnemos lineage work closed; ADR 0005 records the
+  decision to keep `internal/memstore` as the typed memory boundary
+  even with one implementation.
+
+### Roady (planning) state at release
+
+255/255 tasks done in the project's Roady plan; e2e Mnemos workflow
+verified green against `mnemos serve` v0.15.3 in GitHub Actions.
+
 ## [Unreleased] - 2026-05-22 (Embeddings + auto-learning loop)
 
 Closes the "self-learning" gap vs Hermes while preserving the
