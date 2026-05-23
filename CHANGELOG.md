@@ -4,6 +4,42 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - eBPF egress filter: IPv6 enforcement
+
+Closes the v0.2.x deferred IPv6 gap on the cgroup_skb/egress BPF
+program. Before: v6 packets passed through unfiltered because the
+program only branched on ETH_P_IP. After: a second HASH map (16-byte
+key) holds allowlisted v6 destinations; the program branches on
+ctx.protocol to ETH_P_IPV6 too, loads the 16-byte daddr from offset
+24 of the IPv6 header via bpf_skb_load_bytes, looks it up, drops on
+miss.
+
+### Changed
+- `internal/runtime/executor/egress/egress_linux.go`:
+  - `New` provisions two HASH maps now (`nomi_egress_v4`,
+    `nomi_egress_v6`). Both get closed/torn down in `Close`.
+  - `buildProgram` grows two parallel branches off the protocol
+    switch — `v4_load → v4_lookup` and `v6_load → v6_lookup`. A
+    single 16-byte stack slot at RFP-16 holds the destination for
+    either family; the v4 path writes only the bottom 4 bytes.
+    Non-IP packets (ARP, ICMPv6 link-local control) still pass —
+    the threat model is application egress, not L3 hardening.
+  - `AddIP` routes v4 to the v4 map and v6 (incl. v4-mapped v6
+    via `net.IP.To4`) to the v6 map. Malformed `net.IP` inputs
+    now error rather than silently succeeding.
+
+### Tests
+- Existing Linux integration test (`TestNewLinuxAttachesAndCloses`)
+  now exercises a v4-mapped v6 path. New `TestAddIPRejectsGarbage`
+  guards the malformed-IP rejection branch — a security primitive
+  silently accepting garbage is the wrong default.
+
+### Operational notes
+- IPv6 enforcement is automatic when the rule's `host_allowlist`
+  resolves to AAAA records. No new env vars or config.
+- The systemd-cgroup-driver path translation is still deferred —
+  same as before, `--cgroup-parent` assumes cgroupfs driver.
+
 ## [Unreleased] - DiffPreview: Shiki per-hunk highlighting
 
 Closes the last deferred item from the V1 polish wave. DiffPreview

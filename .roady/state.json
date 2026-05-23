@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 606,
+  "version": 609,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1627,11 +1627,15 @@
       "elapsed_minutes": 1
     },
     "task-diffpreview-shiki-per-hunk-highlight": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "7826a0f — one Shiki call per hunk via new highlightLines() helper, multi-line context preserved across line boundaries. useHunkHighlight hook memoises the tokenisation. Plain-text fallback when Shiki not ready or lang not bundled. Unit tests cover normalisation table + null-lang short-circuit; full Shiki path exercised by Playwright e2e.\u003c/evidence\u003e\n\u003c/invoke\u003e"
+      ],
       "started_at": "2026-05-23T12:16:10.454933+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-23T12:19:21.824809+02:00",
+      "elapsed_minutes": 3
     },
     "task-discord-plugin-(channel-+-tool)": {
       "status": "done",
@@ -1908,6 +1912,13 @@
       "started_at": "2026-05-09T17:26:08.844805+02:00",
       "completed_at": "2026-05-09T17:27:52.571833+02:00",
       "elapsed_minutes": 1
+    },
+    "task-ipv6-enforcement-in-ebpf-egress-filter": {
+      "status": "in_progress",
+      "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-23T12:22:49.204693+02:00",
+      "elapsed_minutes": 0
     },
     "task-landing-site-reposition-to-match-readme-coding-agent-wedge": {
       "status": "done",
@@ -2928,5 +2939,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-23T12:16:10.454933+02:00"
+  "updated_at": "2026-05-23T12:22:49.204693+02:00"
 }

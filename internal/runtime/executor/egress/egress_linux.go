@@ -18,8 +18,10 @@ import (
 )
 
 // New attaches a cgroup_skb/egress BPF program to a freshly-created
-// cgroup under /sys/fs/cgroup. The map starts empty — call AddIP for
-// each allowlisted destination before starting the container. Loading
+// cgroup under /sys/fs/cgroup. Two HASH maps back the program: one
+// keyed by 4-byte IPv4 destinations, one keyed by 16-byte IPv6
+// destinations. Both start empty — call AddIP for each allowlisted
+// destination (any IP family) before starting the container. Loading
 // requires CAP_BPF + CAP_NET_ADMIN; without those, expect a
 // "operation not permitted" error which the docker backend should
 // surface and fall back from.
@@ -43,8 +45,8 @@ func New(cfg Config) (Filter, error) {
 		return nil, fmt.Errorf("egress: mkdir cgroup %s: %w", cgroupPath, err)
 	}
 
-	allowMap, err := ebpf.NewMap(&ebpf.MapSpec{
-		Name:       "nomi_egress_allow",
+	v4Map, err := ebpf.NewMap(&ebpf.MapSpec{
+		Name:       "nomi_egress_v4",
 		Type:       ebpf.Hash,
 		KeySize:    4, // IPv4 destination, big-endian
 		ValueSize:  1, // unused — presence in the map = allowed
@@ -52,17 +54,31 @@ func New(cfg Config) (Filter, error) {
 	})
 	if err != nil {
 		_ = os.Remove(cgroupPath)
-		return nil, fmt.Errorf("egress: create map: %w", err)
+		return nil, fmt.Errorf("egress: create v4 map: %w", err)
+	}
+
+	v6Map, err := ebpf.NewMap(&ebpf.MapSpec{
+		Name:       "nomi_egress_v6",
+		Type:       ebpf.Hash,
+		KeySize:    16, // IPv6 destination, big-endian
+		ValueSize:  1,
+		MaxEntries: 1024,
+	})
+	if err != nil {
+		_ = v4Map.Close()
+		_ = os.Remove(cgroupPath)
+		return nil, fmt.Errorf("egress: create v6 map: %w", err)
 	}
 
 	prog, err := ebpf.NewProgram(&ebpf.ProgramSpec{
-		Name:    "nomi_egress",
-		Type:    ebpf.CGroupSKB,
-		License: "GPL",
-		Instructions: buildProgram(allowMap),
+		Name:         "nomi_egress",
+		Type:         ebpf.CGroupSKB,
+		License:      "GPL",
+		Instructions: buildProgram(v4Map, v6Map),
 	})
 	if err != nil {
-		_ = allowMap.Close()
+		_ = v4Map.Close()
+		_ = v6Map.Close()
 		_ = os.Remove(cgroupPath)
 		return nil, fmt.Errorf("egress: load program: %w", err)
 	}
@@ -74,7 +90,8 @@ func New(cfg Config) (Filter, error) {
 	})
 	if err != nil {
 		_ = prog.Close()
-		_ = allowMap.Close()
+		_ = v4Map.Close()
+		_ = v6Map.Close()
 		_ = os.Remove(cgroupPath)
 		return nil, fmt.Errorf("egress: attach cgroup: %w", err)
 	}
@@ -82,7 +99,8 @@ func New(cfg Config) (Filter, error) {
 	return &linuxFilter{
 		cgroupPath: cgroupPath,
 		prog:       prog,
-		allowMap:   allowMap,
+		v4Map:      v4Map,
+		v6Map:      v6Map,
 		attached:   attached,
 	}, nil
 }
@@ -90,27 +108,32 @@ func New(cfg Config) (Filter, error) {
 type linuxFilter struct {
 	cgroupPath string
 	prog       *ebpf.Program
-	allowMap   *ebpf.Map
+	v4Map      *ebpf.Map
+	v6Map      *ebpf.Map
 	attached   link.Link
 }
 
 func (f *linuxFilter) CgroupPath() string { return f.cgroupPath }
 
-// AddIP inserts an IPv4 destination into the allowlist map. IPv6 is
-// currently dropped on the floor — the program only filters IPv4
-// because cgroup_skb/egress sees the IP header directly and supporting
-// v6 doubles program size for a marginal real-world payoff in v1.
+// AddIP inserts an allowlisted destination into the appropriate map.
+// IPv4 addresses land in the 4-byte v4 map; IPv6 in the 16-byte v6
+// map. The wire form is big-endian — matching the byte order
+// bpf_skb_load_bytes pulls off the IP header.
 func (f *linuxFilter) AddIP(ip net.IP) error {
-	v4 := ip.To4()
-	if v4 == nil {
-		// IPv6 not yet supported; skip silently so callers can pass mixed
-		// resolver output without filtering upstream.
-		return nil
+	if v4 := ip.To4(); v4 != nil {
+		var key [4]byte
+		copy(key[:], v4)
+		var value uint8 = 1
+		return f.v4Map.Put(key[:], value)
 	}
-	var key [4]byte
-	copy(key[:], v4)
+	v6 := ip.To16()
+	if v6 == nil {
+		return fmt.Errorf("egress: AddIP: %q is neither IPv4 nor IPv6", ip)
+	}
+	var key [16]byte
+	copy(key[:], v6)
 	var value uint8 = 1
-	return f.allowMap.Put(key[:], value)
+	return f.v6Map.Put(key[:], value)
 }
 
 func (f *linuxFilter) Close() error {
@@ -127,11 +150,17 @@ func (f *linuxFilter) Close() error {
 		}
 		f.prog = nil
 	}
-	if f.allowMap != nil {
-		if err := f.allowMap.Close(); err != nil && first == nil {
+	if f.v4Map != nil {
+		if err := f.v4Map.Close(); err != nil && first == nil {
 			first = err
 		}
-		f.allowMap = nil
+		f.v4Map = nil
+	}
+	if f.v6Map != nil {
+		if err := f.v6Map.Close(); err != nil && first == nil {
+			first = err
+		}
+		f.v6Map = nil
 	}
 	if f.cgroupPath != "" {
 		if err := os.Remove(f.cgroupPath); err != nil && !errors.Is(err, os.ErrNotExist) && first == nil {
@@ -145,28 +174,51 @@ func (f *linuxFilter) Close() error {
 // buildProgram emits the cgroup_skb/egress BPF program. Semantics:
 //
 //	r1 = __sk_buff *ctx
-//	if ctx.protocol != ETH_P_IP (0x0008 BE): return 1 (allow non-IPv4)
-//	bpf_skb_load_bytes(ctx, offsetof(iphdr, daddr) = 16, &daddr, 4)
-//	if load failed (r0 != 0): return 1 (fail-open on load errors;
-//	   verifier guarantees the call shape but a parse failure could
-//	   happen on truncated packets — letting them through is the safer
-//	   default since the alternative is bricking the container)
-//	if bpf_map_lookup_elem(&allow, &daddr) != NULL: return 1 (allow)
-//	return 0 (drop)
+//	switch ctx.protocol:
+//	  ETH_P_IP   (host-order 0x0008 on LE): goto v4_path
+//	  ETH_P_IPV6 (host-order 0xDD86 on LE): goto v6_path
+//	  default:                              return 1 (allow non-IP)
 //
-// __sk_buff layout — protocol at offset 16, all other fields exposed
-// via the verifier rewriter at fixed offsets that match
-// include/uapi/linux/bpf.h:
+//	v4_path:
+//	  bpf_skb_load_bytes(ctx, 16, &stack[0..4), 4)
+//	  if load failed: return 1 (fail-open on truncated packets)
+//	  if bpf_map_lookup_elem(&v4_map, &stack[0..4)) != NULL: return 1
+//	  return 0 (drop)
 //
-//	struct __sk_buff { __u32 len; __u32 pkt_type; __u32 mark;
-//	                   __u32 queue_mapping; __u32 protocol; ... }
-func buildProgram(allowMap *ebpf.Map) asm.Instructions {
+//	v6_path:
+//	  bpf_skb_load_bytes(ctx, 24, &stack[0..16), 16)
+//	  if load failed: return 1
+//	  if bpf_map_lookup_elem(&v6_map, &stack[0..16)) != NULL: return 1
+//	  return 0
+//
+// __sk_buff layout — protocol at offset 16. The verifier exposes the
+// __be16 wire field as a native u32 in host byte order, so on the
+// little-endian architectures we ship to (x86_64, arm64) ETH_P_IP
+// becomes 0x00000008 and ETH_P_IPV6 becomes 0x0000DD86.
+//
+// IPv6 header layout — destination address at offset 24:
+//
+//	0: version + traffic class + flow label (4 bytes)
+//	4: payload length (2)
+//	6: next header (1)
+//	7: hop limit (1)
+//	8: source address (16)
+//	24: destination address (16) ← what we load
+//
+// Stack frame: one 16-byte slot at RFP-16 holds the destination for
+// either family. v4 path writes only the low 4 bytes (offsets -16 to
+// -12) and looks up with the v4 map's 4-byte key against the same
+// pointer; the upper 12 bytes are read by neither path.
+func buildProgram(v4Map, v6Map *ebpf.Map) asm.Instructions {
 	const (
-		skbProtocolOffset = 16 // offsetof(__sk_buff, protocol)
-		ipHdrDaddrOffset  = 16 // offsetof(struct iphdr, daddr) for v4
-		ethPIPBE          = 0x0008
-		retDrop           = 0
-		retAllow          = 1
+		skbProtocolOffset  = 16 // offsetof(__sk_buff, protocol)
+		ipHdrDaddrOffset   = 16 // offsetof(struct iphdr, daddr)
+		ip6HdrDaddrOffset  = 24 // offsetof(struct ipv6hdr, daddr)
+		ethPIPHostOrderLE  = 8      // bpf_htons(ETH_P_IP)   on LE
+		ethPIPV6HostOrdLE  = 0xDD86 // bpf_htons(ETH_P_IPV6) on LE
+		retDrop            = 0
+		retAllow           = 1
+		stackDaddrOffset   = -16
 	)
 
 	return asm.Instructions{
@@ -176,35 +228,52 @@ func buildProgram(allowMap *ebpf.Map) asm.Instructions {
 		// r7 = ctx->protocol (u32 load)
 		asm.LoadMem(asm.R7, asm.R6, skbProtocolOffset, asm.Word),
 
-		// if r7 != 0x0008 (ETH_P_IP big-endian on wire, stored as native u32) → allow
-		// Linux exposes ctx->protocol as host-byte-order on most archs; on
-		// little-endian that's the swapped value 0x00000008. cgroup_skb
-		// programs see __sk_buff which normalises this to host order, so
-		// comparing against 8 is right on every supported architecture.
-		asm.JNE.Imm(asm.R7, 8, "load_daddr"),
+		// Branch on protocol family.
+		asm.JEq.Imm(asm.R7, ethPIPHostOrderLE, "v4_load"),
+		asm.JEq.Imm(asm.R7, ethPIPV6HostOrdLE, "v6_load"),
+		// Neither IPv4 nor IPv6 → allow (ICMP, ARP at L3 if ever seen,
+		// link-local control traffic). The threat model here is
+		// application-level egress, not L3 stack hardening.
 		asm.Mov.Imm(asm.R0, retAllow),
 		asm.Return(),
 
-		// load_daddr: bpf_skb_load_bytes(ctx, 16, &daddr_stack, 4)
-		asm.Mov.Reg(asm.R1, asm.R6).WithSymbol("load_daddr"),
+		// v4_load: bpf_skb_load_bytes(ctx, 16, &stack[-16], 4)
+		asm.Mov.Reg(asm.R1, asm.R6).WithSymbol("v4_load"),
 		asm.Mov.Imm(asm.R2, ipHdrDaddrOffset),
 		asm.Mov.Reg(asm.R3, asm.RFP),
-		asm.Add.Imm(asm.R3, -4),
+		asm.Add.Imm(asm.R3, stackDaddrOffset),
 		asm.Mov.Imm(asm.R4, 4),
 		asm.FnSkbLoadBytes.Call(),
-
-		// if r0 != 0: load failed (e.g. truncated packet) — fail-open
-		asm.JEq.Imm(asm.R0, 0, "lookup"),
+		// if r0 != 0: load failed — fail-open
+		asm.JEq.Imm(asm.R0, 0, "v4_lookup"),
 		asm.Mov.Imm(asm.R0, retAllow),
 		asm.Return(),
 
-		// lookup: bpf_map_lookup_elem(&allow, &daddr_stack)
-		asm.LoadMapPtr(asm.R1, allowMap.FD()).WithSymbol("lookup"),
+		// v4_lookup: bpf_map_lookup_elem(&v4_map, &stack[-16])
+		asm.LoadMapPtr(asm.R1, v4Map.FD()).WithSymbol("v4_lookup"),
 		asm.Mov.Reg(asm.R2, asm.RFP),
-		asm.Add.Imm(asm.R2, -4),
+		asm.Add.Imm(asm.R2, stackDaddrOffset),
 		asm.FnMapLookupElem.Call(),
+		asm.JEq.Imm(asm.R0, 0, "drop"),
+		asm.Mov.Imm(asm.R0, retAllow),
+		asm.Return(),
 
-		// if r0 != NULL: hit — allow
+		// v6_load: bpf_skb_load_bytes(ctx, 24, &stack[-16], 16)
+		asm.Mov.Reg(asm.R1, asm.R6).WithSymbol("v6_load"),
+		asm.Mov.Imm(asm.R2, ip6HdrDaddrOffset),
+		asm.Mov.Reg(asm.R3, asm.RFP),
+		asm.Add.Imm(asm.R3, stackDaddrOffset),
+		asm.Mov.Imm(asm.R4, 16),
+		asm.FnSkbLoadBytes.Call(),
+		asm.JEq.Imm(asm.R0, 0, "v6_lookup"),
+		asm.Mov.Imm(asm.R0, retAllow),
+		asm.Return(),
+
+		// v6_lookup: bpf_map_lookup_elem(&v6_map, &stack[-16])
+		asm.LoadMapPtr(asm.R1, v6Map.FD()).WithSymbol("v6_lookup"),
+		asm.Mov.Reg(asm.R2, asm.RFP),
+		asm.Add.Imm(asm.R2, stackDaddrOffset),
+		asm.FnMapLookupElem.Call(),
 		asm.JEq.Imm(asm.R0, 0, "drop"),
 		asm.Mov.Imm(asm.R0, retAllow),
 		asm.Return(),
@@ -215,10 +284,8 @@ func buildProgram(allowMap *ebpf.Map) asm.Instructions {
 	}
 }
 
-// ipv4ToBE is a small helper exported for tests: encodes the 4-byte
-// big-endian wire form the BPF map keys use. Keeping it package-local
-// since it's currently only used by tests via the package's own
-// _test.go file.
+// ipv4ToBE is a small helper retained for tests; the IPv4 wire form
+// the BPF v4 map keys use is the big-endian 4-byte encoding.
 func ipv4ToBE(ip net.IP) []byte {
 	v4 := ip.To4()
 	if v4 == nil {
