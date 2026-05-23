@@ -4,245 +4,88 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased] - eBPF egress filter: docker systemd cgroup driver
+## [0.2.3] - 2026-05-23 — Security hardening + MCP-client wedge
 
-Closes the last deferred from the V1 polish closeout. Until now the
-eBPF egress filter only worked under docker's cgroupfs driver — the
-filter created `/sys/fs/cgroup/nomi-sandbox-<id>` and passed the
-absolute path to `--cgroup-parent`, which docker's systemd driver
-rejects (it requires a slice name ending in .slice). On hosts using
-the systemd driver the filter would either fail outright at docker
-run time or fall back to the DNS-only path even when CAP_BPF was
-present.
+Six features close out the V1 polish wave. Theme: the reviewable-
+agents thesis only holds if the sandboxed side of "reviewable" is
+actually hard to escape, and the agent has interesting work to
+review. This release ships both ends:
+
+- **Browser automation as a first-party capability.** New Scout
+  plugin (`com.nomi.scout`) connects to a Scout MCP server over
+  stdio or http+sse via `github.com/felixgeelhaar/mcp-go`. Six
+  primitives exposed through Nomi's tool + capability + plan-review
+  pipeline: `scout.navigate`, `scout.observe`, `scout.click`,
+  `scout.type`, `scout.screenshot`, `scout.extract`. All gated by
+  capability `scout.browse`. Lazy connect — a missing scout binary
+  doesn't fail daemon boot; the first tool call surfaces the error.
+  Reusable MCP-client glue for any future MCP-server integration.
+
+- **Three-layer egress isolation.** The `network.egress` capability
+  evolves from a binary none-or-bridge flip into a defense-in-depth
+  stack:
+  - L1 (default): `--network=none`, full deny.
+  - L2 (Allow + host_allowlist): docker `--add-host` pinning of
+    pre-resolved IPs + `--dns=127.255.255.255` so non-pinned DNS
+    lookups time out. Closes accidental egress.
+  - L3 (NOMI_EGRESS_EBPF=1, Linux): a cgroup_skb/egress BPF
+    program drops outbound packets whose destination isn't in the
+    pre-resolved allowlist, irrespective of DNS. Built in pure-Go
+    assembly via `cilium/ebpf` (no clang at build time). Handles
+    both IPv4 and IPv6 — two HASH maps, branched in the BPF
+    program by `ctx.protocol`. Closes hardcoded-IP bypass. Works
+    under both docker cgroup drivers — cgroupfs gets a flat dir,
+    systemd gets a `.slice`. Detection cached once per backend
+    via `sync.Once`. Soft-falls back to L2 on missing caps,
+    unsupported kernel, or detection failure with a structured
+    warning. No silent intent-drop.
+
+- **Diff readability win.** `DiffPreview` no longer makes one Shiki
+  call per line. New `highlightLines(code, lang)` helper does the
+  whole hunk in one tokenisation, then the +/- gutter overlays on
+  top. Multi-line scope (template literals, JSX, block comments,
+  Go raw strings) survives across line boundaries instead of being
+  re-tokenised line-by-line.
+
+### Added
+- `internal/plugins/scout` — MCP-client plugin with stdio + http+sse
+  transports, lazy connect, per-connection client cache.
+- `executor.Request.HostAllowlist` + `permissions` rule constraint
+  `host_allowlist`. UI editor on the assistant builder gates the
+  field to `network.egress` + Allow.
+- `internal/runtime/executor/egress` — pure-Go BPF asm cgroup_skb
+  filter, v4 + v6 HASH maps, cgroupfs + systemd cgroup driver
+  support. `Filter.DockerCgroupParent()` separate from
+  `CgroupPath()` so drivers' divergent `--cgroup-parent` semantics
+  are correct on both.
+- `app/src/lib/highlighter.ts::highlightLines` + the
+  `useHunkHighlight` hook in `diff-preview.tsx`.
 
 ### Changed
-- `internal/runtime/executor/egress/egress.go`:
-  - New `Driver` type with `DriverCgroupfs` + `DriverSystemd`
-    constants. `Config.DockerCgroupDriver` selects the cgroup-naming
-    scheme.
-  - `Filter` interface grows `DockerCgroupParent() string` separate
-    from `CgroupPath()`. The former is what docker wants on the
-    command line; the latter is the filesystem path the BPF program
-    is attached to (now distinct on systemd hosts).
-- `internal/runtime/executor/egress/egress_linux.go`:
-  - Branches on `cfg.DockerCgroupDriver`. cgroupfs → flat dir
-    `nomi-sandbox-<id>`, docker gets the absolute path. systemd →
-    `nomi-sandbox-<id>.slice`, docker gets the bare slice name. The
-    cgroup_skb attachment lives on the parent in both cases; child
-    scopes docker creates inherit the program.
-- `internal/runtime/executor/docker.go`:
-  - `DockerBackend` grows `driverOnce` + `cachedDriver`. Methods
-    converted to pointer receivers so the cached state actually
-    persists (sync.Once on a value receiver is a no-op).
-  - `resolveCgroupDriver` probes via `docker info --format
-    '{{.CgroupDriver}}'` exactly once per backend lifetime and
-    feeds the result into `egress.New`. Detection failure falls
-    back to cgroupfs (the historical behaviour, safer than
-    bricking the eBPF path entirely).
+- `DockerBackend` methods now pointer receivers so `sync.Once`
+  cached state (driver detection) persists across calls.
+- `resolveAllowlist` extracted from `buildHostAllowlistArgs` so
+  `--add-host` pins and the eBPF map share one DNS resolution.
 
-### Tests
-- `TestDockerRunUsesSystemdSliceForSystemdDriver` stubs the
-  detector + filter to assert: (a) driver value reaches
-  `egress.New`, (b) docker's `--cgroup-parent` carries the bare
-  slice name, (c) the absolute path doesn't leak into argv on
-  systemd hosts.
-- `TestDockerResolveCgroupDriverCaches` proves the `sync.Once`
-  memoisation — 5 calls = 1 detector invocation.
+### Security
+- DNS allowlist + eBPF filter together close the gap noted in
+  v0.2.x: previously `--network=none` was the only hard isolation
+  primitive; everything else was best-effort. Now operators can
+  whitelist specific hostnames and have both the docker bridge AND
+  the kernel enforce them.
+- Threat model documented inline: DNS path prevents accidental
+  egress; eBPF path prevents hardcoded-IP bypass; neither is
+  protection against malicious code running with CAP_NET_RAW that
+  forges packets — that's outside the container threat model.
 
 ### Operational
-- IPv6 deferred is closed too; both v4 and v6 enforcement work
-  under either cgroup driver.
-- Detection still needs docker installed + reachable. Hosts without
-  docker fall back to cgroupfs (default), which is harmless: if the
-  eBPF path is attempted but the daemon's actually using systemd
-  underneath, docker will reject the cgroup-parent and the egress
-  filter soft-falls back to DNS-only with the existing warning.
-
-## [Unreleased] - eBPF egress filter: IPv6 enforcement
-
-Closes the v0.2.x deferred IPv6 gap on the cgroup_skb/egress BPF
-program. Before: v6 packets passed through unfiltered because the
-program only branched on ETH_P_IP. After: a second HASH map (16-byte
-key) holds allowlisted v6 destinations; the program branches on
-ctx.protocol to ETH_P_IPV6 too, loads the 16-byte daddr from offset
-24 of the IPv6 header via bpf_skb_load_bytes, looks it up, drops on
-miss.
-
-### Changed
-- `internal/runtime/executor/egress/egress_linux.go`:
-  - `New` provisions two HASH maps now (`nomi_egress_v4`,
-    `nomi_egress_v6`). Both get closed/torn down in `Close`.
-  - `buildProgram` grows two parallel branches off the protocol
-    switch — `v4_load → v4_lookup` and `v6_load → v6_lookup`. A
-    single 16-byte stack slot at RFP-16 holds the destination for
-    either family; the v4 path writes only the bottom 4 bytes.
-    Non-IP packets (ARP, ICMPv6 link-local control) still pass —
-    the threat model is application egress, not L3 hardening.
-  - `AddIP` routes v4 to the v4 map and v6 (incl. v4-mapped v6
-    via `net.IP.To4`) to the v6 map. Malformed `net.IP` inputs
-    now error rather than silently succeeding.
-
-### Tests
-- Existing Linux integration test (`TestNewLinuxAttachesAndCloses`)
-  now exercises a v4-mapped v6 path. New `TestAddIPRejectsGarbage`
-  guards the malformed-IP rejection branch — a security primitive
-  silently accepting garbage is the wrong default.
-
-### Operational notes
-- IPv6 enforcement is automatic when the rule's `host_allowlist`
-  resolves to AAAA records. No new env vars or config.
-- The systemd-cgroup-driver path translation is still deferred —
-  same as before, `--cgroup-parent` assumes cgroupfs driver.
-
-## [Unreleased] - DiffPreview: Shiki per-hunk highlighting
-
-Closes the last deferred item from the V1 polish wave. DiffPreview
-used to call HighlightedCode per source line, which meant Shiki
-re-tokenised every line from scratch — losing multi-line scope
-(template literals, JSX, block comments, multi-line string literals
-in Go) at every line boundary. Now one Shiki call per hunk.
-
-### Changed
-- `app/src/lib/highlighter.ts` — new `highlightLines(code, lang)`
-  helper that runs Shiki once on the whole block, strips the
-  `<span class="line">` wrappers Shiki emits, and returns one HTML
-  string per source line for the caller to render with their own
-  per-line chrome (markers, gutters, bg tints).
-- `app/src/components/diff-preview.tsx` — `useHunkHighlight` hook
-  memoises one tokenisation per (lines, lang) pair. `HunkBody`
-  passes the resulting per-line tokens to `HighlightedDiffHunk`.
-  `HighlightedDiffHunk` no longer owns its own per-line Shiki
-  calls — it just lays out the +/- gutter + bg tint over the
-  token HTML and falls back to plain content when the tokens
-  array isn't available (Shiki still loading, lang not bundled,
-  Shiki layout change that breaks the per-line split).
-
-### Behaviour
-- Same visual API as before; pure correctness/perf win.
-- N independent Shiki promises per render → 1 per hunk.
-- Multi-line tokens stay intact across the hunk so a template
-  literal opening on line 1 and closing on line 4 is highlighted
-  as a single string instead of four mis-tokenised fragments.
-
-### Tests
-- `app/src/lib/__tests__/highlighter.test.ts` covers the lang
-  normalisation table, file-extension sniffing, and the null-lang
-  short-circuit. The Shiki dynamic import is exercised by the
-  Playwright e2e — mocking it at the unit layer was brittle and
-  the value was negligible.
-
-## [Unreleased] - eBPF cgroup_skb egress filter (Linux, experimental)
-
-Hard kernel-level egress isolation for the docker backend, layered on
-top of the existing DNS allowlist. A cgroup_skb/egress BPF program is
-loaded via `github.com/cilium/ebpf` (pure-Go assembly, no clang at
-build time), attached to a per-run cgroup, and consults a HASH map of
-allowlisted IPv4 destinations. Packets whose destination isn't in the
-map are dropped at the kernel — closing the hardcoded-IP gap the
-DNS-only path leaves open.
-
-### Added
-- `internal/runtime/executor/egress` package. `Filter` interface +
-  `New(Config) (Filter, error)`. Linux build (`egress_linux.go`)
-  creates a cgroup under `/sys/fs/cgroup`, builds the BPF program in
-  pure-Go assembly, populates a HASH map for `__sk_buff` destination
-  lookups, and attaches via `link.AttachCgroup`. The `!linux` stub
-  always returns `ErrUnsupported`.
-- Docker backend integration: when `NOMI_EGRESS_EBPF=1` and an
-  allowlist is set, the backend creates the filter, populates IPs
-  from the shared allowlist resolution, sets `--cgroup-parent`, and
-  defers `Close()` to detach + clean up. Any error (no kernel
-  support, missing CAP_BPF/CAP_NET_ADMIN, missing cgroup v2) is a
-  soft failure that logs a structured warning and falls back to the
-  DNS-only path.
-- Tests: stub-platform `TestNewReturnsUnsupportedOffLinux`;
-  Linux-only `TestNewLinuxAttachesAndCloses` (skipped when not root
-  or no cgroup v2); docker-backend integration tests stub
-  `newEgressFilter` to verify map population, cgroup-parent
-  injection, soft fallback on `ErrUnsupported`, and that the filter
-  is never created when the env gate is off.
-
-### Threat-model update
-- DNS allowlist alone: prevents accidental egress; bypassable by
-  hardcoded IPs. With eBPF: kernel drops the packet regardless of
-  how the destination was discovered. IPv6 enforcement is not yet
-  implemented — IPv6 packets pass through (documented in the BPF
-  program comment).
-
-### Operational notes
-- Off by default. Set `NOMI_EGRESS_EBPF=1` on the daemon process to
-  opt in. Daemon must run with `CAP_BPF + CAP_NET_ADMIN` and a
-  cgroup v2 mount at `/sys/fs/cgroup`.
-- macOS and Windows hosts always fall back to the DNS-only path
-  because the kernel hook doesn't exist there.
-- Docker must use the cgroupfs driver (systemd-driver `.slice`
-  naming isn't supported by the v1 cgroup path scheme).
-
-## [Unreleased] - DNS egress allowlist (docker)
-
-Tightens the `network.egress` capability beyond the present
-`--network=none` / `--network=bridge` flip. An Allow rule on
-network.egress that carries a `host_allowlist` constraint now causes
-the docker backend to pre-resolve each host on the host's DNS, inject
-`--add-host=name:ip` for every resolved IP, and steer in-container DNS
-at `127.255.255.255` so lookups for anything outside the list time
-out. NetworkMode is forced to `bridge` when an allowlist is present
-so the pinned hosts are actually reachable.
-
-### Added
-- `executor.Request.HostAllowlist []string`. Runtime extracts the
-  `host_allowlist` constraint from the matched network.egress rule
-  (via `permissions.Engine.MatchingRule`) and propagates it through
-  the reserved `__host_allowlist` tool-input key, matching the
-  existing `__sandbox` / `__network_mode` escape-hatch pattern.
-- Docker backend: `--add-host` pinning + `--dns=127.255.255.255` for
-  every allowlisted host, with unresolvable hosts surfaced as a
-  startup error (silently dropping would let the assistant reach
-  unintended endpoints if upstream DNS later recovers).
-- `host_allowlist` field on the permission rule editor in the
-  assistant builder, gated to `network.egress` + Allow.
-
-### Threat-model note
-- Prevents accidental egress to unintended hosts. Not a hard isolation
-  against malicious code that hardcodes IPs — that requires kernel-
-  level packet filtering (eBPF cgroup_skb), which is the next pass on
-  the roady backlog.
-
-## [Unreleased] - Scout browser plugin
-
-First-party browser automation. Nomi connects to a Scout MCP server
-(stdio subprocess or HTTP+SSE) via `github.com/felixgeelhaar/mcp-go`
-and exposes six browser primitives through the existing tool +
-capability + plan-review surface.
-
-### Added
-- `internal/plugins/scout` — Plugin + ToolProvider +
-  ConnectionHealthReporter. Lazy client construction (first tool
-  call wakes the subprocess), cached per connection so the stdio
-  process doesn't restart per invocation. Stop() closes every
-  cached client.
-- Six tools, each gated by capability `scout.browse`:
-  `scout.navigate`, `scout.observe`, `scout.click`, `scout.type`,
-  `scout.screenshot`, `scout.extract`. They map to the upstream
-  Scout MCP server's `navigate` / `annotated_screenshot` / `click`
-  / `type` / `screenshot` / `extract` tools.
-- Connection config schema covers both transports:
-  - `transport=stdio` (default): `command` (default `scout`),
-    `args` (default `mcp`, comma- or space-separated).
-  - `transport=http`: `endpoint` + optional `token` credential
-    (Bearer auth) resolved through the secrets store.
-
-### Behaviour notes
-- Connection isn't established at boot — a missing or broken
-  `scout` binary doesn't fail `nomid` startup. The first tool
-  invocation surfaces the connection error.
-- Reserved input keys (`connection_id`, anything `__*`) are
-  stripped before forwarding to the Scout server.
-- Tool output flattens the MCP ContentItem array into `text` +
-  optional `image_data` for screenshot endpoints; raw structured
-  content stays available under the `content` key.
-- The any-MCP-server generic plugin (not just Scout) remains on
-  the roady backlog — the client glue here is reusable.
+- eBPF path is off by default. Set `NOMI_EGRESS_EBPF=1` on the
+  daemon process to opt in. Needs CAP_BPF + CAP_NET_ADMIN +
+  cgroup v2.
+- macOS + Windows hosts always fall back to L2 (DNS-only); the
+  Linux kernel hook doesn't exist on those platforms.
+- Scout connection isn't established at boot — first tool call
+  surfaces a configuration error if the scout binary is missing.
 
 ## [0.2.2] - 2026-05-23 — Polish wave
 

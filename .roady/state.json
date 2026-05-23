@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 612,
+  "version": 613,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1693,11 +1693,15 @@
       "elapsed_minutes": 8
     },
     "task-ebpf-egress-filter:-docker-systemd-cgroup-driver": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "07caa3f — egress.Driver type + egress.Config.DockerCgroupDriver, Filter.DockerCgroupParent() separate from CgroupPath(). Linux impl creates .slice dirs for systemd, flat dirs for cgroupfs. Docker backend probes driver via \"docker info\" sync.Once-cached. Pointer receivers so state persists. Tests cover the slice-naming branch + cache. V1 polish closeout deferred list fully cleared."
+      ],
       "started_at": "2026-05-23T12:27:28.301019+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-23T12:30:50.680018+02:00",
+      "elapsed_minutes": 3
     },
     "task-email-plugin-(channel-+-tool-+-trigger)": {
       "status": "done",
@@ -2950,5 +2954,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-23T12:27:28.301019+02:00"
+  "updated_at": "2026-05-23T12:30:50.68002+02:00"
 }
