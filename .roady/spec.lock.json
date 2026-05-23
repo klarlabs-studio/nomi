@@ -975,6 +975,13 @@
       "description": "Hard kernel-level egress isolation for the docker backend, beyond the DNS-pinning the host_allowlist constraint already enables. A pure-Go BPF program of type cgroup_skb/egress is loaded via github.com/cilium/ebpf, attached to a per-run cgroup, and consults a HASH map of allowlisted IPv4 destinations. Packets whose dst doesn't match get dropped at the kernel; the container can't reach hardcoded IPs that bypass DNS. Docker invocation is wrapped with --cgroup-parent pointing at the pre-attached cgroup. Linux-only via build tags; the !linux stub returns ErrUnsupported and the docker backend gracefully falls back to the DNS-only behaviour. Requires CAP_BPF + CAP_NET_ADMIN at the daemon process; if missing, falls back to DNS-only with a structured warning. Experimental: gated behind NOMI_EGRESS_EBPF=1 so default behaviour is unchanged.",
       "requirements": [],
       "source": {}
+    },
+    {
+      "id": "diffpreview-shiki-per-hunk-highlight",
+      "title": "DiffPreview Shiki per-hunk highlight",
+      "description": "Swap DiffPreview's per-line HighlightedCode loop (N Shiki promises per render, multi-line context broken at every line boundary) for one Shiki call per hunk. Markers stripped before tokenization, +/- gutter + bg tint overlay on top of the rendered output. Same visual API as today; correctness wins on string literals, JSX, template strings, multi-line comments.",
+      "requirements": [],
+      "source": {}
     }
   ],
   "constraints": [],

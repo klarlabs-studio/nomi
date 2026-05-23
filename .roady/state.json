@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 603,
+  "version": 606,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1626,6 +1626,13 @@
       "completed_at": "2026-05-09T17:35:33.465075+02:00",
       "elapsed_minutes": 1
     },
+    "task-diffpreview-shiki-per-hunk-highlight": {
+      "status": "in_progress",
+      "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-23T12:16:10.454933+02:00",
+      "elapsed_minutes": 0
+    },
     "task-discord-plugin-(channel-+-tool)": {
       "status": "done",
       "path": "",
@@ -1671,11 +1678,15 @@
       "elapsed_minutes": 7
     },
     "task-ebpf-cgroup_skb-egress-filter-(linux)": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "f7182f0 — pure-Go BPF assembly (cilium/ebpf v0.21.0), cgroup_skb/egress program drops IPv4 packets whose dst isn't in the per-run HASH map. Docker backend wires --cgroup-parent under NOMI_EGRESS_EBPF=1 gate; non-Linux + missing caps soft-fall to DNS-only with structured warning. Tests cover the stub path, real attach (skipped without root), and the 4 docker integration shapes (populate, fallback, default-off, close)."
+      ],
       "started_at": "2026-05-23T12:03:34.588706+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-23T12:12:17.016379+02:00",
+      "elapsed_minutes": 8
     },
     "task-email-plugin-(channel-+-tool-+-trigger)": {
       "status": "done",
@@ -2917,5 +2928,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-23T12:03:34.588706+02:00"
+  "updated_at": "2026-05-23T12:16:10.454933+02:00"
 }

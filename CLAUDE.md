@@ -94,10 +94,10 @@ Planning and task state live in `.roady/` — this is the source of truth for wh
 
 **Shipped (post v0.2.1):** sandboxed executor backends (local/docker/gvisor), Recipe registry + signed YAML bundles + 9 built-in recipes, scheduled runs + NL→cron via LLM, skill induction (Jaccard + cosine embedding clustering + LLM synthesis), auto-learning preferences loop, embeddings provider integration, WhatsApp/Slack/Discord plugins, plugin context-source consumption in planner, FTS5 memory search (`memory_fts` + bm25 ranking), OS notifications on `approval.requested` (`tauri-plugin-notification` + Web API fallback), **macOS menu bar / system tray** with live Approvals(N) badge + pause-all + new-chat + settings + quit + 3 state icons (idle/active/awaiting).
 
+**Shipped (V1 polish closeout):** Scout browser plugin (`com.nomi.scout`, MCP-client via `github.com/felixgeelhaar/mcp-go`, stdio + http+sse transports), DNS egress allowlist on `network.egress` rule (docker `--add-host` pinning + `--dns=127.255.255.255`), eBPF cgroup_skb/egress filter (pure-Go BPF asm via `cilium/ebpf`, gated by `NOMI_EGRESS_EBPF=1`, soft-falls to DNS-only), DiffPreview Shiki per-hunk highlighting (one tokenisation per hunk, multi-line context preserved), `make eval-live-providers` matrix (per-provider pass-rate reporting via `TestPlannerGoldenSet_Live`).
+
 **Pending / deferred:**
-- **Shiki syntax highlighting in DiffPreview** — class names already match what a future Shiki swap will reuse; the worker dep was deferred when per-hunk skip + side-by-side shipped.
-- **NOMI_EVAL_LIVE provider matrix** — `make eval-live` runs the fake-LLM corpus + adversarial fixtures with the threshold gate; live-against-real-providers pass-rate reporting is the post-deferral.
-- **Scout browser plugin** — Scout already exists as a standalone tool; first-party plugin integration is the next big capability.
-- **eBPF / DNS egress allowlist** — `network.egress` capability today flips `--network=none` vs `--network=bridge`; per-domain allowlist enforcement needs a userland firewall layer.
+- **IPv6 in eBPF egress filter** — v1 only filters IPv4; v6 packets pass through. Doubling the BPF program for v6 was deferred to keep the experimental surface small.
+- **eBPF + docker systemd-driver** — current `--cgroup-parent` path scheme assumes cgroupfs driver. systemd-driver `.slice` naming needs a different path translation.
 
 **Workflow when picking up work:** check `.roady/state.json` for the task, run `roady` MCP tools (`roady_get_ready_tasks`, `roady_transition_task`) to claim it, keep WIP ≤ 3. Spec/plan changes go through `roady_review_spec` / `roady_generate_plan` rather than editing YAML by hand — the `events.jsonl` chain breaks otherwise.

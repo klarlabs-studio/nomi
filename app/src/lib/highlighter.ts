@@ -146,6 +146,58 @@ export async function highlightToHTML(
   }
 }
 
+// highlightLines tokenises `code` as `lang` and returns one HTML
+// string per source line — the inner contents of each Shiki
+// `<span class="line">` wrapper. The caller renders the per-line
+// chrome (+/- gutter, bg tint, line numbers); this just gives them
+// the syntax-coloured spans.
+//
+// One Shiki call per hunk preserves multi-line context: a template
+// literal that spans three lines stays one token-tree instead of
+// being re-tokenised from scratch each line, which is what the
+// per-line HighlightedCode path used to do.
+//
+// Returns null when the language isn't bundled or Shiki failed to
+// initialise; callers should render the raw code in that case.
+export async function highlightLines(
+  code: string,
+  lang: BundledLang | null,
+): Promise<string[] | null> {
+  if (!lang) return null;
+  const h = await ensureHighlighter();
+  if (!h) return null;
+  try {
+    const html = h.codeToHtml(code, {
+      lang,
+      themes: { light: LIGHT_THEME, dark: DARK_THEME },
+      defaultColor: false,
+    });
+    // Shiki wraps each line in <span class="line">…</span>. Pull the
+    // inner contents out; the markup of the wrappers themselves is
+    // discarded since the DiffPreview is doing its own per-line
+    // wrapping with marker + tint classes.
+    const lines: string[] = [];
+    const re = /<span class="line">([\s\S]*?)<\/span>(?:\n|$)/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(html)) !== null) {
+      lines.push(m[1]);
+    }
+    // Some Shiki output paths drop the trailing newline + don't emit
+    // an empty last line; if the source code ends with `\n`, push an
+    // empty trailing entry so caller's per-line zip stays aligned.
+    if (code.endsWith("\n") && lines.length > 0 && lines[lines.length - 1] !== "") {
+      lines.push("");
+    }
+    // If the regex couldn't find any `.line` spans (Shiki layout
+    // change, theme without line-wrapping), bail to plain text rather
+    // than rendering raw markup we can't reason about.
+    if (lines.length === 0) return null;
+    return lines;
+  } catch {
+    return null;
+  }
+}
+
 // Warm the highlighter eagerly in idle time so the first chat /
 // diff render doesn't pay the cold-start cost. Safe to no-op when
 // idleCallback isn't available (Safari, headless).

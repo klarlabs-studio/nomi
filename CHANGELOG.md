@@ -4,6 +4,43 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - DiffPreview: Shiki per-hunk highlighting
+
+Closes the last deferred item from the V1 polish wave. DiffPreview
+used to call HighlightedCode per source line, which meant Shiki
+re-tokenised every line from scratch — losing multi-line scope
+(template literals, JSX, block comments, multi-line string literals
+in Go) at every line boundary. Now one Shiki call per hunk.
+
+### Changed
+- `app/src/lib/highlighter.ts` — new `highlightLines(code, lang)`
+  helper that runs Shiki once on the whole block, strips the
+  `<span class="line">` wrappers Shiki emits, and returns one HTML
+  string per source line for the caller to render with their own
+  per-line chrome (markers, gutters, bg tints).
+- `app/src/components/diff-preview.tsx` — `useHunkHighlight` hook
+  memoises one tokenisation per (lines, lang) pair. `HunkBody`
+  passes the resulting per-line tokens to `HighlightedDiffHunk`.
+  `HighlightedDiffHunk` no longer owns its own per-line Shiki
+  calls — it just lays out the +/- gutter + bg tint over the
+  token HTML and falls back to plain content when the tokens
+  array isn't available (Shiki still loading, lang not bundled,
+  Shiki layout change that breaks the per-line split).
+
+### Behaviour
+- Same visual API as before; pure correctness/perf win.
+- N independent Shiki promises per render → 1 per hunk.
+- Multi-line tokens stay intact across the hunk so a template
+  literal opening on line 1 and closing on line 4 is highlighted
+  as a single string instead of four mis-tokenised fragments.
+
+### Tests
+- `app/src/lib/__tests__/highlighter.test.ts` covers the lang
+  normalisation table, file-extension sniffing, and the null-lang
+  short-circuit. The Shiki dynamic import is exercised by the
+  Playwright e2e — mocking it at the unit layer was brittle and
+  the value was negligible.
+
 ## [Unreleased] - eBPF cgroup_skb egress filter (Linux, experimental)
 
 Hard kernel-level egress isolation for the docker backend, layered on

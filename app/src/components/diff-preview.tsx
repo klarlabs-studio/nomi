@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Eye, EyeOff, Columns2, Rows2 } from "lucide-react";
-import { HighlightedCode } from "@/components/highlighted-code";
-import { langFromPath, type BundledLang } from "@/lib/highlighter";
+import { langFromPath, highlightLines, type BundledLang } from "@/lib/highlighter";
 
 interface DiffPreviewProps {
   diff: string;
@@ -125,20 +124,19 @@ function rebuildDiff(blocks: ParsedFileBlock[], skipped: Set<string>): string {
 }
 
 /**
- * DiffPreview renders a unified-diff string. Three new affordances vs
- * the original `<pre>`-only version:
+ * DiffPreview renders a unified-diff string. Affordances:
  *
  *  - Per-hunk skip toggle. Clicking "Skip" on a hunk drops it from the
  *    diff payload (state-managed; emits onDiffChange so the parent can
  *    persist via /plan/edit).
- *  - Side-by-side toggle. When on, we render adds and removes in two
+ *  - Side-by-side toggle. When on, adds and removes render in two
  *    columns instead of one; preference persists in localStorage.
- *  - Color-coded `@@` hunk headers, +/- lines as before.
- *
- * Shiki syntax highlighting is intentionally deferred — adds a worker
- * dep and rendering complexity disproportionate to the value at this
- * stage. The classNames used here are the ones a future Shiki swap
- * will reuse.
+ *  - Shiki per-hunk syntax highlighting. Markers are stripped before
+ *    tokenisation so multi-line context (template strings, JSX, block
+ *    comments) survives; +/- gutter + bg tint are overlaid on the
+ *    tokenised output. Falls back to plain text when the language
+ *    isn't bundled or Shiki hasn't finished initialising.
+ *  - Color-coded `@@` hunk headers, +/- lines.
  */
 export function DiffPreview({ diff, onDiffChange }: DiffPreviewProps) {
   const [expanded, setExpanded] = useState(true);
@@ -267,50 +265,81 @@ function HunkBody({
   fileLang: BundledLang | null;
 }) {
   const lines = hunk.lines.slice(1); // drop the @@ header which renders separately
+  // Highlight once per hunk so multi-line tokens (template strings,
+  // JSX, block comments) survive across line boundaries. The +/-
+  // gutter + bg tint render on top of the syntax-highlighted spans.
+  const tokens = useHunkHighlight(lines, fileLang);
+
   if (viewMode === "unified") {
-    // Unified view: highlight the whole hunk body in one call. Use the
-    // file's detected language; the per-line +/- color treatment runs
-    // as an overlay on top of the highlighted tokens.
-    return (
-      <HighlightedDiffHunk lines={lines} lang={fileLang} side="both" />
-    );
+    return <HighlightedDiffHunk lines={lines} tokens={tokens} side="both" />;
   }
-  // Split view: two columns. Each side gets its own HighlightedDiffHunk
-  // with the opposite side's lines blanked out, keeping line numbers
-  // aligned across both columns.
   return (
     <div className="grid grid-cols-2 gap-px bg-muted-foreground/10 text-[11px] font-mono leading-tight">
-      <HighlightedDiffHunk lines={lines} lang={fileLang} side="removed" />
-      <HighlightedDiffHunk lines={lines} lang={fileLang} side="added" />
+      <HighlightedDiffHunk lines={lines} tokens={tokens} side="removed" />
+      <HighlightedDiffHunk lines={lines} tokens={tokens} side="added" />
     </div>
   );
 }
 
-// HighlightedDiffHunk renders one column (or both) of a diff hunk with
-// Shiki syntax highlighting on the code portion and add/remove tinting
-// on the line. `side="both"` is the unified view; `side="added"` /
-// `side="removed"` are the two halves of the split view (the other
-// side's lines become blank spacers so line numbers stay aligned).
+// useHunkHighlight returns one HTML string per source line, with the
+// +/- markers stripped before tokenisation. Returns null while Shiki
+// is loading or for languages outside the bundle so the caller falls
+// back to plain text. Memoised on the (lines, lang) pair so re-renders
+// from per-hunk skip toggles don't re-tokenise.
+function useHunkHighlight(lines: string[], lang: BundledLang | null) {
+  const cleaned = useMemo(
+    () =>
+      lines
+        .map((l) => {
+          const c = l.charAt(0);
+          return c === "+" || c === "-" || c === " " ? l.slice(1) : l;
+        })
+        .join("\n"),
+    [lines],
+  );
+  const [out, setOut] = useState<string[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!lang) {
+      setOut(null);
+      return;
+    }
+    void highlightLines(cleaned, lang).then((res) => {
+      if (!cancelled) setOut(res);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [cleaned, lang]);
+
+  return out;
+}
+
+// HighlightedDiffHunk renders one column (or both) of a diff hunk
+// using pre-tokenised per-line HTML from useHunkHighlight + a +/-
+// gutter overlay. `side="both"` is the unified view; "added" /
+// "removed" are the two halves of the split view (the opposite side's
+// lines become blank spacers so line numbers stay aligned).
 function HighlightedDiffHunk({
   lines,
-  lang,
+  tokens,
   side,
 }: {
   lines: string[];
-  lang: BundledLang | null;
+  tokens: string[] | null;
   side: "both" | "added" | "removed";
 }) {
   return (
     <pre
       className={
-        "text-[11px] font-mono leading-tight p-2 overflow-x-auto m-0 " +
+        "text-[11px] font-mono leading-tight p-2 overflow-x-auto m-0 shiki-host " +
         (side === "both" ? "" : "bg-background")
       }
     >
       {lines.map((line, i) => {
         const marker = line.charAt(0);
         const content = line.slice(1);
-        // Visibility per column.
         if (side === "added" && marker === "-") {
           return (
             <span key={i} className="block opacity-30">
@@ -328,10 +357,21 @@ function HighlightedDiffHunk({
         let className = "block";
         if (marker === "+") className += " bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
         else if (marker === "-") className += " bg-rose-500/10 text-rose-700 dark:text-rose-300";
+        // tokens may be misaligned with lines if Shiki normalised
+        // trailing whitespace differently — fall back to the raw
+        // content for that line rather than rendering garbled HTML.
+        const tokenHTML = tokens && i < tokens.length ? tokens[i] : null;
         return (
           <span key={i} className={className}>
             <span className="select-none opacity-60">{marker || " "}</span>
-            <HighlightedCode code={content || " "} lang={lang} forBlock={false} />
+            {tokenHTML !== null ? (
+              <span
+                className="inline"
+                dangerouslySetInnerHTML={{ __html: tokenHTML || "&nbsp;" }}
+              />
+            ) : (
+              <span className="inline">{content || " "}</span>
+            )}
           </span>
         );
       })}
