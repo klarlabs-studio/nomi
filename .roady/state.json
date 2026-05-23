@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 585,
+  "version": 589,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1913,6 +1913,17 @@
       "completed_at": "2026-04-26T14:32:09.696971+02:00",
       "elapsed_minutes": 0
     },
+    "task-macos-menu-bar-/-system-tray-integration": {
+      "status": "done",
+      "path": "",
+      "owner": "ai-agent",
+      "evidence": [
+        "Pre-session in c6e24cc — tray menu (New Chat / Open Nomi / Pause All / Approvals(N) / Settings / Quit) + 3 icon states + live badge + double-click toggle all present in main.rs + App.tsx. Verified compiles + listener wires."
+      ],
+      "started_at": "2026-05-23T09:02:57.75486+02:00",
+      "completed_at": "2026-05-23T09:04:37.245148+02:00",
+      "elapsed_minutes": 1
+    },
     "task-macos-menu-bar-integration": {
       "status": "done",
       "path": "",
@@ -2288,11 +2299,15 @@
       "elapsed_minutes": 2
     },
     "task-push-notifications-for-pending-approvals": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "5bf6334 — tauri-plugin-notification + Web API fallback + event-provider hook + Safety settings toggle"
+      ],
       "started_at": "2026-05-23T08:51:54.674305+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-23T08:57:14.096838+02:00",
+      "elapsed_minutes": 5
     },
     "task-recipe-catalog-expansion-—-6-new-built-in-recipes": {
       "status": "done",
@@ -2851,5 +2866,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-23T08:51:54.674305+02:00"
+  "updated_at": "2026-05-23T09:04:37.245149+02:00"
 }

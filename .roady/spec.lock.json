@@ -933,6 +933,13 @@
       "description": "Surface approval requests through OS notifications so the user doesn't need the Nomi window focused to see when an agent is asking. Adds tauri-plugin-notification (built-in for Tauri 2.x) wired to a new useApprovalNotifications hook that subscribes to approval.requested events and fires a notification with the capability + assistant name + a click-to-focus action. Falls back to the Web Notification API outside Tauri (vite preview / Playwright). Includes a per-app permission prompt on first run + a Settings toggle to disable notifications. Closes the loop: \"agents that ask before they act\" works much better when the user knows when the agent is asking.",
       "requirements": [],
       "source": {}
+    },
+    {
+      "id": "macos-menu-bar-/-system-tray-integration",
+      "title": "macOS menu bar / system tray integration",
+      "description": "Add a `tauri::tray::TrayIcon` with a menu so the user has a persistent surface for the most common actions without keeping the Nomi window focused. Menu items: Show Nomi (focuses window), New Chat (focuses window + opens composer), Pending Approvals N (badge — only enabled when N \u003e 0; opens the Approvals tab), Pause All Agents (toggles a global pause), Settings (focuses window + opens Settings → About), Quit. Click on the tray icon itself toggles the window visibility. Cross-platform: same code path serves macOS menu bar, Linux app indicators, Windows system tray. tauri already builds with the tray-icon feature; this feature adds the menu + click handlers + a tiny status-bar event subscription that updates the pending-approvals count badge live.",
+      "requirements": [],
+      "source": {}
     }
   ],
   "constraints": [],
