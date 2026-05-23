@@ -279,12 +279,19 @@ func TestDockerBuildArgsNoAllowlistOmitsAddHost(t *testing.T) {
 // records every AddIP and Close call so the docker-backend integration
 // can be unit-tested without a real kernel.
 type fakeEgressFilter struct {
-	path   string
-	addIPs []string
-	closed bool
+	path         string
+	dockerParent string
+	addIPs       []string
+	closed       bool
 }
 
 func (f *fakeEgressFilter) CgroupPath() string { return f.path }
+func (f *fakeEgressFilter) DockerCgroupParent() string {
+	if f.dockerParent != "" {
+		return f.dockerParent
+	}
+	return f.path
+}
 func (f *fakeEgressFilter) AddIP(ip net.IP) error {
 	f.addIPs = append(f.addIPs, ip.String())
 	return nil
@@ -292,6 +299,80 @@ func (f *fakeEgressFilter) AddIP(ip net.IP) error {
 func (f *fakeEgressFilter) Close() error {
 	f.closed = true
 	return nil
+}
+
+func TestDockerRunUsesSystemdSliceForSystemdDriver(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("docker semantics differ on windows")
+	}
+	prevResolve := resolveHost
+	resolveHost = func(_ string) ([]string, error) { return []string{"203.0.113.10"}, nil }
+	defer func() { resolveHost = prevResolve }()
+
+	prevDriver := detectCgroupDriver
+	detectCgroupDriver = func(_ context.Context, _ string) egress.Driver {
+		return egress.DriverSystemd
+	}
+	defer func() { detectCgroupDriver = prevDriver }()
+
+	var sawConfig egress.Config
+	fake := &fakeEgressFilter{
+		path:         "/sys/fs/cgroup/nomi-sandbox-abc.slice",
+		dockerParent: "nomi-sandbox-abc.slice",
+	}
+	prevFilter := newEgressFilter
+	newEgressFilter = func(cfg egress.Config) (egress.Filter, error) {
+		sawConfig = cfg
+		return fake, nil
+	}
+	defer func() { newEgressFilter = prevFilter }()
+
+	t.Setenv("NOMI_EGRESS_EBPF", "1")
+
+	d := NewDocker()
+	d.Binary = "/bin/echo"
+
+	res, err := d.Run(context.Background(), Request{
+		Argv:          []string{"true"},
+		WorkspaceRoot: "/tmp",
+		Image:         "alpine:3.20",
+		HostAllowlist: []string{"api.example.com"},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v\noutput: %s", err, res.Output)
+	}
+	if sawConfig.DockerCgroupDriver != egress.DriverSystemd {
+		t.Errorf("egress.New received driver %q, want %q",
+			sawConfig.DockerCgroupDriver, egress.DriverSystemd)
+	}
+	if !strings.Contains(string(res.Output), "--cgroup-parent=nomi-sandbox-abc.slice") {
+		t.Errorf("expected systemd slice name in --cgroup-parent, got %q", res.Output)
+	}
+	// The absolute /sys/fs/cgroup/... path must NOT appear in the
+	// docker args for systemd driver — docker rejects it.
+	if strings.Contains(string(res.Output), "--cgroup-parent=/sys/fs/cgroup") {
+		t.Errorf("absolute path leaked into systemd-driver argv: %q", res.Output)
+	}
+}
+
+func TestDockerResolveCgroupDriverCaches(t *testing.T) {
+	prev := detectCgroupDriver
+	calls := 0
+	detectCgroupDriver = func(_ context.Context, _ string) egress.Driver {
+		calls++
+		return egress.DriverSystemd
+	}
+	defer func() { detectCgroupDriver = prev }()
+
+	d := NewDocker()
+	for i := 0; i < 5; i++ {
+		if got := d.resolveCgroupDriver(context.Background()); got != egress.DriverSystemd {
+			t.Fatalf("call %d: got %q, want systemd", i, got)
+		}
+	}
+	if calls != 1 {
+		t.Errorf("detectCgroupDriver called %d times, want exactly 1 (sync.Once)", calls)
+	}
 }
 
 func TestDockerRunWithEBPFFilterPopulatesMap(t *testing.T) {

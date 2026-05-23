@@ -2007,5 +2007,9 @@ features:
       title: IPv6 enforcement in eBPF egress filter
       description: Add IPv6 enforcement to the cgroup_skb/egress BPF program. Today v6 packets pass through unfiltered because the program only checks ETH_P_IP. Adds a second HASH map (16-byte key) for IPv6 destinations, branches the BPF program on protocol to handle ETH_P_IPV6 via bpf_skb_load_bytes at offset 24 of the ipv6 header, and routes Filter.AddIP for v6 addresses into the new map. Existing v4 path unchanged. Closes the IPv6 gap noted in v0.2.x deferred list.
       requirements: []
+    - id: ebpf-egress-filter:-docker-systemd-cgroup-driver
+      title: 'eBPF egress filter: docker systemd cgroup driver'
+      description: 'Make the eBPF egress filter work under docker''s systemd cgroup driver, not just cgroupfs. Current scheme creates `/sys/fs/cgroup/nomi-sandbox-<id>` and passes the absolute path to `--cgroup-parent`, which is rejected by docker when the daemon is using the systemd driver (which requires a slice name ending in .slice). Detect the docker cgroup driver via `docker info --format ''{{.CgroupDriver}}''` cached once per DockerBackend, branch the cgroup-naming + --cgroup-parent value: systemd creates `nomi-sandbox-<id>.slice` and passes the bare slice name; cgroupfs keeps current absolute-path behaviour. cgroup_skb attached at the parent slice/dir; child scopes inherit. Closes the last deferred from the V1 polish closeout.'
+      requirements: []
 constraints: []
 version: 0.1.0

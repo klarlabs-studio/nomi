@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/felixgeelhaar/nomi/internal/runtime/executor/egress"
 )
@@ -29,6 +30,28 @@ var newEgressFilter = egress.New
 // swap in a deterministic resolver without hitting the real network.
 var resolveHost = func(host string) ([]string, error) {
 	return net.LookupHost(host)
+}
+
+// detectCgroupDriver is the function used by the docker backend to
+// resolve which cgroup driver the daemon is configured with. Behind a
+// package var so tests can stub the binary lookup deterministically.
+// Default impl shells out to `docker info --format '{{.CgroupDriver}}'`.
+var detectCgroupDriver = func(ctx context.Context, binary string) egress.Driver {
+	cmd := exec.CommandContext(ctx, binary, "info", "--format", "{{.CgroupDriver}}")
+	out, err := cmd.Output()
+	if err != nil {
+		// On detection failure (no docker installed, daemon
+		// unreachable) fall back to cgroupfs — the safer default,
+		// since failing the eBPF path entirely just drops us back to
+		// DNS-only.
+		return egress.DriverCgroupfs
+	}
+	switch strings.TrimSpace(string(out)) {
+	case "systemd":
+		return egress.DriverSystemd
+	default:
+		return egress.DriverCgroupfs
+	}
 }
 
 // unroutableDNS is the address container DNS is pointed at when an
@@ -68,6 +91,13 @@ type DockerBackend struct {
 	MemoryLimit string // docker --memory format, default "512m"
 	CPULimit    string // docker --cpus format, default "1.0"
 	PIDsLimit   int    // docker --pids-limit, default 128
+
+	// driverOnce + cachedDriver memoise the cgroup-driver probe so it
+	// runs at most once per daemon lifetime. detectCgroupDriver is a
+	// non-trivial subprocess; calling it per Run would visibly slow
+	// short tool invocations.
+	driverOnce   sync.Once
+	cachedDriver egress.Driver
 }
 
 // NewDocker returns a DockerBackend with conservative defaults. Override
@@ -82,12 +112,27 @@ func NewDocker() *DockerBackend {
 }
 
 // Name returns "docker".
-func (DockerBackend) Name() string { return BackendDocker }
+func (*DockerBackend) Name() string { return BackendDocker }
+
+// resolveCgroupDriver returns the docker daemon's cgroup driver, probed
+// exactly once via detectCgroupDriver and cached for the lifetime of
+// the backend. Used to pick the right cgroup-naming scheme for the
+// eBPF egress filter (.slice for systemd, flat dir for cgroupfs).
+func (d *DockerBackend) resolveCgroupDriver(ctx context.Context) egress.Driver {
+	d.driverOnce.Do(func() {
+		binary := d.Binary
+		if binary == "" {
+			binary = "docker"
+		}
+		d.cachedDriver = detectCgroupDriver(ctx, binary)
+	})
+	return d.cachedDriver
+}
 
 // Available reports whether the docker CLI is on PATH and `docker info`
 // succeeds. Boot probes use this to decide whether to register the backend
 // at all so users without Docker installed don't see it in the UI.
-func (d DockerBackend) Available(ctx context.Context) bool {
+func (d *DockerBackend) Available(ctx context.Context) bool {
 	binary := d.Binary
 	if binary == "" {
 		binary = "docker"
@@ -103,7 +148,7 @@ func (d DockerBackend) Available(ctx context.Context) bool {
 // error only when the backend couldn't start the container at all; a
 // non-zero exit (including OOM kills) returns a nil error and a populated
 // Result.
-func (d DockerBackend) Run(ctx context.Context, req Request) (*Result, error) {
+func (d *DockerBackend) Run(ctx context.Context, req Request) (*Result, error) {
 	if len(req.Argv) == 0 {
 		return &Result{ExitCode: -1}, ErrNotStarted
 	}
@@ -135,7 +180,9 @@ func (d DockerBackend) Run(ctx context.Context, req Request) (*Result, error) {
 
 	cgroupParent := ""
 	if len(req.HostAllowlist) > 0 && os.Getenv(egressEBPFEnv) == "1" {
-		filter, err := newEgressFilter(egress.Config{})
+		filter, err := newEgressFilter(egress.Config{
+			DockerCgroupDriver: d.resolveCgroupDriver(runCtx),
+		})
 		if err != nil {
 			// Soft failure: surface a structured warning and continue
 			// with the DNS-only path. We never silently drop the
@@ -154,7 +201,7 @@ func (d DockerBackend) Run(ctx context.Context, req Request) (*Result, error) {
 					}
 				}
 			}
-			cgroupParent = filter.CgroupPath()
+			cgroupParent = filter.DockerCgroupParent()
 			defer func() {
 				if closeErr := filter.Close(); closeErr != nil {
 					slog.Warn("docker backend: eBPF egress filter cleanup error", "error", closeErr)
@@ -205,7 +252,7 @@ func (d DockerBackend) Run(ctx context.Context, req Request) (*Result, error) {
 // buildArgs is the thin entry point used by tests and any callsite
 // that doesn't need to coordinate with the eBPF filter. It resolves
 // the allowlist itself and never sets --cgroup-parent.
-func (d DockerBackend) buildArgs(req Request) ([]string, error) {
+func (d *DockerBackend) buildArgs(req Request) ([]string, error) {
 	return d.buildArgsResolved(req, nil, "")
 }
 
@@ -213,7 +260,7 @@ func (d DockerBackend) buildArgs(req Request) ([]string, error) {
 // path can share a single allowlist resolution and inject
 // --cgroup-parent. Passing `resolved == nil` falls back to resolving
 // here so direct callers (tests, audit-time dry runs) still work.
-func (d DockerBackend) buildArgsResolved(req Request, resolved map[string][]net.IP, cgroupParent string) ([]string, error) {
+func (d *DockerBackend) buildArgsResolved(req Request, resolved map[string][]net.IP, cgroupParent string) ([]string, error) {
 	memory := d.MemoryLimit
 	if memory == "" {
 		memory = "512m"

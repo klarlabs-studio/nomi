@@ -32,10 +32,17 @@ var ErrUnsupported = errors.New("egress: cgroup_skb eBPF filter unsupported on t
 // per-container and not reusable across runs.
 type Filter interface {
 	// CgroupPath returns the absolute path under /sys/fs/cgroup that
-	// docker should target via --cgroup-parent. Caller passes the
-	// returned path to docker so the container ends up inside the
-	// cgroup the BPF program is attached to.
+	// the BPF program is attached to. Used for diagnostics and tests;
+	// docker integration goes through DockerCgroupParent instead.
 	CgroupPath() string
+
+	// DockerCgroupParent returns the value to pass to
+	// `docker run --cgroup-parent`. For the cgroupfs driver this is
+	// the absolute cgroup path; for the systemd driver it's the bare
+	// slice name (e.g. "nomi-sandbox-abc123.slice"). cgroup_skb
+	// attached on the parent applies to every child scope docker
+	// creates underneath.
+	DockerCgroupParent() string
 
 	// AddIP appends an allowlisted destination IP to the BPF map.
 	// Both IPv4 and IPv6 are accepted; the map key encoding follows
@@ -47,6 +54,24 @@ type Filter interface {
 	Close() error
 }
 
+// Driver names the docker cgroup driver the filter must target. Empty
+// or unknown values default to DriverCgroupfs (the historical Nomi
+// behaviour). Detected via `docker info --format '{{.CgroupDriver}}'`
+// in the docker backend and cached for the daemon's lifetime.
+type Driver string
+
+const (
+	// DriverCgroupfs: docker creates child cgroups directly under
+	// --cgroup-parent's filesystem path. Filter uses a flat
+	// `nomi-sandbox-<id>` directory and passes its absolute path.
+	DriverCgroupfs Driver = "cgroupfs"
+
+	// DriverSystemd: docker creates a transient .scope under the
+	// named .slice. Filter creates `nomi-sandbox-<id>.slice` so
+	// docker's child scope inherits the BPF attachment.
+	DriverSystemd Driver = "systemd"
+)
+
 // Config controls the per-filter setup.
 type Config struct {
 	// RunID is mixed into the cgroup directory name so concurrent runs
@@ -55,4 +80,10 @@ type Config struct {
 
 	// CgroupRoot defaults to "/sys/fs/cgroup". Tests override.
 	CgroupRoot string
+
+	// DockerCgroupDriver selects the cgroup naming scheme + the value
+	// returned by DockerCgroupParent. Empty defaults to cgroupfs to
+	// preserve historical behaviour on hosts where detection wasn't
+	// possible.
+	DockerCgroupDriver Driver
 }

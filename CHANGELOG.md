@@ -4,6 +4,60 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - eBPF egress filter: docker systemd cgroup driver
+
+Closes the last deferred from the V1 polish closeout. Until now the
+eBPF egress filter only worked under docker's cgroupfs driver — the
+filter created `/sys/fs/cgroup/nomi-sandbox-<id>` and passed the
+absolute path to `--cgroup-parent`, which docker's systemd driver
+rejects (it requires a slice name ending in .slice). On hosts using
+the systemd driver the filter would either fail outright at docker
+run time or fall back to the DNS-only path even when CAP_BPF was
+present.
+
+### Changed
+- `internal/runtime/executor/egress/egress.go`:
+  - New `Driver` type with `DriverCgroupfs` + `DriverSystemd`
+    constants. `Config.DockerCgroupDriver` selects the cgroup-naming
+    scheme.
+  - `Filter` interface grows `DockerCgroupParent() string` separate
+    from `CgroupPath()`. The former is what docker wants on the
+    command line; the latter is the filesystem path the BPF program
+    is attached to (now distinct on systemd hosts).
+- `internal/runtime/executor/egress/egress_linux.go`:
+  - Branches on `cfg.DockerCgroupDriver`. cgroupfs → flat dir
+    `nomi-sandbox-<id>`, docker gets the absolute path. systemd →
+    `nomi-sandbox-<id>.slice`, docker gets the bare slice name. The
+    cgroup_skb attachment lives on the parent in both cases; child
+    scopes docker creates inherit the program.
+- `internal/runtime/executor/docker.go`:
+  - `DockerBackend` grows `driverOnce` + `cachedDriver`. Methods
+    converted to pointer receivers so the cached state actually
+    persists (sync.Once on a value receiver is a no-op).
+  - `resolveCgroupDriver` probes via `docker info --format
+    '{{.CgroupDriver}}'` exactly once per backend lifetime and
+    feeds the result into `egress.New`. Detection failure falls
+    back to cgroupfs (the historical behaviour, safer than
+    bricking the eBPF path entirely).
+
+### Tests
+- `TestDockerRunUsesSystemdSliceForSystemdDriver` stubs the
+  detector + filter to assert: (a) driver value reaches
+  `egress.New`, (b) docker's `--cgroup-parent` carries the bare
+  slice name, (c) the absolute path doesn't leak into argv on
+  systemd hosts.
+- `TestDockerResolveCgroupDriverCaches` proves the `sync.Once`
+  memoisation — 5 calls = 1 detector invocation.
+
+### Operational
+- IPv6 deferred is closed too; both v4 and v6 enforcement work
+  under either cgroup driver.
+- Detection still needs docker installed + reachable. Hosts without
+  docker fall back to cgroupfs (default), which is harmless: if the
+  eBPF path is attempted but the daemon's actually using systemd
+  underneath, docker will reject the cgroup-parent and the egress
+  filter soft-falls back to DNS-only with the existing warning.
+
 ## [Unreleased] - eBPF egress filter: IPv6 enforcement
 
 Closes the v0.2.x deferred IPv6 gap on the cgroup_skb/egress BPF

@@ -40,7 +40,28 @@ func New(cfg Config) (Filter, error) {
 		runID = hex.EncodeToString(buf[:])
 	}
 
-	cgroupPath := filepath.Join(root, "nomi-sandbox-"+runID)
+	// Driver-dependent cgroup naming:
+	//   cgroupfs: flat dir, docker accepts the absolute path
+	//   systemd:  must end in .slice, docker accepts the bare name
+	// We create the cgroup ourselves in both cases — systemd doesn't
+	// strictly require its own slice-creation API for an empty parent
+	// slice; it just won't track our dir under any service unit, which
+	// is fine because docker creates the actual workload scope as a
+	// child once it spawns the container.
+	driver := cfg.DockerCgroupDriver
+	if driver == "" {
+		driver = DriverCgroupfs
+	}
+	var cgroupName, dockerParent string
+	switch driver {
+	case DriverSystemd:
+		cgroupName = "nomi-sandbox-" + runID + ".slice"
+		dockerParent = cgroupName
+	default: // DriverCgroupfs
+		cgroupName = "nomi-sandbox-" + runID
+		dockerParent = filepath.Join(root, cgroupName)
+	}
+	cgroupPath := filepath.Join(root, cgroupName)
 	if err := os.Mkdir(cgroupPath, 0o755); err != nil && !errors.Is(err, os.ErrExist) {
 		return nil, fmt.Errorf("egress: mkdir cgroup %s: %w", cgroupPath, err)
 	}
@@ -97,23 +118,26 @@ func New(cfg Config) (Filter, error) {
 	}
 
 	return &linuxFilter{
-		cgroupPath: cgroupPath,
-		prog:       prog,
-		v4Map:      v4Map,
-		v6Map:      v6Map,
-		attached:   attached,
+		cgroupPath:   cgroupPath,
+		dockerParent: dockerParent,
+		prog:         prog,
+		v4Map:        v4Map,
+		v6Map:        v6Map,
+		attached:     attached,
 	}, nil
 }
 
 type linuxFilter struct {
-	cgroupPath string
-	prog       *ebpf.Program
-	v4Map      *ebpf.Map
-	v6Map      *ebpf.Map
-	attached   link.Link
+	cgroupPath   string
+	dockerParent string
+	prog         *ebpf.Program
+	v4Map        *ebpf.Map
+	v6Map        *ebpf.Map
+	attached     link.Link
 }
 
-func (f *linuxFilter) CgroupPath() string { return f.cgroupPath }
+func (f *linuxFilter) CgroupPath() string         { return f.cgroupPath }
+func (f *linuxFilter) DockerCgroupParent() string { return f.dockerParent }
 
 // AddIP inserts an allowlisted destination into the appropriate map.
 // IPv4 addresses land in the 4-byte v4 map; IPv6 in the 16-byte v6

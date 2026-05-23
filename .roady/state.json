@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 609,
+  "version": 612,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1692,6 +1692,13 @@
       "completed_at": "2026-05-23T12:12:17.016379+02:00",
       "elapsed_minutes": 8
     },
+    "task-ebpf-egress-filter:-docker-systemd-cgroup-driver": {
+      "status": "in_progress",
+      "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-23T12:27:28.301019+02:00",
+      "elapsed_minutes": 0
+    },
     "task-email-plugin-(channel-+-tool-+-trigger)": {
       "status": "done",
       "path": "",
@@ -1914,11 +1921,15 @@
       "elapsed_minutes": 1
     },
     "task-ipv6-enforcement-in-ebpf-egress-filter": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "14b701f — second HASH map (16-byte key) for v6 destinations, BPF program branches v4_load/v6_load on ctx.protocol, single 16-byte stack slot shared, bpf_skb_load_bytes at offset 24 for v6 daddr. AddIP routes by family; malformed IPs error. v4-mapped v6 normalised via net.IP.To4. Tests cover the v4-mapped v6 path + malformed-IP rejection."
+      ],
       "started_at": "2026-05-23T12:22:49.204693+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-23T12:25:08.182276+02:00",
+      "elapsed_minutes": 2
     },
     "task-landing-site-reposition-to-match-readme-coding-agent-wedge": {
       "status": "done",
@@ -2939,5 +2950,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-23T12:22:49.204693+02:00"
+  "updated_at": "2026-05-23T12:27:28.301019+02:00"
 }

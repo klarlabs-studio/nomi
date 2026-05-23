@@ -96,7 +96,6 @@ Planning and task state live in `.roady/` — this is the source of truth for wh
 
 **Shipped (V1 polish closeout):** Scout browser plugin (`com.nomi.scout`, MCP-client via `github.com/felixgeelhaar/mcp-go`, stdio + http+sse transports), DNS egress allowlist on `network.egress` rule (docker `--add-host` pinning + `--dns=127.255.255.255`), eBPF cgroup_skb/egress filter (pure-Go BPF asm via `cilium/ebpf`, gated by `NOMI_EGRESS_EBPF=1`, soft-falls to DNS-only), DiffPreview Shiki per-hunk highlighting (one tokenisation per hunk, multi-line context preserved), `make eval-live-providers` matrix (per-provider pass-rate reporting via `TestPlannerGoldenSet_Live`).
 
-**Pending / deferred:**
-- **eBPF + docker systemd-driver** — current `--cgroup-parent` path scheme assumes cgroupfs driver. systemd-driver `.slice` naming needs a different path translation.
+**Pending / deferred:** none — V1 polish closeout is fully shipped.
 
 **Workflow when picking up work:** check `.roady/state.json` for the task, run `roady` MCP tools (`roady_get_ready_tasks`, `roady_transition_task`) to claim it, keep WIP ≤ 3. Spec/plan changes go through `roady_review_spec` / `roady_generate_plan` rather than editing YAML by hand — the `events.jsonl` chain breaks otherwise.
