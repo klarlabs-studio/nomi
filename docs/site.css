@@ -482,9 +482,19 @@ button.copy code { background: transparent; border: 0; padding: 0; }
 .step p { color: var(--fg-muted); font-size: 15px; }
 .step img {
   max-width: 100%;
+  height: auto;
   border-radius: 8px;
   border: 1px solid var(--border);
   margin-top: 16px;
+}
+
+/* Safety net for any <img> with explicit width/height attrs that gets
+   constrained by a narrower parent on mobile — without `height: auto`
+   the explicit attribute fights max-width and the image renders
+   skewed (aspect ratio broken). */
+img {
+  max-width: 100%;
+  height: auto;
 }
 
 /* diff grid */

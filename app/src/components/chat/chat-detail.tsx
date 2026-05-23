@@ -4,6 +4,7 @@ import { ArrowDown, Bot, Pause, Play, RefreshCw, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ApprovalCard, PlanReviewCard, ThinkingBlock } from "@/components/chat-message";
+import { MarkdownMessage } from "@/components/markdown-message";
 import { pickResponseText } from "@/lib/response-text";
 import { runsApi } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
@@ -280,13 +281,11 @@ export function ChatDetail({
                 aria-live="polite"
                 aria-atomic="false"
               >
-                <p className="text-sm whitespace-pre-wrap">
-                  {streamingText}
-                  <span
-                    className="ml-0.5 inline-block w-1.5 h-3 bg-foreground/60 align-baseline animate-pulse"
-                    aria-hidden="true"
-                  />
-                </p>
+                <MarkdownMessage content={streamingText} />
+                <span
+                  className="ml-0.5 inline-block w-1.5 h-3 bg-foreground/60 align-baseline animate-pulse"
+                  aria-hidden="true"
+                />
               </div>
             </div>
           </div>
@@ -312,7 +311,7 @@ export function ChatDetail({
             <div className="max-w-[80%] space-y-2">
               <AgentHeader name={assistantName} />
               <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">
-                <p className="text-sm whitespace-pre-wrap">{responseText}</p>
+                <MarkdownMessage content={responseText} />
               </div>
             </div>
           </div>
