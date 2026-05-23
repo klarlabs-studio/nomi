@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 577,
+  "version": 579,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -2276,6 +2276,13 @@
       "completed_at": "2026-05-09T17:30:22.573637+02:00",
       "elapsed_minutes": 2
     },
+    "task-recipe-catalog-expansion-—-6-new-built-in-recipes": {
+      "status": "in_progress",
+      "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-23T08:35:52.772879+02:00",
+      "elapsed_minutes": 0
+    },
     "task-recipe-registry-and-sharing": {
       "status": "done",
       "path": "",
@@ -2822,5 +2829,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-22T23:29:41.777517+02:00"
+  "updated_at": "2026-05-23T08:35:52.772879+02:00"
 }

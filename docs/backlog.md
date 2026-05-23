@@ -2155,3 +2155,9 @@ Augment heuristic skill induction with an LLM-driven synthesis step: given a clu
 Three coupled changes that close the "self-learning" gap vs Hermes while preserving the reviewable-agents wedge: (1) Embedding client interface + OpenAI-compat implementation so any embeddings-capable provider can serve Nomi's semantic-recall paths (Ollama, OpenAI, Together, vLLM). Anthropic skipped — they have no native embeddings. (2) Skill induction uses cosine similarity over goal embeddings when an embedding client is configured; falls back to Jaccard otherwise. Threshold tunable; both code paths share the cluster→synthesis→promote pipeline. (3) Auto-extracted user preferences: on RunCompleted, a background extractor asks the LLM to surface short reusable preference statements ("user prefers running tests before commits", "always use yarn over npm") and writes them to memstore.LocalPreferences. Planner already consumes that surface; this closes the loop so future runs reflect learned preferences without user editing. UI surface in the Memory tab shows inferred preferences with a delete button — keeps the wedge: agent learns, user stays in control.
 
 ---
+
+## Recipe catalog expansion — 6 new built-in recipes
+
+Ships six new built-in Recipes covering prosumer + small-team workflows the wedge actually serves: inbox-triage (read-only email summarizer), release-notes-drafter (read git log + draft changelog from a workspace), meeting-summarizer (read transcript files + extract action items), content-creator (draft blog posts from notes folder), codebase-explorer (read-only repo walk), daily-standup (summarize yesterday's commits + tasks). Each is a curated YAML manifest under internal/recipes/builtin/ with capabilities scoped to the minimum needed (most read-only, one or two scoped writes). Existing Recipe registry + install/export flow consumes them without code changes. Grows the install-flywheel surface from 3 to 9 entries.
+
+---

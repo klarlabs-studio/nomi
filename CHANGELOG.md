@@ -4,6 +4,35 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - Recipe catalog expansion
+
+Built-in catalog grows from 3 to 9 entries, covering the common
+prosumer + small-team workflows the "reviewable agents" wedge
+serves. Each new Recipe ships with a curated capability set scoped
+to the minimum needed (most read-only, one or two scoped writes
+behind `confirm` mode). No code changes — the existing Recipe
+registry + install/export flow consumes them automatically.
+
+### Added (6 new built-in recipes)
+- `inbox-triage` — read-only email summariser. Reads a folder of
+  exports, groups by sender + topic, surfaces the 3-5 messages that
+  need a reply. Never sends.
+- `release-notes-drafter` — turns `git log` between two refs into
+  end-user-readable release notes. Drops merge commits + behaviour-
+  neutral dep bumps; categorises feat / fix / docs / breaking.
+- `meeting-summarizer` — reads transcript files, produces TL;DR +
+  decisions + action items (owner / due date) + open questions.
+  Output is markdown for direct paste.
+- `content-creator` — drafts long-form content from a notes folder,
+  matching voice from existing writing. Includes an outline check
+  + `[citation needed]` placeholders for unsupported claims.
+- `codebase-explorer` — read-only repo walker for first-day
+  onboarding. Cites file paths + line numbers; admits unknowns
+  instead of hallucinating.
+- `daily-standup` — reads yesterday's commits + optional todo file,
+  drafts yesterday / today / blockers. Pair with the Schedules tab
+  for an async-standup loop.
+
 ## [0.2.1] - 2026-05-23 — Patch: chat markdown + mobile image fix
 
 Two paper-cuts caught post-v0.2.0:

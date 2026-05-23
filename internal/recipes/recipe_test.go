@@ -129,12 +129,26 @@ func TestBuiltInCatalogPresent(t *testing.T) {
 	if len(all) < 3 {
 		t.Fatalf("expected at least 3 builtin recipes, got %d", len(all))
 	}
-	want := []string{"coding-agent", "ops-runbook", "research-assistant"}
-	for i, id := range want {
-		if all[i].ID != id {
-			t.Errorf("builtin[%d].ID: got %q want %q", i, all[i].ID, id)
+	have := map[string]bool{}
+	for _, r := range all {
+		have[r.ID] = true
+	}
+	// Catalog is sorted alphabetically by ID; check presence rather
+	// than fixed positions so adding new built-ins doesn't break the
+	// test on every catalog expansion.
+	for _, id := range []string{"coding-agent", "ops-runbook", "research-assistant"} {
+		if !have[id] {
+			t.Errorf("expected built-in catalog to include %q, got %v", id, keys(have))
 		}
 	}
+}
+
+func keys(m map[string]bool) []string {
+	out := make([]string, 0, len(m))
+	for k := range m {
+		out = append(out, k)
+	}
+	return out
 }
 
 func TestBuiltInByID(t *testing.T) {
