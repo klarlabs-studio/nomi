@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 579,
+  "version": 582,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1769,6 +1769,13 @@
       "completed_at": "2026-04-24T12:49:54.198018+02:00",
       "elapsed_minutes": 78
     },
+    "task-fts5-memory-search": {
+      "status": "in_progress",
+      "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-23T08:41:06.445985+02:00",
+      "elapsed_minutes": 0
+    },
     "task-github-connector": {
       "status": "done",
       "path": "",
@@ -2277,11 +2284,15 @@
       "elapsed_minutes": 2
     },
     "task-recipe-catalog-expansion-—-6-new-built-in-recipes": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "a0bcbeb — 6 new YAMLs under internal/recipes/builtin/, test assertion loosened to presence-based, catalog now 9 entries"
+      ],
       "started_at": "2026-05-23T08:35:52.772879+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-23T08:39:43.541218+02:00",
+      "elapsed_minutes": 3
     },
     "task-recipe-registry-and-sharing": {
       "status": "done",
@@ -2829,5 +2840,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-23T08:35:52.772879+02:00"
+  "updated_at": "2026-05-23T08:41:06.445985+02:00"
 }

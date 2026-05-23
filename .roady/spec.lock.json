@@ -919,6 +919,13 @@
       "description": "Ships six new built-in Recipes covering prosumer + small-team workflows the wedge actually serves: inbox-triage (read-only email summarizer), release-notes-drafter (read git log + draft changelog from a workspace), meeting-summarizer (read transcript files + extract action items), content-creator (draft blog posts from notes folder), codebase-explorer (read-only repo walk), daily-standup (summarize yesterday's commits + tasks). Each is a curated YAML manifest under internal/recipes/builtin/ with capabilities scoped to the minimum needed (most read-only, one or two scoped writes). Existing Recipe registry + install/export flow consumes them without code changes. Grows the install-flywheel surface from 3 to 9 entries.",
       "requirements": [],
       "source": {}
+    },
+    {
+      "id": "fts5-memory-search",
+      "title": "FTS5 memory search",
+      "description": "Replace the current case-insensitive LIKE substring scan in `memory.Manager.Search` / `*db.MemoryRepository.Search` with SQLite FTS5. Adds a `memory_fts` virtual table (contentless, indexed on `content`) with INSERT/UPDATE/DELETE triggers that keep it in sync with `memory`. Search uses `MATCH` and falls back to LIKE when the FTS index is unavailable (in-memory DB without FTS5 module, broken trigger state on legacy rows). Honor `Query.Limit`. Add an indexer migration that backfills the FTS table from existing rows on first boot post-upgrade. Cosmetic UX: ranking by `bm25(memory_fts)` so the most relevant entries surface first instead of newest-first when a query is present.",
+      "requirements": [],
+      "source": {}
     }
   ],
   "constraints": [],

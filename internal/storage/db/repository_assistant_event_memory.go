@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -745,8 +746,15 @@ func (r *MemoryRepository) Delete(id string) error {
 	return nil
 }
 
-// Search searches memory entries by content (simple LIKE search)
+// Search searches memory entries by content. Tries the FTS5 index
+// first (ranked by bm25, most relevant first); falls back to a LIKE
+// substring scan when the FTS path errors — covers DBs that haven't
+// run migration #31 yet, FTS5 query parser failures on adversarial
+// user input, and any future driver build without FTS5 compiled in.
 func (r *MemoryRepository) Search(query string, limit int) ([]*domain.MemoryEntry, error) {
+	if entries, err := r.searchFTS(query, limit); err == nil {
+		return entries, nil
+	}
 	sqlQuery := `
 		SELECT id, scope, content, assistant_id, run_id, created_at
 		FROM memory WHERE content LIKE ? ORDER BY created_at DESC LIMIT ?
@@ -758,6 +766,57 @@ func (r *MemoryRepository) Search(query string, limit int) ([]*domain.MemoryEntr
 	defer rows.Close()
 
 	return r.scanMemory(rows)
+}
+
+// searchFTS runs the FTS5 path. Returns the raw error so the caller
+// can decide whether to fall back — internal-only.
+func (r *MemoryRepository) searchFTS(query string, limit int) ([]*domain.MemoryEntry, error) {
+	rows, err := r.db.Query(`
+		SELECT m.id, m.scope, m.content, m.assistant_id, m.run_id, m.created_at
+		FROM memory_fts f
+		JOIN memory m ON m.id = f.id
+		WHERE memory_fts MATCH ?
+		ORDER BY bm25(memory_fts)
+		LIMIT ?
+	`, ftsQuery(query), limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return r.scanMemory(rows)
+}
+
+// ftsQuery turns user input into an FTS5 MATCH expression that won't
+// trip the parser on bare hyphens, slashes, quotes, or operator
+// tokens like AND/OR/NOT. Each whitespace-separated token is wrapped
+// in double quotes (FTS5's phrase syntax) and joined with implicit
+// AND. Empty input collapses to a single quoted empty token so the
+// parser still sees a valid expression — the resulting match is
+// empty, which is the expected "no query" behaviour.
+func ftsQuery(raw string) string {
+	tokens := []string{}
+	field := []rune{}
+	flush := func() {
+		if len(field) == 0 {
+			return
+		}
+		s := strings.ReplaceAll(string(field), `"`, `""`)
+		tokens = append(tokens, `"`+s+`"`)
+		field = field[:0]
+	}
+	for _, r := range raw {
+		switch r {
+		case ' ', '\t', '\n':
+			flush()
+		default:
+			field = append(field, r)
+		}
+	}
+	flush()
+	if len(tokens) == 0 {
+		return `""`
+	}
+	return strings.Join(tokens, " ")
 }
 
 // AnonymizeByAssistant nulls the assistant_id of every memory row that

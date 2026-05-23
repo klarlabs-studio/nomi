@@ -4,6 +4,31 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - FTS5 memory search
+
+`MemoryRepository.Search` switches from the substring `LIKE` scan to
+SQLite FTS5 ranked by bm25. The most relevant entries surface first
+instead of the most recent. Falls back to the previous LIKE path on
+any FTS5 error so an unmigrated DB or a future driver build without
+FTS5 compiled in stays operational.
+
+### Added
+- Migration #31 — `memory_fts` FTS5 virtual table over `memory.content`
+  with porter + unicode61 tokenizer, plus INSERT/UPDATE/DELETE
+  triggers that keep it in sync inside the same transaction as the
+  underlying mutation. Backfills from existing memory rows on first
+  boot post-upgrade; idempotent (skips IDs already in the FTS table).
+- `ftsQuery` helper that wraps every whitespace-separated token in
+  double quotes and joins with implicit AND, so user input with
+  hyphens, slashes, or operator-like words (`AND`, `OR`, `NOT`)
+  doesn't trip the FTS5 parser.
+
+### Behavior notes
+- Search ranking uses `bm25(memory_fts)`; ties broken by FTS internal
+  order. No explicit `created_at` desc anymore — relevance wins.
+- LIKE fallback preserves the prior behaviour so older DBs without
+  the FTS migration still work after a binary upgrade.
+
 ## [Unreleased] - Recipe catalog expansion
 
 Built-in catalog grows from 3 to 9 entries, covering the common
