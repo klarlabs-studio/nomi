@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 594,
+  "version": 595,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -2057,11 +2057,15 @@
       "elapsed_minutes": 0
     },
     "task-nomi_eval_live-provider-matrix": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "0f72d29 — TestPlannerGoldenSet_Live + Makefile target. Verified against qwen2.5:14b: 4-5/5 across two runs."
+      ],
       "started_at": "2026-05-23T09:14:46.994034+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-23T09:22:40.027478+02:00",
+      "elapsed_minutes": 7
     },
     "task-obsidian-plugin-(tool-+-context-source)": {
       "status": "done",
@@ -2884,5 +2888,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-23T09:14:46.994034+02:00"
+  "updated_at": "2026-05-23T09:22:40.027479+02:00"
 }

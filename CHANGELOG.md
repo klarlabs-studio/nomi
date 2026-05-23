@@ -4,6 +4,32 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.2] - 2026-05-23 — Polish wave
+
+Five user-visible improvements on top of v0.2.1. Each entry below
+landed on `main` before the cut; section headings match the
+individual change descriptions further down.
+
+### Highlights
+- Recipe catalog expands from 3 to 9 built-in entries
+  (inbox-triage, release-notes-drafter, meeting-summarizer,
+  content-creator, codebase-explorer, daily-standup join the
+  existing three).
+- FTS5 memory search with bm25 ranking replaces the LIKE scan;
+  relevance wins over recency. LIKE fallback for unmigrated DBs.
+- OS notifications for pending approvals via
+  `tauri-plugin-notification` (+ Web Notification API fallback).
+  Closes the "agents that ask before they act" loop async — user
+  doesn't need the window focused.
+- Shiki syntax highlighting in chat code blocks + diff hunks. Lazy
+  ~700KB bundle, idle-warmed; falls back cleanly when offline /
+  language unbundled.
+- `NOMI_EVAL_LIVE` provider matrix — run the planner golden corpus
+  against real LLM providers (Ollama / OpenAI / Anthropic) with
+  per-provider thresholds.
+
+---
+
 ## [Unreleased] - NOMI_EVAL_LIVE provider matrix
 
 Existing `make eval-live` runs the planner golden corpus + adversarial
