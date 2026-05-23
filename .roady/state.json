@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 589,
+  "version": 591,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -2529,6 +2529,13 @@
       "completed_at": "2026-04-24T12:53:30.204457+02:00",
       "elapsed_minutes": 3
     },
+    "task-shiki-syntax-highlighting": {
+      "status": "in_progress",
+      "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-23T09:08:24.132324+02:00",
+      "elapsed_minutes": 0
+    },
     "task-signed-desktop-builds-+-distribution": {
       "status": "done",
       "path": "",
@@ -2866,5 +2873,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-23T09:04:37.245149+02:00"
+  "updated_at": "2026-05-23T09:08:24.132324+02:00"
 }

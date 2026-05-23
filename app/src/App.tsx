@@ -18,6 +18,7 @@ import { AboutSettings } from "@/components/about-settings";
 import { UpdateBanner } from "@/components/update-banner";
 import { OnboardingWizard } from "@/components/onboarding/wizard";
 import { EventProvider } from "@/providers/event-provider";
+import { warmHighlighter } from "@/lib/highlighter";
 import { approvalsApi, assistantsApi, healthApi, runsApi, settingsApi } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import type { Assistant } from "@/types/api";
@@ -196,6 +197,13 @@ function App() {
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingTemplates, setOnboardingTemplates] = useState<Assistant[]>([]);
+
+  // Warm Shiki on idle so the first chat message or diff hunk doesn't
+  // pay the ~200ms grammar-load cost at render time. Safe no-op on
+  // platforms without requestIdleCallback.
+  useEffect(() => {
+    warmHighlighter();
+  }, []);
 
   useEffect(() => {
     const loadOnboardingState = async () => {

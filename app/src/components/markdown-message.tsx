@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { HighlightedCode } from "@/components/highlighted-code";
 
 // MarkdownMessage renders an LLM's response inside a chat bubble.
 // react-markdown + remark-gfm cover the surface most models emit:
@@ -60,19 +61,16 @@ export function MarkdownMessage({
             </blockquote>
           ),
           code: ({ className: cls, children, ...props }) => {
-            // Inline code: render as a tinted span. The default
-            // `code` element fires for both inline and fenced blocks;
-            // the parent `<pre>` wrapping is what distinguishes them.
-            // We catch inline by absence of a language-* class hint
-            // and the absence of newlines.
+            // Inline code: render as a tinted span. Fenced code blocks
+            // are routed through Shiki via the `pre` override below.
             const text = String(children);
             const isBlock = /\n/.test(text) || (cls && /language-/.test(cls));
             if (isBlock) {
-              return (
-                <code className={"font-mono text-xs " + (cls ?? "")} {...props}>
-                  {children}
-                </code>
-              );
+              // Strip trailing newline that ReactMarkdown adds. lang
+              // comes from the `language-xxx` class react-markdown
+              // attaches to fenced blocks.
+              const lang = cls?.replace(/^language-/, "") ?? null;
+              return <HighlightedCode code={text.replace(/\n$/, "")} lang={lang} />;
             }
             return (
               <code
@@ -83,11 +81,11 @@ export function MarkdownMessage({
               </code>
             );
           },
-          pre: ({ children }) => (
-            <pre className="bg-muted rounded-md p-2 my-2 overflow-x-auto text-xs font-mono">
-              {children}
-            </pre>
-          ),
+          // Pre is rendered as-is; the inner <code> override above
+          // unwraps the fenced block into a HighlightedCode component.
+          // Returning a fragment avoids the extra <pre> wrapper that
+          // would otherwise double-pad the Shiki output.
+          pre: ({ children }) => <>{children}</>,
           table: ({ children }) => (
             <div className="overflow-x-auto my-2">
               <table className="min-w-full border-collapse text-xs">{children}</table>

@@ -1979,5 +1979,9 @@ features:
       title: macOS menu bar / system tray integration
       description: 'Add a `tauri::tray::TrayIcon` with a menu so the user has a persistent surface for the most common actions without keeping the Nomi window focused. Menu items: Show Nomi (focuses window), New Chat (focuses window + opens composer), Pending Approvals N (badge — only enabled when N > 0; opens the Approvals tab), Pause All Agents (toggles a global pause), Settings (focuses window + opens Settings → About), Quit. Click on the tray icon itself toggles the window visibility. Cross-platform: same code path serves macOS menu bar, Linux app indicators, Windows system tray. tauri already builds with the tray-icon feature; this feature adds the menu + click handlers + a tiny status-bar event subscription that updates the pending-approvals count badge live.'
       requirements: []
+    - id: shiki-syntax-highlighting
+      title: Shiki syntax highlighting
+      description: 'Wire Shiki into the two surfaces that render code: DiffPreview (hunk bodies in both unified and split view) and MarkdownMessage (chat fenced code blocks). Lazy-loaded singleton highlighter in `app/src/lib/highlighter.ts` so the ~700KB grammar bundle only ships on first code render. Six common grammars baked in (go / typescript / javascript / python / rust / bash / json / yaml). DiffPreview detects language from the file path captured in the parsed block; MarkdownMessage uses the fence info-string (```ts, ```go, …). Falls back to plain `<pre>` when Shiki isn''t ready yet or the language isn''t bundled — no UX regression.'
+      requirements: []
 constraints: []
 version: 0.1.0

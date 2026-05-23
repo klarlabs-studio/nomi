@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Eye, EyeOff, Columns2, Rows2 } from "lucide-react";
+import { HighlightedCode } from "@/components/highlighted-code";
+import { langFromPath, type BundledLang } from "@/lib/highlighter";
 
 interface DiffPreviewProps {
   diff: string;
@@ -207,7 +209,9 @@ export function DiffPreview({ diff, onDiffChange }: DiffPreviewProps) {
 
       {expanded && (
         <div className="p-2 space-y-3 max-h-96 overflow-y-auto">
-          {blocks.map((block, bi) => (
+          {blocks.map((block, bi) => {
+            const fileLang = langFromPath(block.fileLabel);
+            return (
             <div key={bi} className="space-y-1">
               <div className="text-[11px] text-muted-foreground font-mono">
                 {block.fileLabel}
@@ -240,57 +244,97 @@ export function DiffPreview({ diff, onDiffChange }: DiffPreviewProps) {
                         )}
                       </button>
                     </div>
-                    <HunkBody hunk={hunk} viewMode={viewMode} />
+                    <HunkBody hunk={hunk} viewMode={viewMode} fileLang={fileLang} />
                   </div>
                 );
               })}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
-function HunkBody({ hunk, viewMode }: { hunk: ParsedHunk; viewMode: "unified" | "split" }) {
+function HunkBody({
+  hunk,
+  viewMode,
+  fileLang,
+}: {
+  hunk: ParsedHunk;
+  viewMode: "unified" | "split";
+  fileLang: BundledLang | null;
+}) {
   const lines = hunk.lines.slice(1); // drop the @@ header which renders separately
   if (viewMode === "unified") {
+    // Unified view: highlight the whole hunk body in one call. Use the
+    // file's detected language; the per-line +/- color treatment runs
+    // as an overlay on top of the highlighted tokens.
     return (
-      <pre className="text-[11px] font-mono leading-tight p-2 overflow-x-auto m-0">
-        {lines.map((line, i) => {
-          let className = "block";
-          if (line.startsWith("+")) className += " text-emerald-600 dark:text-emerald-400";
-          else if (line.startsWith("-")) className += " text-rose-600 dark:text-rose-400";
-          return (
-            <span key={i} className={className}>
-              {line || " "}
-            </span>
-          );
-        })}
-      </pre>
+      <HighlightedDiffHunk lines={lines} lang={fileLang} side="both" />
     );
   }
-  // Split view: removes on the left, adds on the right, context shown
-  // on both sides aligned by source order. Cheap layout — hunks stay
-  // small enough that this doesn't need virtualization.
+  // Split view: two columns. Each side gets its own HighlightedDiffHunk
+  // with the opposite side's lines blanked out, keeping line numbers
+  // aligned across both columns.
   return (
     <div className="grid grid-cols-2 gap-px bg-muted-foreground/10 text-[11px] font-mono leading-tight">
-      <pre className="p-2 overflow-x-auto m-0 bg-background">
-        {lines.map((line, i) => {
-          if (line.startsWith("+")) return <span key={i} className="block opacity-30"> </span>;
-          let className = "block";
-          if (line.startsWith("-")) className += " text-rose-600 dark:text-rose-400";
-          return <span key={i} className={className}>{line || " "}</span>;
-        })}
-      </pre>
-      <pre className="p-2 overflow-x-auto m-0 bg-background">
-        {lines.map((line, i) => {
-          if (line.startsWith("-")) return <span key={i} className="block opacity-30"> </span>;
-          let className = "block";
-          if (line.startsWith("+")) className += " text-emerald-600 dark:text-emerald-400";
-          return <span key={i} className={className}>{line || " "}</span>;
-        })}
-      </pre>
+      <HighlightedDiffHunk lines={lines} lang={fileLang} side="removed" />
+      <HighlightedDiffHunk lines={lines} lang={fileLang} side="added" />
     </div>
+  );
+}
+
+// HighlightedDiffHunk renders one column (or both) of a diff hunk with
+// Shiki syntax highlighting on the code portion and add/remove tinting
+// on the line. `side="both"` is the unified view; `side="added"` /
+// `side="removed"` are the two halves of the split view (the other
+// side's lines become blank spacers so line numbers stay aligned).
+function HighlightedDiffHunk({
+  lines,
+  lang,
+  side,
+}: {
+  lines: string[];
+  lang: BundledLang | null;
+  side: "both" | "added" | "removed";
+}) {
+  return (
+    <pre
+      className={
+        "text-[11px] font-mono leading-tight p-2 overflow-x-auto m-0 " +
+        (side === "both" ? "" : "bg-background")
+      }
+    >
+      {lines.map((line, i) => {
+        const marker = line.charAt(0);
+        const content = line.slice(1);
+        // Visibility per column.
+        if (side === "added" && marker === "-") {
+          return (
+            <span key={i} className="block opacity-30">
+              {" "}
+            </span>
+          );
+        }
+        if (side === "removed" && marker === "+") {
+          return (
+            <span key={i} className="block opacity-30">
+              {" "}
+            </span>
+          );
+        }
+        let className = "block";
+        if (marker === "+") className += " bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
+        else if (marker === "-") className += " bg-rose-500/10 text-rose-700 dark:text-rose-300";
+        return (
+          <span key={i} className={className}>
+            <span className="select-none opacity-60">{marker || " "}</span>
+            <HighlightedCode code={content || " "} lang={lang} forBlock={false} />
+          </span>
+        );
+      })}
+    </pre>
   );
 }
