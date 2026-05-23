@@ -118,6 +118,7 @@ func (t *CommandExecTool) Execute(ctx context.Context, input map[string]interfac
 
 	image, _ := input["__sandbox_image"].(string)
 	netMode, _ := input["__network_mode"].(string)
+	hostAllowlist := hostAllowlistFromInput(input)
 
 	req := executor.Request{
 		Argv:          tokens,
@@ -127,6 +128,7 @@ func (t *CommandExecTool) Execute(ctx context.Context, input map[string]interfac
 		Env:           BuildSandboxEnv(overrides),
 		Timeout:       time.Duration(timeout) * time.Second,
 		NetworkMode:   executor.NetworkMode(netMode),
+		HostAllowlist: hostAllowlist,
 	}
 
 	execResult, runErr := backend.Run(ctx, req)
@@ -172,4 +174,28 @@ func backendFromInput(input map[string]interface{}) executor.Backend {
 		return b
 	}
 	return executor.NewLocal()
+}
+
+// hostAllowlistFromInput pulls the reserved `__host_allowlist` key the
+// runtime injects when an Allow rule on network.egress carries a
+// host_allowlist constraint. Accepts both []string (runtime fast path)
+// and []interface{} (JSON-decoded shape for any test caller).
+func hostAllowlistFromInput(input map[string]interface{}) []string {
+	raw, ok := input["__host_allowlist"]
+	if !ok {
+		return nil
+	}
+	switch v := raw.(type) {
+	case []string:
+		return v
+	case []interface{}:
+		out := make([]string, 0, len(v))
+		for _, item := range v {
+			if s, ok := item.(string); ok && s != "" {
+				out = append(out, s)
+			}
+		}
+		return out
+	}
+	return nil
 }

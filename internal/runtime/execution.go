@@ -319,9 +319,19 @@ func (r *Runtime) executeStep(ctx context.Context, run *domain.Run, step *domain
 			// network. Confirm/Deny/absent all collapse to "none" since
 			// approval at the backend-config layer doesn't have a UI
 			// surface yet — operators should approve at the tool layer.
+			//
+			// When Allow + the rule carries a `host_allowlist` constraint,
+			// propagate the list so the docker backend pre-resolves each
+			// host on the host's DNS, pins them via --add-host, and
+			// breaks in-container DNS for anything outside the list.
 			netMode := executor.NetworkNone
 			if r.permEngine.Evaluate(assistant.PermissionPolicy, "network.egress") == domain.PermissionAllow {
 				netMode = executor.NetworkBridge
+				if rule := r.permEngine.MatchingRule(assistant.PermissionPolicy, "network.egress"); rule != nil {
+					if hosts := extractHostAllowlist(rule.Constraints); len(hosts) > 0 {
+						toolInput["__host_allowlist"] = hosts
+					}
+				}
 			}
 			toolInput["__network_mode"] = string(netMode)
 		}
@@ -653,6 +663,40 @@ func (r *Runtime) getCapabilityForTool(toolName string) string {
 // as the workspace root for sandboxed tool invocations. Returns "" when the
 // assistant has no folder attached, in which case filesystem.read/write will
 // refuse (by design) and command.exec will fall back to the daemon's cwd.
+// extractHostAllowlist pulls a network.egress rule's `host_allowlist`
+// constraint into a clean []string. Supports the two shapes JSON
+// deserialization can produce ([]interface{} from a generic decode,
+// []string from a typed source) and skips empty entries so a sloppy
+// rule like {"host_allowlist": ["api.openai.com", ""]} doesn't smuggle
+// a bare --add-host arg into the docker call.
+func extractHostAllowlist(constraints map[string]interface{}) []string {
+	if constraints == nil {
+		return nil
+	}
+	raw, ok := constraints["host_allowlist"]
+	if !ok {
+		return nil
+	}
+	out := []string{}
+	switch v := raw.(type) {
+	case []string:
+		for _, s := range v {
+			if s = strings.TrimSpace(s); s != "" {
+				out = append(out, s)
+			}
+		}
+	case []interface{}:
+		for _, item := range v {
+			if s, ok := item.(string); ok {
+				if s = strings.TrimSpace(s); s != "" {
+					out = append(out, s)
+				}
+			}
+		}
+	}
+	return out
+}
+
 func assistantWorkspaceRoot(assistant *domain.AssistantDefinition) string {
 	if assistant == nil {
 		return ""

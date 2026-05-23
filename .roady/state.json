@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 597,
+  "version": 600,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1637,6 +1637,13 @@
       "completed_at": "2026-05-05T10:45:49.115058+02:00",
       "elapsed_minutes": 0
     },
+    "task-dns-egress-allowlist-for-container-backends": {
+      "status": "in_progress",
+      "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-23T11:53:38.394494+02:00",
+      "elapsed_minutes": 0
+    },
     "task-dynamic-tool-routing": {
       "status": "done",
       "path": "",
@@ -1947,11 +1954,15 @@
       "elapsed_minutes": 0
     },
     "task-mcp-client-plugin-generic-+-scout-integration": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "684500c — Scout plugin built on github.com/felixgeelhaar/mcp-go. Six tools, stdio + http transports, lazy connect. Generic any-MCP-server plugin still backlog (Scout client glue here is reusable)."
+      ],
       "started_at": "2026-05-23T10:59:38.851784+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-23T11:09:56.218203+02:00",
+      "elapsed_minutes": 10
     },
     "task-memory-system-(mnemos)": {
       "status": "done",
@@ -2895,5 +2906,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-23T10:59:38.851784+02:00"
+  "updated_at": "2026-05-23T11:53:38.394494+02:00"
 }

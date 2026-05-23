@@ -917,7 +917,50 @@ function AssistantForm({
                     Declared capabilities to allow this rule to take effect.
                   </p>
                 )}
-                {rule.capability === "command.exec" && rule.mode === "allow" && (
+                {rule.capability === "network.egress" && rule.mode === "allow" && (
+                <div className="ml-0">
+                  <label className="text-xs text-muted-foreground">
+                    Host allowlist (comma-separated DNS names; empty = unrestricted bridge networking).
+                    Docker backend pre-resolves each host on the host&apos;s DNS, pins the IPs via
+                    <code className="font-mono"> --add-host</code>, and breaks in-container DNS for
+                    anything outside the list. Not effective against code that hardcodes IPs.
+                  </label>
+                  <Input
+                    value={
+                      Array.isArray(rule.constraints?.host_allowlist)
+                        ? (rule.constraints!.host_allowlist as string[]).join(", ")
+                        : ""
+                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const parsed = value
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean);
+                      const newRules = [...(formData.permission_policy?.rules || [])];
+                      const nextConstraints = { ...(rule.constraints || {}) };
+                      if (parsed.length === 0) {
+                        delete nextConstraints.host_allowlist;
+                      } else {
+                        nextConstraints.host_allowlist = parsed;
+                      }
+                      newRules[i] = {
+                        ...rule,
+                        constraints: Object.keys(nextConstraints).length
+                          ? nextConstraints
+                          : undefined,
+                      };
+                      setFormData({
+                        ...formData,
+                        permission_policy: { rules: newRules },
+                      });
+                    }}
+                    placeholder="api.openai.com, graph.facebook.com"
+                    className="mt-1 text-sm"
+                  />
+                </div>
+              )}
+              {rule.capability === "command.exec" && rule.mode === "allow" && (
                   <div className="ml-0">
                     <label className="text-xs text-muted-foreground">
                       Allowed binaries (comma-separated; empty = any binary the shlex parser permits)

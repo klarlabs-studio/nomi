@@ -4,10 +4,24 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"os/exec"
 	"path/filepath"
 	"strings"
 )
+
+// resolveHost is the host-side DNS lookup used to pin allowlisted hosts
+// before container start. Indirected through a package var so tests can
+// swap in a deterministic resolver without hitting the real network.
+var resolveHost = func(host string) ([]string, error) {
+	return net.LookupHost(host)
+}
+
+// unroutableDNS is the address container DNS is pointed at when an
+// allowlist is in effect. Lookups for anything not pinned via --add-host
+// time out against this address. Using a documentation-block-reserved
+// IP that isn't routable from any container interface.
+const unroutableDNS = "127.255.255.255"
 
 // DockerBackend runs subprocesses inside a fresh container, bind-mounting
 // the assistant's workspace at /workspace and isolating CPU, memory, PIDs,
@@ -16,8 +30,11 @@ import (
 // dependencies) into the daemon binary.
 //
 // Hardening currently applied per container:
-//   - --network=none — no outbound connectivity (PR4 will wire an opt-in
-//     network.egress capability and switch to a restricted bridge).
+//   - --network=none by default. An Allow rule on network.egress flips to
+//     --network=bridge. If that rule carries a `host_allowlist` constraint,
+//     each host is pre-resolved on the host's DNS, pinned via --add-host,
+//     and in-container DNS is steered at an unroutable address so lookups
+//     for anything outside the list fail. Doesn't stop hardcoded-IP egress.
 //   - --memory + --memory-swap pinned equal so OOMKilled fires consistently
 //     and the kernel doesn't quietly thrash swap.
 //   - --cpus + --pids-limit to bound runaway loops.
@@ -148,6 +165,12 @@ func (d DockerBackend) buildArgs(req Request) ([]string, error) {
 	if netMode == "" {
 		netMode = NetworkNone
 	}
+	// An allowlist on a none-network request is nonsensical; force bridge
+	// so the pinned hosts are actually reachable. Empty allowlist =
+	// caller's mode is honoured as-is.
+	if len(req.HostAllowlist) > 0 && netMode == NetworkNone {
+		netMode = NetworkBridge
+	}
 
 	args := []string{
 		"run", "--rm",
@@ -163,12 +186,47 @@ func (d DockerBackend) buildArgs(req Request) ([]string, error) {
 	if d.Runtime != "" {
 		args = append(args, "--runtime="+d.Runtime)
 	}
+	if len(req.HostAllowlist) > 0 {
+		hostArgs, err := buildHostAllowlistArgs(req.HostAllowlist)
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, hostArgs...)
+	}
 	for _, e := range req.Env {
 		args = append(args, "-e", e)
 	}
 	args = append(args, req.Image)
 	args = append(args, req.Argv...)
 	return args, nil
+}
+
+// buildHostAllowlistArgs resolves each hostname on the host and returns
+// the docker flags that (a) pin every resolved IP via --add-host and
+// (b) break in-container DNS for anything not pinned. An unresolvable
+// host is a hard error: silently dropping it would let the assistant
+// reach unintended endpoints if the upstream DNS later recovers and
+// returns a different IP.
+func buildHostAllowlistArgs(hosts []string) ([]string, error) {
+	var out []string
+	for _, h := range hosts {
+		h = strings.TrimSpace(h)
+		if h == "" {
+			continue
+		}
+		ips, err := resolveHost(h)
+		if err != nil {
+			return nil, fmt.Errorf("docker backend: host_allowlist resolve %q: %w", h, err)
+		}
+		if len(ips) == 0 {
+			return nil, fmt.Errorf("docker backend: host_allowlist %q has no A/AAAA records", h)
+		}
+		for _, ip := range ips {
+			out = append(out, "--add-host="+h+":"+ip)
+		}
+	}
+	out = append(out, "--dns="+unroutableDNS)
+	return out, nil
 }
 
 // containerWorkDir translates a host workdir into a path inside the

@@ -4,6 +4,36 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - DNS egress allowlist (docker)
+
+Tightens the `network.egress` capability beyond the present
+`--network=none` / `--network=bridge` flip. An Allow rule on
+network.egress that carries a `host_allowlist` constraint now causes
+the docker backend to pre-resolve each host on the host's DNS, inject
+`--add-host=name:ip` for every resolved IP, and steer in-container DNS
+at `127.255.255.255` so lookups for anything outside the list time
+out. NetworkMode is forced to `bridge` when an allowlist is present
+so the pinned hosts are actually reachable.
+
+### Added
+- `executor.Request.HostAllowlist []string`. Runtime extracts the
+  `host_allowlist` constraint from the matched network.egress rule
+  (via `permissions.Engine.MatchingRule`) and propagates it through
+  the reserved `__host_allowlist` tool-input key, matching the
+  existing `__sandbox` / `__network_mode` escape-hatch pattern.
+- Docker backend: `--add-host` pinning + `--dns=127.255.255.255` for
+  every allowlisted host, with unresolvable hosts surfaced as a
+  startup error (silently dropping would let the assistant reach
+  unintended endpoints if upstream DNS later recovers).
+- `host_allowlist` field on the permission rule editor in the
+  assistant builder, gated to `network.egress` + Allow.
+
+### Threat-model note
+- Prevents accidental egress to unintended hosts. Not a hard isolation
+  against malicious code that hardcodes IPs — that requires kernel-
+  level packet filtering (eBPF cgroup_skb), which is the next pass on
+  the roady backlog.
+
 ## [Unreleased] - Scout browser plugin
 
 First-party browser automation. Nomi connects to a Scout MCP server

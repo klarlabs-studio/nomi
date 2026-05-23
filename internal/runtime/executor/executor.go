@@ -52,6 +52,14 @@ const (
 // both; container backends bind-mount WorkspaceRoot at a fixed path inside
 // the container and require Image to know what to run. NetworkMode is also
 // container-only.
+//
+// HostAllowlist narrows egress when NetworkMode == NetworkBridge: the
+// docker backend pre-resolves each hostname on the host, injects
+// --add-host pins for the resolved IPs, and points the container's
+// resolver at an unroutable address so DNS lookups for anything outside
+// the list fail. Threat model: prevents accidental egress to unintended
+// hosts; not hard isolation against malicious code that hardcodes IPs.
+// eBPF cgroup_skb is the next pass for that.
 type Request struct {
 	Argv          []string
 	WorkDir       string
@@ -60,6 +68,7 @@ type Request struct {
 	Env           []string
 	Timeout       time.Duration
 	NetworkMode   NetworkMode
+	HostAllowlist []string
 }
 
 // Result reports how the process ended. ExitCode is -1 when the process

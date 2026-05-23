@@ -2,6 +2,7 @@ package executor
 
 import (
 	"context"
+	"fmt"
 	"runtime"
 	"strings"
 	"testing"
@@ -165,6 +166,109 @@ func TestDockerLiveEcho(t *testing.T) {
 	}
 	if !strings.Contains(string(res.Output), "hi-from-container") {
 		t.Fatalf("output missing payload: %q", res.Output)
+	}
+}
+
+func TestDockerBuildArgsHostAllowlist(t *testing.T) {
+	prev := resolveHost
+	resolveHost = func(host string) ([]string, error) {
+		switch host {
+		case "api.openai.com":
+			return []string{"203.0.113.10"}, nil
+		case "graph.facebook.com":
+			return []string{"203.0.113.20", "203.0.113.21"}, nil
+		}
+		return nil, fmt.Errorf("unexpected host %q", host)
+	}
+	defer func() { resolveHost = prev }()
+
+	d := NewDocker()
+	args, err := d.buildArgs(Request{
+		Argv:          []string{"curl", "https://api.openai.com"},
+		WorkspaceRoot: "/host/work",
+		Image:         "alpine:3.20",
+		NetworkMode:   NetworkBridge,
+		HostAllowlist: []string{"api.openai.com", "graph.facebook.com"},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !contains(args, "--network=bridge") {
+		t.Fatalf("expected --network=bridge, got %v", args)
+	}
+	wantHosts := []string{
+		"--add-host=api.openai.com:203.0.113.10",
+		"--add-host=graph.facebook.com:203.0.113.20",
+		"--add-host=graph.facebook.com:203.0.113.21",
+	}
+	for _, h := range wantHosts {
+		if !contains(args, h) {
+			t.Errorf("missing %s in %v", h, args)
+		}
+	}
+	if !contains(args, "--dns="+unroutableDNS) {
+		t.Fatalf("missing --dns=%s in %v", unroutableDNS, args)
+	}
+}
+
+func TestDockerBuildArgsHostAllowlistForcesBridgeFromNone(t *testing.T) {
+	prev := resolveHost
+	resolveHost = func(string) ([]string, error) { return []string{"203.0.113.10"}, nil }
+	defer func() { resolveHost = prev }()
+
+	d := NewDocker()
+	args, err := d.buildArgs(Request{
+		Argv:          []string{"true"},
+		WorkspaceRoot: "/host/work",
+		Image:         "alpine:3.20",
+		NetworkMode:   NetworkNone,
+		HostAllowlist: []string{"api.openai.com"},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !contains(args, "--network=bridge") {
+		t.Fatalf("allowlist on NetworkNone should force bridge, got %v", args)
+	}
+}
+
+func TestDockerBuildArgsHostAllowlistResolveFailureSurfaces(t *testing.T) {
+	prev := resolveHost
+	resolveHost = func(string) ([]string, error) { return nil, fmt.Errorf("nope") }
+	defer func() { resolveHost = prev }()
+
+	d := NewDocker()
+	_, err := d.buildArgs(Request{
+		Argv:          []string{"true"},
+		WorkspaceRoot: "/host/work",
+		Image:         "alpine:3.20",
+		NetworkMode:   NetworkBridge,
+		HostAllowlist: []string{"unresolvable.invalid"},
+	})
+	if err == nil {
+		t.Fatal("expected resolve failure to bubble up")
+	}
+}
+
+func TestDockerBuildArgsNoAllowlistOmitsAddHost(t *testing.T) {
+	d := NewDocker()
+	args, err := d.buildArgs(Request{
+		Argv:          []string{"true"},
+		WorkspaceRoot: "/host/work",
+		Image:         "alpine:3.20",
+		NetworkMode:   NetworkBridge,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	for _, a := range args {
+		if strings.HasPrefix(a, "--add-host=") {
+			t.Fatalf("did not expect --add-host without an allowlist, got %v", args)
+		}
+		if strings.HasPrefix(a, "--dns=") {
+			t.Fatalf("did not expect --dns without an allowlist, got %v", args)
+		}
 	}
 }
 
