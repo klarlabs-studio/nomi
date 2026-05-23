@@ -277,6 +277,36 @@ Three profiles for the default permission stance on new assistants.
 Balanced is recommended; Cautious confirms everything; Fast trades
 safety for iteration speed.
 
+### Sandboxed execution backends
+
+Pick `local`, `docker` (rootless, capped memory + CPU + PIDs,
+`--network=none` by default), or `gvisor` (runsc — user-space kernel
+boundary) per assistant from the UI. Boot-time probe; only registered
+backends appear in the dropdown.
+
+### Recipes — shareable assistant bundles
+
+Versioned, SHA-256-signed YAML bundles: assistant config + permission
+policy + executor backend. Built-in catalog ships `coding-agent`,
+`research-assistant`, `ops-runbook`. One-click install; export-as-recipe
+button on every assistant. No other agent tool ships shareable bundles.
+
+### Schedules in plain English
+
+Type "every weekday at 8am" or "first Monday of the month"; the
+configured LLM translates to cron, the parser validates before save,
+and the background ticker fires Runs on cadence through the same
+plan-review + approval surface as any manual run.
+
+### Learns with your approval
+
+After successful runs, Nomi extracts short preference statements
+("Run tests before committing") into a Preferences memory the planner
+reads on the next plan. Embedding-based clustering surfaces candidate
+skills from your past runs; LLM synthesis proposes a Recipe shape;
+you review and promote. Every learned preference and proposed skill
+is visible — and deletable — in the Memory tab.
+
 ### Audit log
 <p align="center"><img src="docs/images/05-events.png" width="900" alt="Event log"></p>
 
@@ -367,24 +397,35 @@ every release ships against — is in
 
 ## Roadmap
 
-**v0.2 — "Plans That Plan."** Shipped: LLM-generated multi-step
-plans, capability-routed tools, streaming tokens, JSON mode + few-shot
-exemplars, self-repair retry loop, prompt-injection trust-boundary
-tags, replan-on-failure (planner sees prior step output + failure and
-proposes a corrective plan, bounded by MaxReplansPerRun), the
-[`coding-agent` flagship recipe](examples/coding-agent/) with
-unified-diff previews, hash-chained audit log, and Prometheus
-`/metrics` for plan / step / replan attribution per provider.
+**v0.2.1 (current) — "Reviewable agents."** Shipped: plan-review-
+before-execute state machine, capability-gated tools, hash-chained
+audit log, sandboxed execution backends (local + Docker + gVisor),
+signed Recipe registry with built-in catalog, scheduled runs with
+natural-language cron, auto-extracted preference learning loop,
+skill induction with embedding clustering + LLM synthesis, four
+messaging channels (Telegram + Slack + Discord + WhatsApp), Gmail /
+Calendar / GitHub / Obsidian / Mnemos plugins, markdown chat
+rendering, Prometheus `/metrics` for plan / step / executor /
+replan attribution per provider.
 
-Backlog (post-v0.2, in priority order — not committed):
+Backlog (post-v0.2.1, in priority order — not committed):
 
-- NomiHub plugin marketplace (signed WASM, install/update flow).
-- `nomi tui` — bubbletea TUI for SSH-only workflows.
-- Cross-device sync (opt-in, end-to-end-encrypted).
-- Vision backend for the media plugin (LLaVA via Ollama).
+- Expanded built-in recipe catalog (15+ curated for common
+  prosumer workflows).
+- Browser automation as a first-party plugin via
+  [Scout](https://github.com/felixgeelhaar/scout).
+- macOS menu bar integration (new chat / pause all / quick
+  approval).
+- Push notifications when approvals are pending.
+- SQLite FTS5 for memory search.
+- Network-egress domain allowlist enforced via eBPF/DNS filter
+  (today only `--network=none` vs `--network=bridge`).
+- Cross-machine recipe sync (opt-in, end-to-end-encrypted).
+- Hosted Mnemos for visibility-scoped team memory.
 
-Live spec, plan, and task state in [`.roady/`](.roady/); ideas and bug
-reports on the [issues page](https://github.com/felixgeelhaar/nomi/issues).
+Live spec, plan, and task state in [`.roady/`](.roady/) (130
+features, 255/255 tasks closed at release). Ideas and bug reports on
+the [issues page](https://github.com/felixgeelhaar/nomi/issues).
 
 ## Contributing
 
