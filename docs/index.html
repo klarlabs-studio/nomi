@@ -37,7 +37,7 @@
 <main id="top">
 
   <section class="hero">
-    <div class="kicker">Open source · Apache 2.0 · v0.2.2</div>
+    <div class="kicker">Open source · Apache 2.0 · v0.2.3</div>
     <p class="category">Reviewable agents.</p>
     <h1>Agents that ask<br/><span class="accent">before they act.</span></h1>
     <p class="lede">
@@ -313,22 +313,22 @@
     <p class="section-lede">Reviewable execution + sandboxed runtime + auto-learning are shipping today. The next horizons are explicit so you can plan against them.</p>
     <div class="roadmap-grid">
       <article class="roadmap-card now">
-        <span class="roadmap-tag">Now · shipping (v0.2.1)</span>
-        <h3>Reviewable agents</h3>
-        <p>Plan-review-before-execute, capability-gated tools, hash-chained audit log, sandboxed exec (local + Docker + gVisor), recipe registry with signed YAML bundles, scheduled runs with natural-language cron, auto-extracted preferences your planner reads, skill induction with embedding clustering + LLM synthesis. Four messaging channels — Telegram, Slack, Discord, WhatsApp — plus Gmail, Calendar, GitHub, Obsidian, Mnemos (optional) connectors. Bring any OpenAI-compatible model.</p>
+        <span class="roadmap-tag">Now · shipping (v0.2.3)</span>
+        <h3>Reviewable agents + hard sandboxing</h3>
+        <p>Plan-review-before-execute, capability-gated tools, hash-chained audit log, sandboxed exec (local + Docker + gVisor), recipe registry with signed YAML bundles, scheduled runs with natural-language cron, auto-extracted preferences your planner reads, skill induction with embedding clustering + LLM synthesis. Three-layer egress isolation — <code>--network=none</code> default, DNS allowlist for accidental egress, optional eBPF cgroup_skb/egress filter (Linux, IPv4 + IPv6, cgroupfs + systemd cgroup drivers) for hardcoded-IP bypass. Browser automation as a first-party plugin via <a href="https://github.com/felixgeelhaar/scout">Scout</a> over MCP. Diff-review UI does whole-hunk Shiki tokenisation so multi-line scope survives. Four messaging channels — Telegram, Slack, Discord, WhatsApp — plus Gmail, Calendar, GitHub, Obsidian, Mnemos (optional) connectors. Bring any OpenAI-compatible model.</p>
       </article>
       <article class="roadmap-card next">
         <span class="roadmap-tag">Next</span>
-        <h3>Polish + reach</h3>
-        <p>Expanded built-in recipe catalog (15+ curated). Browser automation surfaced as a first-party plugin via <a href="https://github.com/felixgeelhaar/scout">Scout</a>. macOS menu bar integration (new chat / pause all / quick approval). Push notifications when an approval is pending. SQLite FTS5 for memory search. Network-egress domain allowlist enforced via eBPF/DNS filter (not just <code>--network=none</code>).</p>
+        <h3>Reach</h3>
+        <p>Generic any-MCP-server plugin so connecting to a new MCP source (Linear MCP, GitHub MCP, filesystem MCP) is config, not code. macOS menu bar polish — quick-approval inline rather than via main window. WASM plugin marketplace catalog growth — signing + verification already exist (<code>ed25519</code>). Live-provider eval matrix expanded across more model families.</p>
       </article>
       <article class="roadmap-card later">
         <span class="roadmap-tag">Later</span>
         <h3>Team + organizational</h3>
-        <p>Cross-machine recipe sync. Visibility-scoped Mnemos (personal / team / org) for institutional memory shared across agents. Approval delegation across devices. Hosted Mnemos as an opt-in, never a forced cloud. WASM plugin marketplace expansion — signing + verification already exist (<code>ed25519</code>), catalog growth is the next dial.</p>
+        <p>Cross-machine recipe sync. Visibility-scoped Mnemos (personal / team / org) for institutional memory shared across agents. Approval delegation across devices. Hosted Mnemos as an opt-in, never a forced cloud.</p>
       </article>
     </div>
-    <p class="muted">Backlog of record: <a href="https://github.com/felixgeelhaar/nomi/blob/main/.roady/spec.yaml"><code>.roady/spec.yaml</code></a> (130 features, 255/255 tasks closed at release). Plan / state / events are hash-chained — no roadmap edits in the dark.</p>
+    <p class="muted">Backlog of record: <a href="https://github.com/felixgeelhaar/nomi/blob/main/.roady/spec.yaml"><code>.roady/spec.yaml</code></a> (142 features, 267 tasks closed at release). Plan / state / events are hash-chained — no roadmap edits in the dark.</p>
   </section>
 
   <section class="cta-final">

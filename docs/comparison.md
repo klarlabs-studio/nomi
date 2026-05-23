@@ -3,7 +3,7 @@
 How Nomi differs from other agent platforms. Facts only — every column
 maps to behavior shipped today, not roadmap claims.
 
-> **Disclosure:** rows describe Nomi as of v0.1.x and competitor projects
+> **Disclosure:** rows describe Nomi as of v0.2.3 and competitor projects
 > as of early 2026. Competitor capabilities evolve quickly; if a row is
 > stale, please open an issue.
 
@@ -19,6 +19,8 @@ maps to behavior shipped today, not roadmap claims.
 | BYO LLM | ✅ Anthropic, OpenAI, Ollama; per-assistant override | ✅ | ✅ | ✅ | ✕ Anthropic only | ✅ | ✅ |
 | Desktop UI | ✅ Tauri shell (macOS / Linux / Windows) | ✅ Goose Desktop | ◐ VSCode extension | ◐ Terminal + 01 device | ✕ CLI | ◐ Web UI | ✕ |
 | Plugin sandbox | ✅ WASM (wazero) + ed25519 signing | ◐ MCP servers | ◐ MCP servers | ✕ | ◐ MCP servers | ◐ Python plugins | ◐ Python tools |
+| Network egress isolation | ✅ `--network=none` default + DNS allowlist (`--add-host` pinning) + optional eBPF cgroup_skb filter (IPv4 + IPv6, both docker cgroup drivers) | ✕ | ✕ | ✕ | ◐ tool-level allowlist | ✕ | ✕ |
+| Browser automation | ✅ Scout MCP-client plugin, capability-gated through plan review | ◐ via MCP server | ✕ | ◐ via tool | ✕ | ◐ via plugin | ◐ via tool |
 | License | Apache-2.0 | Apache-2.0 | Apache-2.0 | AGPL-3.0 | Proprietary | MIT | MIT |
 
 Legend: ✅ shipped · ◐ partial / different shape · ✕ not present.

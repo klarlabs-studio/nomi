@@ -397,34 +397,40 @@ every release ships against — is in
 
 ## Roadmap
 
-**v0.2.1 (current) — "Reviewable agents."** Shipped: plan-review-
-before-execute state machine, capability-gated tools, hash-chained
-audit log, sandboxed execution backends (local + Docker + gVisor),
-signed Recipe registry with built-in catalog, scheduled runs with
-natural-language cron, auto-extracted preference learning loop,
-skill induction with embedding clustering + LLM synthesis, four
-messaging channels (Telegram + Slack + Discord + WhatsApp), Gmail /
-Calendar / GitHub / Obsidian / Mnemos plugins, markdown chat
-rendering, Prometheus `/metrics` for plan / step / executor /
-replan attribution per provider.
+**v0.2.3 (current) — "Reviewable agents + hard sandboxing."**
+Shipped: plan-review-before-execute state machine, capability-gated
+tools, hash-chained audit log, sandboxed execution backends (local +
+Docker + gVisor), three-layer network egress isolation
+(`--network=none` default → DNS allowlist via docker `--add-host` +
+`--dns=127.255.255.255` → optional eBPF cgroup_skb filter, IPv4 +
+IPv6, both docker cgroup drivers), browser automation as a first-
+party plugin via [Scout](https://github.com/felixgeelhaar/scout)
+over MCP, signed Recipe registry with built-in catalog, scheduled
+runs with natural-language cron, auto-extracted preference learning
+loop, skill induction with embedding clustering + LLM synthesis,
+four messaging channels (Telegram + Slack + Discord + WhatsApp),
+Gmail / Calendar / GitHub / Obsidian / Mnemos plugins, markdown
+chat rendering with Shiki per-hunk diff highlighting, OS push
+notifications for pending approvals, macOS menu bar integration
+(new chat / pause all / quit), SQLite FTS5 memory search,
+Prometheus `/metrics` for plan / step / executor / replan
+attribution per provider, `make eval-live-providers` matrix
+against real LLM providers.
 
-Backlog (post-v0.2.1, in priority order — not committed):
+Backlog (post-v0.2.3, in priority order — not committed):
 
-- Expanded built-in recipe catalog (15+ curated for common
-  prosumer workflows).
-- Browser automation as a first-party plugin via
-  [Scout](https://github.com/felixgeelhaar/scout).
-- macOS menu bar integration (new chat / pause all / quick
-  approval).
-- Push notifications when approvals are pending.
-- SQLite FTS5 for memory search.
-- Network-egress domain allowlist enforced via eBPF/DNS filter
-  (today only `--network=none` vs `--network=bridge`).
+- Generic any-MCP-server plugin (Scout-style client glue
+  generalised — config-driven, not code-driven, per server).
+- Quick-approval inline in the menu bar (don't open main window
+  for trivial confirms).
 - Cross-machine recipe sync (opt-in, end-to-end-encrypted).
 - Hosted Mnemos for visibility-scoped team memory.
+- Approval delegation across devices.
+- WASM plugin marketplace catalog growth (signing + verification
+  already shipped).
 
-Live spec, plan, and task state in [`.roady/`](.roady/) (130
-features, 255/255 tasks closed at release). Ideas and bug reports on
+Live spec, plan, and task state in [`.roady/`](.roady/) (142
+features, 267 tasks closed at release). Ideas and bug reports on
 the [issues page](https://github.com/felixgeelhaar/nomi/issues).
 
 ## Contributing
