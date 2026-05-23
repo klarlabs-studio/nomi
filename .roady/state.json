@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 600,
+  "version": 603,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -1638,11 +1638,15 @@
       "elapsed_minutes": 0
     },
     "task-dns-egress-allowlist-for-container-backends": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "0667dfe — host_allowlist constraint on network.egress rule → docker --add-host pinning + --dns=127.255.255.255. Resolve failures hard-error. UI gate on Allow + network.egress. Tests cover multi-IP, force-bridge-from-none, resolve-failure, no-allowlist. eBPF cgroup_skb remains backlog for hardcoded-IP egress."
+      ],
       "started_at": "2026-05-23T11:53:38.394494+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-23T11:58:16.347299+02:00",
+      "elapsed_minutes": 4
     },
     "task-dynamic-tool-routing": {
       "status": "done",
@@ -1665,6 +1669,13 @@
       "started_at": "2026-04-24T13:47:51.164505+02:00",
       "completed_at": "2026-04-24T13:54:52.268186+02:00",
       "elapsed_minutes": 7
+    },
+    "task-ebpf-cgroup_skb-egress-filter-(linux)": {
+      "status": "in_progress",
+      "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-23T12:03:34.588706+02:00",
+      "elapsed_minutes": 0
     },
     "task-email-plugin-(channel-+-tool-+-trigger)": {
       "status": "done",
@@ -2906,5 +2917,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-23T11:53:38.394494+02:00"
+  "updated_at": "2026-05-23T12:03:34.588706+02:00"
 }

@@ -4,6 +4,53 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - eBPF cgroup_skb egress filter (Linux, experimental)
+
+Hard kernel-level egress isolation for the docker backend, layered on
+top of the existing DNS allowlist. A cgroup_skb/egress BPF program is
+loaded via `github.com/cilium/ebpf` (pure-Go assembly, no clang at
+build time), attached to a per-run cgroup, and consults a HASH map of
+allowlisted IPv4 destinations. Packets whose destination isn't in the
+map are dropped at the kernel — closing the hardcoded-IP gap the
+DNS-only path leaves open.
+
+### Added
+- `internal/runtime/executor/egress` package. `Filter` interface +
+  `New(Config) (Filter, error)`. Linux build (`egress_linux.go`)
+  creates a cgroup under `/sys/fs/cgroup`, builds the BPF program in
+  pure-Go assembly, populates a HASH map for `__sk_buff` destination
+  lookups, and attaches via `link.AttachCgroup`. The `!linux` stub
+  always returns `ErrUnsupported`.
+- Docker backend integration: when `NOMI_EGRESS_EBPF=1` and an
+  allowlist is set, the backend creates the filter, populates IPs
+  from the shared allowlist resolution, sets `--cgroup-parent`, and
+  defers `Close()` to detach + clean up. Any error (no kernel
+  support, missing CAP_BPF/CAP_NET_ADMIN, missing cgroup v2) is a
+  soft failure that logs a structured warning and falls back to the
+  DNS-only path.
+- Tests: stub-platform `TestNewReturnsUnsupportedOffLinux`;
+  Linux-only `TestNewLinuxAttachesAndCloses` (skipped when not root
+  or no cgroup v2); docker-backend integration tests stub
+  `newEgressFilter` to verify map population, cgroup-parent
+  injection, soft fallback on `ErrUnsupported`, and that the filter
+  is never created when the env gate is off.
+
+### Threat-model update
+- DNS allowlist alone: prevents accidental egress; bypassable by
+  hardcoded IPs. With eBPF: kernel drops the packet regardless of
+  how the destination was discovered. IPv6 enforcement is not yet
+  implemented — IPv6 packets pass through (documented in the BPF
+  program comment).
+
+### Operational notes
+- Off by default. Set `NOMI_EGRESS_EBPF=1` on the daemon process to
+  opt in. Daemon must run with `CAP_BPF + CAP_NET_ADMIN` and a
+  cgroup v2 mount at `/sys/fs/cgroup`.
+- macOS and Windows hosts always fall back to the DNS-only path
+  because the kernel hook doesn't exist there.
+- Docker must use the cgroupfs driver (systemd-driver `.slice`
+  naming isn't supported by the v1 cgroup path scheme).
+
 ## [Unreleased] - DNS egress allowlist (docker)
 
 Tightens the `network.egress` capability beyond the present

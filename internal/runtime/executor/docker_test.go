@@ -3,10 +3,13 @@ package executor
 import (
 	"context"
 	"fmt"
+	"net"
 	"runtime"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/felixgeelhaar/nomi/internal/runtime/executor/egress"
 )
 
 func TestDockerBuildArgs(t *testing.T) {
@@ -269,6 +272,146 @@ func TestDockerBuildArgsNoAllowlistOmitsAddHost(t *testing.T) {
 		if strings.HasPrefix(a, "--dns=") {
 			t.Fatalf("did not expect --dns without an allowlist, got %v", args)
 		}
+	}
+}
+
+// fakeEgressFilter is a deterministic stand-in for egress.Filter that
+// records every AddIP and Close call so the docker-backend integration
+// can be unit-tested without a real kernel.
+type fakeEgressFilter struct {
+	path   string
+	addIPs []string
+	closed bool
+}
+
+func (f *fakeEgressFilter) CgroupPath() string { return f.path }
+func (f *fakeEgressFilter) AddIP(ip net.IP) error {
+	f.addIPs = append(f.addIPs, ip.String())
+	return nil
+}
+func (f *fakeEgressFilter) Close() error {
+	f.closed = true
+	return nil
+}
+
+func TestDockerRunWithEBPFFilterPopulatesMap(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("docker semantics differ on windows")
+	}
+	prevResolve := resolveHost
+	resolveHost = func(host string) ([]string, error) {
+		if host == "api.example.com" {
+			return []string{"203.0.113.10"}, nil
+		}
+		return nil, fmt.Errorf("unexpected host %q", host)
+	}
+	defer func() { resolveHost = prevResolve }()
+
+	fake := &fakeEgressFilter{path: "/sys/fs/cgroup/nomi-sandbox-fake"}
+	prevFilter := newEgressFilter
+	newEgressFilter = func(egress.Config) (egress.Filter, error) {
+		return fake, nil
+	}
+	defer func() { newEgressFilter = prevFilter }()
+
+	t.Setenv("NOMI_EGRESS_EBPF", "1")
+
+	d := NewDocker()
+	d.Binary = "/bin/echo" // make docker invocation a noop that just echoes args
+
+	res, err := d.Run(context.Background(), Request{
+		Argv:          []string{"true"},
+		WorkspaceRoot: "/tmp",
+		Image:         "alpine:3.20",
+		NetworkMode:   NetworkBridge,
+		HostAllowlist: []string{"api.example.com"},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v\noutput: %s", err, res.Output)
+	}
+	if !fake.closed {
+		t.Error("filter.Close() not called via defer")
+	}
+	if len(fake.addIPs) != 1 || fake.addIPs[0] != "203.0.113.10" {
+		t.Errorf("expected AddIP(203.0.113.10), got %v", fake.addIPs)
+	}
+	if !strings.Contains(string(res.Output), "--cgroup-parent=/sys/fs/cgroup/nomi-sandbox-fake") {
+		t.Errorf("expected --cgroup-parent in argv, got %q", res.Output)
+	}
+}
+
+func TestDockerRunWithEBPFUnavailableFallsBackToDNSOnly(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("docker semantics differ on windows")
+	}
+	prevResolve := resolveHost
+	resolveHost = func(_ string) ([]string, error) {
+		return []string{"203.0.113.10"}, nil
+	}
+	defer func() { resolveHost = prevResolve }()
+
+	prevFilter := newEgressFilter
+	newEgressFilter = func(egress.Config) (egress.Filter, error) {
+		return nil, egress.ErrUnsupported
+	}
+	defer func() { newEgressFilter = prevFilter }()
+
+	t.Setenv("NOMI_EGRESS_EBPF", "1")
+
+	d := NewDocker()
+	d.Binary = "/bin/echo"
+
+	res, err := d.Run(context.Background(), Request{
+		Argv:          []string{"true"},
+		WorkspaceRoot: "/tmp",
+		Image:         "alpine:3.20",
+		HostAllowlist: []string{"api.example.com"},
+	})
+	if err != nil {
+		t.Fatalf("expected DNS-only fallback to succeed, got %v\noutput: %s", err, res.Output)
+	}
+	if strings.Contains(string(res.Output), "--cgroup-parent") {
+		t.Errorf("unsupported filter should not produce --cgroup-parent, got %q", res.Output)
+	}
+	if !strings.Contains(string(res.Output), "--add-host=api.example.com:203.0.113.10") {
+		t.Errorf("DNS-only fallback should still pin via --add-host, got %q", res.Output)
+	}
+}
+
+func TestDockerRunEBPFDisabledByDefault(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("docker semantics differ on windows")
+	}
+	prevResolve := resolveHost
+	resolveHost = func(_ string) ([]string, error) {
+		return []string{"203.0.113.10"}, nil
+	}
+	defer func() { resolveHost = prevResolve }()
+
+	called := false
+	prevFilter := newEgressFilter
+	newEgressFilter = func(egress.Config) (egress.Filter, error) {
+		called = true
+		return nil, nil
+	}
+	defer func() { newEgressFilter = prevFilter }()
+
+	t.Setenv("NOMI_EGRESS_EBPF", "")
+
+	d := NewDocker()
+	d.Binary = "/bin/echo"
+
+	_, err := d.Run(context.Background(), Request{
+		Argv:          []string{"true"},
+		WorkspaceRoot: "/tmp",
+		Image:         "alpine:3.20",
+		HostAllowlist: []string{"api.example.com"},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if called {
+		t.Error("newEgressFilter must not be called when NOMI_EGRESS_EBPF != 1")
 	}
 }
 

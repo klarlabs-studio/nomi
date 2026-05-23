@@ -968,6 +968,13 @@
       "description": "Tighten the `network.egress` capability beyond the present `--network=none` / `--network=bridge` flip. Adds a `host_allowlist []string` field on `executor.Request`. When non-empty, the Docker backend resolves each allowlisted hostname through the host's DNS BEFORE container start, injects `--add-host=host:ip` for every resolved IP, and points the container's `--dns` at an unroutable address (`127.255.255.255`) so in-container resolution fails for anything not in `/etc/hosts`. NetworkMode is forced to `bridge` when an allowlist is present (the bridge is needed to reach the allowlisted host at all). Threat model: prevents accidental egress to unintended hosts; not a hard isolation against malicious code that hardcodes IPs — eBPF cgroup_skb is the next pass for that, documented as deferred. Runtime extracts the allowlist from the permission rule's `host_allowlist` constraint when the assistant's `network.egress` rule is Allow.",
       "requirements": [],
       "source": {}
+    },
+    {
+      "id": "ebpf-cgroup_skb-egress-filter-(linux)",
+      "title": "eBPF cgroup_skb egress filter (Linux)",
+      "description": "Hard kernel-level egress isolation for the docker backend, beyond the DNS-pinning the host_allowlist constraint already enables. A pure-Go BPF program of type cgroup_skb/egress is loaded via github.com/cilium/ebpf, attached to a per-run cgroup, and consults a HASH map of allowlisted IPv4 destinations. Packets whose dst doesn't match get dropped at the kernel; the container can't reach hardcoded IPs that bypass DNS. Docker invocation is wrapped with --cgroup-parent pointing at the pre-attached cgroup. Linux-only via build tags; the !linux stub returns ErrUnsupported and the docker backend gracefully falls back to the DNS-only behaviour. Requires CAP_BPF + CAP_NET_ADMIN at the daemon process; if missing, falls back to DNS-only with a structured warning. Experimental: gated behind NOMI_EGRESS_EBPF=1 so default behaviour is unchanged.",
+      "requirements": [],
+      "source": {}
     }
   ],
   "constraints": [],
