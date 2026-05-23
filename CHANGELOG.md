@@ -4,6 +4,36 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] - 2026-05-23 — Patch: chat markdown + mobile image fix
+
+Two paper-cuts caught post-v0.2.0:
+
+### Fixed
+- **LLM responses now render as markdown** in chat bubbles. Streaming
+  buffer + final response both go through `react-markdown` +
+  `remark-gfm` with `skipHtml` (no raw HTML pass-through, so a
+  prompt-injected response can't break out of the bubble). Headings
+  render compactly, fenced code blocks scroll horizontally, tables
+  get a min-width wrapper, links open in a new tab with
+  `noopener noreferrer`.
+- **Mobile image skew on the website.** `.step img` carried
+  `max-width: 100%` but no `height: auto`, so explicit
+  `width`/`height` attributes broke aspect ratio on narrow viewports.
+  Added `height: auto` to `.step img` plus a global `img` safety net
+  so future images can't regress.
+- **Browser-only UI sessions** — short-circuit `getAuthToken` +
+  `getApiBase` when `__TAURI_INTERNALS__` is absent, plus a
+  `?nomi_dev_token=…` / `#nomi_dev_token=…` URL bootstrap in
+  `app/index.html`. Vite preview / Playwright / Scout can now drive
+  the UI without the desktop shell.
+- **`/memory` default scope** — `ListMemory` with no `?scope` filter
+  now returns workspace + profile + **preferences**, so the
+  Memory tab's Preferences subtab correctly shows learned and
+  manual entries on the default fetch.
+
+### Dependencies
+- Added `react-markdown` and `remark-gfm`.
+
 ## [0.2.0] - 2026-05-23 — "Reviewable agents"
 
 Major feature release. Repositions Nomi from "personal AI runtime" to
