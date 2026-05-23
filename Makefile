@@ -135,3 +135,20 @@ reliability-evals:
 # fake LLM. Threshold default is 0.80; tighten via NOMI_GOLDEN_THRESHOLD.
 eval-live:
 	@NOMI_GOLDEN_THRESHOLD=$${NOMI_GOLDEN_THRESHOLD:-0.80} go test -v -count=1 -run "TestPlannerGoldenSet|TestPlannerAdversarialResilience" ./internal/runtime/evals/
+
+# Run the planner golden corpus against every live LLM provider whose
+# envs are configured and emit a per-provider pass-rate report. Skips
+# silently when nothing is configured so a developer can run only the
+# providers they have credentials for.
+#
+# Configure providers via env (any subset):
+#   NOMI_EVAL_LIVE_OLLAMA_MODEL=qwen2.5:14b        # + optional NOMI_EVAL_LIVE_OLLAMA_URL
+#   OPENAI_API_KEY=...  NOMI_EVAL_LIVE_OPENAI_MODEL=gpt-4o-mini
+#   ANTHROPIC_API_KEY=...  NOMI_EVAL_LIVE_ANTHROPIC_MODEL=claude-sonnet-4-6
+#
+# Per-provider threshold override (default falls back to NOMI_GOLDEN_THRESHOLD):
+#   NOMI_GOLDEN_THRESHOLD_OLLAMA=0.6
+#   NOMI_GOLDEN_THRESHOLD_OPENAI=0.85
+#   NOMI_GOLDEN_THRESHOLD_ANTHROPIC=0.85
+eval-live-providers:
+	@go test -v -count=1 -timeout 30m -run TestPlannerGoldenSet_Live ./internal/runtime/evals/

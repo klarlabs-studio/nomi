@@ -4,6 +4,61 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] - NOMI_EVAL_LIVE provider matrix
+
+Existing `make eval-live` runs the planner golden corpus + adversarial
+fixtures against a deterministic httptest LLM fake — the regression
+gate for parser / validator / routing behaviour. This adds a parallel
+target that runs the same corpus against real providers (Ollama,
+OpenAI, Anthropic) and emits per-provider pass-rate numbers, so
+prompt regressions in real models surface as a metric rather than as
+an anecdote.
+
+### Added
+- `internal/runtime/evals/planner_live_test.go` —
+  `TestPlannerGoldenSet_Live`. Iterates known providers, runs the
+  goldenCases against each, and prints
+  `planner golden pass rate [provider=… model=…]: P/N = R%` per
+  provider. Skips silently when no provider envs are configured —
+  contributors run only the providers they have credentials for.
+- Tolerance: real LLMs legitimately produce slightly different plan
+  shapes from the fake. Step count is matched within ±1; only the
+  first step's tool routing has to match exactly. The aggregate
+  pass rate is the gate, not individual fixtures.
+- `Makefile` target `eval-live-providers` with documented env
+  variables and per-provider threshold overrides
+  (`NOMI_GOLDEN_THRESHOLD_OLLAMA`, `NOMI_GOLDEN_THRESHOLD_OPENAI`,
+  `NOMI_GOLDEN_THRESHOLD_ANTHROPIC`).
+
+### Observed (informational, not gated)
+- qwen2.5:14b on Ollama: 4-5/5 across two runs (~80-100% pass rate).
+  Single-digit-percent variance per fixture between runs is expected
+  with real models.
+
+## [Unreleased] - Shiki syntax highlighting
+
+Chat fenced code blocks and diff hunks now render through Shiki with
+the GitHub light/dark theme pair. Lazy-loaded singleton so the
+~700KB grammar bundle stays out of the initial Vite chunk; warms on
+idle so the first render doesn't pay the cold-start cost. Languages
+outside the bundle fall through to the previous plain-text rendering,
+no UX regression.
+
+### Added
+- `app/src/lib/highlighter.ts` — Shiki core wrapped behind a single
+  promise + grammar resolver covering go / typescript / tsx /
+  javascript / jsx / python / rust / bash / shell / json / yaml /
+  markdown / sql / diff.
+- `app/src/components/highlighted-code.tsx` — async-aware component
+  that swaps in the Shiki-rendered HTML when ready, shows a styled
+  `<pre>` fallback while loading or for un-bundled languages.
+- `MarkdownMessage` code-block override routes fenced blocks through
+  `HighlightedCode` using the `language-*` class react-markdown
+  attaches.
+- `DiffPreview` HunkBody refactored to render each hunk line as
+  marker + Shiki-highlighted content; line tinting (add/remove)
+  composes with syntax tokens rather than fighting them.
+
 ## [Unreleased] - OS notifications for pending approvals
 
 Closes the "agents that ask before they act" loop on the user side.

@@ -1,6 +1,6 @@
 {
   "project_id": "Nomi",
-  "version": 591,
+  "version": 594,
   "task_states": {
     "approval-flow": {
       "status": "done",
@@ -2056,6 +2056,13 @@
       "completed_at": "2026-05-22T20:35:09.171476+02:00",
       "elapsed_minutes": 0
     },
+    "task-nomi_eval_live-provider-matrix": {
+      "status": "in_progress",
+      "path": "",
+      "owner": "ai-agent",
+      "started_at": "2026-05-23T09:14:46.994034+02:00",
+      "elapsed_minutes": 0
+    },
     "task-obsidian-plugin-(tool-+-context-source)": {
       "status": "done",
       "path": "",
@@ -2530,11 +2537,15 @@
       "elapsed_minutes": 3
     },
     "task-shiki-syntax-highlighting": {
-      "status": "in_progress",
+      "status": "done",
       "path": "",
       "owner": "ai-agent",
+      "evidence": [
+        "8f5222c — highlighter.ts + HighlightedCode + MarkdownMessage code-block override + DiffPreview HunkBody refactored to highlighted lines"
+      ],
       "started_at": "2026-05-23T09:08:24.132324+02:00",
-      "elapsed_minutes": 0
+      "completed_at": "2026-05-23T09:13:46.213655+02:00",
+      "elapsed_minutes": 5
     },
     "task-signed-desktop-builds-+-distribution": {
       "status": "done",
@@ -2873,5 +2884,5 @@
       "elapsed_minutes": 3
     }
   },
-  "updated_at": "2026-05-23T09:08:24.132324+02:00"
+  "updated_at": "2026-05-23T09:14:46.994034+02:00"
 }

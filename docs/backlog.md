@@ -2185,3 +2185,9 @@ Add a `tauri::tray::TrayIcon` with a menu so the user has a persistent surface f
 Wire Shiki into the two surfaces that render code: DiffPreview (hunk bodies in both unified and split view) and MarkdownMessage (chat fenced code blocks). Lazy-loaded singleton highlighter in `app/src/lib/highlighter.ts` so the ~700KB grammar bundle only ships on first code render. Six common grammars baked in (go / typescript / javascript / python / rust / bash / json / yaml). DiffPreview detects language from the file path captured in the parsed block; MarkdownMessage uses the fence info-string (```ts, ```go, …). Falls back to plain `<pre>` when Shiki isn't ready yet or the language isn't bundled — no UX regression.
 
 ---
+
+## NOMI_EVAL_LIVE provider matrix
+
+Run the existing planner golden corpus + adversarial fixtures against real LLM providers and emit a per-provider pass-rate report. Adds `TestPlannerGoldenSet_Live` (build-tag-free; env-gated) that enumerates known providers — Ollama, OpenAI, Anthropic — and runs each only when its endpoint/key envs are set. Per-provider threshold via `NOMI_GOLDEN_THRESHOLD_<PROVIDER>` overrides the global default. New make target `eval-live-providers` documents the run path. Output format mirrors the fake-LLM logger so existing CI parsers don't need changes.
+
+---
