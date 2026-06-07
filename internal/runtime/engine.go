@@ -31,16 +31,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/events"
-	"github.com/felixgeelhaar/nomi/internal/llm"
-	"github.com/felixgeelhaar/nomi/internal/memstore"
-	"github.com/felixgeelhaar/nomi/internal/metrics"
-	"github.com/felixgeelhaar/nomi/internal/permissions"
-	"github.com/felixgeelhaar/nomi/internal/runtime/executor"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
-	"github.com/felixgeelhaar/nomi/internal/tools"
 	"github.com/google/uuid"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/events"
+	"go.klarlabs.de/nomi/internal/llm"
+	"go.klarlabs.de/nomi/internal/memstore"
+	"go.klarlabs.de/nomi/internal/metrics"
+	"go.klarlabs.de/nomi/internal/permissions"
+	"go.klarlabs.de/nomi/internal/runtime/executor"
+	"go.klarlabs.de/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/tools"
 )
 
 // Runtime orchestrates runs, steps, and tool execution.

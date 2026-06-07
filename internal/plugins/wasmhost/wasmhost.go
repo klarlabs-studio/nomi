@@ -47,10 +47,10 @@ type Module struct {
 	module   api.Module
 	pluginID string
 
-	allocFn        api.Function
-	deallocFn      api.Function
-	manifestFn     api.Function
-	toolExecuteFn  api.Function
+	allocFn       api.Function
+	deallocFn     api.Function
+	manifestFn    api.Function
+	toolExecuteFn api.Function
 }
 
 // Loader holds the wazero runtime and the host-import builder shared

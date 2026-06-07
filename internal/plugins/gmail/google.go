@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/integrations/google"
+	"go.klarlabs.de/nomi/internal/integrations/google"
 )
 
 // GoogleProvider implements Provider against Gmail REST v1
@@ -481,25 +481,25 @@ func writeAttachmentPart(mw *multipart.Writer, att Attachment) error {
 // --- response decoding --------------------------------------------
 
 type gmailThread struct {
-	ID       string          `json:"id"`
-	Snippet  string          `json:"snippet"`
-	Messages []gmailMessage  `json:"messages"`
+	ID       string         `json:"id"`
+	Snippet  string         `json:"snippet"`
+	Messages []gmailMessage `json:"messages"`
 }
 
 type gmailMessage struct {
-	ID           string         `json:"id"`
-	ThreadID     string         `json:"threadId"`
-	LabelIDs     []string       `json:"labelIds"`
-	Snippet      string         `json:"snippet"`
-	InternalDate string         `json:"internalDate"`
-	Payload      gmailPart      `json:"payload"`
+	ID           string    `json:"id"`
+	ThreadID     string    `json:"threadId"`
+	LabelIDs     []string  `json:"labelIds"`
+	Snippet      string    `json:"snippet"`
+	InternalDate string    `json:"internalDate"`
+	Payload      gmailPart `json:"payload"`
 }
 
 type gmailPart struct {
-	MimeType string         `json:"mimeType"`
-	Headers  []gmailHeader  `json:"headers"`
-	Body     gmailPartBody  `json:"body"`
-	Parts    []gmailPart    `json:"parts"`
+	MimeType string        `json:"mimeType"`
+	Headers  []gmailHeader `json:"headers"`
+	Body     gmailPartBody `json:"body"`
+	Parts    []gmailPart   `json:"parts"`
 }
 
 type gmailHeader struct {
@@ -588,4 +588,3 @@ func splitAddressList(s string) []string {
 	}
 	return out
 }
-

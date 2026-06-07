@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/llm"
+	"go.klarlabs.de/nomi/internal/llm"
 )
 
 type fakeLLM struct {

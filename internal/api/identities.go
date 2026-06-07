@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // IdentityServer exposes REST endpoints for managing channel identity

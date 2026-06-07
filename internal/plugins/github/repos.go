@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/tools"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/tools"
 )
 
 // repoTools registers the github.repos.* family.
@@ -279,7 +279,7 @@ func (p *Plugin) reposClone(ctx context.Context, conn *domain.Connection, input 
 		return nil, fmt.Errorf("github.repos.clone: git failed: %s: %w", safe, err)
 	}
 	return map[string]any{
-		"path":      target,
+		"path":       target,
 		"size_bytes": dirSize(target),
 	}, nil
 }

@@ -17,11 +17,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/events"
-	"github.com/felixgeelhaar/nomi/internal/plugins"
-	"github.com/felixgeelhaar/nomi/internal/runtime"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/events"
+	"go.klarlabs.de/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/runtime"
+	"go.klarlabs.de/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // PluginID is the stable reverse-DNS identifier for this plugin.
@@ -260,12 +260,12 @@ func (p *Plugin) ReceiveWebhook(ctx context.Context, connectionID string, body [
 					Kind:         "whatsapp",
 					Goal:         fmt.Sprintf("WhatsApp message from %s (%s): %s", profileName, msg.From, msg.Text.Body),
 					Metadata: map[string]interface{}{
-						"from":             msg.From,
-						"profile_name":     profileName,
-						"message_id":       msg.ID,
-						"phone_number_id":  change.Value.Metadata.PhoneNumberID,
-						"display_phone":    change.Value.Metadata.DisplayPhoneNumber,
-						"text":             msg.Text.Body,
+						"from":            msg.From,
+						"profile_name":    profileName,
+						"message_id":      msg.ID,
+						"phone_number_id": change.Value.Metadata.PhoneNumberID,
+						"display_phone":   change.Value.Metadata.DisplayPhoneNumber,
+						"text":            msg.Text.Body,
 					},
 				}
 				if err := onFire(ctx, event); err != nil {
@@ -309,4 +309,3 @@ func (p *Plugin) recordError(connectionID, msg string) {
 	h.LastError = msg
 	h.ErrorCount++
 }
-

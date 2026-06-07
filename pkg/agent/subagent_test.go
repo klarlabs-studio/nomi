@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/pkg/agent"
+	"go.klarlabs.de/nomi/pkg/agent"
 )
 
 func TestRunWithSubagentsSpawnsGatedChild(t *testing.T) {

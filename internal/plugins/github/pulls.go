@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // pullTools registers the github.pulls.* family.

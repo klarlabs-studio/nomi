@@ -5,9 +5,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/permissions"
-	"github.com/felixgeelhaar/nomi/internal/tools"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/permissions"
+	"go.klarlabs.de/nomi/internal/tools"
 )
 
 // recordingTool captures the input map it was invoked with so tests can

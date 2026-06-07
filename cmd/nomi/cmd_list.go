@@ -58,10 +58,10 @@ func newTab() *tabwriter.Writer {
 func listRuns(cli *Client, c *commonFlags, n int) int {
 	var resp struct {
 		Runs []struct {
-			ID         string `json:"id"`
-			Status     string `json:"status"`
-			Goal       string `json:"goal"`
-			CreatedAt  string `json:"created_at"`
+			ID          string `json:"id"`
+			Status      string `json:"status"`
+			Goal        string `json:"goal"`
+			CreatedAt   string `json:"created_at"`
 			AssistantID string `json:"assistant_id"`
 		} `json:"runs"`
 	}

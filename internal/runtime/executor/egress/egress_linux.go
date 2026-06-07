@@ -235,14 +235,14 @@ func (f *linuxFilter) Close() error {
 // pointer; the upper 12 bytes are read by neither path.
 func buildProgram(v4Map, v6Map *ebpf.Map) asm.Instructions {
 	const (
-		skbProtocolOffset  = 16 // offsetof(__sk_buff, protocol)
-		ipHdrDaddrOffset   = 16 // offsetof(struct iphdr, daddr)
-		ip6HdrDaddrOffset  = 24 // offsetof(struct ipv6hdr, daddr)
-		ethPIPHostOrderLE  = 8      // bpf_htons(ETH_P_IP)   on LE
-		ethPIPV6HostOrdLE  = 0xDD86 // bpf_htons(ETH_P_IPV6) on LE
-		retDrop            = 0
-		retAllow           = 1
-		stackDaddrOffset   = -16
+		skbProtocolOffset = 16     // offsetof(__sk_buff, protocol)
+		ipHdrDaddrOffset  = 16     // offsetof(struct iphdr, daddr)
+		ip6HdrDaddrOffset = 24     // offsetof(struct ipv6hdr, daddr)
+		ethPIPHostOrderLE = 8      // bpf_htons(ETH_P_IP)   on LE
+		ethPIPV6HostOrdLE = 0xDD86 // bpf_htons(ETH_P_IPV6) on LE
+		retDrop           = 0
+		retAllow          = 1
+		stackDaddrOffset  = -16
 	)
 
 	return asm.Instructions{

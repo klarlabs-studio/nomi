@@ -8,10 +8,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/plugins"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // PluginServer exposes REST endpoints for managing plugins and their

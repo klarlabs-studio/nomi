@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/tools"
+	"go.klarlabs.de/nomi/internal/tools"
 )
 
 // This file tests the plugin contract types only. Registry behavior,
@@ -132,16 +132,16 @@ func TestCardinalityConstantsAreDistinct(t *testing.T) {
 
 type fakePlugin struct{}
 
-func (fakePlugin) Manifest() PluginManifest { return PluginManifest{ID: "com.nomi.fake"} }
+func (fakePlugin) Manifest() PluginManifest                         { return PluginManifest{ID: "com.nomi.fake"} }
 func (fakePlugin) Configure(context.Context, json.RawMessage) error { return nil }
-func (fakePlugin) Start(context.Context) error { return nil }
-func (fakePlugin) Stop() error { return nil }
-func (fakePlugin) Status() PluginStatus { return PluginStatus{Running: true, Ready: true} }
+func (fakePlugin) Start(context.Context) error                      { return nil }
+func (fakePlugin) Stop() error                                      { return nil }
+func (fakePlugin) Status() PluginStatus                             { return PluginStatus{Running: true, Ready: true} }
 
-func (fakePlugin) Channels() []Channel                { return nil }
-func (fakePlugin) Tools() []tools.Tool                { return nil }
-func (fakePlugin) Triggers() []Trigger                { return nil }
-func (fakePlugin) ContextSources() []ContextSource    { return nil }
+func (fakePlugin) Channels() []Channel             { return nil }
+func (fakePlugin) Tools() []tools.Tool             { return nil }
+func (fakePlugin) Triggers() []Trigger             { return nil }
+func (fakePlugin) ContextSources() []ContextSource { return nil }
 
 func TestFakePluginSatisfiesAllRoles(t *testing.T) {
 	var p Plugin = fakePlugin{}
@@ -177,8 +177,8 @@ type fakeChannel struct {
 	kind   string
 }
 
-func (c fakeChannel) ConnectionID() string                               { return c.connID }
-func (c fakeChannel) Kind() string                                       { return c.kind }
+func (c fakeChannel) ConnectionID() string                                      { return c.connID }
+func (c fakeChannel) Kind() string                                              { return c.kind }
 func (c fakeChannel) Send(_ context.Context, _ string, _ OutboundMessage) error { return nil }
 
 func TestTriggerEventShape(t *testing.T) {

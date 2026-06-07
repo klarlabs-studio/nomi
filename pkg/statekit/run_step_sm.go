@@ -3,7 +3,7 @@ package statekit
 import (
 	"fmt"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // RunStateMachine manages the lifecycle of a Run

@@ -5,7 +5,7 @@ import (
 	"math"
 	"sort"
 
-	"github.com/felixgeelhaar/nomi/internal/llm"
+	"go.klarlabs.de/nomi/internal/llm"
 )
 
 // embeddingThreshold is the cosine-similarity cutoff above which two

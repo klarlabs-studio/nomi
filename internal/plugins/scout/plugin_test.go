@@ -3,7 +3,7 @@ package scout
 import (
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/plugins"
 )
 
 func TestManifestSurface(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // FileReadTool reads file contents from inside an assistant's workspace root.

@@ -71,11 +71,11 @@ var live = map[uintptr][]byte{}
 //export plugin_manifest
 func pluginManifest() uint64 {
 	body, _ := json.Marshal(map[string]any{
-		"id":          "com.example.echo",
-		"name":        "Echo Plugin",
-		"version":     "0.0.1",
-		"author":      "Nomi WASM spike",
-		"description": "Smallest plugin that exercises the Nomi WASM ABI end-to-end.",
+		"id":           "com.example.echo",
+		"name":         "Echo Plugin",
+		"version":      "0.0.1",
+		"author":       "Nomi WASM spike",
+		"description":  "Smallest plugin that exercises the Nomi WASM ABI end-to-end.",
 		"capabilities": []string{"network.outgoing"},
 		"contributes": map[string]any{
 			"tools": []map[string]any{

@@ -8,7 +8,7 @@
 
 ## Context
 
-Real Mnemos already exists at `github.com/felixgeelhaar/mnemos`, with a stable HTTP/gRPC service surface and a Go client SDK at `github.com/felixgeelhaar/mnemos/client`. The data model is a **knowledge graph**, not a key-value memory store:
+Real Mnemos already exists at `go.klarlabs.de/mnemos`, with a stable HTTP/gRPC service surface and a Go client SDK at `go.klarlabs.de/mnemos/client`. The data model is a **knowledge graph**, not a key-value memory store:
 
 - `Events` — raw knowledge events with `RunID`, `Content`, `Metadata`, `IngestedAt`.
 - `Claims` — extracted assertions with `Type` (fact/hypothesis/decision/test_result), `Confidence`, `Status` (active/contested/resolved/deprecated), `Visibility` (personal/team/org).
@@ -57,8 +57,8 @@ Treat Mnemos as a **plugin under ADR 0001**, not a runtime subsystem. Keep Nomi'
                   │
                   ▼ HTTP (bearer auth)
 ┌──────────────────────────────────────────────┐
-│  Mnemos service (github.com/felixgeelhaar/   │
-│    mnemos, `mnemos serve`)                   │
+│  Mnemos service (go.klarlabs.de/mnemos,      │
+│    `mnemos serve`)                           │
 │  ─ Events / Claims / Relationships / Embeds  │
 │  ─ Visibility: personal | team | org         │
 └──────────────────────────────────────────────┘
@@ -108,7 +108,7 @@ Multiple connections supported (e.g. personal + company instances). Assistants p
 
 ### 5. What lives in the Mnemos plugin
 
-- A thin wrapper around `github.com/felixgeelhaar/mnemos/client.Client` per connection.
+- A thin wrapper around `go.klarlabs.de/mnemos/client.Client` per connection.
 - Tool implementations that translate Nomi tool-call input → Mnemos client calls → Nomi tool-call output. Capability strings declared in the manifest.
 - A context-source implementation for the optional planner-context retrieval.
 - Connection persistence via the existing `ConnectorConfigRepository` (Nomi's plugin-config layer).

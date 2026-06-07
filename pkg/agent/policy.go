@@ -1,8 +1,8 @@
 package agent
 
 import (
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/permissions"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/permissions"
 )
 
 // Mode is a capability evaluation result. It mirrors Nomi's permission modes.

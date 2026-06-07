@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/permissions"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/permissions"
 )
 
 // Each gate failure mode covered by an isolated test. The four
@@ -167,9 +167,9 @@ func TestHostAllowed_IntersectionNotUnion(t *testing.T) {
 
 func TestStripPort_HandlesWithAndWithoutPort(t *testing.T) {
 	cases := map[string]string{
-		"api.slack.com":      "api.slack.com",
-		"api.slack.com:443":  "api.slack.com",
-		"localhost:8080":     "localhost",
+		"api.slack.com":     "api.slack.com",
+		"api.slack.com:443": "api.slack.com",
+		"localhost:8080":    "localhost",
 	}
 	for in, want := range cases {
 		if got := stripPort(in); got != want {

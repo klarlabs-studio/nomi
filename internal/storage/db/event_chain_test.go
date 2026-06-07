@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 func seedRunForChainTest(t *testing.T, database *DB, runID, assistantID string) {

@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/llm"
-	"github.com/felixgeelhaar/nomi/internal/metrics"
-	"github.com/felixgeelhaar/nomi/internal/memstore"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/llm"
+	"go.klarlabs.de/nomi/internal/memstore"
+	"go.klarlabs.de/nomi/internal/metrics"
 )
 
 // plannerStep is the planner's intermediate representation, narrower than

@@ -9,15 +9,15 @@ import (
 	"sync"
 	"time"
 
-	gh "github.com/felixgeelhaar/nomi/internal/integrations/github"
-	"github.com/felixgeelhaar/nomi/internal/plugins"
+	gh "go.klarlabs.de/nomi/internal/integrations/github"
+	"go.klarlabs.de/nomi/internal/plugins"
 )
 
 // Trigger kinds. Strings appear in the manifest's TriggerContribution.Kind
 // and in connection-config trigger_rules[*].kind.
 const (
-	TriggerKindIssueOpened        = "github.issue_opened"
-	TriggerKindPRReviewRequested  = "github.pr_review_requested"
+	TriggerKindIssueOpened       = "github.issue_opened"
+	TriggerKindPRReviewRequested = "github.pr_review_requested"
 )
 
 // pollInterval is the cadence for the background loop. 60s matches
@@ -44,7 +44,7 @@ type githubTrigger struct {
 	// Per-(repo, kind) baselines for delta detection. Populated on the
 	// first poll; subsequent polls fire only on entries that exceed
 	// the baseline. Keyed by "<owner>/<repo>" (case-insensitive).
-	highestIssueNumber map[string]int  // for issue_opened
+	highestIssueNumber map[string]int          // for issue_opened
 	seenReviewRequests map[string]map[int]bool // for pr_review_requested: repo → PR# set
 	etagIssues         map[string]string
 	etagPulls          map[string]string

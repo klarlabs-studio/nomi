@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/plugins"
 )
 
 // helper that returns an httptest.Server speaking just enough of the

@@ -13,8 +13,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins/bundle"
-	"github.com/felixgeelhaar/nomi/internal/plugins/signing"
+	"go.klarlabs.de/nomi/internal/plugins/bundle"
+	"go.klarlabs.de/nomi/internal/plugins/signing"
 )
 
 func main() {
@@ -28,7 +28,10 @@ func main() {
 		os.Exit(1)
 	}
 	wasm, err := os.ReadFile(os.Args[1])
-	if err != nil { fmt.Fprintln(os.Stderr, err); os.Exit(1) }
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 
 	pubPub, pubPriv, _ := ed25519.GenerateKey(nil)
 	manifest := map[string]any{
@@ -61,7 +64,10 @@ func main() {
 		Readme:        []byte("# E2E Echo\n\nLive E2E install test."),
 		Signature:     signing.Sign(pubPriv, mBytes, wasm),
 		PublisherJSON: pubJSON,
-	}); err != nil { fmt.Fprintln(os.Stderr, err); os.Exit(1) }
+	}); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 	_, _ = os.Stdout.Write(buf.Bytes())
 	fmt.Fprintf(os.Stderr, "wrote %d bytes\n", buf.Len())
 }

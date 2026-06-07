@@ -15,17 +15,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/plugins"
-	"github.com/felixgeelhaar/nomi/internal/plugins/bundle"
-	"github.com/felixgeelhaar/nomi/internal/plugins/hub"
-	"github.com/felixgeelhaar/nomi/internal/plugins/signing"
-	"github.com/felixgeelhaar/nomi/internal/plugins/store"
-	"github.com/felixgeelhaar/nomi/internal/plugins/update"
-	"github.com/felixgeelhaar/nomi/internal/plugins/wasmhost"
 	"fmt"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"github.com/gin-gonic/gin"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/plugins/bundle"
+	"go.klarlabs.de/nomi/internal/plugins/hub"
+	"go.klarlabs.de/nomi/internal/plugins/signing"
+	"go.klarlabs.de/nomi/internal/plugins/store"
+	"go.klarlabs.de/nomi/internal/plugins/update"
+	"go.klarlabs.de/nomi/internal/plugins/wasmhost"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // installHarness is a focused harness specifically for install/uninstall

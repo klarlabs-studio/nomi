@@ -6,12 +6,12 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/events"
-	"github.com/felixgeelhaar/nomi/internal/memory"
-	"github.com/felixgeelhaar/nomi/internal/permissions"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
-	"github.com/felixgeelhaar/nomi/internal/tools"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/events"
+	"go.klarlabs.de/nomi/internal/memory"
+	"go.klarlabs.de/nomi/internal/permissions"
+	"go.klarlabs.de/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/tools"
 )
 
 // flakyTool fails with a transient error N times, then succeeds. Used to

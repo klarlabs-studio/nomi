@@ -6,8 +6,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/secrets"
 )
 
 // ProfileRepo is the subset of ProviderProfileRepository the resolver needs.
@@ -35,8 +35,8 @@ type Resolver struct {
 }
 
 type cachedClient struct {
-	client      Client
-	modelHint   string // the model ID associated with this profile for default calls
+	client    Client
+	modelHint string // the model ID associated with this profile for default calls
 }
 
 // NewResolver constructs a Resolver. Any of the dependencies may be nil

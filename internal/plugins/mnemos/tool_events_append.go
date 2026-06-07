@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	mnemosclient "github.com/felixgeelhaar/mnemos/client"
+	mnemosclient "go.klarlabs.de/mnemos/client"
 )
 
 // eventsAppendTool implements mnemos.events.append. Capability:

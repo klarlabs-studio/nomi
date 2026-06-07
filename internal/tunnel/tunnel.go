@@ -25,8 +25,8 @@ type Adapter interface {
 type Kind string
 
 const (
-	KindNgrok   Kind = "ngrok"
-	KindNoop    Kind = "noop"
+	KindNgrok Kind = "ngrok"
+	KindNoop  Kind = "noop"
 )
 
 // Config holds user-facing tunnel settings persisted in app_settings.

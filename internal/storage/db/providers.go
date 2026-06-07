@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // ProviderProfileRepository handles provider profile persistence
@@ -82,7 +82,9 @@ func (r *ProviderProfileRepository) Delete(id string) error {
 	return err
 }
 
-func (r *ProviderProfileRepository) scanRow(scanner interface{ Scan(dest ...interface{}) error }) (*domain.ProviderProfile, error) {
+func (r *ProviderProfileRepository) scanRow(scanner interface {
+	Scan(dest ...interface{}) error
+}) (*domain.ProviderProfile, error) {
 	var profile domain.ProviderProfile
 	var modelIDsJSON string
 

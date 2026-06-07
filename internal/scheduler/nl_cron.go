@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/felixgeelhaar/nomi/internal/llm"
+	"go.klarlabs.de/nomi/internal/llm"
 )
 
 // TranslateResult is what the NL translator returns to callers. CronExpr

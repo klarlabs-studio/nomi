@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/felixgeelhaar/nomi/internal/configio"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/configio"
+	"go.klarlabs.de/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // ConfigServer wires GET /config/export + POST /config/import. Both

@@ -9,9 +9,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	gh "github.com/felixgeelhaar/nomi/internal/integrations/github"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/domain"
+	gh "go.klarlabs.de/nomi/internal/integrations/github"
+	"go.klarlabs.de/nomi/internal/secrets"
 )
 
 // memSecrets mirrors the in-memory secrets.Store used in other plugin

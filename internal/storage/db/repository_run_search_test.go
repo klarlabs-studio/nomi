@@ -3,7 +3,7 @@ package db
 import (
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // TestRunRepository_Search_MatchesGoalAndStepTitle covers the

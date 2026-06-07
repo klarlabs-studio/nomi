@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/plugins"
-	"github.com/felixgeelhaar/nomi/internal/tools"
 	"github.com/slack-go/slack"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/tools"
 )
 
 // Slack ToolProvider. Assistants can proactively post to Slack channels

@@ -1,5 +1,5 @@
 // Package mnemos is the Nomi-side plugin that integrates the standalone
-// Mnemos knowledge-graph service (github.com/felixgeelhaar/mnemos) into
+// Mnemos knowledge-graph service (go.klarlabs.de/mnemos) into
 // the runtime via ADR 0001's plugin contract.
 //
 // Mnemos is a separate HTTP service that stores Events, Claims (fact /

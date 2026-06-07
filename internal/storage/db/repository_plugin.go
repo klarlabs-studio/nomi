@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // ConnectionRepository handles CRUD for plugin_connections.
@@ -154,12 +154,12 @@ type rowScanner interface {
 
 func scanConnection(row rowScanner) (*domain.Connection, error) {
 	var (
-		conn      domain.Connection
-		cfg       string
-		creds     string
-		enabled   int
-		webhookURL sql.NullString
-		allowlist string
+		conn           domain.Connection
+		cfg            string
+		creds          string
+		enabled        int
+		webhookURL     sql.NullString
+		allowlist      string
 		webhookEnabled int
 	)
 	err := row.Scan(&conn.ID, &conn.PluginID, &conn.Name, &cfg, &creds, &enabled, &conn.CreatedAt, &conn.UpdatedAt,

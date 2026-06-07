@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/runtime/executor/egress"
+	"go.klarlabs.de/nomi/internal/runtime/executor/egress"
 )
 
 func TestDockerBuildArgs(t *testing.T) {

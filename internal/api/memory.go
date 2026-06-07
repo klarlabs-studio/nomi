@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/memory"
-	"github.com/felixgeelhaar/nomi/internal/memstore"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/memory"
+	"go.klarlabs.de/nomi/internal/memstore"
 )
 
 // MemoryServer handles memory-related endpoints

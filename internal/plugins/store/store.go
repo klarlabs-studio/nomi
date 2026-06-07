@@ -28,8 +28,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins"
-	"github.com/felixgeelhaar/nomi/internal/plugins/bundle"
+	"go.klarlabs.de/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/plugins/bundle"
 )
 
 // Store roots the on-disk layout. Constructed once at daemon boot and

@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/runtime"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/runtime"
+	"go.klarlabs.de/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // TelegramConnection represents a single Telegram bot connection.

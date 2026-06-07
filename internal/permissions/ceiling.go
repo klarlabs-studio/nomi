@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // SystemCapabilityFamilies maps a permission capability string to the
@@ -76,8 +76,8 @@ type CeilingViolation struct {
 // the missing families) so a UI can offer a one-click "Add families"
 // fix without re-deriving the set itself.
 type CeilingValidationError struct {
-	Violations          []CeilingViolation `json:"violations"`
-	SuggestedCapabilities []string         `json:"suggested_capabilities"`
+	Violations            []CeilingViolation `json:"violations"`
+	SuggestedCapabilities []string           `json:"suggested_capabilities"`
 }
 
 func (e *CeilingValidationError) Error() string {

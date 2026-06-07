@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // RemoteTemplateServer handles remote assistant template marketplace.
@@ -30,22 +30,22 @@ func (s *RemoteTemplateServer) ListRemoteTemplates(c *gin.Context) {
 // InstallRemoteTemplate installs a remote template as a local draft assistant.
 func (s *RemoteTemplateServer) InstallRemoteTemplate(c *gin.Context) {
 	var req struct {
-		ID               string `json:"id"`
-		CatalogHash       string `json:"catalog_hash"`
-		SourceURL         string `json:"source_url"`
-		Signature        string `json:"signature"`
-		Name             string `json:"name"`
-		Tagline          string `json:"tagline"`
-		Role             string `json:"role"`
-		BestFor          string `json:"best_for"`
-		NotFor           string `json:"not_for"`
-		SuggestedModel    string `json:"suggested_model"`
-		SystemPrompt     string `json:"system_prompt"`
-		Channels         string `json:"channels"`  // JSON array
-		Capabilities      string `json:"capabilities"` // JSON array
-		Contexts          string `json:"contexts"`    // JSON array
-		MemoryPolicy      string `json:"memory_policy"` // JSON object
-		PermissionPolicy  string `json:"permission_policy"` // JSON object
+		ID                  string `json:"id"`
+		CatalogHash         string `json:"catalog_hash"`
+		SourceURL           string `json:"source_url"`
+		Signature           string `json:"signature"`
+		Name                string `json:"name"`
+		Tagline             string `json:"tagline"`
+		Role                string `json:"role"`
+		BestFor             string `json:"best_for"`
+		NotFor              string `json:"not_for"`
+		SuggestedModel      string `json:"suggested_model"`
+		SystemPrompt        string `json:"system_prompt"`
+		Channels            string `json:"channels"`             // JSON array
+		Capabilities        string `json:"capabilities"`         // JSON array
+		Contexts            string `json:"contexts"`             // JSON array
+		MemoryPolicy        string `json:"memory_policy"`        // JSON object
+		PermissionPolicy    string `json:"permission_policy"`    // JSON object
 		RecommendedBindings string `json:"recommended_bindings"` // JSON array
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -61,24 +61,24 @@ func (s *RemoteTemplateServer) InstallRemoteTemplate(c *gin.Context) {
 	assistantID := "asst-" + req.ID
 
 	rt := &db.RemoteTemplate{
-		ID:               req.ID,
-		CatalogHash:       req.CatalogHash,
-		SourceURL:         req.SourceURL,
-		Signature:        req.Signature,
-		Name:             req.Name,
-		Tagline:          req.Tagline,
-		Role:             req.Role,
-		BestFor:          req.BestFor,
-		NotFor:           req.NotFor,
-		SuggestedModel:    req.SuggestedModel,
-		SystemPrompt:     req.SystemPrompt,
-		Channels:         req.Channels,
-		Capabilities:      req.Capabilities,
-		Contexts:          req.Contexts,
-		MemoryPolicy:      req.MemoryPolicy,
-		PermissionPolicy:  req.PermissionPolicy,
+		ID:                  req.ID,
+		CatalogHash:         req.CatalogHash,
+		SourceURL:           req.SourceURL,
+		Signature:           req.Signature,
+		Name:                req.Name,
+		Tagline:             req.Tagline,
+		Role:                req.Role,
+		BestFor:             req.BestFor,
+		NotFor:              req.NotFor,
+		SuggestedModel:      req.SuggestedModel,
+		SystemPrompt:        req.SystemPrompt,
+		Channels:            req.Channels,
+		Capabilities:        req.Capabilities,
+		Contexts:            req.Contexts,
+		MemoryPolicy:        req.MemoryPolicy,
+		PermissionPolicy:    req.PermissionPolicy,
 		RecommendedBindings: req.RecommendedBindings,
-		LocalAssistantID:  assistantID,
+		LocalAssistantID:    assistantID,
 	}
 
 	if err := s.repo.Install(rt, assistantID); err != nil {

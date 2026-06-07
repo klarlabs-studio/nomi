@@ -74,7 +74,7 @@ Tabs/features in `App.tsx`: Chats, Assistants, Approvals, Memory, Events, Settin
 
 ## Conventions
 
-- Module path: `github.com/felixgeelhaar/nomi`. Internal packages are genuinely internal — don't import them from `app/` or `pkg/`.
+- Module path: `go.klarlabs.de/nomi`. Internal packages are genuinely internal — don't import them from `app/` or `pkg/`.
 - Domain types and status enums live in `internal/domain/models.go`; keep state strings in sync with the machines in `pkg/statekit/run_step_sm.go` when adding statuses.
 - New tools go through `tools.Registry` + a capability string matching a permission rule — never bypass the permission engine.
 - New connectors implement `connectors.Connector` and register in `cmd/nomid/main.go`; config reads go through `ConnectorConfigRepository`, not env.
@@ -94,7 +94,7 @@ Planning and task state live in `.roady/` — this is the source of truth for wh
 
 **Shipped (post v0.2.1):** sandboxed executor backends (local/docker/gvisor), Recipe registry + signed YAML bundles + 9 built-in recipes, scheduled runs + NL→cron via LLM, skill induction (Jaccard + cosine embedding clustering + LLM synthesis), auto-learning preferences loop, embeddings provider integration, WhatsApp/Slack/Discord plugins, plugin context-source consumption in planner, FTS5 memory search (`memory_fts` + bm25 ranking), OS notifications on `approval.requested` (`tauri-plugin-notification` + Web API fallback), **macOS menu bar / system tray** with live Approvals(N) badge + pause-all + new-chat + settings + quit + 3 state icons (idle/active/awaiting).
 
-**Shipped (V1 polish closeout):** Scout browser plugin (`com.nomi.scout`, MCP-client via `github.com/felixgeelhaar/mcp-go`, stdio + http+sse transports), DNS egress allowlist on `network.egress` rule (docker `--add-host` pinning + `--dns=127.255.255.255`), eBPF cgroup_skb/egress filter (pure-Go BPF asm via `cilium/ebpf`, gated by `NOMI_EGRESS_EBPF=1`, soft-falls to DNS-only), DiffPreview Shiki per-hunk highlighting (one tokenisation per hunk, multi-line context preserved), `make eval-live-providers` matrix (per-provider pass-rate reporting via `TestPlannerGoldenSet_Live`).
+**Shipped (V1 polish closeout):** Scout browser plugin (`com.nomi.scout`, MCP-client via `go.klarlabs.de/mcp`, stdio + http+sse transports), DNS egress allowlist on `network.egress` rule (docker `--add-host` pinning + `--dns=127.255.255.255`), eBPF cgroup_skb/egress filter (pure-Go BPF asm via `cilium/ebpf`, gated by `NOMI_EGRESS_EBPF=1`, soft-falls to DNS-only), DiffPreview Shiki per-hunk highlighting (one tokenisation per hunk, multi-line context preserved), `make eval-live-providers` matrix (per-provider pass-rate reporting via `TestPlannerGoldenSet_Live`).
 
 **Pending / deferred:** none — V1 polish closeout is fully shipped.
 

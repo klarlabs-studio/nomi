@@ -105,11 +105,11 @@ func (r *Registry) Execute(ctx context.Context, name string, input map[string]in
 
 // ExecutionResult wraps the result of a tool execution
 type ExecutionResult struct {
-	ToolName  string                 `json:"tool_name"`
-	Success   bool                   `json:"success"`
-	Output    map[string]interface{} `json:"output,omitempty"`
-	Error     string                 `json:"error,omitempty"`
-	Capability string                `json:"capability"`
+	ToolName   string                 `json:"tool_name"`
+	Success    bool                   `json:"success"`
+	Output     map[string]interface{} `json:"output,omitempty"`
+	Error      string                 `json:"error,omitempty"`
+	Capability string                 `json:"capability"`
 }
 
 // Executor handles tool execution with logging and error handling

@@ -3,7 +3,7 @@ package skills
 import (
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 type fakeRunSource struct{ runs []*domain.Run }

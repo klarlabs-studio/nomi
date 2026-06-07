@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/events"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/events"
 )
 
 // ApprovalStore defines the interface for approval persistence
@@ -22,14 +22,14 @@ type ApprovalStore interface {
 
 // ApprovalRequest represents a pending approval
 type ApprovalRequest struct {
-	ID          string                 `json:"id"`
-	RunID       string                 `json:"run_id"`
-	StepID      *string                `json:"step_id,omitempty"`
-	Capability  string                 `json:"capability"`
-	Context     map[string]interface{} `json:"context,omitempty"`
-	Status      ApprovalStatus         `json:"status"`
-	ResolvedAt  *time.Time             `json:"resolved_at,omitempty"`
-	CreatedAt   time.Time              `json:"created_at"`
+	ID         string                 `json:"id"`
+	RunID      string                 `json:"run_id"`
+	StepID     *string                `json:"step_id,omitempty"`
+	Capability string                 `json:"capability"`
+	Context    map[string]interface{} `json:"context,omitempty"`
+	Status     ApprovalStatus         `json:"status"`
+	ResolvedAt *time.Time             `json:"resolved_at,omitempty"`
+	CreatedAt  time.Time              `json:"created_at"`
 }
 
 // ApprovalStatus represents the status of an approval request

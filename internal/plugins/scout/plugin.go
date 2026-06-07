@@ -7,7 +7,7 @@
 // built-in tools.
 //
 // The plugin is intentionally Scout-specific for v1 even though
-// `github.com/felixgeelhaar/mcp-go/client` is a generic client. The
+// `go.klarlabs.de/mcp/client` is a generic client. The
 // generic "any-MCP-server" plugin variant is a follow-up — see the
 // roady backlog item.
 package scout
@@ -20,13 +20,13 @@ import (
 	"sync"
 	"time"
 
-	mcpclient "github.com/felixgeelhaar/mcp-go/client"
+	mcpclient "go.klarlabs.de/mcp/client"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/plugins"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
-	"github.com/felixgeelhaar/nomi/internal/tools"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/tools"
 )
 
 // PluginID is the stable reverse-DNS identifier.
@@ -43,7 +43,7 @@ type Plugin struct {
 
 	mu      sync.RWMutex
 	running bool
-	clients map[string]*mcpclient.Client    // connection_id -> client
+	clients map[string]*mcpclient.Client // connection_id -> client
 	health  map[string]*plugins.ConnectionHealth
 }
 
@@ -101,7 +101,7 @@ func (p *Plugin) Manifest() plugins.PluginManifest {
 			ConfigSchema: map[string]plugins.ConfigField{
 				"transport": {
 					Type: "enum", Label: "Transport",
-					Default: "stdio",
+					Default:     "stdio",
 					Description: "How Nomi reaches the Scout MCP server.",
 					Options: []plugins.ConfigOption{
 						{Value: "stdio", Label: "stdio (spawn local binary)"},

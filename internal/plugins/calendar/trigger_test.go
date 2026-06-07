@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/plugins"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // stubProvider serves canned upcoming-event lists per call so the
@@ -32,7 +32,9 @@ func (s *stubProvider) ListUpcoming(_ context.Context, _ string, _, _ time.Time,
 
 // The other Provider methods aren't exercised by triggers, but the
 // interface needs satisfying.
-func (s *stubProvider) CreateEvent(context.Context, string, Event) (Event, error) { return Event{}, nil }
+func (s *stubProvider) CreateEvent(context.Context, string, Event) (Event, error) {
+	return Event{}, nil
+}
 func (s *stubProvider) UpdateEvent(context.Context, string, string, Event) (Event, error) {
 	return Event{}, nil
 }
@@ -122,9 +124,9 @@ func TestTriggers_OnePerRule(t *testing.T) {
 
 func TestTriggers_RejectsBadRules(t *testing.T) {
 	f := newTriggerFixture(t, []map[string]any{
-		{"name": "PreNoLead", "kind": TriggerKindPreMeeting},          // missing lead_minutes
-		{"name": "Unknown", "kind": "calendar.future_thing"},          // unknown kind
-		{"name": "OK", "kind": TriggerKindEventCancelled},             // valid
+		{"name": "PreNoLead", "kind": TriggerKindPreMeeting}, // missing lead_minutes
+		{"name": "Unknown", "kind": "calendar.future_thing"}, // unknown kind
+		{"name": "OK", "kind": TriggerKindEventCancelled},    // valid
 	})
 	got := f.plugin.Triggers()
 	if len(got) != 1 || got[0].Kind() != TriggerKindEventCancelled {

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // requireGit skips a test when git is unavailable on the host. The patch

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/felixgeelhaar/nomi/internal/seed"
+	"go.klarlabs.de/nomi/internal/seed"
 )
 
 // seedCmd: apply a YAML manifest against an already-running daemon

@@ -16,18 +16,18 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/llm"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/llm"
 )
 
 // Defaults for the induction pass. Conservative on purpose: a noisier
 // signal (too many suggestions, irrelevant clusters) actively makes the
 // "Suggested skills" panel useless.
 const (
-	DefaultMinClusterSize    = 3
-	DefaultMinJaccardSim     = 0.5
-	DefaultMaxSuggestions    = 10
-	DefaultMaxSourceRuns     = 500
+	DefaultMinClusterSize = 3
+	DefaultMinJaccardSim  = 0.5
+	DefaultMaxSuggestions = 10
+	DefaultMaxSourceRuns  = 500
 )
 
 // Suggestion is the candidate skill the inducer emits. ID is a stable

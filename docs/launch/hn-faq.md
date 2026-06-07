@@ -113,7 +113,7 @@ the demo loop runs end-to-end without risking your real codebase.
 
 ## Code, plan, ship plan
 
-- Source: <https://github.com/felixgeelhaar/nomi>
+- Source: <https://github.com/klarlabs-studio/nomi>
 - Spec / plan / task state: [`.roady/`](../../.roady/)
 - ADRs: [`docs/adr/`](../adr/)
 - Issues / discussions are the right place for "would you take a

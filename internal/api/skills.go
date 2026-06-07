@@ -9,10 +9,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"github.com/felixgeelhaar/nomi/internal/llm"
-	"github.com/felixgeelhaar/nomi/internal/recipes"
-	"github.com/felixgeelhaar/nomi/internal/skills"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/llm"
+	"go.klarlabs.de/nomi/internal/recipes"
+	"go.klarlabs.de/nomi/internal/skills"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // SkillsServer handles the /skills surface — induction suggestions and
@@ -53,14 +53,14 @@ func (s *SkillsServer) ListSuggestions(c *gin.Context) {
 // "Generate with AI" pre-fill survives the round-trip into Recipe
 // land without the UI having to call multiple endpoints.
 type promoteRequest struct {
-	SuggestionID         string   `json:"suggestion_id" binding:"required"`
-	RecipeID             string   `json:"recipe_id" binding:"required"`
-	Name                 string   `json:"name" binding:"required"`
-	Description          string   `json:"description,omitempty"`
-	SourceAssistant      string   `json:"source_assistant_id,omitempty"`
-	SynthesizedRole      string   `json:"synthesized_role,omitempty"`
-	SynthesizedPrompt    string   `json:"synthesized_system_prompt,omitempty"`
-	SynthesizedCapsList  []string `json:"synthesized_capabilities,omitempty"`
+	SuggestionID        string   `json:"suggestion_id" binding:"required"`
+	RecipeID            string   `json:"recipe_id" binding:"required"`
+	Name                string   `json:"name" binding:"required"`
+	Description         string   `json:"description,omitempty"`
+	SourceAssistant     string   `json:"source_assistant_id,omitempty"`
+	SynthesizedRole     string   `json:"synthesized_role,omitempty"`
+	SynthesizedPrompt   string   `json:"synthesized_system_prompt,omitempty"`
+	SynthesizedCapsList []string `json:"synthesized_capabilities,omitempty"`
 }
 
 // PromoteSuggestion materialises a Recipe + a new Assistant from a

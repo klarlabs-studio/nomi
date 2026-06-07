@@ -20,8 +20,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins/bundle"
-	"github.com/felixgeelhaar/nomi/internal/plugins/hub"
+	"go.klarlabs.de/nomi/internal/plugins/bundle"
+	"go.klarlabs.de/nomi/internal/plugins/hub"
 )
 
 // CatalogOptions is the BuildCatalog input.

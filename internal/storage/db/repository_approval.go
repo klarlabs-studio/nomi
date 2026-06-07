@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/permissions"
+	"go.klarlabs.de/nomi/internal/permissions"
 )
 
 // ApprovalRepository handles database operations for Approvals

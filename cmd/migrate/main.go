@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 func main() {

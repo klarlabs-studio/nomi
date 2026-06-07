@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/events"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/events"
 )
 
 // ConversationRepository handles CRUD + lookup for plugin_conversations.
@@ -68,11 +68,11 @@ func (r *ConversationRepository) Create(c *domain.Conversation, eventBus events.
 	}
 	if eventBus != nil {
 		_, _ = eventBus.Publish(context.Background(), domain.EventConversationCreated, c.ID, nil, map[string]interface{}{
-			"conversation_id":        c.ID,
-			"plugin_id":              c.PluginID,
-			"connection_id":          c.ConnectionID,
+			"conversation_id":          c.ID,
+			"plugin_id":                c.PluginID,
+			"connection_id":            c.ConnectionID,
 			"external_conversation_id": c.ExternalConversationID,
-			"assistant_id":           c.AssistantID,
+			"assistant_id":             c.AssistantID,
 		})
 	}
 	return nil

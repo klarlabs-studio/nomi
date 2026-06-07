@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // memoryStore is a minimal in-memory EventStore implementation so tests

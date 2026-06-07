@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/metrics"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
-	"github.com/felixgeelhaar/nomi/pkg/statekit"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/metrics"
+	"go.klarlabs.de/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/pkg/statekit"
 )
 
 // ErrConcurrentTransition is returned when a run-status update lost a CAS

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // ScheduleRepository persists Schedule rows. CRUD is keyed by ID; the

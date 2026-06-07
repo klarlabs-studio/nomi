@@ -32,12 +32,12 @@ import (
 	"github.com/google/uuid"
 	"gopkg.in/yaml.v3"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/llm"
-	"github.com/felixgeelhaar/nomi/internal/permissions"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
-	assistanttemplates "github.com/felixgeelhaar/nomi/templates"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/llm"
+	"go.klarlabs.de/nomi/internal/permissions"
+	"go.klarlabs.de/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/storage/db"
+	assistanttemplates "go.klarlabs.de/nomi/templates"
 )
 
 // File is the YAML shape on disk.

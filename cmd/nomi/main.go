@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/felixgeelhaar/nomi/internal/buildinfo"
+	"go.klarlabs.de/nomi/internal/buildinfo"
 )
 
 const usage = `nomi — CLI client for the Nomi runtime daemon (nomid).

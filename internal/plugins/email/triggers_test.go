@@ -3,8 +3,8 @@ package email
 import (
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/plugins/email/transport"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/plugins/email/transport"
 )
 
 func TestTriggerRule_FiltersAreCaseInsensitive(t *testing.T) {

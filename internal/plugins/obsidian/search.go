@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 const defaultSearchLimit = 25
@@ -52,12 +52,12 @@ func (p *Plugin) searchNotes(_ context.Context, conn *domain.Connection, input m
 	}
 
 	type match struct {
-		Path    string  `json:"path"`
-		Score   float64 `json:"score"`
-		Snippet string  `json:"snippet,omitempty"`
+		Path    string   `json:"path"`
+		Score   float64  `json:"score"`
+		Snippet string   `json:"snippet,omitempty"`
 		Tags    []string `json:"tags,omitempty"`
 		Links   []string `json:"links,omitempty"`
-		ModTime int64   `json:"-"`
+		ModTime int64    `json:"-"`
 	}
 
 	var matches []match

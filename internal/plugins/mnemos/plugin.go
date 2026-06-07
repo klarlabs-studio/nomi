@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"sync"
 
-	mnemosclient "github.com/felixgeelhaar/mnemos/client"
+	mnemosclient "go.klarlabs.de/mnemos/client"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
-	"github.com/felixgeelhaar/nomi/internal/tools"
+	"go.klarlabs.de/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/tools"
 )
 
 // Plugin is the Nomi-side Mnemos integration. One Plugin instance

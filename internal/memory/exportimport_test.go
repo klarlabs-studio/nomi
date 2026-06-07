@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/memstore"
+	"go.klarlabs.de/nomi/internal/memstore"
 )
 
 func TestExportImport_RoundTrip(t *testing.T) {

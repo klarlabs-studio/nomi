@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // PluginStateRepository handles CRUD for plugin_state. See ADR 0002 §1.
@@ -176,11 +176,11 @@ func (r *PluginStateRepository) Delete(pluginID string) error {
 
 func scanPluginState(row rowScanner) (*domain.PluginState, error) {
 	var (
-		s             domain.PluginState
-		installed     int
-		enabled       int
-		distStr       string
-		lastChecked   sql.NullTime
+		s           domain.PluginState
+		installed   int
+		enabled     int
+		distStr     string
+		lastChecked sql.NullTime
 	)
 	err := row.Scan(
 		&s.PluginID, &distStr, &installed, &enabled, &s.Version,

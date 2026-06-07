@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // RemoteTemplateRepository handles CRUD for remote_templates.
@@ -22,25 +22,25 @@ func NewRemoteTemplateRepository(db *DB) *RemoteTemplateRepository {
 
 // RemoteTemplate represents a row in remote_templates.
 type RemoteTemplate struct {
-	ID               string
-	CatalogHash       string
-	SourceURL         string
-	Signature        string
-	Name             string
-	Tagline          string
-	Role             string
-	BestFor          string
-	NotFor           string
-	SuggestedModel    string
-	SystemPrompt     string
-	Channels         string // JSON array
-	Capabilities      string // JSON array
-	Contexts          string // JSON array
-	MemoryPolicy      string // JSON object
-	PermissionPolicy  string // JSON object
+	ID                  string
+	CatalogHash         string
+	SourceURL           string
+	Signature           string
+	Name                string
+	Tagline             string
+	Role                string
+	BestFor             string
+	NotFor              string
+	SuggestedModel      string
+	SystemPrompt        string
+	Channels            string // JSON array
+	Capabilities        string // JSON array
+	Contexts            string // JSON array
+	MemoryPolicy        string // JSON object
+	PermissionPolicy    string // JSON object
 	RecommendedBindings string // JSON array
-	InstalledAt      string
-	LocalAssistantID  string
+	InstalledAt         string
+	LocalAssistantID    string
 }
 
 // Install creates or updates a remote template row and materializes a local draft Assistant.

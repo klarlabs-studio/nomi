@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/felixgeelhaar/nomi/internal/memstore"
+	"go.klarlabs.de/nomi/internal/memstore"
 )
 
 // ExportFormatVersion identifies the JSONL wire format. The first line
@@ -22,7 +22,7 @@ const ExportFormatVersion = 1
 type exportHeader struct {
 	Format  string         `json:"format"`
 	Version int            `json:"version"`
-	Scope   memstore.Scope   `json:"scope"`
+	Scope   memstore.Scope `json:"scope"`
 	Count   int            `json:"count,omitempty"` // entry count; 0 if streaming
 }
 

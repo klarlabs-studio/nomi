@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/plugins"
 )
 
 func TestVaultContextSource_QueryReturnsScoredMatches(t *testing.T) {
@@ -148,7 +148,7 @@ func TestTokenizeGoal(t *testing.T) {
 		{"the and", nil}, // all stopwords
 		{"Rust performance arena", []string{"rust", "performance", "arena"}},
 		{"How should I use [[wikilinks]] for research?", []string{"use", "wikilinks", "research"}},
-		{"a b cd", nil}, // all under min length
+		{"a b cd", nil},                      // all under min length
 		{"rust rust rust", []string{"rust"}}, // dedup
 	}
 	for _, tc := range cases {

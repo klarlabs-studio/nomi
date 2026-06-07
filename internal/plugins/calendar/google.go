@@ -10,7 +10,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/integrations/google"
+	"go.klarlabs.de/nomi/internal/integrations/google"
 )
 
 // GoogleProvider implements Provider against the Google Calendar v3 REST

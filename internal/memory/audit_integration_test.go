@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/events"
-	"github.com/felixgeelhaar/nomi/internal/memstore"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/events"
+	"go.klarlabs.de/nomi/internal/memstore"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // TestAuditChain_MemoryOps verifies that EmbeddedClient.WithEventBus

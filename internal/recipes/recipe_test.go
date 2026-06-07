@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 func TestParseValidMinimum(t *testing.T) {
@@ -108,10 +108,10 @@ func TestToAssistantDefinition(t *testing.T) {
 	r := &Recipe{
 		SchemaVersion: 1, ID: "x", Name: "X", Version: "1",
 		Assistant: AssistantSpec{
-			Name:         "X",
-			Role:         "r",
-			SystemPrompt: "sp",
-			Capabilities: []string{"filesystem.read"},
+			Name:            "X",
+			Role:            "r",
+			SystemPrompt:    "sp",
+			Capabilities:    []string{"filesystem.read"},
 			ExecutorBackend: "local",
 		},
 	}

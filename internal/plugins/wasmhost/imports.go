@@ -6,9 +6,9 @@ import (
 	"errors"
 	"log"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
 	"github.com/tetratelabs/wazero/api"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/secrets"
 )
 
 // hostHTTPRequest is the gated network egress point for marketplace

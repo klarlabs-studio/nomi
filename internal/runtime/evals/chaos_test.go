@@ -3,8 +3,8 @@ package evals
 import (
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/pkg/statekit"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/pkg/statekit"
 )
 
 // TestChaos_RunStateMachine verifies run state machine resilience.
@@ -79,7 +79,7 @@ func TestChaos_IllegalRunTransitions(t *testing.T) {
 		from domain.RunStatus
 		to   domain.RunStatus
 	}{
-		{domain.RunCreated, domain.RunCompleted},    // skip planning
+		{domain.RunCreated, domain.RunCompleted},   // skip planning
 		{domain.RunCompleted, domain.RunExecuting}, // terminal→active (no retry)
 	}
 	for _, tc := range illegal {
@@ -97,10 +97,10 @@ func TestChaos_IllegalStepTransitions(t *testing.T) {
 		from domain.StepStatus
 		to   domain.StepStatus
 	}{
-		{domain.StepPending, domain.StepDone},     // skip ready/running
-		{domain.StepRunning, domain.StepReady},    // reverse without retry
-		{domain.StepDone, domain.StepRunning},     // terminal→active
-		{domain.StepFailed, domain.StepRunning},   // terminal→active (no retry)
+		{domain.StepPending, domain.StepDone},   // skip ready/running
+		{domain.StepRunning, domain.StepReady},  // reverse without retry
+		{domain.StepDone, domain.StepRunning},   // terminal→active
+		{domain.StepFailed, domain.StepRunning}, // terminal→active (no retry)
 	}
 	for _, tc := range illegal {
 		sm := statekit.NewStepStateMachine()

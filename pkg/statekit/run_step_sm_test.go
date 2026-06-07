@@ -3,7 +3,7 @@ package statekit
 import (
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 func TestRunStateMachineHappyPath(t *testing.T) {

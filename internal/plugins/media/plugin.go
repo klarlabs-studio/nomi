@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins"
-	"github.com/felixgeelhaar/nomi/internal/tools"
+	"go.klarlabs.de/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/tools"
 )
 
 // PluginID is the stable reverse-DNS identifier for the media plugin.

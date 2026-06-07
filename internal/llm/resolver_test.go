@@ -8,8 +8,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/secrets"
 )
 
 type memoryProfiles struct {

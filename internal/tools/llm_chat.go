@@ -3,8 +3,8 @@ package tools
 import (
 	"context"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/llm"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/llm"
 )
 
 // LLMChatTool bridges the runtime's tool-execution model to the LLM client.

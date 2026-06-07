@@ -20,8 +20,8 @@ import (
 	"strings"
 	"time"
 
-	imapclient "github.com/emersion/go-imap/v2/imapclient"
 	"github.com/emersion/go-imap/v2"
+	imapclient "github.com/emersion/go-imap/v2/imapclient"
 )
 
 // stdEncoding aliased for the wrapBase64 helper to avoid a per-call
@@ -80,15 +80,15 @@ type EmailAttachment struct {
 // and render the Chats tab sensibly; rich content (HTML, attachments)
 // lives in follow-up work.
 type Message struct {
-	UID         uint32
-	MessageID   string // RFC 5322 Message-ID header (with surrounding <>)
-	InReplyTo   string // Referenced Message-ID for threaded replies
-	References  []string
-	From        string
-	To          []string
-	Subject     string
-	Body        string // plain-text body, decoded
-	ReceivedAt  time.Time
+	UID        uint32
+	MessageID  string // RFC 5322 Message-ID header (with surrounding <>)
+	InReplyTo  string // Referenced Message-ID for threaded replies
+	References []string
+	From       string
+	To         []string
+	Subject    string
+	Body       string // plain-text body, decoded
+	ReceivedAt time.Time
 }
 
 // SendEmail delivers a single plaintext email via the configured SMTP

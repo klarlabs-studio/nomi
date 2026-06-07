@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/felixgeelhaar/nomi/internal/runtime/executor/egress"
+	"go.klarlabs.de/nomi/internal/runtime/executor/egress"
 )
 
 // egressEBPFEnv is the env var that gates the experimental cgroup_skb

@@ -25,10 +25,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins"
-	"github.com/felixgeelhaar/nomi/internal/plugins/bundle"
-	"github.com/felixgeelhaar/nomi/internal/plugins/wasmhost"
-	"github.com/felixgeelhaar/nomi/internal/plugins/wasmplugin"
+	"go.klarlabs.de/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/plugins/bundle"
+	"go.klarlabs.de/nomi/internal/plugins/wasmhost"
+	"go.klarlabs.de/nomi/internal/plugins/wasmplugin"
 )
 
 // Result is one loaded dev plugin paired with the source file path so

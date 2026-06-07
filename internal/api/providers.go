@@ -8,11 +8,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/llm"
-	"github.com/felixgeelhaar/nomi/internal/permissions"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/llm"
+	"go.klarlabs.de/nomi/internal/permissions"
+	"go.klarlabs.de/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // ProviderServer handles provider profile endpoints
@@ -195,7 +195,7 @@ func (s *ProviderServer) UpdateProviderProfile(c *gin.Context) {
 	if req.SecretRef != "" {
 		secretRef, err := s.stashProviderSecret(profile.ID, req.SecretRef)
 		if err != nil {
-respondInternal(c, "failed to stash secret", err)
+			respondInternal(c, "failed to stash secret", err)
 			return
 		}
 		profile.SecretRef = secretRef
@@ -227,9 +227,9 @@ respondInternal(c, "failed to stash secret", err)
 // minus the SecretRef stash + uuid generation; we treat the input as a
 // throwaway snapshot.
 type ProbeProviderRequest struct {
-	Endpoint  string   `json:"endpoint"`
-	APIKey    string   `json:"api_key,omitempty"`
-	ModelIDs  []string `json:"model_ids,omitempty"`
+	Endpoint string   `json:"endpoint"`
+	APIKey   string   `json:"api_key,omitempty"`
+	ModelIDs []string `json:"model_ids,omitempty"`
 }
 
 // ProbeProviderResponse summarises whether a provider is reachable and

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 func TestValidatePolicyAgainstCeiling_AcceptsCoherentPolicy(t *testing.T) {

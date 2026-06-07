@@ -7,8 +7,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/tools"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/tools"
 )
 
 func TestDiscoverVault_RejectsMissingPath(t *testing.T) {

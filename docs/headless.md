@@ -28,7 +28,7 @@ docker run -d \
   -p 127.0.0.1:8080:8080 \
   -v nomi-data:/data \
   --restart unless-stopped \
-  ghcr.io/felixgeelhaar/nomi:latest
+  ghcr.io/klarlabs-studio/nomi:latest
 ```
 
 The `nomid` binary lives at `/usr/local/bin/nomid`, runs as `nonroot`,
@@ -43,7 +43,7 @@ docker run -d \
   -p 8080:8080 \
   -e NOMI_BIND=0.0.0.0 \
   -v nomi-data:/data \
-  ghcr.io/felixgeelhaar/nomi:latest
+  ghcr.io/klarlabs-studio/nomi:latest
 ```
 
 The auth token still gates every request — binding to `0.0.0.0` makes
@@ -59,7 +59,7 @@ services:
     volumes: [ollama:/root/.ollama]
 
   nomid:
-    image: ghcr.io/felixgeelhaar/nomi:latest
+    image: ghcr.io/klarlabs-studio/nomi:latest
     environment:
       NOMI_BIND: "0.0.0.0"
     ports: ["8080:8080"]
@@ -111,7 +111,7 @@ The auth token is the only credential. **Rotate it** on first boot
 
 ```bash
 # install (one of)
-go install github.com/felixgeelhaar/nomi/cmd/nomid@latest
+go install go.klarlabs.de/nomi/cmd/nomid@latest
 # or download the per-platform nomid-* asset from the releases page
 
 sudo useradd -r -s /usr/sbin/nologin nomid
@@ -171,7 +171,7 @@ spec:
     spec:
       containers:
         - name: nomid
-          image: ghcr.io/felixgeelhaar/nomi:latest
+          image: ghcr.io/klarlabs-studio/nomi:latest
           env:
             - { name: NOMI_BIND, value: "0.0.0.0" }
           ports: [{ containerPort: 8080 }]
@@ -489,7 +489,7 @@ scrape_configs:
 
 - **Tauri menu-bar tray** is desktop-only.
 - **The Tauri auto-updater** is desktop-only; for headless deploys,
-  pin the image tag (e.g. `ghcr.io/felixgeelhaar/nomi:v0.1.0`) and
+  pin the image tag (e.g. `ghcr.io/klarlabs-studio/nomi:v0.1.0`) and
   upgrade by re-pulling.
 - **Some plugin connection flows** (Telegram bot setup, Gmail OAuth)
   expect a browser to complete — run the desktop UI once on a

@@ -34,7 +34,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/plugins"
 )
 
 // zeroTime returns the canonical mtime baked into every tar header so
@@ -87,13 +87,13 @@ type Sources struct {
 //
 //   - PublicKey       — Ed25519 pubkey the bundle Signature was made with
 //   - RootSignature   — root key's Ed25519 signature over (fingerprint,
-//                       PublicKey, Expiry); proves the publisher was
-//                       attested by NomiHub
+//     PublicKey, Expiry); proves the publisher was
+//     attested by NomiHub
 //   - KeyFingerprint  — short human-readable id surfaced in the install
-//                       dialog (e.g. "AAAA-BBBB-CCCC-DDDD")
+//     dialog (e.g. "AAAA-BBBB-CCCC-DDDD")
 //   - Expiry          — optional; rejected by the verifier once past
 //   - KeyChain        — informational, recorded for audit (typically
-//                       just ["root"] for v1)
+//     just ["root"] for v1)
 //
 // PublicKey + RootSignature are base64-encoded on disk so publisher.json
 // stays human-readable; the json:"" tags decode to []byte via

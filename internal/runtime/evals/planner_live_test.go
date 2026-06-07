@@ -8,14 +8,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/events"
-	"github.com/felixgeelhaar/nomi/internal/llm"
-	"github.com/felixgeelhaar/nomi/internal/memory"
-	"github.com/felixgeelhaar/nomi/internal/permissions"
-	"github.com/felixgeelhaar/nomi/internal/runtime"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
-	"github.com/felixgeelhaar/nomi/internal/tools"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/events"
+	"go.klarlabs.de/nomi/internal/llm"
+	"go.klarlabs.de/nomi/internal/memory"
+	"go.klarlabs.de/nomi/internal/permissions"
+	"go.klarlabs.de/nomi/internal/runtime"
+	"go.klarlabs.de/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/tools"
 )
 
 // liveProvider describes how to point the planner at a real LLM
@@ -23,10 +23,10 @@ import (
 // variables — absent envs cause the provider to skip silently so a
 // developer can run a single provider without configuring the others.
 type liveProvider struct {
-	name       string // "ollama", "openai", "anthropic"
-	endpoint   string
-	apiKey     string
-	model      string
+	name     string // "ollama", "openai", "anthropic"
+	endpoint string
+	apiKey   string
+	model    string
 	// thresholdEnv overrides the per-provider pass-rate floor.
 	// Pattern: NOMI_GOLDEN_THRESHOLD_OLLAMA, NOMI_GOLDEN_THRESHOLD_OPENAI, etc.
 	thresholdEnv string

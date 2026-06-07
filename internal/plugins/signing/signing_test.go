@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins/bundle"
+	"go.klarlabs.de/nomi/internal/plugins/bundle"
 )
 
 // fixedClock returns a now() func that always reports t. Used to make

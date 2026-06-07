@@ -936,7 +936,7 @@ features:
         - Ship `docs/plugins.md` + `examples/wasm-plugin-template/` even before the marketplace exists.
 
         Action — distribution:
-        - Ship winget manifest, AUR PKGBUILD, Nix flake (`nix run github:felixgeelhaar/nomi`). High leverage on r/LocalLLaMA + r/selfhosted + NixOS audiences.
+        - Ship winget manifest, AUR PKGBUILD, Nix flake (`nix run github:klarlabs-studio/nomi`). High leverage on r/LocalLLaMA + r/selfhosted + NixOS audiences.
 
         Action — landing trust signals:
         - GH stars badge above the fold, downloads/contributors badges, "Watch 90s demo" CTA linking to YouTube for HN-comment portability.
@@ -1576,7 +1576,7 @@ features:
         2. Wire Nomi as a consumer of the external package
            - go.mod: require github.com/felixgeelhaar/mnemos vX.Y.Z (pin the first tagged release).
            - Delete internal/mnemos/ and internal/memory/client.go + tests. internal/memory/manager.go stays (still used by REST CRUD endpoints).
-           - Replace import paths: github.com/felixgeelhaar/nomi/internal/mnemos → github.com/felixgeelhaar/mnemos. Same for embedded.
+           - Replace import paths: go.klarlabs.de/nomi/internal/mnemos → github.com/felixgeelhaar/mnemos. Same for embedded.
            - Update cmd/nomid/main.go: open mnemos.db separately from nomi.db (new file in the OS app-data dir alongside nomi.db). Construct embedded.NewClient(mnemosDB).WithEventBus(eventBus).
 
         3. Data migration on first boot post-upgrade

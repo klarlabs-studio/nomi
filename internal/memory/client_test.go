@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/memstore"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/memstore"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // seedAssistant inserts a minimal AssistantDefinition so memory rows can

@@ -32,7 +32,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins/bundle"
+	"go.klarlabs.de/nomi/internal/plugins/bundle"
 )
 
 // Sentinel errors for branchable failure cases. The install dialog and
@@ -51,8 +51,8 @@ var (
 // the chain checks consult. Production builds inject time.Now; tests
 // inject a frozen clock so expiry tests are deterministic.
 type Verifier struct {
-	root  ed25519.PublicKey
-	now   func() time.Time
+	root ed25519.PublicKey
+	now  func() time.Time
 }
 
 // NewVerifier returns a Verifier with the given root pubkey. now may

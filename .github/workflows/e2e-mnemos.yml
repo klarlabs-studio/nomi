@@ -47,7 +47,7 @@ jobs:
       - name: Checkout Mnemos
         uses: actions/checkout@v4
         with:
-          repository: felixgeelhaar/mnemos
+          repository: klarlabs-studio/mnemos
           path: mnemos
           # workflow_dispatch passes a ref via inputs.mnemos-ref; push +
           # pull_request runs fall back to the pinned default. Using a

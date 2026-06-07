@@ -191,10 +191,10 @@ func TestPullsCreate_PassesPayload(t *testing.T) {
 func TestPullsCreate_RequiresFields(t *testing.T) {
 	p, conn := stubPlugin(t, newStubServer(t))
 	cases := []map[string]any{
-		{"connection_id": "c1", "owner": "o", "repo": "r", "head": "h", "base": "b"},                  // no title
-		{"connection_id": "c1", "owner": "o", "repo": "r", "title": "t", "base": "b"},                 // no head
-		{"connection_id": "c1", "owner": "o", "repo": "r", "title": "t", "head": "h"},                 // no base
-		{"connection_id": "c1", "repo": "r", "title": "t", "head": "h", "base": "b"},                  // no owner
+		{"connection_id": "c1", "owner": "o", "repo": "r", "head": "h", "base": "b"},  // no title
+		{"connection_id": "c1", "owner": "o", "repo": "r", "title": "t", "base": "b"}, // no head
+		{"connection_id": "c1", "owner": "o", "repo": "r", "title": "t", "head": "h"}, // no base
+		{"connection_id": "c1", "repo": "r", "title": "t", "head": "h", "base": "b"},  // no owner
 	}
 	for i, in := range cases {
 		if _, err := p.pullsCreate(context.Background(), conn, in); err == nil {

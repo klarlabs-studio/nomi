@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // FilePatchTool applies a unified diff to files inside the assistant's

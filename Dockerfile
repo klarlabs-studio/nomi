@@ -42,9 +42,9 @@ ARG NOMI_BUILD_DATE=unknown
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -trimpath \
     -ldflags "-s -w \
-      -X github.com/felixgeelhaar/nomi/internal/buildinfo.Version=${NOMI_VERSION} \
-      -X github.com/felixgeelhaar/nomi/internal/buildinfo.Commit=${NOMI_COMMIT} \
-      -X github.com/felixgeelhaar/nomi/internal/buildinfo.BuildDate=${NOMI_BUILD_DATE}" \
+      -X go.klarlabs.de/nomi/internal/buildinfo.Version=${NOMI_VERSION} \
+      -X go.klarlabs.de/nomi/internal/buildinfo.Commit=${NOMI_COMMIT} \
+      -X go.klarlabs.de/nomi/internal/buildinfo.BuildDate=${NOMI_BUILD_DATE}" \
     -o /out/nomid \
     ./cmd/nomid
 

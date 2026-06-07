@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	mnemosclient "github.com/felixgeelhaar/mnemos/client"
+	mnemosclient "go.klarlabs.de/mnemos/client"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/plugins"
 )
 
 // claimsContextSource implements plugins.ContextSource for the

@@ -3,7 +3,7 @@ package db
 import (
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 func TestChannelIdentityRepository_CreateFindAndEnforce(t *testing.T) {

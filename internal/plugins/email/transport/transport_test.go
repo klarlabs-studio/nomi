@@ -12,9 +12,9 @@ import (
 
 func TestParseAddress_NormalizesToBareForm(t *testing.T) {
 	cases := map[string]string{
-		"alice@example.com":          "alice@example.com",
-		"Alice <alice@example.com>":  "alice@example.com",
-		`"Alice B" <alice@ex.com>`:   "alice@ex.com",
+		"alice@example.com":         "alice@example.com",
+		"Alice <alice@example.com>": "alice@example.com",
+		`"Alice B" <alice@ex.com>`:  "alice@ex.com",
 	}
 	for in, want := range cases {
 		got, err := ParseAddress(in)

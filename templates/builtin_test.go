@@ -3,7 +3,7 @@ package templates
 import (
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/permissions"
+	"go.klarlabs.de/nomi/internal/permissions"
 )
 
 // TestBuiltInTemplatesPassCeilingValidation guards every bundled assistant

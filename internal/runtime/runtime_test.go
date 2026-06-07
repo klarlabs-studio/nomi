@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/events"
-	"github.com/felixgeelhaar/nomi/internal/memory"
-	"github.com/felixgeelhaar/nomi/internal/permissions"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
-	"github.com/felixgeelhaar/nomi/internal/tools"
-	"github.com/felixgeelhaar/nomi/pkg/statekit"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/events"
+	"go.klarlabs.de/nomi/internal/memory"
+	"go.klarlabs.de/nomi/internal/permissions"
+	"go.klarlabs.de/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/tools"
+	"go.klarlabs.de/nomi/pkg/statekit"
 )
 
 func setupTestRuntime(t *testing.T) (*Runtime, *db.DB, func()) {
@@ -72,12 +72,12 @@ func TestCreateRun(t *testing.T) {
 	// Create an assistant first
 	assistantRepo := db.NewAssistantRepository(rt.db)
 	assistant := &domain.AssistantDefinition{
-		ID:           "test-assistant",
-		Name:         "Test Assistant",
-		Role:         "test",
-		SystemPrompt: "You are a test assistant",
+		ID:               "test-assistant",
+		Name:             "Test Assistant",
+		Role:             "test",
+		SystemPrompt:     "You are a test assistant",
 		PermissionPolicy: permissions.BuildPermissivePolicy(),
-		CreatedAt:    time.Now().UTC(),
+		CreatedAt:        time.Now().UTC(),
 	}
 	if err := assistantRepo.Create(assistant); err != nil {
 		t.Fatalf("Failed to create assistant: %v", err)

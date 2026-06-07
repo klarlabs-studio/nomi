@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/plugins/email/transport"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/plugins/email/transport"
 )
 
 // Trigger rules for the Email plugin. A rule is a simple predicate over an

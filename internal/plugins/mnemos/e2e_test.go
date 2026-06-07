@@ -6,7 +6,7 @@
 //
 // Run locally:
 //
-//	go run github.com/felixgeelhaar/mnemos/cmd/mnemos serve --port 9099 &
+//	go run go.klarlabs.de/mnemos/cmd/mnemos serve --port 9099 &
 //	MNEMOS_E2E_BASE_URL=http://127.0.0.1:9099 \
 //	  go test -tags e2e_mnemos -v ./internal/plugins/mnemos/...
 //
@@ -22,7 +22,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/plugins"
 )
 
 // e2eBaseURL returns the configured Mnemos URL or skips the test if

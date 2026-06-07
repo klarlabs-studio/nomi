@@ -3,8 +3,8 @@ package runtime
 import (
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/permissions"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/permissions"
 )
 
 func TestEffectivePermissionMode_DesktopRun(t *testing.T) {
@@ -96,10 +96,10 @@ func TestEffectivePermissionMode_IntersectsToStrictest(t *testing.T) {
 	run := &domain.Run{ID: "r1", Source: &src}
 
 	cases := []struct {
-		name           string
-		assistantMode  domain.PermissionMode
-		capability     string
-		wantEffective  domain.PermissionMode
+		name          string
+		assistantMode domain.PermissionMode
+		capability    string
+		wantEffective domain.PermissionMode
 	}{
 		{"allow+allow → allow", domain.PermissionAllow, "filesystem.read", domain.PermissionAllow},
 		{"confirm+allow → confirm", domain.PermissionConfirm, "filesystem.read", domain.PermissionConfirm},

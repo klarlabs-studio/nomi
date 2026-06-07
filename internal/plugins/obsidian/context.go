@@ -10,18 +10,18 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/plugins"
 )
 
 const (
-	contextSourceName       = "obsidian.vault"
-	contextMaxNotes         = 5
-	contextMaxLinkedNotes   = 5
-	contextSnippetMaxBytes  = 600
-	contextOutputMaxBytes   = 4000
-	contextMinTokenLen      = 3
-	contextFollowLinkDepth  = 1
+	contextSourceName      = "obsidian.vault"
+	contextMaxNotes        = 5
+	contextMaxLinkedNotes  = 5
+	contextSnippetMaxBytes = 600
+	contextOutputMaxBytes  = 4000
+	contextMinTokenLen     = 3
+	contextFollowLinkDepth = 1
 )
 
 // ContextSources implements plugins.ContextSourceProvider. Returns one
@@ -134,7 +134,7 @@ type indexedNote struct {
 	links    []string
 	modUnix  int64
 
-	score    int
+	score int
 }
 
 func indexVault(root string, ignore *ignoreMatcher) ([]indexedNote, error) {

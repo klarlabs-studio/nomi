@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // marshalArguments encodes a step's argument map for the JSON column. Empty

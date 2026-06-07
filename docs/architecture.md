@@ -40,7 +40,7 @@ without adopting the whole stack.
 
 ## The cognitive-stack libraries
 
-### [`statekit`](https://github.com/felixgeelhaar/statekit) — state
+### [`statekit`](https://github.com/klarlabs-studio/statekit) — state
 
 Type-safe finite state machines for Go, with XState JSON
 compatibility. Every Nomi `Run`, `Plan`, and `Step` transition flows
@@ -53,7 +53,7 @@ will lie to you on day 90; statekit won't. Start with statekit when
 the bug reports begin to read "the run is stuck in `executing` but
 nothing is happening."
 
-### [`mnemos`](https://github.com/felixgeelhaar/mnemos) — memory
+### [`mnemos`](https://github.com/klarlabs-studio/mnemos) — memory
 
 Evidence-backed local-first knowledge engine. Memory entries are
 claims with provenance, not opaque vector blobs. SQLite-backed,
@@ -68,7 +68,7 @@ is on the roadmap — see the mnemos integration assessment in
 If your agent needs to remember things across runs and you want the
 same SQL surface you use everywhere else, mnemos is the right shape.
 
-### [`scout`](https://github.com/felixgeelhaar/scout) — sight
+### [`scout`](https://github.com/klarlabs-studio/scout) — sight
 
 Browser automation built for agents — observable DOM, semantic
 selectors, deterministic end-to-end. Used by the Nomi user-journey

@@ -3,11 +3,11 @@
   "description": "Local-first, state-driven agent platform",
   "homepage": "https://nomi.ai/",
   "license": "Apache-2.0",
-  "url": "https://github.com/felixgeelhaar/nomi/releases/download/v0.1.1/Nomi_0.1.1_x64_en-US.msi",
+  "url": "https://github.com/klarlabs-studio/nomi/releases/download/v0.1.1/Nomi_0.1.1_x64_en-US.msi",
   "hash": "cf3438500d67766e062fd72eaf696f1c6e29070663487e35c7dba36e30143d80",
   "architecture": {
     "64bit": {
-      "url": "https://github.com/felixgeelhaar/nomi/releases/download/v0.1.1/Nomi_0.1.1_x64_en-US.msi",
+      "url": "https://github.com/klarlabs-studio/nomi/releases/download/v0.1.1/Nomi_0.1.1_x64_en-US.msi",
       "hash": "cf3438500d67766e062fd72eaf696f1c6e29070663487e35c7dba36e30143d80"
     }
   },
@@ -18,9 +18,9 @@
     "type": "msi"
   },
   "checkver": {
-    "github": "https://github.com/felixgeelhaar/nomi"
+    "github": "https://github.com/klarlabs-studio/nomi"
   },
   "autoupdate": {
-    "url": "https://github.com/felixgeelhaar/nomi/releases/download/v$version/Nomi_$version_x64_en-US.msi"
+    "url": "https://github.com/klarlabs-studio/nomi/releases/download/v$version/Nomi_$version_x64_en-US.msi"
   }
 }

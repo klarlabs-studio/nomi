@@ -19,7 +19,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // SchemaVersion is the only schema version recognised today. Bumps
@@ -30,32 +30,32 @@ const SchemaVersion = 1
 // Recipe is the parsed manifest. Field order matches the YAML wire form
 // so a canonical serialisation round-trips deterministically.
 type Recipe struct {
-	SchemaVersion int                        `yaml:"schema_version" json:"schema_version"`
-	ID            string                     `yaml:"id" json:"id"`
-	Name          string                     `yaml:"name" json:"name"`
-	Version       string                     `yaml:"version" json:"version"`
-	Author        string                     `yaml:"author,omitempty" json:"author,omitempty"`
-	Description   string                     `yaml:"description,omitempty" json:"description,omitempty"`
-	Tags          []string                   `yaml:"tags,omitempty" json:"tags,omitempty"`
-	Assistant     AssistantSpec              `yaml:"assistant" json:"assistant"`
+	SchemaVersion int           `yaml:"schema_version" json:"schema_version"`
+	ID            string        `yaml:"id" json:"id"`
+	Name          string        `yaml:"name" json:"name"`
+	Version       string        `yaml:"version" json:"version"`
+	Author        string        `yaml:"author,omitempty" json:"author,omitempty"`
+	Description   string        `yaml:"description,omitempty" json:"description,omitempty"`
+	Tags          []string      `yaml:"tags,omitempty" json:"tags,omitempty"`
+	Assistant     AssistantSpec `yaml:"assistant" json:"assistant"`
 }
 
 // AssistantSpec is the subset of AssistantDefinition that a recipe
 // captures. Pruned of runtime-only fields (ID, CreatedAt, TemplateID)
 // because those are assigned at install time.
 type AssistantSpec struct {
-	Name             string                   `yaml:"name" json:"name"`
-	Tagline          string                   `yaml:"tagline,omitempty" json:"tagline,omitempty"`
-	Role             string                   `yaml:"role" json:"role"`
-	BestFor          string                   `yaml:"best_for,omitempty" json:"best_for,omitempty"`
-	NotFor           string                   `yaml:"not_for,omitempty" json:"not_for,omitempty"`
-	SuggestedModel   string                   `yaml:"suggested_model,omitempty" json:"suggested_model,omitempty"`
-	SystemPrompt     string                   `yaml:"system_prompt" json:"system_prompt"`
-	Capabilities     []string                 `yaml:"capabilities,omitempty" json:"capabilities,omitempty"`
-	MemoryPolicy     domain.MemoryPolicy      `yaml:"memory_policy,omitempty" json:"memory_policy,omitempty"`
-	PermissionPolicy domain.PermissionPolicy  `yaml:"permission_policy,omitempty" json:"permission_policy,omitempty"`
-	ExecutorBackend  string                   `yaml:"executor_backend,omitempty" json:"executor_backend,omitempty"`
-	SandboxImage     string                   `yaml:"sandbox_image,omitempty" json:"sandbox_image,omitempty"`
+	Name             string                  `yaml:"name" json:"name"`
+	Tagline          string                  `yaml:"tagline,omitempty" json:"tagline,omitempty"`
+	Role             string                  `yaml:"role" json:"role"`
+	BestFor          string                  `yaml:"best_for,omitempty" json:"best_for,omitempty"`
+	NotFor           string                  `yaml:"not_for,omitempty" json:"not_for,omitempty"`
+	SuggestedModel   string                  `yaml:"suggested_model,omitempty" json:"suggested_model,omitempty"`
+	SystemPrompt     string                  `yaml:"system_prompt" json:"system_prompt"`
+	Capabilities     []string                `yaml:"capabilities,omitempty" json:"capabilities,omitempty"`
+	MemoryPolicy     domain.MemoryPolicy     `yaml:"memory_policy,omitempty" json:"memory_policy,omitempty"`
+	PermissionPolicy domain.PermissionPolicy `yaml:"permission_policy,omitempty" json:"permission_policy,omitempty"`
+	ExecutorBackend  string                  `yaml:"executor_backend,omitempty" json:"executor_backend,omitempty"`
+	SandboxImage     string                  `yaml:"sandbox_image,omitempty" json:"sandbox_image,omitempty"`
 }
 
 // Hash returns the canonical SHA-256 hex digest of a recipe. Used to

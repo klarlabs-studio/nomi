@@ -32,7 +32,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins/signing"
+	"go.klarlabs.de/nomi/internal/plugins/signing"
 )
 
 // SchemaVersion pins the wire format. v1 is the only version today.

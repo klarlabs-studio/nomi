@@ -23,9 +23,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins"
-	"github.com/felixgeelhaar/nomi/internal/plugins/wasmhost"
-	"github.com/felixgeelhaar/nomi/internal/tools"
+	"go.klarlabs.de/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/plugins/wasmhost"
+	"go.klarlabs.de/nomi/internal/tools"
 )
 
 // Plugin wraps a wasmhost.Module + a parsed manifest. CallConfigBuilder

@@ -5,7 +5,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // TestTransitionRun_ConcurrentLoserGetsErrConcurrentTransition spins
@@ -38,10 +38,10 @@ func TestTransitionRun_ConcurrentLoserGetsErrConcurrentTransition(t *testing.T) 
 	}
 
 	var (
-		wg          sync.WaitGroup
-		successes   int
-		concurrent  int
-		errsMu      sync.Mutex
+		wg         sync.WaitGroup
+		successes  int
+		concurrent int
+		errsMu     sync.Mutex
 	)
 	wg.Add(2)
 	go func() {

@@ -17,13 +17,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/events"
-	"github.com/felixgeelhaar/nomi/internal/plugins"
-	"github.com/felixgeelhaar/nomi/internal/plugins/email/transport"
-	"github.com/felixgeelhaar/nomi/internal/runtime"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/events"
+	"go.klarlabs.de/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/plugins/email/transport"
+	"go.klarlabs.de/nomi/internal/runtime"
+	"go.klarlabs.de/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // PluginID is the stable reverse-DNS identifier for this plugin.
@@ -36,18 +36,18 @@ const defaultPollInterval = 60 * time.Second
 
 // Plugin is the Email plugin implementation.
 type Plugin struct {
-	rt             *runtime.Runtime
-	connections    *db.ConnectionRepository
-	bindings       *db.AssistantBindingRepository
-	conversations  *db.ConversationRepository
-	identities     *db.ChannelIdentityRepository
-	triggerRules   *db.EmailTriggerRepository
-	secrets        secrets.Store
-	eventBus       *events.EventBus
+	rt            *runtime.Runtime
+	connections   *db.ConnectionRepository
+	bindings      *db.AssistantBindingRepository
+	conversations *db.ConversationRepository
+	identities    *db.ChannelIdentityRepository
+	triggerRules  *db.EmailTriggerRepository
+	secrets       secrets.Store
+	eventBus      *events.EventBus
 
 	mu            sync.RWMutex
 	running       bool
-	cancelPerConn  map[string]context.CancelFunc
+	cancelPerConn map[string]context.CancelFunc
 	uidWatermark  map[string]uint32 // connection_id -> highest UID processed
 	healthPerConn map[string]*plugins.ConnectionHealth
 }
@@ -70,7 +70,7 @@ func NewPlugin(
 		bindings:      bindings,
 		conversations: convs,
 		identities:    idents,
-		triggerRules:   triggerRepo,
+		triggerRules:  triggerRepo,
 		secrets:       secrets,
 		eventBus:      eventBus,
 	}

@@ -9,11 +9,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/felixgeelhaar/nomi/releases/latest"><img src="https://img.shields.io/github/v/release/felixgeelhaar/nomi?include_prereleases&color=blue" alt="release"></a>
-  <a href="https://github.com/felixgeelhaar/nomi/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/felixgeelhaar/nomi/release.yml?branch=main" alt="build"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/felixgeelhaar/nomi" alt="license"></a>
+  <a href="https://github.com/klarlabs-studio/nomi/releases/latest"><img src="https://img.shields.io/github/v/release/klarlabs-studio/nomi?include_prereleases&color=blue" alt="release"></a>
+  <a href="https://github.com/klarlabs-studio/nomi/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/klarlabs-studio/nomi/release.yml?branch=main" alt="build"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/klarlabs-studio/nomi" alt="license"></a>
   <img src="https://img.shields.io/badge/local--first-yes-green" alt="local-first">
-  <a href="https://github.com/felixgeelhaar/nomi/stargazers"><img src="https://img.shields.io/github/stars/felixgeelhaar/nomi?style=social" alt="stars"></a>
+  <a href="https://github.com/klarlabs-studio/nomi/stargazers"><img src="https://img.shields.io/github/stars/klarlabs-studio/nomi?style=social" alt="stars"></a>
 </p>
 
 <p align="center">
@@ -27,13 +27,13 @@
 </p>
 
 <p align="center">
-  <video src="https://github.com/felixgeelhaar/nomi/raw/main/docs/media/hero.mp4"
+  <video src="https://github.com/klarlabs-studio/nomi/raw/main/docs/media/hero.mp4"
          poster="docs/media/hero-poster.jpg"
          width="900"
          controls
          muted
          playsinline>
-    <a href="https://github.com/felixgeelhaar/nomi/blob/main/docs/media/hero.mp4">
+    <a href="https://github.com/klarlabs-studio/nomi/blob/main/docs/media/hero.mp4">
       <img src="docs/media/hero-poster.jpg" alt="Plan → Approve → Run — 90s demo" width="900" />
     </a>
   </video>
@@ -55,7 +55,7 @@ engine, sandboxes execution in containers or gVisor, schedules runs
 in plain English, and learns with your approval. Set up an agent in a
 form, install a recipe with one click, or watch Nomi propose a new
 skill from your own runs. For team-scale structured knowledge,
-[Mnemos](https://github.com/felixgeelhaar/mnemos) drops in as an
+[Mnemos](https://github.com/klarlabs-studio/mnemos) drops in as an
 optional plugin.
 
 - **Local-first by default — self-hosted by choice.** On a laptop the
@@ -76,7 +76,7 @@ optional plugin.
   a vector blob. The agent accumulates context across runs so the next
   task starts with the last one's lineage. For team-scale structured
   knowledge (decisions / claims / evidence / contradictions), the
-  [Mnemos](https://github.com/felixgeelhaar/mnemos) plugin is one
+  [Mnemos](https://github.com/klarlabs-studio/mnemos) plugin is one
   capability grant away.
 - **Bring any LLM.** Ollama for free + private. Anthropic / OpenAI when
   you want frontier models. LM Studio, vLLM, Together — anything that
@@ -114,22 +114,22 @@ Full feature-by-feature breakdown:
 | Channel | Command |
 |---|---|
 | **Homebrew Cask (macOS)** | `brew install --cask felixgeelhaar/tap/nomi` |
-| **DMG / MSI / AppImage / DEB** | [Releases page](https://github.com/felixgeelhaar/nomi/releases/latest) |
+| **DMG / MSI / AppImage / DEB** | [Releases page](https://github.com/klarlabs-studio/nomi/releases/latest) |
 
 **CLI (`nomi` — drives a local or remote daemon over REST):**
 
 | Channel | Command |
 |---|---|
 | **Homebrew (macOS / Linux)** | `brew install felixgeelhaar/tap/nomi` |
-| **Direct download (Windows)** | [Releases page](https://github.com/felixgeelhaar/nomi/releases/latest) — `nomi-*-windows-amd64.zip` |
-| **`go install`** | `go install github.com/felixgeelhaar/nomi/cmd/nomi@latest` |
+| **Direct download (Windows)** | [Releases page](https://github.com/klarlabs-studio/nomi/releases/latest) — `nomi-*-windows-amd64.zip` |
+| **`go install`** | `go install go.klarlabs.de/nomi/cmd/nomi@latest` |
 
 **Headless daemon (`nomid`):**
 
 | Channel | Command |
 |---|---|
-| **Docker** | `docker run -p 8080:8080 -v nomi-data:/data ghcr.io/felixgeelhaar/nomi` |
-| **`go install`** | `go install github.com/felixgeelhaar/nomi/cmd/nomid@latest` |
+| **Docker** | `docker run -p 8080:8080 -v nomi-data:/data ghcr.io/klarlabs-studio/nomi` |
+| **`go install`** | `go install go.klarlabs.de/nomi/cmd/nomid@latest` |
 
 The desktop bundle ships the `nomid` runtime as a Tauri sidecar — one
 installer, both binaries. **Docker / `go install` give you just the
@@ -228,8 +228,8 @@ $ nomi run "Add a JSON tag to the User struct in models.go"
 Three places to land next:
 
 1. **Try the flagship recipe** — [`examples/coding-agent/`](examples/coding-agent/) walks the read → unified-diff preview → approve → `go test` loop above against a tiny sample repo. [`examples/code-reviewer/`](examples/code-reviewer/) is the read-only sibling.
-2. **Talk to other people** — [GitHub Discussions](https://github.com/felixgeelhaar/nomi/discussions) for questions, [issues](https://github.com/felixgeelhaar/nomi/issues) for bugs.
-3. **Watch where v0.2 lands** — the v0.2 flagship is real LLM-backed multi-step plans + Anthropic streaming; subscribe via [GitHub Releases](https://github.com/felixgeelhaar/nomi/releases) → Watch → Custom → Releases.
+2. **Talk to other people** — [GitHub Discussions](https://github.com/klarlabs-studio/nomi/discussions) for questions, [issues](https://github.com/klarlabs-studio/nomi/issues) for bugs.
+3. **Watch where v0.2 lands** — the v0.2 flagship is real LLM-backed multi-step plans + Anthropic streaming; subscribe via [GitHub Releases](https://github.com/klarlabs-studio/nomi/releases) → Watch → Custom → Releases.
 
 ## Features
 
@@ -327,13 +327,13 @@ policy, folder context, model override, and bound plugin connections.
 Nomi is built from composable cognitive-stack libraries you can use
 independently. Each is Apache-2.0, documented, releasable on its own:
 
-- **[`statekit`](https://github.com/felixgeelhaar/statekit)** — finite
+- **[`statekit`](https://github.com/klarlabs-studio/statekit)** — finite
   state machines for Go (powers every `Run` / `Plan` / `Step`).
-- **[`mnemos`](https://github.com/felixgeelhaar/mnemos)** — knowledge
+- **[`mnemos`](https://github.com/klarlabs-studio/mnemos)** — knowledge
   graph for agent organizations (events, claims, evidence,
   relationships). Reachable from Nomi via an optional plugin
   *(plugin in flight)*.
-- **[`scout`](https://github.com/felixgeelhaar/scout)** — browser
+- **[`scout`](https://github.com/klarlabs-studio/scout)** — browser
   automation built for agents.
 - **[`roady`](https://github.com/felixgeelhaar/roady)** — spec-driven
   planning + task tracking with hash-chained audit log.
@@ -404,7 +404,7 @@ Docker + gVisor), three-layer network egress isolation
 (`--network=none` default → DNS allowlist via docker `--add-host` +
 `--dns=127.255.255.255` → optional eBPF cgroup_skb filter, IPv4 +
 IPv6, both docker cgroup drivers), browser automation as a first-
-party plugin via [Scout](https://github.com/felixgeelhaar/scout)
+party plugin via [Scout](https://github.com/klarlabs-studio/scout)
 over MCP, signed Recipe registry with built-in catalog, scheduled
 runs with natural-language cron, auto-extracted preference learning
 loop, skill induction with embedding clustering + LLM synthesis,
@@ -431,7 +431,7 @@ Backlog (post-v0.2.3, in priority order — not committed):
 
 Live spec, plan, and task state in [`.roady/`](.roady/) (142
 features, 267 tasks closed at release). Ideas and bug reports on
-the [issues page](https://github.com/felixgeelhaar/nomi/issues).
+the [issues page](https://github.com/klarlabs-studio/nomi/issues).
 
 ## Contributing
 
@@ -441,7 +441,7 @@ architecture, runtime state machine), then open an issue to discuss.
 Smaller fixes — typos, doc edits, plugin polish — can land straight as
 a PR.
 
-Look for [`good first issue`](https://github.com/felixgeelhaar/nomi/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
+Look for [`good first issue`](https://github.com/klarlabs-studio/nomi/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 labels on the issues board.
 
 The project follows the [Contributor Covenant Code of

@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins/bundle"
-	"github.com/felixgeelhaar/nomi/internal/plugins/hub"
-	"github.com/felixgeelhaar/nomi/internal/plugins/signing"
+	"go.klarlabs.de/nomi/internal/plugins/bundle"
+	"go.klarlabs.de/nomi/internal/plugins/hub"
+	"go.klarlabs.de/nomi/internal/plugins/signing"
 )
 
 // fixturePublisher returns the keys + a helper that writes a signed
@@ -34,11 +34,11 @@ func newFixture(t *testing.T) *fixturePublisher {
 func (f *fixturePublisher) writeBundle(t *testing.T, dir, filename, pluginID, version string) {
 	t.Helper()
 	manifest := map[string]any{
-		"id":          pluginID,
-		"name":        "Plugin " + pluginID,
-		"version":     version,
-		"author":      "Tests",
-		"cardinality": "single",
+		"id":           pluginID,
+		"name":         "Plugin " + pluginID,
+		"version":      version,
+		"author":       "Tests",
+		"cardinality":  "single",
 		"capabilities": []string{"echo.echo"},
 		"contributes": map[string]any{
 			"tools": []map[string]any{

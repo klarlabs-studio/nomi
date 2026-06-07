@@ -7,8 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"github.com/felixgeelhaar/nomi/internal/recipes"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/recipes"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // RecipeServer handles the /recipes REST surface.
@@ -114,8 +114,8 @@ type installRequest struct {
 // data the install flow would write, so the UI can render a diff /
 // confirmation step before calling /install.
 type installPreview struct {
-	Recipe       *recipes.Recipe `json:"recipe"`
-	SHA256       string          `json:"sha256"`
+	Recipe           *recipes.Recipe        `json:"recipe"`
+	SHA256           string                 `json:"sha256"`
 	AssistantPreview map[string]interface{} `json:"assistant_preview"`
 }
 

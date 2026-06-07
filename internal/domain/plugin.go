@@ -23,9 +23,9 @@ type Connection struct {
 	// whether the receiver accepts payloads for this connection;
 	// WebhookEventAllowlist is a JSON array of event type strings
 	// (e.g. ["push","pull_request"]) — empty means allow all.
-	WebhookURL              string   `json:"webhook_url,omitempty"`
-	WebhookEnabled          bool     `json:"webhook_enabled"`
-	WebhookEventAllowlist   []string `json:"webhook_event_allowlist"`
+	WebhookURL            string   `json:"webhook_url,omitempty"`
+	WebhookEnabled        bool     `json:"webhook_enabled"`
+	WebhookEventAllowlist []string `json:"webhook_event_allowlist"`
 }
 
 // BindingRole enumerates the roles an AssistantConnectionBinding can occupy.
@@ -143,12 +143,12 @@ type PluginState struct {
 // these rows and dispatches the right tool (transcribe, describe,
 // extract) before planning starts. See ADR 0001 §rich-media.
 type RunAttachment struct {
-	ID          string    `json:"id"`
-	RunID       string    `json:"run_id"`
-	Kind        string    `json:"kind"` // "image" | "document" | "audio" | "video"
-	Filename    string    `json:"filename,omitempty"`
-	ContentType string    `json:"content_type,omitempty"`
-	URL         string    `json:"url,omitempty"`
+	ID          string `json:"id"`
+	RunID       string `json:"run_id"`
+	Kind        string `json:"kind"` // "image" | "document" | "audio" | "video"
+	Filename    string `json:"filename,omitempty"`
+	ContentType string `json:"content_type,omitempty"`
+	URL         string `json:"url,omitempty"`
 	// ExternalID is the channel provider's stable reference (Telegram
 	// file_id, Slack file_id, Discord attachment id). Stored so we can
 	// re-fetch when URLs expire — Telegram's getFile URLs, in

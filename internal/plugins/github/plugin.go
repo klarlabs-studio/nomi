@@ -15,12 +15,12 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	gh "github.com/felixgeelhaar/nomi/internal/integrations/github"
-	"github.com/felixgeelhaar/nomi/internal/plugins"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
-	"github.com/felixgeelhaar/nomi/internal/tools"
+	"go.klarlabs.de/nomi/internal/domain"
+	gh "go.klarlabs.de/nomi/internal/integrations/github"
+	"go.klarlabs.de/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/tools"
 )
 
 // PluginID is the stable reverse-DNS identifier.
@@ -28,12 +28,12 @@ const PluginID = "com.nomi.github"
 
 // Connection config keys. Stored in plugin_connections.config (JSON).
 const (
-	configAppID           = "app_id"            // int64 as JSON number
-	configInstallationID  = "installation_id"   // int64 as JSON number
-	configAccountLogin    = "account_login"     // org or user that installed the App
-	configRepoAllowlist   = "repo_allowlist"    // []string of "owner/repo"
-	configPollingEnabled  = "polling_enabled"   // bool, default false
-	credentialPrivateKey  = "private_key_pem"   // ref into secrets.Store
+	configAppID          = "app_id"          // int64 as JSON number
+	configInstallationID = "installation_id" // int64 as JSON number
+	configAccountLogin   = "account_login"   // org or user that installed the App
+	configRepoAllowlist  = "repo_allowlist"  // []string of "owner/repo"
+	configPollingEnabled = "polling_enabled" // bool, default false
+	credentialPrivateKey = "private_key_pem" // ref into secrets.Store
 )
 
 // Plugin is the GitHub plugin. Tool-only; one Connection = one App
@@ -111,17 +111,17 @@ func (p *Plugin) Manifest() plugins.PluginManifest {
 		Requires: plugins.Requirements{
 			Credentials: []plugins.CredentialSpec{
 				{
-					Kind:     "github_app_private_key",
-					Key:      credentialPrivateKey,
-					Label:    "GitHub App private key (PEM)",
-					Required: true,
+					Kind:        "github_app_private_key",
+					Key:         credentialPrivateKey,
+					Label:       "GitHub App private key (PEM)",
+					Required:    true,
 					Description: "Paste the PKCS#1 or PKCS#8 PEM downloaded from the App's settings page when you generated the key. Begins with `-----BEGIN RSA PRIVATE KEY-----` or `-----BEGIN PRIVATE KEY-----`.",
 				},
 				{
-					Kind:     "webhook_secret",
-					Key:      "webhook_secret",
-					Label:    "Webhook Secret",
-					Required: false,
+					Kind:        "webhook_secret",
+					Key:         "webhook_secret",
+					Label:       "Webhook Secret",
+					Required:    false,
 					Description: "Secret used to verify webhook signatures from GitHub. Generate one in the Connections tab after enabling webhooks.",
 				},
 			},
@@ -314,4 +314,3 @@ func configInt(config map[string]any, key string) (int64, error) {
 		return 0, fmt.Errorf("config key %q has unsupported type %T", key, raw)
 	}
 }
-

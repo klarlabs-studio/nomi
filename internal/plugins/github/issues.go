@@ -6,9 +6,9 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	gh "github.com/felixgeelhaar/nomi/internal/integrations/github"
-	"github.com/felixgeelhaar/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/domain"
+	gh "go.klarlabs.de/nomi/internal/integrations/github"
+	"go.klarlabs.de/nomi/internal/plugins"
 )
 
 // IssueTools constructs the slice of github.issues.* tools the plugin

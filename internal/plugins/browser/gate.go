@@ -22,7 +22,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // ErrHostNotAllowed is the sentinel for navigation refusals. The

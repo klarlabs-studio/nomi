@@ -14,10 +14,10 @@ import (
 
 // ngrokAdapter implements Adapter using the official ngrok-go SDK.
 type ngrokAdapter struct {
-	cfg      Config
-	url      string
+	cfg       Config
+	url       string
 	forwarder ngrok.Forwarder
-	mu       sync.RWMutex
+	mu        sync.RWMutex
 }
 
 func newNgrokAdapter(cfg Config) *ngrokAdapter {

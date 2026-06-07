@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // FileListTool lists directory entries inside an assistant's workspace root.

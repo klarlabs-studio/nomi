@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // MigrateRepositories moves any plaintext secrets still present in SQLite
@@ -37,7 +37,7 @@ func MigrateRepositories(store Store, database *db.DB) error {
 // the connectors package (which would create an import cycle, since the
 // connectors package imports secrets).
 type telegramConfigLike struct {
-	Enabled     bool                    `json:"enabled"`
+	Enabled     bool                     `json:"enabled"`
 	Connections []telegramConnectionLike `json:"connections"`
 }
 

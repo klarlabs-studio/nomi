@@ -8,9 +8,9 @@ COMMIT     ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo none)
 BUILD_DATE ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 
 LDFLAGS := -s -w \
-	-X github.com/felixgeelhaar/nomi/internal/buildinfo.Version=$(VERSION) \
-	-X github.com/felixgeelhaar/nomi/internal/buildinfo.Commit=$(COMMIT) \
-	-X github.com/felixgeelhaar/nomi/internal/buildinfo.BuildDate=$(BUILD_DATE)
+	-X go.klarlabs.de/nomi/internal/buildinfo.Version=$(VERSION) \
+	-X go.klarlabs.de/nomi/internal/buildinfo.Commit=$(COMMIT) \
+	-X go.klarlabs.de/nomi/internal/buildinfo.BuildDate=$(BUILD_DATE)
 
 # Default target
 all: build

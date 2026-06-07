@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // AssistantRepository handles database operations for Assistants

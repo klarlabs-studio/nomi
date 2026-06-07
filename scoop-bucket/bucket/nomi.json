@@ -1,23 +1,23 @@
 {
   "version": "0.1.1",
   "description": "CLI client for the Nomi local-first agent platform",
-  "homepage": "https://github.com/felixgeelhaar/nomi",
+  "homepage": "https://github.com/klarlabs-studio/nomi",
   "license": "Apache-2.0",
   "architecture": {
     "64bit": {
-      "url": "https://github.com/felixgeelhaar/nomi/releases/download/v0.1.1/nomi-0.1.1-windows-amd64.zip",
+      "url": "https://github.com/klarlabs-studio/nomi/releases/download/v0.1.1/nomi-0.1.1-windows-amd64.zip",
       "hash": "7e2acb9676612dfcd3217bae9cf59ff68f13c1781d4954b69d46cc3018962d33",
       "extract_dir": "nomi-windows-amd64"
     }
   },
   "bin": "nomi.exe",
   "checkver": {
-    "github": "https://github.com/felixgeelhaar/nomi"
+    "github": "https://github.com/klarlabs-studio/nomi"
   },
   "autoupdate": {
     "architecture": {
       "64bit": {
-        "url": "https://github.com/felixgeelhaar/nomi/releases/download/v$version/nomi-$version-windows-amd64.zip",
+        "url": "https://github.com/klarlabs-studio/nomi/releases/download/v$version/nomi-$version-windows-amd64.zip",
         "extract_dir": "nomi-windows-amd64"
       }
     },

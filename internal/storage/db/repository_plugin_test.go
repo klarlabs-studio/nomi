@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 func newTestDB(t *testing.T) (*DB, func()) {

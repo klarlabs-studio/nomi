@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/plugins"
 )
 
 // ReceiveWebhook implements plugins.WebhookReceiver. Parses GitHub webhook
@@ -98,10 +98,10 @@ func (p *Plugin) handlePRWebhook(ctx context.Context, connectionID string, data 
 		Kind:         TriggerKindPRReviewRequested,
 		Goal:         fmt.Sprintf("Review requested on PR %s/%d: %s", repoName, int(num), title),
 		Metadata: map[string]interface{}{
-			"repo":     repoName,
+			"repo":      repoName,
 			"pr_number": int(num),
-			"title":    title,
-			"body":     body,
+			"title":     title,
+			"body":      body,
 		},
 	}
 	return onFire(ctx, ev)

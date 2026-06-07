@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/runtime"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/runtime"
 )
 
 // Server holds all API handlers
@@ -229,12 +229,12 @@ func (s *Server) ApprovePlan(c *gin.Context) {
 // EditPlanRequest represents a request to edit a plan
 type EditPlanRequest struct {
 	Steps []struct {
-		ID                 string                 `json:"id,omitempty"`
-		Title              string                 `json:"title"`
-		Description        string                 `json:"description,omitempty"`
-		ExpectedTool       string                 `json:"expected_tool,omitempty"`
-		ExpectedCapability string                 `json:"expected_capability,omitempty"`
-		DependsOn          []string               `json:"depends_on,omitempty"`
+		ID                 string   `json:"id,omitempty"`
+		Title              string   `json:"title"`
+		Description        string   `json:"description,omitempty"`
+		ExpectedTool       string   `json:"expected_tool,omitempty"`
+		ExpectedCapability string   `json:"expected_capability,omitempty"`
+		DependsOn          []string `json:"depends_on,omitempty"`
 		// Arguments lets the desktop UI push a modified tool argument
 		// payload (e.g. a unified diff with skipped hunks dropped)
 		// without re-running the planner. Optional; when absent, the

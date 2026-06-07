@@ -13,15 +13,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/events"
-	"github.com/felixgeelhaar/nomi/internal/llm"
-	"github.com/felixgeelhaar/nomi/internal/memory"
-	"github.com/felixgeelhaar/nomi/internal/permissions"
-	"github.com/felixgeelhaar/nomi/internal/runtime"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
-	"github.com/felixgeelhaar/nomi/internal/tools"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/events"
+	"go.klarlabs.de/nomi/internal/llm"
+	"go.klarlabs.de/nomi/internal/memory"
+	"go.klarlabs.de/nomi/internal/permissions"
+	"go.klarlabs.de/nomi/internal/runtime"
+	"go.klarlabs.de/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/tools"
 )
 
 // goldenCase pairs a user goal with the plan a competent planner should
@@ -44,11 +44,11 @@ type goldenCase struct {
 // Set NOMI_GOLDEN_THRESHOLD to override the 80%-pass threshold.
 var goldenCases = []goldenCase{
 	{
-		name: "single-step llm.chat for a question",
-		goal: "Explain SQLite WAL mode in 4 sentences.",
+		name:        "single-step llm.chat for a question",
+		goal:        "Explain SQLite WAL mode in 4 sentences.",
 		plannerJSON: `{"steps":[{"title":"Explain WAL","description":"Summarize WAL.","tool":"llm.chat","arguments":{"prompt":"Explain SQLite WAL in 4 sentences."}}]}`,
-		wantTools: []string{"llm.chat"},
-		wantSteps: 1,
+		wantTools:   []string{"llm.chat"},
+		wantSteps:   1,
 	},
 	{
 		name: "read-then-summarize is two steps",
@@ -61,11 +61,11 @@ var goldenCases = []goldenCase{
 		wantSteps: 2,
 	},
 	{
-		name: "write needs a content arg",
-		goal: "Save a placeholder TODO.md file.",
+		name:        "write needs a content arg",
+		goal:        "Save a placeholder TODO.md file.",
 		plannerJSON: `{"steps":[{"title":"Write TODO","description":"Create TODO.md.","tool":"filesystem.write","arguments":{"path":"TODO.md","content":"# TODO\n\n- [ ] Pick first task\n"}}]}`,
-		wantTools: []string{"filesystem.write"},
-		wantSteps: 1,
+		wantTools:   []string{"filesystem.write"},
+		wantSteps:   1,
 	},
 	{
 		name: "list+read combo for orientation",
@@ -79,11 +79,11 @@ var goldenCases = []goldenCase{
 		wantSteps: 3,
 	},
 	{
-		name: "command.exec for running tests",
-		goal: "Run go test ./...",
+		name:        "command.exec for running tests",
+		goal:        "Run go test ./...",
 		plannerJSON: `{"steps":[{"title":"Run tests","description":"Execute go test.","tool":"command.exec","arguments":{"command":"go test ./..."}}]}`,
-		wantTools: []string{"command.exec"},
-		wantSteps: 1,
+		wantTools:   []string{"command.exec"},
+		wantSteps:   1,
 	},
 }
 
@@ -252,7 +252,7 @@ func runGoldenCase(t *testing.T, c goldenCase) {
 // llm.NewResolver requires a non-nil Store, so a no-op fake is enough.
 type inMemoryStore struct{ data map[string]string }
 
-func newInMemoryStore() *inMemoryStore { return &inMemoryStore{data: make(map[string]string)} }
+func newInMemoryStore() *inMemoryStore         { return &inMemoryStore{data: make(map[string]string)} }
 func (s *inMemoryStore) Put(k, v string) error { s.data[k] = v; return nil }
 func (s *inMemoryStore) Get(k string) (string, error) {
 	v, ok := s.data[k]

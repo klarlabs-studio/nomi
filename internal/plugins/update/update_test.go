@@ -12,16 +12,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/events"
-	"github.com/felixgeelhaar/nomi/internal/plugins"
-	"github.com/felixgeelhaar/nomi/internal/plugins/bundle"
-	"github.com/felixgeelhaar/nomi/internal/plugins/hub"
-	"github.com/felixgeelhaar/nomi/internal/plugins/signing"
-	"github.com/felixgeelhaar/nomi/internal/plugins/store"
-	"github.com/felixgeelhaar/nomi/internal/plugins/wasmhost"
-	"github.com/felixgeelhaar/nomi/internal/plugins/wasmplugin"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/events"
+	"go.klarlabs.de/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/plugins/bundle"
+	"go.klarlabs.de/nomi/internal/plugins/hub"
+	"go.klarlabs.de/nomi/internal/plugins/signing"
+	"go.klarlabs.de/nomi/internal/plugins/store"
+	"go.klarlabs.de/nomi/internal/plugins/wasmhost"
+	"go.klarlabs.de/nomi/internal/plugins/wasmplugin"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // updateFixture is everything the update tests need. Centralized so

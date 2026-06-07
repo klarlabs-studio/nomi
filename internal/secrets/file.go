@@ -17,10 +17,10 @@ import (
 // fileStore is the fallback Store used when the OS keyring is unavailable.
 // Layout:
 //
-//   <dataDir>/secret.key   — 32 bytes of OS-random, 0600, never rotated.
-//   <dataDir>/secrets.vault — JSON {key -> base64(nonce||ciphertext||tag)},
-//                             each value encrypted with AES-256-GCM using
-//                             the contents of secret.key as the key.
+//	<dataDir>/secret.key   — 32 bytes of OS-random, 0600, never rotated.
+//	<dataDir>/secrets.vault — JSON {key -> base64(nonce||ciphertext||tag)},
+//	                          each value encrypted with AES-256-GCM using
+//	                          the contents of secret.key as the key.
 //
 // This is weaker than a platform keychain (anyone who can read the user's
 // home directory can decrypt the vault) but strictly better than the prior

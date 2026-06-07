@@ -6,7 +6,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/felixgeelhaar/nomi/internal/tools"
+	"go.klarlabs.de/nomi/internal/tools"
 )
 
 // Registry is the single source of truth for registered plugins. Role-view

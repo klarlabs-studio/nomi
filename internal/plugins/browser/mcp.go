@@ -1,6 +1,6 @@
 // Package browser is the system-tier plugin that gives Nomi
 // assistants browser-automation tools by delegating to Scout
-// (https://github.com/felixgeelhaar/scout) over stdio MCP. Scout
+// (https://github.com/klarlabs-studio/scout) over stdio MCP. Scout
 // owns the browser lifecycle, semantic observation, and Playwright
 // integration; the Nomi plugin is a thin contract translator that
 // proxies tool calls into Scout's MCP surface.

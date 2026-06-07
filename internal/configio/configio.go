@@ -40,11 +40,11 @@ import (
 	"github.com/google/uuid"
 	"gopkg.in/yaml.v3"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/llm"
-	"github.com/felixgeelhaar/nomi/internal/permissions"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/llm"
+	"go.klarlabs.de/nomi/internal/permissions"
+	"go.klarlabs.de/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // SchemaVersion bumps any time the on-disk shape changes in a way the
@@ -55,14 +55,14 @@ const SchemaVersion = 1
 // Snapshot is the wire shape. Every field is omit-empty so a sparse
 // import (e.g. only the providers section) round-trips cleanly.
 type Snapshot struct {
-	SchemaVersion int                `yaml:"schema_version"`
-	ExportedAt    time.Time          `yaml:"exported_at,omitempty"`
-	Providers     []ProviderSnapshot `yaml:"providers,omitempty"`
-	DefaultLLM    *DefaultLLM        `yaml:"default_llm,omitempty"`
+	SchemaVersion int                 `yaml:"schema_version"`
+	ExportedAt    time.Time           `yaml:"exported_at,omitempty"`
+	Providers     []ProviderSnapshot  `yaml:"providers,omitempty"`
+	DefaultLLM    *DefaultLLM         `yaml:"default_llm,omitempty"`
 	Assistants    []AssistantSnapshot `yaml:"assistants,omitempty"`
-	Settings      *SettingsSnapshot  `yaml:"settings,omitempty"`
-	Preferences   []MemorySnapshot   `yaml:"preferences,omitempty"`
-	PluginStates  []PluginState      `yaml:"plugin_states,omitempty"`
+	Settings      *SettingsSnapshot   `yaml:"settings,omitempty"`
+	Preferences   []MemorySnapshot    `yaml:"preferences,omitempty"`
+	PluginStates  []PluginState       `yaml:"plugin_states,omitempty"`
 }
 
 type ProviderSnapshot struct {
@@ -80,20 +80,20 @@ type DefaultLLM struct {
 }
 
 type AssistantSnapshot struct {
-	TemplateID       string                       `yaml:"template_id,omitempty"`
-	Name             string                       `yaml:"name"`
-	Tagline          string                       `yaml:"tagline,omitempty"`
-	Role             string                       `yaml:"role,omitempty"`
-	BestFor          string                       `yaml:"best_for,omitempty"`
-	NotFor           string                       `yaml:"not_for,omitempty"`
-	SuggestedModel   string                       `yaml:"suggested_model,omitempty"`
-	SystemPrompt     string                       `yaml:"system_prompt,omitempty"`
-	Channels         []string                     `yaml:"channels,omitempty"`
-	Capabilities     []string                     `yaml:"capabilities,omitempty"`
-	Contexts         []domain.ContextAttachment   `yaml:"contexts,omitempty"`
-	MemoryPolicy     domain.MemoryPolicy          `yaml:"memory_policy,omitempty"`
-	PermissionPolicy domain.PermissionPolicy      `yaml:"permission_policy,omitempty"`
-	ModelPolicy      *domain.ModelPolicy          `yaml:"model_policy,omitempty"`
+	TemplateID       string                     `yaml:"template_id,omitempty"`
+	Name             string                     `yaml:"name"`
+	Tagline          string                     `yaml:"tagline,omitempty"`
+	Role             string                     `yaml:"role,omitempty"`
+	BestFor          string                     `yaml:"best_for,omitempty"`
+	NotFor           string                     `yaml:"not_for,omitempty"`
+	SuggestedModel   string                     `yaml:"suggested_model,omitempty"`
+	SystemPrompt     string                     `yaml:"system_prompt,omitempty"`
+	Channels         []string                   `yaml:"channels,omitempty"`
+	Capabilities     []string                   `yaml:"capabilities,omitempty"`
+	Contexts         []domain.ContextAttachment `yaml:"contexts,omitempty"`
+	MemoryPolicy     domain.MemoryPolicy        `yaml:"memory_policy,omitempty"`
+	PermissionPolicy domain.PermissionPolicy    `yaml:"permission_policy,omitempty"`
+	ModelPolicy      *domain.ModelPolicy        `yaml:"model_policy,omitempty"`
 }
 
 type SettingsSnapshot struct {
@@ -428,7 +428,7 @@ type Result struct {
 
 // MarshalYAML / Marshal helpers expose the encoder as a one-line API
 // for callers that don't want to import yaml.v3 directly.
-func Marshal(snap *Snapshot) ([]byte, error) { return yaml.Marshal(snap) }
+func Marshal(snap *Snapshot) ([]byte, error)     { return yaml.Marshal(snap) }
 func Unmarshal(raw []byte, snap *Snapshot) error { return yaml.Unmarshal(raw, snap) }
 
 // LoadFile is a convenience for `nomid` / `nomi` to read a snapshot

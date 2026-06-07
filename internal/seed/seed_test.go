@@ -6,8 +6,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/secrets"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // inMemSecrets is a tiny secrets.Store impl for tests; production

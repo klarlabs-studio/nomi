@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/secrets"
 )
 
 type memStore struct {

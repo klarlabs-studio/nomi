@@ -11,10 +11,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/events"
-	"github.com/felixgeelhaar/nomi/internal/memstore"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/events"
+	"go.klarlabs.de/nomi/internal/memstore"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // EmbeddedClient is the in-process implementation of memstore.Client.
@@ -22,7 +22,7 @@ import (
 // Scope/Entry types and the domain MemoryEntry rows on disk.
 //
 // Step 1 of ADR 0004 — once the package extracts to
-// github.com/felixgeelhaar/mnemos this struct moves with it; today it
+// go.klarlabs.de/mnemos this struct moves with it; today it
 // lives here so the runtime can depend on the memstore.Client interface
 // without forcing the repo refactor in the same change.
 type EmbeddedClient struct {

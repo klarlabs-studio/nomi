@@ -41,7 +41,7 @@ winget install --id Microsoft.WingetCreate
 # After the GitHub Release is published with a signed MSI:
 wingetcreate update Nomi.Nomi `
     --version <semver> `
-    --urls https://github.com/felixgeelhaar/nomi/releases/download/v<semver>/Nomi_<semver>_x64_en-US.msi `
+    --urls https://github.com/klarlabs-studio/nomi/releases/download/v<semver>/Nomi_<semver>_x64_en-US.msi `
     --submit `
     --token <github-pat>
 ```

@@ -12,12 +12,12 @@
 <meta property="og:title" content="Nomi — Agents that ask before they act." />
 <meta property="og:description" content="Reviewable agents. Configure in a UI, preview the plan, approve. Multi-step automation gated by capability and audited end-to-end." />
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://felixgeelhaar.github.io/nomi/" />
-<meta property="og:image" content="https://felixgeelhaar.github.io/nomi/media/og-card.png" />
+<meta property="og:url" content="https://klarlabs-studio.github.io/nomi/" />
+<meta property="og:image" content="https://klarlabs-studio.github.io/nomi/media/og-card.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:image" content="https://felixgeelhaar.github.io/nomi/media/og-card.png" />
+<meta name="twitter:image" content="https://klarlabs-studio.github.io/nomi/media/og-card.png" />
 <link rel="stylesheet" href="site.css" />
 </head>
 <body>
@@ -30,7 +30,7 @@
     <a href="#compared">Compared to</a>
     <a href="#roadmap">Roadmap</a>
     <a href="#install">Install</a>
-    <a href="https://github.com/felixgeelhaar/nomi" rel="noopener">GitHub →</a>
+    <a href="https://github.com/klarlabs-studio/nomi" rel="noopener">GitHub →</a>
   </nav>
 </header>
 
@@ -48,7 +48,7 @@
         <code>brew install --cask felixgeelhaar/tap/nomi</code>
         <span class="copy-icon">⧉</span>
       </button>
-      <a class="btn-secondary" href="https://github.com/felixgeelhaar/nomi" rel="noopener">GitHub →</a>
+      <a class="btn-secondary" href="https://github.com/klarlabs-studio/nomi" rel="noopener">GitHub →</a>
     </div>
     <div class="badges">
       <span>macOS</span>
@@ -161,7 +161,7 @@
       </div>
       <div class="diff-card">
         <h3>Persistent memory you can read</h3>
-        <p>Workspace-scoped SQLite next to your runs — exportable, inspectable, queryable. The agent accumulates context across runs so the next task starts with the last one's lineage. For team-scale structured knowledge (claims, evidence, relationships), <a href="https://github.com/felixgeelhaar/mnemos">Mnemos</a> drops in as an optional plugin.</p>
+        <p>Workspace-scoped SQLite next to your runs — exportable, inspectable, queryable. The agent accumulates context across runs so the next task starts with the last one's lineage. For team-scale structured knowledge (claims, evidence, relationships), <a href="https://github.com/klarlabs-studio/mnemos">Mnemos</a> drops in as an optional plugin.</p>
       </div>
       <div class="diff-card">
         <h3>Daemon-not-IDE-plugin</h3>
@@ -203,7 +203,7 @@
     </dl>
     <p class="muted">
       Full feature-by-feature breakdown:
-      <a href="https://github.com/felixgeelhaar/nomi/blob/main/docs/comparison.md">docs/comparison.md</a>.
+      <a href="https://github.com/klarlabs-studio/nomi/blob/main/docs/comparison.md">docs/comparison.md</a>.
     </p>
   </section>
 
@@ -242,20 +242,20 @@
         <h3>Desktop</h3>
         <p>Tauri shell + bundled <code>nomid</code> daemon. Menu-bar tray. Auto-updates.</p>
         <pre><code>brew install --cask felixgeelhaar/tap/nomi</code></pre>
-        <p class="alt">or download <a href="https://github.com/felixgeelhaar/nomi/releases/latest">DMG / MSI / AppImage / DEB</a></p>
+        <p class="alt">or download <a href="https://github.com/klarlabs-studio/nomi/releases/latest">DMG / MSI / AppImage / DEB</a></p>
       </div>
       <div class="install-card">
         <h3>CLI</h3>
         <p>Drives a local or remote daemon over REST. Tail runs, approve from terminal, export config.</p>
         <pre><code>brew install felixgeelhaar/tap/nomi</code></pre>
-        <p class="alt">or <code>go install github.com/felixgeelhaar/nomi/cmd/nomi@latest</code></p>
+        <p class="alt">or <code>go install go.klarlabs.de/nomi/cmd/nomi@latest</code></p>
       </div>
       <div class="install-card">
         <h3>Headless daemon</h3>
         <p>Just <code>nomid</code>. Drop it on a VPS, a Kubernetes pod, anywhere. Configure with a YAML seed.</p>
         <pre><code>docker run -p 8080:8080 -v nomi-data:/data \
-  ghcr.io/felixgeelhaar/nomi</code></pre>
-        <p class="alt">full guide: <a href="https://github.com/felixgeelhaar/nomi/blob/main/docs/headless.md">docs/headless.md</a></p>
+  ghcr.io/klarlabs-studio/nomi</code></pre>
+        <p class="alt">full guide: <a href="https://github.com/klarlabs-studio/nomi/blob/main/docs/headless.md">docs/headless.md</a></p>
       </div>
     </div>
 
@@ -276,9 +276,9 @@
 <span class="ev-ok">✓</span> run.completed     duration=11s</code></pre>
 
       <p class="next-steps">
-        <a class="next-link" href="https://github.com/felixgeelhaar/nomi/tree/main/examples">Try a recipe →</a>
-        <a class="next-link" href="https://github.com/felixgeelhaar/nomi/discussions">Ask in Discussions →</a>
-        <a class="next-link" href="https://github.com/felixgeelhaar/nomi/releases">Watch releases →</a>
+        <a class="next-link" href="https://github.com/klarlabs-studio/nomi/tree/main/examples">Try a recipe →</a>
+        <a class="next-link" href="https://github.com/klarlabs-studio/nomi/discussions">Ask in Discussions →</a>
+        <a class="next-link" href="https://github.com/klarlabs-studio/nomi/releases">Watch releases →</a>
       </p>
     </div>
   </section>
@@ -287,17 +287,17 @@
     <h2>Built on infrastructure you can use too</h2>
     <p class="section-lede">Nomi rides four small, focused libraries. Each is independent, Apache 2.0, and worth a look on its own — especially if you're shipping anything agentic.</p>
     <div class="lib-grid">
-      <a class="lib lib-lead" href="https://github.com/felixgeelhaar/statekit" rel="noopener">
+      <a class="lib lib-lead" href="https://github.com/klarlabs-studio/statekit" rel="noopener">
         <span class="lib-tag">core</span>
         <h3>statekit</h3>
         <p>Type-safe finite state machines for Go. Every Nomi run, plan and step transition is a statekit machine — including the approval pause/resume loop. If you're tired of bool-flag state, start here.</p>
       </a>
-      <a class="lib lib-lead" href="https://github.com/felixgeelhaar/mnemos" rel="noopener">
+      <a class="lib lib-lead" href="https://github.com/klarlabs-studio/mnemos" rel="noopener">
         <span class="lib-tag">cognition</span>
         <h3>mnemos</h3>
         <p>Knowledge graph for agent organizations. Events, claims (fact / hypothesis / decision / test_result), evidence links, contradicts/supports relationships, visibility scopes. HTTP service with a typed Go client. Reachable from Nomi via an optional plugin.</p>
       </a>
-      <a class="lib" href="https://github.com/felixgeelhaar/scout" rel="noopener">
+      <a class="lib" href="https://github.com/klarlabs-studio/scout" rel="noopener">
         <h3>scout</h3>
         <p>Browser automation built for agents — observable DOM, semantic selectors, deterministic E2E.</p>
       </a>
@@ -315,7 +315,7 @@
       <article class="roadmap-card now">
         <span class="roadmap-tag">Now · shipping (v0.2.3)</span>
         <h3>Reviewable agents + hard sandboxing</h3>
-        <p>Plan-review-before-execute, capability-gated tools, hash-chained audit log, sandboxed exec (local + Docker + gVisor), recipe registry with signed YAML bundles, scheduled runs with natural-language cron, auto-extracted preferences your planner reads, skill induction with embedding clustering + LLM synthesis. Three-layer egress isolation — <code>--network=none</code> default, DNS allowlist for accidental egress, optional eBPF cgroup_skb/egress filter (Linux, IPv4 + IPv6, cgroupfs + systemd cgroup drivers) for hardcoded-IP bypass. Browser automation as a first-party plugin via <a href="https://github.com/felixgeelhaar/scout">Scout</a> over MCP. Diff-review UI does whole-hunk Shiki tokenisation so multi-line scope survives. Four messaging channels — Telegram, Slack, Discord, WhatsApp — plus Gmail, Calendar, GitHub, Obsidian, Mnemos (optional) connectors. Bring any OpenAI-compatible model.</p>
+        <p>Plan-review-before-execute, capability-gated tools, hash-chained audit log, sandboxed exec (local + Docker + gVisor), recipe registry with signed YAML bundles, scheduled runs with natural-language cron, auto-extracted preferences your planner reads, skill induction with embedding clustering + LLM synthesis. Three-layer egress isolation — <code>--network=none</code> default, DNS allowlist for accidental egress, optional eBPF cgroup_skb/egress filter (Linux, IPv4 + IPv6, cgroupfs + systemd cgroup drivers) for hardcoded-IP bypass. Browser automation as a first-party plugin via <a href="https://github.com/klarlabs-studio/scout">Scout</a> over MCP. Diff-review UI does whole-hunk Shiki tokenisation so multi-line scope survives. Four messaging channels — Telegram, Slack, Discord, WhatsApp — plus Gmail, Calendar, GitHub, Obsidian, Mnemos (optional) connectors. Bring any OpenAI-compatible model.</p>
       </article>
       <article class="roadmap-card next">
         <span class="roadmap-tag">Next</span>
@@ -328,7 +328,7 @@
         <p>Cross-machine recipe sync. Visibility-scoped Mnemos (personal / team / org) for institutional memory shared across agents. Approval delegation across devices. Hosted Mnemos as an opt-in, never a forced cloud.</p>
       </article>
     </div>
-    <p class="muted">Backlog of record: <a href="https://github.com/felixgeelhaar/nomi/blob/main/.roady/spec.yaml"><code>.roady/spec.yaml</code></a> (142 features, 267 tasks closed at release). Plan / state / events are hash-chained — no roadmap edits in the dark.</p>
+    <p class="muted">Backlog of record: <a href="https://github.com/klarlabs-studio/nomi/blob/main/.roady/spec.yaml"><code>.roady/spec.yaml</code></a> (142 features, 267 tasks closed at release). Plan / state / events are hash-chained — no roadmap edits in the dark.</p>
   </section>
 
   <section class="cta-final">
@@ -339,7 +339,7 @@
         <code>brew install --cask felixgeelhaar/tap/nomi</code>
         <span class="copy-icon">⧉</span>
       </button>
-      <a class="btn-secondary" href="https://github.com/felixgeelhaar/nomi" rel="noopener">Star on GitHub →</a>
+      <a class="btn-secondary" href="https://github.com/klarlabs-studio/nomi" rel="noopener">Star on GitHub →</a>
     </div>
   </section>
 
@@ -353,22 +353,22 @@
     </div>
     <div>
       <h4>Docs</h4>
-      <a href="https://github.com/felixgeelhaar/nomi#readme">README</a>
-      <a href="https://github.com/felixgeelhaar/nomi/blob/main/docs/comparison.md">Compared to</a>
-      <a href="https://github.com/felixgeelhaar/nomi/blob/main/docs/headless.md">Headless guide</a>
-      <a href="https://github.com/felixgeelhaar/nomi/blob/main/docs/user-journeys.md">User journeys</a>
+      <a href="https://github.com/klarlabs-studio/nomi#readme">README</a>
+      <a href="https://github.com/klarlabs-studio/nomi/blob/main/docs/comparison.md">Compared to</a>
+      <a href="https://github.com/klarlabs-studio/nomi/blob/main/docs/headless.md">Headless guide</a>
+      <a href="https://github.com/klarlabs-studio/nomi/blob/main/docs/user-journeys.md">User journeys</a>
     </div>
     <div>
       <h4>Code</h4>
-      <a href="https://github.com/felixgeelhaar/nomi">Source</a>
-      <a href="https://github.com/felixgeelhaar/nomi/releases">Releases</a>
-      <a href="https://github.com/felixgeelhaar/nomi/issues">Issues</a>
+      <a href="https://github.com/klarlabs-studio/nomi">Source</a>
+      <a href="https://github.com/klarlabs-studio/nomi/releases">Releases</a>
+      <a href="https://github.com/klarlabs-studio/nomi/issues">Issues</a>
     </div>
     <div>
       <h4>Built on</h4>
-      <a href="https://github.com/felixgeelhaar/statekit">statekit</a>
-      <a href="https://github.com/felixgeelhaar/mnemos">mnemos</a>
-      <a href="https://github.com/felixgeelhaar/scout">scout</a>
+      <a href="https://github.com/klarlabs-studio/statekit">statekit</a>
+      <a href="https://github.com/klarlabs-studio/mnemos">mnemos</a>
+      <a href="https://github.com/klarlabs-studio/scout">scout</a>
       <a href="https://github.com/felixgeelhaar/roady">roady</a>
     </div>
   </div>

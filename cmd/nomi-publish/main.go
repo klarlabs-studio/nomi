@@ -29,7 +29,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins/publisher"
+	"go.klarlabs.de/nomi/internal/plugins/publisher"
 )
 
 func main() {

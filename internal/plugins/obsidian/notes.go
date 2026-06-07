@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // noteTools constructs the slice of obsidian.note.* tools the plugin
@@ -54,12 +54,12 @@ func (p *Plugin) noteRead(_ context.Context, conn *domain.Connection, input map[
 	frontmatter, body := parseFrontmatter(string(raw))
 	tags := tagsFromFrontmatter(frontmatter)
 	return map[string]any{
-		"path":         rel,
-		"content":      string(raw),
-		"body":         body,
-		"frontmatter":  frontmatter,
-		"tags":         tags,
-		"wikilinks":    extractWikilinks(body),
+		"path":        rel,
+		"content":     string(raw),
+		"body":        body,
+		"frontmatter": frontmatter,
+		"tags":        tags,
+		"wikilinks":   extractWikilinks(body),
 	}, nil
 }
 

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/tools"
+	"go.klarlabs.de/nomi/internal/tools"
 )
 
 // testPlugin is a fully-featured plugin implementation for registry tests.
@@ -73,22 +73,24 @@ func (s stubTool) Execute(context.Context, map[string]interface{}) (map[string]i
 
 type stubChannel struct{ connID, kind string }
 
-func (s stubChannel) ConnectionID() string                             { return s.connID }
-func (s stubChannel) Kind() string                                     { return s.kind }
+func (s stubChannel) ConnectionID() string                                { return s.connID }
+func (s stubChannel) Kind() string                                        { return s.kind }
 func (s stubChannel) Send(context.Context, string, OutboundMessage) error { return nil }
 
 type stubTrigger struct{ connID, kind string }
 
-func (s stubTrigger) ConnectionID() string                        { return s.connID }
-func (s stubTrigger) Kind() string                                { return s.kind }
+func (s stubTrigger) ConnectionID() string                         { return s.connID }
+func (s stubTrigger) Kind() string                                 { return s.kind }
 func (s stubTrigger) Start(context.Context, TriggerCallback) error { return nil }
-func (s stubTrigger) Stop() error                                 { return nil }
+func (s stubTrigger) Stop() error                                  { return nil }
 
 type stubContextSource struct{ connID, name string }
 
-func (s stubContextSource) ConnectionID() string                      { return s.connID }
-func (s stubContextSource) Name() string                              { return s.name }
-func (s stubContextSource) Query(context.Context, ContextQueryRequest) (string, error) { return "", nil }
+func (s stubContextSource) ConnectionID() string { return s.connID }
+func (s stubContextSource) Name() string         { return s.name }
+func (s stubContextSource) Query(context.Context, ContextQueryRequest) (string, error) {
+	return "", nil
+}
 
 // TestList_ReturnsStableIDOrder pins the registry contract relied on
 // by the UI: list-by-id ascending, deterministic across calls. Before

@@ -40,14 +40,14 @@ func accessLogMiddleware() gin.HandlerFunc {
 		}
 
 		entry := map[string]any{
-			"ts":          time.Now().UTC().Format(time.RFC3339Nano),
-			"request_id":  rid,
-			"method":      c.Request.Method,
-			"path":        c.Request.URL.Path,
-			"route":       route,
-			"status":      c.Writer.Status(),
-			"latency_ms":  time.Since(start).Milliseconds(),
-			"client_ip":   c.ClientIP(),
+			"ts":           time.Now().UTC().Format(time.RFC3339Nano),
+			"request_id":   rid,
+			"method":       c.Request.Method,
+			"path":         c.Request.URL.Path,
+			"route":        route,
+			"status":       c.Writer.Status(),
+			"latency_ms":   time.Since(start).Milliseconds(),
+			"client_ip":    c.ClientIP(),
 			"response_len": c.Writer.Size(),
 		}
 		b, err := json.Marshal(entry)

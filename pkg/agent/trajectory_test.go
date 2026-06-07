@@ -3,7 +3,7 @@ package agent_test
 import (
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/pkg/agent"
+	"go.klarlabs.de/nomi/pkg/agent"
 )
 
 func TestTrajectoryHashChainVerifies(t *testing.T) {

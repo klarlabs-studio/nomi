@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/tools"
+	"go.klarlabs.de/nomi/internal/tools"
 )
 
 // ChannelProvider is implemented by plugins that act as conversational

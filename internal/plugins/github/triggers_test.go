@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/plugins"
 )
 
 func TestParseRepoAllowlist(t *testing.T) {
@@ -18,9 +18,9 @@ func TestParseRepoAllowlist(t *testing.T) {
 		{"acme/widgets", 1},
 		{"acme/widgets, acme/gadgets", 2},
 		{"  acme/widgets  ", 1},
-		{"acme/", 0},     // missing repo
-		{"/widgets", 0},  // missing owner
-		{"acme", 0},      // missing slash
+		{"acme/", 0},    // missing repo
+		{"/widgets", 0}, // missing owner
+		{"acme", 0},     // missing slash
 		{"", 0},
 	}
 	for _, tc := range cases {

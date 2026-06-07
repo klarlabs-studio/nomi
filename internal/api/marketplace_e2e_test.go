@@ -17,17 +17,17 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/events"
-	"github.com/felixgeelhaar/nomi/internal/plugins"
-	"github.com/felixgeelhaar/nomi/internal/plugins/bundle"
-	"github.com/felixgeelhaar/nomi/internal/plugins/hub"
-	"github.com/felixgeelhaar/nomi/internal/plugins/publisher"
-	"github.com/felixgeelhaar/nomi/internal/plugins/signing"
-	"github.com/felixgeelhaar/nomi/internal/plugins/store"
-	"github.com/felixgeelhaar/nomi/internal/plugins/update"
-	"github.com/felixgeelhaar/nomi/internal/plugins/wasmhost"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/events"
+	"go.klarlabs.de/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/plugins/bundle"
+	"go.klarlabs.de/nomi/internal/plugins/hub"
+	"go.klarlabs.de/nomi/internal/plugins/publisher"
+	"go.klarlabs.de/nomi/internal/plugins/signing"
+	"go.klarlabs.de/nomi/internal/plugins/store"
+	"go.klarlabs.de/nomi/internal/plugins/update"
+	"go.klarlabs.de/nomi/internal/plugins/wasmhost"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // TestMarketplace_EndToEnd is the dogfood that proves the whole
@@ -54,7 +54,7 @@ import (
 //  9. Run the update.Scan path manually — confirm available_version
 //     populates and plugin.update_available fires.
 //  10. POST /plugins/{id}/update — confirm the swap completes and the
-//      registry now serves v2.
+//     registry now serves v2.
 //
 // If any of these steps regresses, the marketplace pipeline is
 // broken. This is the single test the publisher pipeline + daemon

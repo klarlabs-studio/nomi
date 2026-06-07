@@ -124,7 +124,7 @@ jobs:
       - name: Build Go daemon (per-target, for both standalone release artifact AND Tauri sidecar bundling)
         shell: bash
         env:
-          LDFLAGS: "-s -w -X github.com/felixgeelhaar/nomi/internal/buildinfo.Version=${{ env.VERSION }} -X github.com/felixgeelhaar/nomi/internal/buildinfo.Commit=${{ env.COMMIT }} -X github.com/felixgeelhaar/nomi/internal/buildinfo.BuildDate=${{ env.BUILD_DATE }}"
+          LDFLAGS: "-s -w -X go.klarlabs.de/nomi/internal/buildinfo.Version=${{ env.VERSION }} -X go.klarlabs.de/nomi/internal/buildinfo.Commit=${{ env.COMMIT }} -X go.klarlabs.de/nomi/internal/buildinfo.BuildDate=${{ env.BUILD_DATE }}"
         run: |
           mkdir -p app/src-tauri/bin
           # Tauri's externalBin convention: list "bin/nomid" in
@@ -166,7 +166,7 @@ jobs:
       - name: Build + package nomi CLI per target
         shell: bash
         env:
-          LDFLAGS: "-s -w -X github.com/felixgeelhaar/nomi/internal/buildinfo.Version=${{ env.VERSION }} -X github.com/felixgeelhaar/nomi/internal/buildinfo.Commit=${{ env.COMMIT }} -X github.com/felixgeelhaar/nomi/internal/buildinfo.BuildDate=${{ env.BUILD_DATE }}"
+          LDFLAGS: "-s -w -X go.klarlabs.de/nomi/internal/buildinfo.Version=${{ env.VERSION }} -X go.klarlabs.de/nomi/internal/buildinfo.Commit=${{ env.COMMIT }} -X go.klarlabs.de/nomi/internal/buildinfo.BuildDate=${{ env.BUILD_DATE }}"
         run: |
           # Standalone CLI archive — installed by Homebrew formula and
           # Scoop manifest. Single binary, ~15 MB, no daemon dependency.

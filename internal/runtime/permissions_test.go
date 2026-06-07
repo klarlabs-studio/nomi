@@ -3,8 +3,8 @@ package runtime
 import (
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/permissions"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/permissions"
 )
 
 // declaredCapabilityCeiling is the gate the assistant builder's

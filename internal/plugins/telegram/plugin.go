@@ -19,13 +19,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/events"
-	"github.com/felixgeelhaar/nomi/internal/permissions"
-	"github.com/felixgeelhaar/nomi/internal/plugins"
-	"github.com/felixgeelhaar/nomi/internal/runtime"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/events"
+	"go.klarlabs.de/nomi/internal/permissions"
+	"go.klarlabs.de/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/runtime"
+	"go.klarlabs.de/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // PluginID is the stable reverse-DNS identifier for this plugin. Used
@@ -52,11 +52,11 @@ type Plugin struct {
 	// real endpoint.
 	apiBase string
 
-	mu             sync.RWMutex
-	running        bool
-	cancelPerConn  map[string]context.CancelFunc         // connection id -> cancel
-	runConnMap     map[string]string                     // run id -> connection id
-	healthPerConn  map[string]*plugins.ConnectionHealth  // connection id -> health
+	mu            sync.RWMutex
+	running       bool
+	cancelPerConn map[string]context.CancelFunc        // connection id -> cancel
+	runConnMap    map[string]string                    // run id -> connection id
+	healthPerConn map[string]*plugins.ConnectionHealth // connection id -> health
 	// approvalMsg tracks the Telegram (chat_id, message_id) that hosted
 	// the inline keyboard for a given approval_id so we can edit it in
 	// place when the approval resolves.
@@ -574,16 +574,16 @@ type telegramUpdate struct {
 			Height   int    `json:"height"`
 		} `json:"photo,omitempty"`
 		Voice *struct {
-			FileID    string `json:"file_id"`
-			FileSize  int64  `json:"file_size"`
-			Duration  int    `json:"duration"`
-			MimeType  string `json:"mime_type"`
+			FileID   string `json:"file_id"`
+			FileSize int64  `json:"file_size"`
+			Duration int    `json:"duration"`
+			MimeType string `json:"mime_type"`
 		} `json:"voice,omitempty"`
 		Audio *struct {
-			FileID    string `json:"file_id"`
-			FileSize  int64  `json:"file_size"`
-			MimeType  string `json:"mime_type"`
-			FileName  string `json:"file_name"`
+			FileID   string `json:"file_id"`
+			FileSize int64  `json:"file_size"`
+			MimeType string `json:"mime_type"`
+			FileName string `json:"file_name"`
 		} `json:"audio,omitempty"`
 		Video *struct {
 			FileID   string `json:"file_id"`
@@ -591,10 +591,10 @@ type telegramUpdate struct {
 			MimeType string `json:"mime_type"`
 		} `json:"video,omitempty"`
 		Document *struct {
-			FileID    string `json:"file_id"`
-			FileSize  int64  `json:"file_size"`
-			MimeType  string `json:"mime_type"`
-			FileName  string `json:"file_name"`
+			FileID   string `json:"file_id"`
+			FileSize int64  `json:"file_size"`
+			MimeType string `json:"mime_type"`
+			FileName string `json:"file_name"`
 		} `json:"document,omitempty"`
 	} `json:"message"`
 	// CallbackQuery is the payload Telegram sends when a user taps an
@@ -1011,9 +1011,9 @@ func (c *Channel) sendAttachment(ctx context.Context, chatID string, att plugins
 	if !att.IsInline() && att.URL != "" {
 		// JSON path: Telegram accepts a URL as the file value.
 		payload := map[string]string{
-			"chat_id":  chatID,
-			formField:  att.URL,
-			"caption":  caption,
+			"chat_id": chatID,
+			formField: att.URL,
+			"caption": caption,
 		}
 		body, err := json.Marshal(payload)
 		if err != nil {

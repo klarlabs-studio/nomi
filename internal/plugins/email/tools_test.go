@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/plugins"
 )
 
 func TestSendTool_RejectsMissingConnectionID(t *testing.T) {

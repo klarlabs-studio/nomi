@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // TestSummarizePriorAttempts_StaysUnderBudget builds a 10-step run

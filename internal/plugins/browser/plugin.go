@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/plugins"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
-	"github.com/felixgeelhaar/nomi/internal/tools"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/tools"
 )
 
 // PluginID is the stable reverse-DNS identifier.
@@ -77,7 +77,7 @@ func (p *Plugin) Manifest() plugins.PluginManifest {
 		Name:        "Browser",
 		Version:     "0.1.0",
 		Author:      "Nomi",
-		Description: "Browser automation via Scout (felixgeelhaar/scout). Each connection is a separate isolated browser profile so assistants don't share auth state. Requires `scout` on PATH (brew install scout).",
+		Description: "Browser automation via Scout (klarlabs-studio/scout). Each connection is a separate isolated browser profile so assistants don't share auth state. Requires `scout` on PATH (brew install scout).",
 		Cardinality: plugins.ConnectionMulti,
 		Capabilities: []string{
 			"browser.navigate",

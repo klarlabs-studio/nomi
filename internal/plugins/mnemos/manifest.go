@@ -3,7 +3,7 @@ package mnemos
 import (
 	_ "embed"
 
-	"github.com/felixgeelhaar/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/plugins"
 )
 
 // PluginID is the stable reverse-DNS identifier. Do not change without
@@ -28,10 +28,10 @@ const (
 // plugins. Prefix matches the plugin family so the planner can group
 // related tools and the UI can render them under one heading.
 const (
-	ToolEventsAppend        = "mnemos.events.append"
-	ToolClaimsAppend        = "mnemos.claims.append"
-	ToolClaimsList          = "mnemos.claims.list"
-	ToolRelationshipsList   = "mnemos.relationships.list"
+	ToolEventsAppend      = "mnemos.events.append"
+	ToolClaimsAppend      = "mnemos.claims.append"
+	ToolClaimsList        = "mnemos.claims.list"
+	ToolRelationshipsList = "mnemos.relationships.list"
 	ToolEmbeddingsAppend  = "mnemos.embeddings.append"
 	// ToolSearch covers hybrid retrieval (vector + lexical) over the
 	// claim store. Maps to client.Search upstream — the "embeddings

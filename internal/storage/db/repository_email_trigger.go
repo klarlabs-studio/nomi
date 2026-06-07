@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // EmailTriggerRepository handles CRUD + lookup for email_trigger_rules.

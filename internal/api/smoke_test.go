@@ -16,15 +16,15 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/felixgeelhaar/nomi/internal/connectors"
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/events"
-	"github.com/felixgeelhaar/nomi/internal/memory"
-	"github.com/felixgeelhaar/nomi/internal/permissions"
-	"github.com/felixgeelhaar/nomi/internal/runtime"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
-	"github.com/felixgeelhaar/nomi/internal/tools"
+	"go.klarlabs.de/nomi/internal/connectors"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/events"
+	"go.klarlabs.de/nomi/internal/memory"
+	"go.klarlabs.de/nomi/internal/permissions"
+	"go.klarlabs.de/nomi/internal/runtime"
+	"go.klarlabs.de/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/tools"
 )
 
 // memorySecretStore is an in-memory secrets.Store for tests. It's here
@@ -119,10 +119,10 @@ func newHarness(t *testing.T) *harness {
 		Approvals:    approvalMgr,
 		Memory:       memMgr,
 		MemoryClient: memClient,
-		Tools:      toolReg,
-		Connectors: connReg,
-		Secrets:    secretStore,
-		AuthToken:  testAuthToken,
+		Tools:        toolReg,
+		Connectors:   connReg,
+		Secrets:      secretStore,
+		AuthToken:    testAuthToken,
 	})
 
 	h := &harness{

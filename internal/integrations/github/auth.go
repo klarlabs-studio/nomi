@@ -231,9 +231,9 @@ func (c *AuthClient) mintInstallationToken(ctx context.Context, installationID i
 	}
 
 	var payload struct {
-		Token       string            `json:"token"`
-		ExpiresAt   time.Time         `json:"expires_at"`
-		Permissions map[string]string `json:"permissions"`
+		Token        string            `json:"token"`
+		ExpiresAt    time.Time         `json:"expires_at"`
+		Permissions  map[string]string `json:"permissions"`
 		Repositories []struct {
 			ID int64 `json:"id"`
 		} `json:"repositories"`

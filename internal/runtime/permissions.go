@@ -1,8 +1,8 @@
 package runtime
 
 import (
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/permissions"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/permissions"
 )
 
 // declaredCapabilityCeiling is a thin alias kept so the runtime's call

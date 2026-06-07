@@ -177,13 +177,13 @@ func (c *openaiClient) Provider() string {
 }
 
 type openaiChatRequest struct {
-	Model          string                  `json:"model"`
-	Messages       []ChatMessage           `json:"messages"`
-	MaxTokens      int                     `json:"max_tokens,omitempty"`
-	Temperature    *float64                `json:"temperature,omitempty"`
-	Stop           []string                `json:"stop,omitempty"`
-	Stream         bool                    `json:"stream,omitempty"`
-	ResponseFormat *openaiResponseFormat   `json:"response_format,omitempty"`
+	Model          string                `json:"model"`
+	Messages       []ChatMessage         `json:"messages"`
+	MaxTokens      int                   `json:"max_tokens,omitempty"`
+	Temperature    *float64              `json:"temperature,omitempty"`
+	Stop           []string              `json:"stop,omitempty"`
+	Stream         bool                  `json:"stream,omitempty"`
+	ResponseFormat *openaiResponseFormat `json:"response_format,omitempty"`
 }
 
 type openaiResponseFormat struct {

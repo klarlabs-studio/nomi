@@ -21,8 +21,8 @@ func validSources() Sources {
 			"contributes": {},
 			"cardinality": "single"
 		}`),
-		WASM:        []byte("\x00asm\x01\x00\x00\x00"),
-		Readme:      []byte("# Test plugin\n"),
+		WASM:   []byte("\x00asm\x01\x00\x00\x00"),
+		Readme: []byte("# Test plugin\n"),
 		PublisherJSON: []byte(`{
 			"name": "Nomi Test",
 			"key_fingerprint": "AAAA-BBBB-CCCC-DDDD",

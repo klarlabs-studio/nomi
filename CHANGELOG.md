@@ -1140,7 +1140,7 @@ First public beta. Local-first, state-driven agent platform.
 - **Distribution**: Homebrew Cask (`brew install --cask
   felixgeelhaar/tap/nomi`), Scoop (`scoop install nomi`), Docker
   (headless `nomid` daemon), `go install
-  github.com/felixgeelhaar/nomi/cmd/nomid@latest`.
+  go.klarlabs.de/nomi/cmd/nomid@latest`.
 
 ### Security
 - Auth-token rotation HTTP endpoint with atomic in-memory store; old
@@ -1191,6 +1191,6 @@ auth resilience, and UI consistency.
   - tool path invalidates provider cache on auth failures,
   - Google OAuth/Gmail paths invalidate account auth state on 401.
 
-[0.1.1]: https://github.com/felixgeelhaar/nomi/releases/tag/v0.1.1
+[0.1.1]: https://github.com/klarlabs-studio/nomi/releases/tag/v0.1.1
 
-[0.1.0]: https://github.com/felixgeelhaar/nomi/releases/tag/v0.1.0
+[0.1.0]: https://github.com/klarlabs-studio/nomi/releases/tag/v0.1.0

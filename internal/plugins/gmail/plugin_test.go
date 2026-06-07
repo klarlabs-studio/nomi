@@ -9,9 +9,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/plugins"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/plugins"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // stubProvider records calls so each tool's input → Provider-call
@@ -506,4 +506,3 @@ func TestBuildRFC822_RejectsEmptyTo(t *testing.T) {
 		t.Fatal("expected error for empty To")
 	}
 }
-

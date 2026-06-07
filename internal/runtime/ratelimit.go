@@ -59,16 +59,16 @@ func (b *tokenBucket) Allow() bool {
 // minute" is bounded even when the per-run budget would otherwise allow
 // more.
 type rateLimiter struct {
-	mu                          sync.Mutex
-	runsPerMinuteSource         map[string]*tokenBucket
-	toolCallsPerMinuteRun       map[string]*tokenBucket
+	mu                           sync.Mutex
+	runsPerMinuteSource          map[string]*tokenBucket
+	toolCallsPerMinuteRun        map[string]*tokenBucket
 	toolCallsPerMinuteConnection map[string]*tokenBucket
-	runsPerMinute               int
-	runsBurst                   int
-	toolCallsPerMinute          int
-	toolCallsBurst              int
+	runsPerMinute                int
+	runsBurst                    int
+	toolCallsPerMinute           int
+	toolCallsBurst               int
 	connectionToolCallsPerMinute int
-	connectionToolCallsBurst    int
+	connectionToolCallsBurst     int
 }
 
 func newRateLimiter(runsPerMinute, runsBurst, toolCallsPerMinute, toolCallsBurst int) *rateLimiter {

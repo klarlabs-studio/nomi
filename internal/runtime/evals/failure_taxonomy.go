@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // FailureClass is a stable bucket used for reliability reporting and

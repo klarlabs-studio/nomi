@@ -29,10 +29,10 @@ type ignoreRule struct {
 	raw     string
 	dirOnly bool
 	// Compiled forms — exactly one is set per rule.
-	exactPath  string
-	prefix     string // for `prefix/**`
-	basename   string // for `name` or `name/`
-	globExt    string // for `*.ext`
+	exactPath string
+	prefix    string // for `prefix/**`
+	basename  string // for `name` or `name/`
+	globExt   string // for `*.ext`
 }
 
 func loadObsidianIgnore(vaultPath string) *ignoreMatcher {

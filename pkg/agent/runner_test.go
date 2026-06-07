@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/pkg/agent"
+	"go.klarlabs.de/nomi/pkg/agent"
 )
 
 func plan(steps ...agent.Step) agent.Plan { return agent.Plan{Goal: "test", Steps: steps} }

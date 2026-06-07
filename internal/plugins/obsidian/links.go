@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // wikilinkRe matches Obsidian's `[[target]]` and `[[target|alias]]`

@@ -2,7 +2,7 @@ cask "nomi" do
   version "0.1.0"
   sha256 :no_check
 
-  url "https://github.com/felixgeelhaar/nomi/releases/download/v#{version}/Nomi_#{version}_universal.dmg"
+  url "https://github.com/klarlabs-studio/nomi/releases/download/v#{version}/Nomi_#{version}_universal.dmg"
   name "Nomi"
   desc "Local-first, state-driven agent platform"
   homepage "https://nomi.ai/"

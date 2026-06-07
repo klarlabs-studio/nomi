@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 func newTestConn(t *testing.T) (*Plugin, *domain.Connection, string) {

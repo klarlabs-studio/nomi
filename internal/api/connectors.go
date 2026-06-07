@@ -7,10 +7,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/felixgeelhaar/nomi/internal/connectors"
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	"github.com/felixgeelhaar/nomi/internal/secrets"
-	"github.com/felixgeelhaar/nomi/internal/storage/db"
+	"go.klarlabs.de/nomi/internal/connectors"
+	"go.klarlabs.de/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/secrets"
+	"go.klarlabs.de/nomi/internal/storage/db"
 )
 
 // ConnectorServer handles connector-related endpoints
@@ -66,11 +66,11 @@ func (s *ConnectorServer) ListConnectorStatuses(c *gin.Context) {
 
 // ConnectorConfigResponse represents a connector with its config
 type ConnectorConfigResponse struct {
-	Name         string                        `json:"name"`
-	Manifest     connectors.ConnectorManifest  `json:"manifest"`
-	Status       connectors.ConnectorStatus    `json:"status"`
-	Config       map[string]interface{}        `json:"config"`
-	Enabled      bool                          `json:"enabled"`
+	Name     string                       `json:"name"`
+	Manifest connectors.ConnectorManifest `json:"manifest"`
+	Status   connectors.ConnectorStatus   `json:"status"`
+	Config   map[string]interface{}       `json:"config"`
+	Enabled  bool                         `json:"enabled"`
 }
 
 // ListConnectorConfigs returns all connectors with their configurations.
@@ -197,14 +197,14 @@ func (s *ConnectorServer) UpdateConnectorConfig(c *gin.Context) {
 	// Restart the connector to apply changes dynamically
 	if err := s.registry.Restart(c.Request.Context(), name); err != nil {
 		c.JSON(http.StatusOK, gin.H{
-			"status": "updated",
+			"status":  "updated",
 			"message": "Configuration saved but restart failed: " + err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"status": "updated",
+		"status":  "updated",
 		"message": "Configuration saved and applied.",
 	})
 }

@@ -98,10 +98,10 @@ type Entry struct {
 // Limit is the maximum number of entries to return. Zero means
 // implementation default (typically 50). Negative values are rejected.
 type Query struct {
-	AssistantID *string `json:"assistant_id,omitempty"`
-	RunID       *string `json:"run_id,omitempty"`
+	AssistantID *string    `json:"assistant_id,omitempty"`
+	RunID       *string    `json:"run_id,omitempty"`
 	Since       *time.Time `json:"since,omitempty"`
-	Limit       int     `json:"limit,omitempty"`
+	Limit       int        `json:"limit,omitempty"`
 }
 
 // SearchOpts controls semantic search. For the V1 implementation

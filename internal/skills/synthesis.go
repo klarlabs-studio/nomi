@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/felixgeelhaar/nomi/internal/llm"
+	"go.klarlabs.de/nomi/internal/llm"
 )
 
 // SynthesizedRecipe is what the LLM-driven synthesis step produces from
@@ -16,11 +16,11 @@ import (
 // form — system_prompt becomes the reusable template extracted from
 // the cluster's goal patterns.
 type SynthesizedRecipe struct {
-	SuggestedName  string   `json:"suggested_name"`
-	SuggestedRole  string   `json:"suggested_role"`
-	SystemPrompt   string   `json:"system_prompt"`
-	Capabilities   []string `json:"capabilities"`
-	Explanation    string   `json:"explanation"`
+	SuggestedName string   `json:"suggested_name"`
+	SuggestedRole string   `json:"suggested_role"`
+	SystemPrompt  string   `json:"system_prompt"`
+	Capabilities  []string `json:"capabilities"`
+	Explanation   string   `json:"explanation"`
 }
 
 // synthesisEnvelope models the strict JSON the LLM is asked to emit.

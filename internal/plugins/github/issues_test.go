@@ -14,17 +14,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
-	gh "github.com/felixgeelhaar/nomi/internal/integrations/github"
+	"go.klarlabs.de/nomi/internal/domain"
+	gh "go.klarlabs.de/nomi/internal/integrations/github"
 )
 
 // stubServer wires an httptest.Server that mints installation tokens
 // (so AuthClient is satisfied) and serves whatever response the test
 // queues for a given path. Returned with a cleanup func.
 type stubServer struct {
-	srv      *httptest.Server
-	pathMap  map[string]stubResponse
-	calls    []string
+	srv     *httptest.Server
+	pathMap map[string]stubResponse
+	calls   []string
 }
 
 type stubResponse struct {

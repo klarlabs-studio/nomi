@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/runtime/executor"
+	"go.klarlabs.de/nomi/internal/runtime/executor"
 )
 
 type fakeBackend struct {

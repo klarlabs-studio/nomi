@@ -14,17 +14,17 @@ import (
 // A plugin's lifecycle mirrors today's connector lifecycle but with an
 // explicit Configure step:
 //
-//   Configure(ctx, config)  // called whenever a Connection is added or
-//                           // updated; plugin validates and caches state.
-//                           // May be called multiple times before Start
-//                           // or while running.
-//   Start(ctx)              // begin background work (polling loops,
-//                           // WebSocket connections, webhook listeners).
-//                           // Idempotent: calling Start on an already-
-//                           // running plugin returns nil.
-//   Stop()                  // graceful shutdown. Must return within a
-//                           // reasonable bound (say 5s) so the daemon's
-//                           // shutdown isn't blocked by a hung plugin.
+//	Configure(ctx, config)  // called whenever a Connection is added or
+//	                        // updated; plugin validates and caches state.
+//	                        // May be called multiple times before Start
+//	                        // or while running.
+//	Start(ctx)              // begin background work (polling loops,
+//	                        // WebSocket connections, webhook listeners).
+//	                        // Idempotent: calling Start on an already-
+//	                        // running plugin returns nil.
+//	Stop()                  // graceful shutdown. Must return within a
+//	                        // reasonable bound (say 5s) so the daemon's
+//	                        // shutdown isn't blocked by a hung plugin.
 //
 // Thread safety: all methods may be called from multiple goroutines.
 // Implementations are responsible for their own synchronization; the

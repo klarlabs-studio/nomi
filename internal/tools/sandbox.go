@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/kballard/go-shellquote"
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 // ErrPathEscapesRoot is returned when a user-supplied path resolves outside its

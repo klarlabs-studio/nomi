@@ -3,7 +3,7 @@ package permissions
 import (
 	"testing"
 
-	"github.com/felixgeelhaar/nomi/internal/domain"
+	"go.klarlabs.de/nomi/internal/domain"
 )
 
 func TestMatchingRuleReturnsExactRule(t *testing.T) {
