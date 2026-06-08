@@ -243,7 +243,7 @@ func makeSnippet(body, query string) string {
 		snippet = "…" + snippet
 	}
 	if end < len(body) {
-		snippet = snippet + "…"
+		snippet += "…"
 	}
 	return snippet
 }
