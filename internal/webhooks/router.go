@@ -117,7 +117,7 @@ func (r *Router) handleWebhook(c *gin.Context) {
 
 	// 4. Verify signature
 	headers := extractHeaders(c.Request.Header)
-	verifier := chooseVerifier(pluginID, headers)
+	verifier := chooseVerifier(pluginID)
 	if err := verifier.Verify(body, secretPlain, headers); err != nil {
 		log.Printf("[webhook] signature verification failed for %s/%s: %v", pluginID, connectionID, err)
 		r.auditEvent(connectionID, pluginID, "webhook.signature_mismatch", headers, body)

@@ -30,7 +30,7 @@ func newTriggerFixture(t *testing.T, rules []map[string]any) *triggerFixture {
 	if err != nil {
 		t.Fatalf("db: %v", err)
 	}
-	t.Cleanup(func() { database.Close() })
+	t.Cleanup(func() { _ = database.Close() })
 	if err := database.Migrate(); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}

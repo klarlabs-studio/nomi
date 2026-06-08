@@ -110,7 +110,7 @@ func LoadOrGenerateAuthToken(dataDir string) (string, string, error) {
 	}
 	path := filepath.Join(dataDir, AuthTokenFilename)
 
-	if data, err := os.ReadFile(path); err == nil {
+	if data, err := os.ReadFile(path); err == nil { //nolint:gosec // G304: app-internal auth token under the data dir
 		token := strings.TrimSpace(string(data))
 		if len(token) >= tokenByteLength*2 {
 			return token, path, nil

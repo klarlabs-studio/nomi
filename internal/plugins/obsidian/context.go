@@ -166,7 +166,7 @@ func indexVault(root string, ignore *ignoreMatcher) ([]indexedNote, error) {
 			return nil
 		}
 
-		raw, readErr := os.ReadFile(p)
+		raw, readErr := os.ReadFile(p) //nolint:gosec // G304: path produced by WalkDir over the vault root
 		if readErr != nil {
 			return nil
 		}

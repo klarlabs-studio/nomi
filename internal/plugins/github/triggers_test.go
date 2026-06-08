@@ -2,7 +2,6 @@ package github
 
 import (
 	"context"
-	"net/http"
 	"sync"
 	"testing"
 	"time"
@@ -56,7 +55,6 @@ func TestPollingEnabled_StringAndBool(t *testing.T) {
 func TestGitHubTrigger_FirstPollEstablishesBaseline(t *testing.T) {
 	srv := newStubServer(t)
 	srv.stub("GET /repos/o/r/issues",
-		http.StatusOK,
 		`[{"number":3,"title":"newest","state":"open"},{"number":2,"title":"middle","state":"open"},{"number":1,"title":"oldest","state":"open"}]`)
 	p, conn := stubPlugin(t, srv)
 
@@ -100,7 +98,6 @@ func TestGitHubTrigger_SubsequentPollFiresOnNewIssues(t *testing.T) {
 	srv := newStubServer(t)
 	// First poll: 3 issues. Second poll: 5 issues (#4, #5 are new).
 	srv.stub("GET /repos/o/r/issues",
-		http.StatusOK,
 		`[{"number":3,"title":"three","state":"open"},{"number":2,"title":"two","state":"open"},{"number":1,"title":"one","state":"open"}]`)
 	p, conn := stubPlugin(t, srv)
 	auth, _ := p.authClientFor(conn)
@@ -115,7 +112,6 @@ func TestGitHubTrigger_SubsequentPollFiresOnNewIssues(t *testing.T) {
 
 	// Second poll returns #4 and #5 in addition.
 	srv.stub("GET /repos/o/r/issues",
-		http.StatusOK,
 		`[{"number":5,"title":"five","state":"open"},{"number":4,"title":"four","state":"open"},{"number":3,"title":"three","state":"open"},{"number":2,"title":"two","state":"open"},{"number":1,"title":"one","state":"open"}]`)
 	var fired []plugins.TriggerEvent
 	cb2 := func(_ context.Context, ev plugins.TriggerEvent) error {

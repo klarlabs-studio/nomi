@@ -99,7 +99,7 @@ func (r *ApprovalRepository) ListByRun(runID string) ([]*permissions.ApprovalReq
 	if err != nil {
 		return nil, fmt.Errorf("failed to list approvals: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return r.scanApprovals(rows)
 }
@@ -114,7 +114,7 @@ func (r *ApprovalRepository) ListPending() ([]*permissions.ApprovalRequest, erro
 	if err != nil {
 		return nil, fmt.Errorf("failed to list pending approvals: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return r.scanApprovals(rows)
 }
@@ -131,7 +131,7 @@ func (r *ApprovalRepository) ListByTimeRange(from, to time.Time) ([]*permissions
 	if err != nil {
 		return nil, fmt.Errorf("failed to list approvals by time range: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return r.scanApprovals(rows)
 }

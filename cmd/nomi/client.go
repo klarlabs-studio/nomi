@@ -27,10 +27,7 @@ type Client struct {
 // error if neither flag nor file resolves to a usable value — better
 // than a confused HTTP 401 on the first call.
 func NewClient(c *commonFlags) (*Client, error) {
-	url, err := resolveURL(c.URL)
-	if err != nil {
-		return nil, fmt.Errorf("resolve URL: %w", err)
-	}
+	url := resolveURL(c.URL)
 	tok, err := resolveToken(c.Token)
 	if err != nil {
 		return nil, fmt.Errorf("resolve token: %w", err)
@@ -42,21 +39,21 @@ func NewClient(c *commonFlags) (*Client, error) {
 	}, nil
 }
 
-func resolveURL(flagURL string) (string, error) {
+func resolveURL(flagURL string) string {
 	if flagURL != "" {
-		return flagURL, nil
+		return flagURL
 	}
 	// Read api.endpoint written by the daemon. JSON of the form
 	// {"url":"http://127.0.0.1:8080","port":"8080"}.
 	if path := dataDirPath("api.endpoint"); path != "" {
-		if data, err := os.ReadFile(path); err == nil {
+		if data, err := os.ReadFile(path); err == nil { //nolint:gosec // G304: app-internal data-dir endpoint file
 			var ep struct{ URL string }
 			if json.Unmarshal(data, &ep) == nil && ep.URL != "" {
-				return ep.URL, nil
+				return ep.URL
 			}
 		}
 	}
-	return "http://127.0.0.1:8080", nil
+	return "http://127.0.0.1:8080"
 }
 
 func resolveToken(flagTok string) (string, error) {
@@ -67,7 +64,7 @@ func resolveToken(flagTok string) (string, error) {
 		return strings.TrimSpace(v), nil
 	}
 	if path := dataDirPath("auth.token"); path != "" {
-		if data, err := os.ReadFile(path); err == nil {
+		if data, err := os.ReadFile(path); err == nil { //nolint:gosec // G304: app-internal data-dir endpoint file
 			return strings.TrimSpace(string(data)), nil
 		}
 	}
@@ -123,7 +120,7 @@ func (c *Client) do(method, path string, body any) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%s %s: %w", method, path, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	raw, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return raw, fmt.Errorf("%s %s: HTTP %d: %s", method, path, resp.StatusCode, string(raw))

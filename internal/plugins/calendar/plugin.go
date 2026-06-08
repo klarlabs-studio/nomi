@@ -191,35 +191,34 @@ func (t *calendarToolBase) Capability() string { return t.cap }
 
 // resolveProvider does the common validation dance: connection_id present,
 // binding exists for the calling assistant (role=tool), connection is
-// enabled, provider constructible. Returns the Connection too so tools
-// can read its config.
-func (t *calendarToolBase) resolveProvider(input map[string]interface{}) (Provider, *domain.Connection, error) {
+// enabled, provider constructible.
+func (t *calendarToolBase) resolveProvider(input map[string]interface{}) (Provider, error) {
 	connectionID, _ := input["connection_id"].(string)
 	if connectionID == "" {
-		return nil, nil, fmt.Errorf("%s: connection_id is required", t.name)
+		return nil, fmt.Errorf("%s: connection_id is required", t.name)
 	}
 	assistantID, _ := input["__assistant_id"].(string)
 	if assistantID != "" && t.plugin.bindings != nil {
 		ok, err := t.plugin.bindings.HasBinding(assistantID, connectionID, domain.BindingRoleTool)
 		if err != nil {
-			return nil, nil, fmt.Errorf("%s: binding check failed: %w", t.name, err)
+			return nil, fmt.Errorf("%s: binding check failed: %w", t.name, err)
 		}
 		if !ok {
-			return nil, nil, plugins.ConnectionNotBoundError(assistantID, connectionID, PluginID)
+			return nil, plugins.ConnectionNotBoundError(assistantID, connectionID, PluginID)
 		}
 	}
 	conn, err := t.plugin.connections.GetByID(connectionID)
 	if err != nil {
-		return nil, nil, fmt.Errorf("%s: %w", t.name, err)
+		return nil, fmt.Errorf("%s: %w", t.name, err)
 	}
 	if !conn.Enabled {
-		return nil, nil, fmt.Errorf("%s: connection %s is disabled", t.name, connectionID)
+		return nil, fmt.Errorf("%s: connection %s is disabled", t.name, connectionID)
 	}
 	provider, err := t.plugin.providerFor(conn)
 	if err != nil {
-		return nil, nil, fmt.Errorf("%s: %w", t.name, err)
+		return nil, fmt.Errorf("%s: %w", t.name, err)
 	}
-	return provider, conn, nil
+	return provider, nil
 }
 
 type listUpcomingTool struct{ plugin *Plugin }
@@ -229,7 +228,7 @@ func (t *listUpcomingTool) Capability() string { return "calendar.read" }
 
 func (t *listUpcomingTool) Execute(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
 	base := calendarToolBase{plugin: t.plugin, name: t.Name(), cap: t.Capability()}
-	provider, _, err := base.resolveProvider(input)
+	provider, err := base.resolveProvider(input)
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +260,7 @@ func (t *createEventTool) Capability() string { return "calendar.write" }
 
 func (t *createEventTool) Execute(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
 	base := calendarToolBase{plugin: t.plugin, name: t.Name(), cap: t.Capability()}
-	provider, _, err := base.resolveProvider(input)
+	provider, err := base.resolveProvider(input)
 	if err != nil {
 		return nil, err
 	}
@@ -300,7 +299,7 @@ func (t *updateEventTool) Capability() string { return "calendar.write" }
 
 func (t *updateEventTool) Execute(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
 	base := calendarToolBase{plugin: t.plugin, name: t.Name(), cap: t.Capability()}
-	provider, _, err := base.resolveProvider(input)
+	provider, err := base.resolveProvider(input)
 	if err != nil {
 		return nil, err
 	}
@@ -335,7 +334,7 @@ func (t *deleteEventTool) Capability() string { return "calendar.write" }
 
 func (t *deleteEventTool) Execute(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
 	base := calendarToolBase{plugin: t.plugin, name: t.Name(), cap: t.Capability()}
-	provider, _, err := base.resolveProvider(input)
+	provider, err := base.resolveProvider(input)
 	if err != nil {
 		return nil, err
 	}
@@ -357,7 +356,7 @@ func (t *findFreeSlotsTool) Capability() string { return "calendar.read" }
 
 func (t *findFreeSlotsTool) Execute(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
 	base := calendarToolBase{plugin: t.plugin, name: t.Name(), cap: t.Capability()}
-	provider, _, err := base.resolveProvider(input)
+	provider, err := base.resolveProvider(input)
 	if err != nil {
 		return nil, err
 	}

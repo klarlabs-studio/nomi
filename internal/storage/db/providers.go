@@ -48,7 +48,7 @@ func (r *ProviderProfileRepository) List() ([]*domain.ProviderProfile, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	profiles := make([]*domain.ProviderProfile, 0)
 	for rows.Next() {

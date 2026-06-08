@@ -246,12 +246,12 @@ func (m *Module) allocBuffer(ctx context.Context, data []byte) (wasmBuffer, erro
 	if len(results) != 1 {
 		return wasmBuffer{}, fmt.Errorf("alloc: expected 1 result, got %d", len(results))
 	}
-	ptr := uint32(results[0])
+	ptr := uint32(results[0]) //nolint:gosec // G115: wasm alloc returns a 32-bit linear-memory pointer
 	if !m.module.Memory().Write(ptr, data) {
 		_, _ = m.deallocFn.Call(ctx, uint64(ptr), uint64(len(data)))
 		return wasmBuffer{}, fmt.Errorf("write(%d bytes @ %d) out of bounds", len(data), ptr)
 	}
-	return wasmBuffer{ptr: ptr, length: uint32(len(data))}, nil
+	return wasmBuffer{ptr: ptr, length: uint32(len(data))}, nil //nolint:gosec // G115: data length bounded by 32-bit wasm linear memory
 }
 
 // unpackPtrLen unpacks the i64 return convention used by every export
@@ -259,7 +259,7 @@ func (m *Module) allocBuffer(ctx context.Context, data []byte) (wasmBuffer, erro
 // the length. Avoids the need for multi-value returns which TinyGo's
 // WASM target doesn't always support cleanly.
 func unpackPtrLen(packed uint64) (ptr, length uint32) {
-	return uint32(packed >> 32), uint32(packed & 0xFFFFFFFF)
+	return uint32(packed >> 32), uint32(packed & 0xFFFFFFFF) //nolint:gosec // G115: explicit 32-bit mask of a packed ptr/len value
 }
 
 // PackPtrLen is the host-side encoder symmetric with unpackPtrLen.

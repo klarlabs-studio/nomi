@@ -58,10 +58,10 @@ func (p *Plugin) pullsList(ctx context.Context, conn *domain.Connection, input m
 	if s, _ := input["state"].(string); s != "" {
 		q.Set("state", s)
 	}
-	if pp := intFromInput(input, "per_page", 0); pp > 0 {
+	if pp := intFromInput(input, "per_page"); pp > 0 {
 		q.Set("per_page", fmt.Sprintf("%d", pp))
 	}
-	if pg := intFromInput(input, "page", 0); pg > 0 {
+	if pg := intFromInput(input, "page"); pg > 0 {
 		q.Set("page", fmt.Sprintf("%d", pg))
 	}
 	cli, err := p.clientFor(conn)
@@ -86,7 +86,7 @@ func (p *Plugin) pullsList(ctx context.Context, conn *domain.Connection, input m
 func (p *Plugin) pullsGet(ctx context.Context, conn *domain.Connection, input map[string]any) (map[string]any, error) {
 	owner, _ := input["owner"].(string)
 	repo, _ := input["repo"].(string)
-	num := intFromInput(input, "pull_number", 0)
+	num := intFromInput(input, "pull_number")
 	if owner == "" || repo == "" || num <= 0 {
 		return nil, fmt.Errorf("github.pulls.get: owner, repo, pull_number required")
 	}
@@ -144,7 +144,7 @@ func (p *Plugin) pullsGet(ctx context.Context, conn *domain.Connection, input ma
 func (p *Plugin) pullsComment(ctx context.Context, conn *domain.Connection, input map[string]any) (map[string]any, error) {
 	owner, _ := input["owner"].(string)
 	repo, _ := input["repo"].(string)
-	num := intFromInput(input, "pull_number", 0)
+	num := intFromInput(input, "pull_number")
 	body, _ := input["body"].(string)
 	if owner == "" || repo == "" || num <= 0 || body == "" {
 		return nil, fmt.Errorf("github.pulls.comment: owner, repo, pull_number, body required")
@@ -169,7 +169,7 @@ func (p *Plugin) pullsComment(ctx context.Context, conn *domain.Connection, inpu
 func (p *Plugin) pullsReview(ctx context.Context, conn *domain.Connection, input map[string]any) (map[string]any, error) {
 	owner, _ := input["owner"].(string)
 	repo, _ := input["repo"].(string)
-	num := intFromInput(input, "pull_number", 0)
+	num := intFromInput(input, "pull_number")
 	event, _ := input["event"].(string)
 	body, _ := input["body"].(string)
 	if owner == "" || repo == "" || num <= 0 || event == "" {
@@ -333,11 +333,9 @@ func extractIssueRefs(body string) []string {
 			start := idx + i + len(kw) + 1
 			// Find the next "#NNN" after the keyword (within ~32 chars
 			// to avoid sweeping the whole body).
-			window := body
+			var window string
 			if start < len(body) {
 				window = body[start:]
-			} else {
-				window = ""
 			}
 			if h := strings.Index(window, "#"); h >= 0 && h < 32 {
 				j := h + 1

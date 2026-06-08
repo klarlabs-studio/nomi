@@ -100,7 +100,7 @@ func (r *RemoteTemplateRepository) ListAll() ([]*RemoteTemplate, error) {
 	if err != nil {
 		return nil, fmt.Errorf("list remote templates: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var out []*RemoteTemplate
 	for rows.Next() {

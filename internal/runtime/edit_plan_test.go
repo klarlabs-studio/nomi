@@ -25,7 +25,7 @@ import (
 // path in smoke_test.go (validation errors); the happy path lived
 // only in e2e where it skipped on missing LLM.
 func TestEditPlan_CreatesNewVersionAndAuditEvent(t *testing.T) {
-	rt, database, _, cleanup := setupTestRuntimeWithMemory(t)
+	rt, database, cleanup := setupTestRuntimeWithMemory(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -120,7 +120,7 @@ func TestEditPlan_CreatesNewVersionAndAuditEvent(t *testing.T) {
 // before approve, so the runtime applies the exact patch the user
 // reviewed (filesystem.patch arguments.diff override).
 func TestEditPlan_PersistsArguments(t *testing.T) {
-	rt, database, _, cleanup := setupTestRuntimeWithMemory(t)
+	rt, database, cleanup := setupTestRuntimeWithMemory(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -175,7 +175,7 @@ func TestEditPlan_PersistsArguments(t *testing.T) {
 // step rows have been mutated and editing the plan out from under
 // them would corrupt state.
 func TestEditPlan_RefusesIfRunNotInPlanReview(t *testing.T) {
-	rt, database, _, cleanup := setupTestRuntimeWithMemory(t)
+	rt, database, cleanup := setupTestRuntimeWithMemory(t)
 	defer cleanup()
 
 	ctx := context.Background()

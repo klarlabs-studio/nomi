@@ -89,7 +89,7 @@ func (r *RecipeRepository) List() ([]*RecipeRow, error) {
 	if err != nil {
 		return nil, fmt.Errorf("list recipes: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	out := []*RecipeRow{}
 	for rows.Next() {
 		row, err := scanRecipe(rows)

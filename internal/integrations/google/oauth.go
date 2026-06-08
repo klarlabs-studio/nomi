@@ -17,7 +17,7 @@ import (
 
 const (
 	deviceCodeURL = "https://oauth2.googleapis.com/device/code"
-	tokenURL      = "https://oauth2.googleapis.com/token"
+	tokenURL      = "https://oauth2.googleapis.com/token" //nolint:gosec // G101: public Google OAuth token endpoint URL, not a credential
 	gmailScope    = "https://www.googleapis.com/auth/gmail.modify"
 	calendarScope = "https://www.googleapis.com/auth/calendar"
 )
@@ -106,7 +106,7 @@ func (m *OAuthManager) StartDeviceFlow(ctx context.Context, clientID, accountID 
 	if err != nil {
 		return nil, fmt.Errorf("device code request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("device code request returned %d", resp.StatusCode)
@@ -232,7 +232,7 @@ func (m *OAuthManager) exchangeDeviceCode(ctx context.Context, session *DeviceSe
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	var result tokenResponse
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
@@ -309,7 +309,7 @@ func (m *OAuthManager) refreshToken(ctx context.Context, clientID, refreshToken 
 	if err != nil {
 		return nil, fmt.Errorf("refresh token request failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("refresh token request returned %d", resp.StatusCode)

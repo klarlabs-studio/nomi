@@ -167,7 +167,7 @@ func (r *RunRepository) List(status *domain.RunStatus, limit, offset int) ([]*do
 	if err != nil {
 		return nil, fmt.Errorf("failed to list runs: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return r.scanRuns(rows)
 }
@@ -201,7 +201,7 @@ func (r *RunRepository) Search(query string, limit int) ([]*domain.Run, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to search runs: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return r.scanRuns(rows)
 }
 
@@ -227,7 +227,7 @@ func (r *RunRepository) ListByStatusIn(statuses []domain.RunStatus) ([]*domain.R
 	if err != nil {
 		return nil, fmt.Errorf("failed to list runs by status: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return r.scanRuns(rows)
 }
 
@@ -241,7 +241,7 @@ func (r *RunRepository) ListChildren(parentID string) ([]*domain.Run, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to list child runs: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return r.scanRuns(rows)
 }
 
@@ -400,7 +400,7 @@ func (r *StepRepository) ListByRun(runID string) ([]*domain.Step, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to list steps: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return r.scanSteps(rows)
 }

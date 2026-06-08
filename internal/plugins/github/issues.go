@@ -148,10 +148,10 @@ func (p *Plugin) issuesList(ctx context.Context, conn *domain.Connection, input 
 	if a, _ := input["assignee"].(string); a != "" {
 		q.Set("assignee", a)
 	}
-	if pp := intFromInput(input, "per_page", 0); pp > 0 {
+	if pp := intFromInput(input, "per_page"); pp > 0 {
 		q.Set("per_page", fmt.Sprintf("%d", pp))
 	}
-	if pg := intFromInput(input, "page", 0); pg > 0 {
+	if pg := intFromInput(input, "page"); pg > 0 {
 		q.Set("page", fmt.Sprintf("%d", pg))
 	}
 
@@ -185,7 +185,7 @@ func (p *Plugin) issuesList(ctx context.Context, conn *domain.Connection, input 
 func (p *Plugin) issuesGet(ctx context.Context, conn *domain.Connection, input map[string]any) (map[string]any, error) {
 	owner, _ := input["owner"].(string)
 	repo, _ := input["repo"].(string)
-	num := intFromInput(input, "issue_number", 0)
+	num := intFromInput(input, "issue_number")
 	if owner == "" || repo == "" || num <= 0 {
 		return nil, fmt.Errorf("github.issues.get: owner, repo, issue_number required")
 	}
@@ -246,7 +246,7 @@ func (p *Plugin) issuesCreate(ctx context.Context, conn *domain.Connection, inpu
 func (p *Plugin) issuesComment(ctx context.Context, conn *domain.Connection, input map[string]any) (map[string]any, error) {
 	owner, _ := input["owner"].(string)
 	repo, _ := input["repo"].(string)
-	num := intFromInput(input, "issue_number", 0)
+	num := intFromInput(input, "issue_number")
 	body, _ := input["body"].(string)
 	if owner == "" || repo == "" || num <= 0 || body == "" {
 		return nil, fmt.Errorf("github.issues.comment: owner, repo, issue_number, body required")
@@ -288,7 +288,7 @@ func (p *Plugin) assertRepoAllowed(conn *domain.Connection, owner, repo string) 
 
 // --- helpers ---
 
-func intFromInput(input map[string]any, key string, def int) int {
+func intFromInput(input map[string]any, key string) int {
 	switch v := input[key].(type) {
 	case float64:
 		return int(v)
@@ -300,11 +300,11 @@ func intFromInput(input map[string]any, key string, def int) int {
 		var n int
 		_, err := fmt.Sscanf(v, "%d", &n)
 		if err != nil {
-			return def
+			return 0
 		}
 		return n
 	}
-	return def
+	return 0
 }
 
 func stringSlice(input map[string]any, key string) []string {

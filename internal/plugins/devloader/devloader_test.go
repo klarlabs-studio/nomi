@@ -55,7 +55,7 @@ func wasmhostTestdataDir(t *testing.T) string {
 func TestLoad_PicksUpBundleFiles(t *testing.T) {
 	ctx := context.Background()
 	loader := wasmhost.NewLoader(ctx)
-	defer loader.Close(ctx)
+	defer func() { _ = loader.Close(ctx) }()
 
 	dir := t.TempDir()
 	writeBundle(t, dir, "alpha.nomi-plugin", "com.dev.alpha")
@@ -86,7 +86,7 @@ func TestLoad_PicksUpBundleFiles(t *testing.T) {
 func TestLoad_PartialFailureCollectsErrors(t *testing.T) {
 	ctx := context.Background()
 	loader := wasmhost.NewLoader(ctx)
-	defer loader.Close(ctx)
+	defer func() { _ = loader.Close(ctx) }()
 
 	dir := t.TempDir()
 	writeBundle(t, dir, "good.nomi-plugin", "com.dev.good")
@@ -111,7 +111,7 @@ func TestLoad_PartialFailureCollectsErrors(t *testing.T) {
 func TestLoad_CreatesMissingDir(t *testing.T) {
 	ctx := context.Background()
 	loader := wasmhost.NewLoader(ctx)
-	defer loader.Close(ctx)
+	defer func() { _ = loader.Close(ctx) }()
 
 	dir := filepath.Join(t.TempDir(), "plugins-dev")
 	res, err := Load(ctx, dir, loader)

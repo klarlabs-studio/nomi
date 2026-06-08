@@ -82,7 +82,7 @@ func runCatalog(args []string) {
 	if err != nil {
 		fail("build catalog: %v", err)
 	}
-	if err := os.WriteFile(*out, bytes, 0o644); err != nil {
+	if err := os.WriteFile(*out, bytes, 0o600); err != nil {
 		fail("write %s: %v", *out, err)
 	}
 	fmt.Printf("Wrote signed catalog to %s\n", *out)

@@ -214,7 +214,7 @@ func (r *AssistantRepository) List(limit, offset int) ([]*domain.AssistantDefini
 	if err != nil {
 		return nil, fmt.Errorf("failed to list assistants: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return r.scanAssistants(rows)
 }
@@ -346,12 +346,6 @@ func (r *EventRepository) create(e execer, event *domain.Event, prevHash string)
 	return nil
 }
 
-// queryRower lets us share the latest-hash lookup between the
-// connection (DB) and transaction (sql.Tx) variants of Create.
-type queryRower interface {
-	QueryRow(query string, args ...interface{}) *sql.Row
-}
-
 const latestEntryHashQuery = `
 	SELECT entry_hash FROM events
 	WHERE entry_hash IS NOT NULL
@@ -454,7 +448,7 @@ func (r *EventRepository) VerifyChain() (*ChainVerifyResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan events for verify: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	expectedPrev := ""
 	count := 0
@@ -515,7 +509,7 @@ func (r *EventRepository) ListByRun(runID string, limit int) ([]*domain.Event, e
 	if err != nil {
 		return nil, fmt.Errorf("failed to list events: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return r.scanEvents(rows)
 }
@@ -530,7 +524,7 @@ func (r *EventRepository) ListByType(eventType domain.EventType, limit int) ([]*
 	if err != nil {
 		return nil, fmt.Errorf("failed to list events: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return r.scanEvents(rows)
 }
@@ -545,7 +539,7 @@ func (r *EventRepository) ListAll(limit int) ([]*domain.Event, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to list events: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return r.scanEvents(rows)
 }
@@ -562,7 +556,7 @@ func (r *EventRepository) ListByTimeRange(from, to time.Time) ([]*domain.Event, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to list events by time range: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return r.scanEvents(rows)
 }
@@ -684,7 +678,7 @@ func (r *MemoryRepository) ListByScope(scope string, limit int) ([]*domain.Memor
 	if err != nil {
 		return nil, fmt.Errorf("failed to list memory: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return r.scanMemory(rows)
 }
@@ -699,7 +693,7 @@ func (r *MemoryRepository) ListByAssistant(assistantID string, limit int) ([]*do
 	if err != nil {
 		return nil, fmt.Errorf("failed to list memory: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return r.scanMemory(rows)
 }
@@ -763,7 +757,7 @@ func (r *MemoryRepository) Search(query string, limit int) ([]*domain.MemoryEntr
 	if err != nil {
 		return nil, fmt.Errorf("failed to search memory: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return r.scanMemory(rows)
 }
@@ -782,7 +776,7 @@ func (r *MemoryRepository) searchFTS(query string, limit int) ([]*domain.MemoryE
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return r.scanMemory(rows)
 }
 
@@ -897,7 +891,7 @@ func (r *AppSettingsRepository) List() (map[string]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to list settings: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	settings := make(map[string]string)
 	for rows.Next() {

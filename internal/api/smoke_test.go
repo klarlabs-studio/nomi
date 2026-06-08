@@ -135,7 +135,7 @@ func newHarness(t *testing.T) *harness {
 	}
 	t.Cleanup(func() {
 		rt.Shutdown()
-		database.Close()
+		_ = database.Close()
 	})
 	return h
 }
@@ -451,7 +451,7 @@ func TestSSEStreamDeliversPublishedEvent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("open stream: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("stream status = %d", resp.StatusCode)
 	}

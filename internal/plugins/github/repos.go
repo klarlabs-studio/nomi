@@ -95,13 +95,13 @@ func (p *Plugin) reposSearchCode(ctx context.Context, conn *domain.Connection, i
 
 	values := url.Values{}
 	values.Set("q", q)
-	if pp := intFromInput(input, "per_page", 0); pp > 0 {
+	if pp := intFromInput(input, "per_page"); pp > 0 {
 		if pp > 100 {
 			pp = 100
 		}
 		values.Set("per_page", fmt.Sprintf("%d", pp))
 	}
-	if pg := intFromInput(input, "page", 0); pg > 0 {
+	if pg := intFromInput(input, "page"); pg > 0 {
 		values.Set("page", fmt.Sprintf("%d", pg))
 	}
 
@@ -262,14 +262,14 @@ func (p *Plugin) reposClone(ctx context.Context, conn *domain.Connection, input 
 
 	// `git clone` doesn't strictly need a parent dir, but creating
 	// it explicitly keeps the error surface deterministic.
-	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(target), 0o750); err != nil {
 		return nil, fmt.Errorf("github.repos.clone: prepare parent: %w", err)
 	}
 
 	// --depth 1 is the right default for agent-flavored "show me
 	// this repo" use cases. Agents that want history can pass
 	// depth=0 explicitly later.
-	cmd := exec.CommandContext(ctx, "git", "clone", "--depth", "1", "--quiet", cloneURL, target)
+	cmd := exec.CommandContext(ctx, "git", "clone", "--depth", "1", "--quiet", cloneURL, target) //nolint:gosec // G204: fixed git clone invocation, clone URL is validated
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		// Scrub the token from any error path before returning to the

@@ -11,7 +11,7 @@ import (
 
 func TestPullsList_Basic(t *testing.T) {
 	srv := newStubServer(t)
-	srv.stub("GET /repos/o/r/pulls", http.StatusOK,
+	srv.stub("GET /repos/o/r/pulls",
 		`[{"number":1,"title":"PR one","state":"open","user":{"login":"alice"},"head":{"sha":"abc","ref":"feat/x"},"base":{"ref":"main"}}]`)
 	p, conn := stubPlugin(t, srv)
 	out, err := p.pullsList(context.Background(), conn, map[string]any{
@@ -31,9 +31,9 @@ func TestPullsList_Basic(t *testing.T) {
 
 func TestPullsGet_BundlesCheckRuns(t *testing.T) {
 	srv := newStubServer(t)
-	srv.stub("GET /repos/o/r/pulls/7", http.StatusOK,
+	srv.stub("GET /repos/o/r/pulls/7",
 		`{"number":7,"title":"X","state":"open","body":"Fixes #42 also closes #43","user":{"login":"alice"},"head":{"sha":"deadbeef","ref":"feat"},"base":{"ref":"main"}}`)
-	srv.stub("GET /repos/o/r/commits/deadbeef/check-runs", http.StatusOK,
+	srv.stub("GET /repos/o/r/commits/deadbeef/check-runs",
 		`{"total_count":2,"check_runs":[{"name":"build","status":"completed","conclusion":"success"},{"name":"tests","status":"in_progress"}]}`)
 	p, conn := stubPlugin(t, srv)
 	out, err := p.pullsGet(context.Background(), conn, map[string]any{
@@ -62,7 +62,7 @@ func TestPullsGet_BundlesCheckRuns(t *testing.T) {
 
 func TestPullsGet_TolerantOfCheckRunsFailure(t *testing.T) {
 	srv := newStubServer(t)
-	srv.stub("GET /repos/o/r/pulls/7", http.StatusOK,
+	srv.stub("GET /repos/o/r/pulls/7",
 		`{"number":7,"title":"X","head":{"sha":"deadbeef"},"base":{"ref":"main"}}`)
 	// No stub for check-runs path → 404 from the stub server. The
 	// pullsGet handler should still succeed with check_runs_error
@@ -106,7 +106,7 @@ func TestPullsReview_RejectsEmptyCommentBody(t *testing.T) {
 
 func TestPullsReview_AcceptsApproveWithoutBody(t *testing.T) {
 	srv := newStubServer(t)
-	srv.stub("POST /repos/o/r/pulls/7/reviews", http.StatusOK,
+	srv.stub("POST /repos/o/r/pulls/7/reviews",
 		`{"id":1,"state":"APPROVED","user":{"login":"bot"}}`)
 	p, conn := stubPlugin(t, srv)
 	_, err := p.pullsReview(context.Background(), conn, map[string]any{
@@ -154,7 +154,7 @@ func TestPullsCreate_PassesPayload(t *testing.T) {
 		if strings.Contains(r.URL.Path, "/access_tokens") {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
-			fmt.Fprintf(w, `{"token":"ghs_stub","expires_at":%q}`, time.Now().Add(time.Hour).UTC().Format(time.RFC3339))
+			_, _ = fmt.Fprintf(w, `{"token":"ghs_stub","expires_at":%q}`, time.Now().Add(time.Hour).UTC().Format(time.RFC3339))
 			return
 		}
 		if r.Method == "POST" && r.URL.Path == "/repos/o/r/pulls" {

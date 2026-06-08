@@ -15,7 +15,7 @@ import (
 // both would silently succeed and the run.* event chain would carry a
 // duplicated transition.
 func TestTransitionRun_ConcurrentLoserGetsErrConcurrentTransition(t *testing.T) {
-	rt, _, cleanup := setupTestRuntime(t)
+	rt, cleanup := setupTestRuntime(t)
 	defer cleanup()
 
 	// Seed an assistant + run row directly through the repos so we

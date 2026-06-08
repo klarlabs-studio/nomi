@@ -17,24 +17,24 @@ import (
 	"go.klarlabs.de/nomi/internal/tools"
 )
 
-func setupTestRuntimeWithMemory(t *testing.T) (*Runtime, *db.DB, *memory.EmbeddedClient, func()) {
+func setupTestRuntimeWithMemory(t *testing.T) (*Runtime, *db.DB, func()) {
 	// Use temp file database instead of :memory: for connection stability
 	tmpFile, err := os.CreateTemp("", "nomi-integration-*.db")
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
-	tmpFile.Close()
+	_ = tmpFile.Close()
 
 	config := db.Config{Path: tmpFile.Name()}
 	database, err := db.New(config)
 	if err != nil {
-		os.Remove(tmpFile.Name())
+		_ = os.Remove(tmpFile.Name())
 		t.Fatalf("Failed to create test database: %v", err)
 	}
 
 	if err := database.Migrate(); err != nil {
-		database.Close()
-		os.Remove(tmpFile.Name())
+		_ = database.Close()
+		_ = os.Remove(tmpFile.Name())
 		t.Fatalf("Failed to run migrations: %v", err)
 	}
 
@@ -54,16 +54,16 @@ func setupTestRuntimeWithMemory(t *testing.T) (*Runtime, *db.DB, *memory.Embedde
 	rt := NewRuntime(database, eventBus, permEngine, approvalMgr, toolExecutor, memManager, DefaultConfig())
 
 	cleanup := func() {
-		database.Close()
-		os.Remove(tmpFile.Name())
+		_ = database.Close()
+		_ = os.Remove(tmpFile.Name())
 	}
 
-	return rt, database, memManager, cleanup
+	return rt, database, cleanup
 }
 
 // TestFullRunLifecycle covers: create → planning → executing → approval → completed
 func TestFullRunLifecycle(t *testing.T) {
-	rt, _, _, cleanup := setupTestRuntimeWithMemory(t)
+	rt, _, cleanup := setupTestRuntimeWithMemory(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -125,7 +125,7 @@ func TestFullRunLifecycle(t *testing.T) {
 	time.Sleep(1 * time.Second)
 
 	// Verify run is awaiting approval
-	updatedRun, steps, _, err = rt.GetRun(run.ID)
+	updatedRun, _, _, err = rt.GetRun(run.ID)
 	if err != nil {
 		t.Fatalf("Failed to get run: %v", err)
 	}
@@ -205,7 +205,7 @@ func TestFullRunLifecycle(t *testing.T) {
 
 // TestApprovalDeny covers: create → approval → deny → failed
 func TestApprovalDeny(t *testing.T) {
-	rt, _, _, cleanup := setupTestRuntimeWithMemory(t)
+	rt, _, cleanup := setupTestRuntimeWithMemory(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -270,7 +270,7 @@ func TestApprovalDeny(t *testing.T) {
 
 // TestRunRetry covers: create → fail → retry → complete
 func TestRunRetry(t *testing.T) {
-	rt, _, _, cleanup := setupTestRuntimeWithMemory(t)
+	rt, _, cleanup := setupTestRuntimeWithMemory(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -349,7 +349,7 @@ func TestRunRetry(t *testing.T) {
 
 // TestEventEmission verifies events are published during run lifecycle
 func TestEventEmission(t *testing.T) {
-	rt, _, _, cleanup := setupTestRuntimeWithMemory(t)
+	rt, _, cleanup := setupTestRuntimeWithMemory(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -416,7 +416,7 @@ func TestEventEmission(t *testing.T) {
 
 // TestFolderContextLoading verifies that folder contexts are loaded into run steps
 func TestFolderContextLoading(t *testing.T) {
-	rt, _, _, cleanup := setupTestRuntimeWithMemory(t)
+	rt, _, cleanup := setupTestRuntimeWithMemory(t)
 	defer cleanup()
 
 	ctx := context.Background()
@@ -426,7 +426,7 @@ func TestFolderContextLoading(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Create some files
 	if err := os.WriteFile(filepath.Join(tmpDir, "README.md"), []byte("# Test"), 0644); err != nil {

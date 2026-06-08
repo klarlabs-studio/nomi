@@ -12,7 +12,6 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/mail"
@@ -28,11 +27,6 @@ import (
 // package qualifier. base64.StdEncoding is the canonical RFC 4648
 // alphabet which all email clients understand.
 var stdEncoding = base64.StdEncoding
-
-// _json keeps encoding/json reachable; the legacy SendEmail path uses
-// it via downstream call sites elsewhere in the package once the
-// inbound IMAP fetcher decodes envelope JSON.
-var _json = json.Marshal
 
 // Config is the per-connection email-plugin configuration. Everything
 // callers need to open an IMAP connection for receive and an SMTP
@@ -262,10 +256,10 @@ func sendMailImplicitTLS(host, addr string, auth smtp.Auth, from string, to []st
 	}
 	client, err := smtp.NewClient(conn, host)
 	if err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return fmt.Errorf("smtp client: %w", err)
 	}
-	defer client.Quit()
+	defer func() { _ = client.Quit() }()
 	if auth != nil {
 		if err := client.Auth(auth); err != nil {
 			return fmt.Errorf("smtp auth: %w", err)
@@ -284,7 +278,7 @@ func sendMailImplicitTLS(host, addr string, auth smtp.Auth, from string, to []st
 		return fmt.Errorf("smtp data: %w", err)
 	}
 	if _, err := w.Write(msg); err != nil {
-		w.Close()
+		_ = w.Close()
 		return fmt.Errorf("smtp write: %w", err)
 	}
 	if err := w.Close(); err != nil {
@@ -318,7 +312,7 @@ func FetchNew(ctx context.Context, cfg Config, sinceUID uint32) ([]Message, uint
 	if err != nil {
 		return nil, sinceUID, fmt.Errorf("imap dial: %w", err)
 	}
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	if cfg.Username != "" {
 		if err := c.Login(cfg.Username, cfg.Password).Wait(); err != nil {

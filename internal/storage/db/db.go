@@ -66,7 +66,7 @@ type DB struct {
 func New(config Config) (*DB, error) {
 	// Ensure directory exists
 	dir := filepath.Dir(config.Path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o750); err != nil {
 		return nil, fmt.Errorf("failed to create data directory: %w", err)
 	}
 
@@ -86,7 +86,7 @@ func New(config Config) (*DB, error) {
 		PRAGMA synchronous = NORMAL;
 		PRAGMA busy_timeout = 5000;
 	`); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, fmt.Errorf("failed to configure database: %w", err)
 	}
 

@@ -186,12 +186,9 @@ func (s *ConnectorServer) UpdateConnectorConfig(c *gin.Context) {
 	// the TelegramPlugin sees the new connection immediately. Removing
 	// this block after plugin-ui-01 ships is a one-line change.
 	if name == "telegram" {
-		if err := s.mirrorTelegramToPlugin(req.Config, req.Enabled); err != nil {
-			// Surface as a warning rather than a hard error — the legacy
-			// row persisted, the bridge failure only affects the new
-			// plugin's visibility.
-			log.Printf("telegram bridge write failed: %v", err)
-		}
+		// Best-effort dual-write into the new plugin tables; failures
+		// only affect the new plugin's visibility, not the legacy row.
+		s.mirrorTelegramToPlugin(req.Config, req.Enabled)
 	}
 
 	// Restart the connector to apply changes dynamically
@@ -224,7 +221,7 @@ func (s *ConnectorServer) UpdateConnectorConfig(c *gin.Context) {
 // from the incoming config) are NOT auto-deleted — we only delete
 // something when the user explicitly removes it from the UI. This is
 // conservative on the "don't surprise the user" axis.
-func (s *ConnectorServer) mirrorTelegramToPlugin(config map[string]interface{}, topLevelEnabled bool) error {
+func (s *ConnectorServer) mirrorTelegramToPlugin(config map[string]interface{}, topLevelEnabled bool) {
 	rawConns, _ := config["connections"].([]interface{})
 
 	connRepo := db.NewConnectionRepository(s.configRepo.DB())
@@ -271,7 +268,6 @@ func (s *ConnectorServer) mirrorTelegramToPlugin(config map[string]interface{}, 
 			})
 		}
 	}
-	return nil
 }
 
 // telegramPluginID mirrors internal/plugins/telegram.PluginID without

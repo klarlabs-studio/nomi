@@ -362,7 +362,7 @@ func (s *PluginServer) sourceBundle(c *gin.Context) ([]byte, string, error) {
 		if err != nil {
 			return nil, "", err
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		body, err := io.ReadAll(io.LimitReader(f, maxBundle+1))
 		if err != nil {
 			return nil, "", err
@@ -413,7 +413,7 @@ func defaultHTTPFetch(ctx context.Context, url string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("HTTP %d from %s", resp.StatusCode, url)
 	}

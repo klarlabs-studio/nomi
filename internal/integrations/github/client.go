@@ -118,7 +118,7 @@ func (c *Client) Do(ctx context.Context, method, path string, body any, out any)
 	if err != nil {
 		return fmt.Errorf("github: request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// 401 specifically: invalidate the cached token and bubble; the
 	// next call mints fresh. Common when a token is revoked between

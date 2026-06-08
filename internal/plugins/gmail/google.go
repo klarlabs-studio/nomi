@@ -71,7 +71,7 @@ func (g *GoogleProvider) doJSON(req *http.Request, out interface{}) error {
 	if err != nil {
 		return fmt.Errorf("gmail: %s %s: %w", req.Method, req.URL.Path, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024*1024))
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		// Check for 401 Unauthorized - invalidate the account's auth
@@ -364,7 +364,7 @@ func buildRFC822(opts SendOptions) ([]byte, error) {
 		buf.WriteString("\r\n")
 		qp := quotedprintable.NewWriter(&buf)
 		_, _ = qp.Write([]byte(opts.Body))
-		qp.Close()
+		_ = qp.Close()
 	case !hasAttachments:
 		// multipart/alternative — text + html
 		mw := multipart.NewWriter(&buf)

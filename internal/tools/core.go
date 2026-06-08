@@ -60,7 +60,7 @@ func (t *FileReadTool) Execute(ctx context.Context, input map[string]interface{}
 		}
 	}
 
-	content, err := os.ReadFile(resolved)
+	content, err := os.ReadFile(resolved) //nolint:gosec // G304: path resolved within the workspace root
 	if err != nil {
 		return nil, fmt.Errorf("couldn't read the file: %w", err)
 	}
@@ -130,10 +130,10 @@ func (t *FileWriteTool) Execute(ctx context.Context, input map[string]interface{
 		}
 	}
 
-	if err := os.MkdirAll(filepath.Dir(resolved), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(resolved), 0o750); err != nil {
 		return nil, fmt.Errorf("couldn't create the folder: %w", err)
 	}
-	if err := os.WriteFile(resolved, []byte(content), 0o644); err != nil {
+	if err := os.WriteFile(resolved, []byte(content), 0o600); err != nil {
 		return nil, fmt.Errorf("couldn't write the file: %w", err)
 	}
 

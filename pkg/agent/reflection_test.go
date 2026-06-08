@@ -7,9 +7,9 @@ import (
 	"go.klarlabs.de/nomi/pkg/agent"
 )
 
-func hasInsight(insights []agent.Insight, kind, capability string, count int) bool {
+func hasInsight(insights []agent.Insight, kind, capability string) bool {
 	for _, in := range insights {
-		if in.Kind == kind && in.Capability == capability && in.Count == count {
+		if in.Kind == kind && in.Capability == capability && in.Count == 2 {
 			return true
 		}
 	}
@@ -24,10 +24,10 @@ func TestReflectSkillAndFriction(t *testing.T) {
 		{Capability: "document.delete", Status: agent.StatusDenied},
 		{Capability: "once.only", Status: agent.StatusExecuted}, // below threshold
 	})
-	if !hasInsight(insights, agent.KindSkill, "tax.assess", 2) {
+	if !hasInsight(insights, agent.KindSkill, "tax.assess") {
 		t.Error("expected tax.assess skill (count 2)")
 	}
-	if !hasInsight(insights, agent.KindFriction, "document.delete", 2) {
+	if !hasInsight(insights, agent.KindFriction, "document.delete") {
 		t.Error("expected document.delete friction (count 2)")
 	}
 	for _, in := range insights {
@@ -49,10 +49,10 @@ func TestReflectOverTrajectories(t *testing.T) {
 		trs = append(trs, tr)
 	}
 	insights := agent.Reflect(agent.ObservationsFromTrajectories(trs...))
-	if !hasInsight(insights, agent.KindSkill, "tax.assess", 2) {
+	if !hasInsight(insights, agent.KindSkill, "tax.assess") {
 		t.Errorf("expected skill insight from trajectories; got %+v", insights)
 	}
-	if !hasInsight(insights, agent.KindFriction, "document.delete", 2) {
+	if !hasInsight(insights, agent.KindFriction, "document.delete") {
 		t.Errorf("expected friction insight from trajectories; got %+v", insights)
 	}
 }

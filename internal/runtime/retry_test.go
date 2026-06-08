@@ -78,7 +78,7 @@ func newRetryHarness(t *testing.T, maxRetries int) *retryHarness {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { database.Close() })
+	t.Cleanup(func() { _ = database.Close() })
 	if err := database.Migrate(); err != nil {
 		t.Fatal(err)
 	}

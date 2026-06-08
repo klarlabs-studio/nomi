@@ -97,17 +97,17 @@ func (w *WhisperBackend) Transcribe(ctx context.Context, audio []byte, languageH
 		return "", "", fmt.Errorf("create temp audio: %w", err)
 	}
 	audioPath := audioFile.Name()
-	defer os.Remove(audioPath)
+	defer func() { _ = os.Remove(audioPath) }()
 	if _, err := audioFile.Write(audio); err != nil {
-		audioFile.Close()
+		_ = audioFile.Close()
 		return "", "", fmt.Errorf("write temp audio: %w", err)
 	}
-	audioFile.Close()
+	_ = audioFile.Close()
 
 	// Output base — whisper-cli appends .txt automatically.
 	outBase := strings.TrimSuffix(audioPath, ".wav") + "-out"
 	outFile := outBase + ".txt"
-	defer os.Remove(outFile)
+	defer func() { _ = os.Remove(outFile) }()
 
 	modelPath := filepath.Join(w.modelDir, "ggml-"+w.modelSize+".bin")
 
@@ -129,14 +129,14 @@ func (w *WhisperBackend) Transcribe(ctx context.Context, audio []byte, languageH
 	runCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
-	cmd := exec.CommandContext(runCtx, w.binaryPath, args...)
+	cmd := exec.CommandContext(runCtx, w.binaryPath, args...) //nolint:gosec // G204: whisper binary path from plugin config
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
 		return "", "", fmt.Errorf("whisper exec: %w (stderr: %s)", err, strings.TrimSpace(stderr.String()))
 	}
 
-	transcriptBytes, err := os.ReadFile(outFile)
+	transcriptBytes, err := os.ReadFile(outFile) //nolint:gosec // G304: self-created temp output file
 	if err != nil {
 		return "", "", fmt.Errorf("read whisper output: %w", err)
 	}

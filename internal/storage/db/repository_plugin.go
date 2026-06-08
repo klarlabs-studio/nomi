@@ -115,7 +115,7 @@ func (r *ConnectionRepository) ListByPlugin(pluginID string) ([]*domain.Connecti
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return collectConnections(rows)
 }
 
@@ -130,7 +130,7 @@ func (r *ConnectionRepository) ListEnabled() ([]*domain.Connection, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return collectConnections(rows)
 }
 
@@ -281,7 +281,7 @@ func (r *AssistantBindingRepository) ListByAssistant(assistantID string) ([]*dom
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return collectBindings(rows)
 }
 
@@ -298,7 +298,7 @@ func (r *AssistantBindingRepository) ListByConnection(connectionID string) ([]*d
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return collectBindings(rows)
 }
 

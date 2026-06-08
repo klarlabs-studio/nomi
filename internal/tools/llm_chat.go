@@ -151,12 +151,11 @@ func (t *LLMChatTool) Execute(ctx context.Context, input map[string]interface{})
 			return nil
 		})
 		if err != nil {
-			// Invalidate cache on auth error
+			// Invalidate cache on auth error. For the default client
+			// (empty providerID) invalidation is handled by the
+			// resolver's DefaultClient path, so there's nothing to do.
 			if providerID != "" {
 				t.resolver.InvalidateCacheIfAuthError(providerID, err)
-			} else {
-				// For default client, we need to invalidate the default profile
-				// This is handled by the resolver's DefaultClient path
 			}
 			return nil, err
 		}

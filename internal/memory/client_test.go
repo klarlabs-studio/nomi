@@ -54,23 +54,23 @@ func newTestClient(t *testing.T) (*EmbeddedClient, *db.DB, *db.MemoryRepository,
 	if err != nil {
 		t.Fatalf("create temp db: %v", err)
 	}
-	tmpFile.Close()
+	_ = tmpFile.Close()
 
 	database, err := db.New(db.Config{Path: tmpFile.Name()})
 	if err != nil {
-		os.Remove(tmpFile.Name())
+		_ = os.Remove(tmpFile.Name())
 		t.Fatalf("open db: %v", err)
 	}
 	if err := database.Migrate(); err != nil {
-		database.Close()
-		os.Remove(tmpFile.Name())
+		_ = database.Close()
+		_ = os.Remove(tmpFile.Name())
 		t.Fatalf("migrate: %v", err)
 	}
 	repo := db.NewMemoryRepository(database)
 	c := NewEmbeddedClient(repo)
 	cleanup := func() {
-		database.Close()
-		os.Remove(tmpFile.Name())
+		_ = database.Close()
+		_ = os.Remove(tmpFile.Name())
 	}
 	return c, database, repo, cleanup
 }

@@ -23,7 +23,7 @@ func TestDetermineToolRoutesViaStepDefinition(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer database.Close()
+	defer func() { _ = database.Close() }()
 	if err := database.Migrate(); err != nil {
 		t.Fatal(err)
 	}
@@ -106,7 +106,7 @@ func TestDetermineToolFallsBackToCommandExecForLegacySteps(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer database.Close()
+	defer func() { _ = database.Close() }()
 	if err := database.Migrate(); err != nil {
 		t.Fatal(err)
 	}

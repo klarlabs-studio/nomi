@@ -65,7 +65,7 @@ func memoryExportCmd(common *commonFlags, args []string) int {
 		fmt.Fprintln(os.Stderr, "memory export:", err)
 		return 1
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		body, _ := io.ReadAll(resp.Body)
 		fmt.Fprintf(os.Stderr, "memory export: HTTP %d: %s\n", resp.StatusCode, string(body))
@@ -79,7 +79,7 @@ func memoryExportCmd(common *commonFlags, args []string) int {
 			fmt.Fprintln(os.Stderr, err)
 			return 1
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		dst = f
 	}
 	if _, err := io.Copy(dst, resp.Body); err != nil {
@@ -114,12 +114,12 @@ func memoryImportCmd(common *commonFlags, args []string) int {
 	if path == "-" {
 		src = os.Stdin
 	} else {
-		f, err := os.Open(path)
+		f, err := os.Open(path) //nolint:gosec // G304: path is a user-supplied CLI argument
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return 1
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		src = f
 	}
 
@@ -135,7 +135,7 @@ func memoryImportCmd(common *commonFlags, args []string) int {
 		fmt.Fprintln(os.Stderr, "memory import:", err)
 		return 1
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	body, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		fmt.Fprintf(os.Stderr, "memory import: HTTP %d: %s\n", resp.StatusCode, string(body))

@@ -50,7 +50,7 @@ func New(root string) (*Store, error) {
 	if root == "" {
 		return nil, fmt.Errorf("store: empty root")
 	}
-	if err := os.MkdirAll(root, 0o755); err != nil {
+	if err := os.MkdirAll(root, 0o750); err != nil {
 		return nil, fmt.Errorf("store: mkdir %s: %w", root, err)
 	}
 	return &Store{root: filepath.Clean(root)}, nil
@@ -85,7 +85,7 @@ func (s *Store) Install(b *bundle.Bundle) error {
 	// Clean any residue from a previous failed install attempt before
 	// writing into the staging path.
 	_ = os.RemoveAll(tmp)
-	if err := os.MkdirAll(tmp, 0o755); err != nil {
+	if err := os.MkdirAll(tmp, 0o750); err != nil {
 		return fmt.Errorf("store: stage %s: %w", tmp, err)
 	}
 
@@ -104,7 +104,7 @@ func (s *Store) Install(b *bundle.Bundle) error {
 		files["README.md"] = b.Readme
 	}
 	for name, body := range files {
-		if err := os.WriteFile(filepath.Join(tmp, name), body, 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(tmp, name), body, 0o600); err != nil {
 			_ = os.RemoveAll(tmp)
 			return fmt.Errorf("store: write %s: %w", name, err)
 		}
@@ -139,7 +139,7 @@ func (s *Store) WASM(pluginID string) ([]byte, error) {
 		return nil, fmt.Errorf("store: unsafe plugin id %q", pluginID)
 	}
 	path := filepath.Join(s.root, pluginID, "plugin.wasm")
-	body, err := os.ReadFile(path)
+	body, err := os.ReadFile(path) //nolint:gosec // G304: path under the store root, plugin id validated by safePluginID
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, fmt.Errorf("%w: %s", ErrNotInstalled, pluginID)
 	}
@@ -152,7 +152,7 @@ func (s *Store) Manifest(pluginID string) (plugins.PluginManifest, error) {
 		return plugins.PluginManifest{}, fmt.Errorf("store: unsafe plugin id %q", pluginID)
 	}
 	path := filepath.Join(s.root, pluginID, "manifest.json")
-	body, err := os.ReadFile(path)
+	body, err := os.ReadFile(path) //nolint:gosec // G304: path under the store root, plugin id validated by safePluginID
 	if errors.Is(err, fs.ErrNotExist) {
 		return plugins.PluginManifest{}, fmt.Errorf("%w: %s", ErrNotInstalled, pluginID)
 	}

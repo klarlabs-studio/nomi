@@ -120,7 +120,7 @@ func (r *ConversationRepository) ListByAssistant(assistantID string, limit int) 
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return collectConversations(rows)
 }
 
@@ -139,7 +139,7 @@ func (r *ConversationRepository) ListByConnection(connectionID string, limit int
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return collectConversations(rows)
 }
 

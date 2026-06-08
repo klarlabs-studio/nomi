@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -58,7 +59,6 @@ import (
 	"go.klarlabs.de/nomi/internal/storage/db"
 	"go.klarlabs.de/nomi/internal/tools"
 	"go.klarlabs.de/nomi/internal/tunnel"
-	"sync"
 )
 
 func main() {
@@ -91,7 +91,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	defer database.Close()
+	// database is closed explicitly in the graceful-shutdown sequence
+	// below. A deferred Close here would be skipped by the startup
+	// log.Fatalf calls (os.Exit never runs defers) and would only
+	// mislead about cleanup ordering.
 
 	// Run migrations (embedded in binary)
 	if err := database.Migrate(); err != nil {
@@ -210,7 +213,9 @@ func main() {
 	scheduleRepo := db.NewScheduleRepository(database)
 	sched := scheduler.New(scheduleRepo, rt)
 	schedCtx, schedCancel := context.WithCancel(context.Background())
-	defer schedCancel()
+	// schedCancel is invoked explicitly in the graceful-shutdown
+	// sequence below; a deferred call here would be skipped by the
+	// startup log.Fatalf calls.
 	sched.Start(schedCtx)
 	log.Printf("scheduler: started (tick=%s)", scheduler.DefaultTickInterval)
 
@@ -683,9 +688,9 @@ func main() {
 	if err != nil {
 		strictPort := os.Getenv("NOMI_STRICT_PORT") == "1"
 		if strictPort || !isAddrInUse(err) {
-			log.Fatalf("Failed to bind API port %s: %v", port, err)
+			log.Fatalf("Failed to bind API port %s: %v", port, err) //nolint:gosec // G706: port is operator-supplied config, logged by the local daemon
 		}
-		log.Printf("API port %s in use, picking a free port", port)
+		log.Printf("API port %s in use, picking a free port", port) //nolint:gosec // G706: port is operator-supplied config, logged by the local daemon
 		apiListener, err = net.Listen("tcp", bindHost+":0")
 		if err != nil {
 			log.Fatalf("Failed to bind fallback port: %v", err)
@@ -713,7 +718,7 @@ func main() {
 				log.Printf("Tunnel start failed: %v — inbound webhooks disabled", err)
 				tunnelAdapter = nil
 			} else if publicURL != "" {
-				log.Printf("Tunnel public URL: %s", publicURL)
+				log.Printf("Tunnel public URL: %s", publicURL) //nolint:gosec // G706: tunnel URL from the configured provider, local daemon log
 				// Update all enabled connections that have webhooks enabled
 				connRepo := db.NewConnectionRepository(database)
 				conns, _ := connRepo.ListEnabled()
@@ -765,7 +770,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to publish API endpoint: %v", err)
 	}
-	log.Printf("API endpoint at %s (URL %s)", endpointPath, apiURL)
+	log.Printf("API endpoint at %s (URL %s)", endpointPath, apiURL) //nolint:gosec // G706: app-internal endpoint path/URL, local daemon log
 
 	server := &http.Server{
 		Handler:           router,
@@ -824,6 +829,10 @@ func main() {
 
 	log.Println("Shutting down server...")
 
+	// Stop the scheduler + learning loops first so they don't launch new
+	// runs while everything else unwinds.
+	schedCancel()
+
 	// Cancel in-flight runs first so the goroutines unwind before we stop
 	// connectors (which may be routing messages into the runtime) and the
 	// HTTP server (which is streaming events to subscribers).
@@ -852,6 +861,12 @@ func main() {
 	// because plugin Stop calls above may still touch wasm modules.
 	if err := wasmLoader.Close(shutdownCtx); err != nil {
 		log.Printf("wasm loader close: %v", err)
+	}
+
+	// Close the database last: every shutdown step above may still flush
+	// state through it.
+	if err := database.Close(); err != nil {
+		log.Printf("Database close: %v", err)
 	}
 
 	log.Println("Nomi Runtime stopped")
@@ -902,7 +917,7 @@ func defaultUpdateFetch(ctx context.Context, url string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("HTTP %d from %s", resp.StatusCode, url)
 	}

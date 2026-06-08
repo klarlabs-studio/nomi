@@ -72,11 +72,12 @@ func (s *MemoryServer) ListMemory(c *gin.Context) {
 
 	var entries []*domain.MemoryEntry
 
-	if query != "" {
+	switch {
+	case query != "":
 		entries, err = s.manager.Search(scope, query, limit)
-	} else if scope != "" {
+	case scope != "":
 		entries, err = s.manager.ListByScope(scope, limit)
-	} else {
+	default:
 		// No scope filter — return the union of every user-visible
 		// scope so the UI's Memory tab can render workspace, profile,
 		// and preferences (learned + manual) without making three

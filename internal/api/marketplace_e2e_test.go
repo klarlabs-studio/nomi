@@ -74,14 +74,14 @@ func TestMarketplace_EndToEnd(t *testing.T) {
 	if err != nil {
 		t.Fatalf("db: %v", err)
 	}
-	defer database.Close()
+	defer func() { _ = database.Close() }()
 	if err := database.Migrate(); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
 
 	verifier, _ := signing.NewVerifier(rootPub, nil)
 	loader := wasmhost.NewLoader(ctx)
-	defer loader.Close(ctx)
+	defer func() { _ = loader.Close(ctx) }()
 
 	pluginStore, err := store.New(filepath.Join(tmp, "plugins"))
 	if err != nil {
@@ -184,7 +184,7 @@ func TestMarketplace_EndToEnd(t *testing.T) {
 		if err != nil {
 			return nil, err
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 		if resp.StatusCode != http.StatusOK {
 			return nil, fmt.Errorf("HTTP %d from %s", resp.StatusCode, url)
 		}

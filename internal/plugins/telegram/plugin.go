@@ -377,7 +377,7 @@ func (p *Plugin) sendApprovalPrompt(ctx context.Context, token, chatID, text, ap
 	if err != nil {
 		return 0, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return 0, fmt.Errorf("telegram sendMessage returned %d", resp.StatusCode)
 	}
@@ -436,7 +436,7 @@ func (p *Plugin) answerCallbackQuery(ctx context.Context, token, queryID string)
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err == nil {
-		resp.Body.Close()
+		_ = resp.Body.Close()
 	}
 }
 
@@ -462,7 +462,7 @@ func (p *Plugin) editMessageText(ctx context.Context, token, chatID string, mess
 	if err != nil {
 		return err
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	return nil
 }
 
@@ -509,7 +509,7 @@ func (p *Plugin) startConnection(ctx context.Context, conn *domain.Connection) {
 		log.Printf("[telegram plugin] %v; skipping connection %s", err, conn.ID)
 		return
 	}
-	loopCtx, cancel := context.WithCancel(ctx)
+	loopCtx, cancel := context.WithCancel(ctx) //nolint:gosec // G118: cancel is retained in cancelPerConn and invoked on Stop
 	p.mu.Lock()
 	p.cancelPerConn[conn.ID] = cancel
 	p.mu.Unlock()
@@ -647,7 +647,7 @@ func (p *Plugin) pollLoop(ctx context.Context, connID, token string) {
 		var body telegramGetUpdatesResponse
 		dec := json.NewDecoder(resp.Body)
 		err = dec.Decode(&body)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if err != nil || !body.OK {
 			if err != nil {
 				log.Printf("[telegram plugin] decode updates on %s: %v", connID, err)
@@ -993,7 +993,7 @@ func (c *Channel) sendPlainText(ctx context.Context, chatID, text string) error 
 	if err != nil {
 		return fmt.Errorf("telegram send: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return decodeTelegramError(resp)
 	}
@@ -1028,7 +1028,7 @@ func (c *Channel) sendAttachment(ctx context.Context, chatID string, att plugins
 		if err != nil {
 			return fmt.Errorf("telegram %s: %w", endpoint, err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 		if resp.StatusCode != http.StatusOK {
 			return decodeTelegramError(resp)
 		}
@@ -1052,7 +1052,7 @@ func (c *Channel) sendAttachment(ctx context.Context, chatID string, att plugins
 	if err != nil {
 		return fmt.Errorf("telegram %s: %w", endpoint, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return decodeTelegramError(resp)
 	}

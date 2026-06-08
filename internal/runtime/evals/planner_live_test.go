@@ -195,13 +195,13 @@ func runLiveCase(p liveProvider, c goldenCase) (got, want string, err error) {
 	if err != nil {
 		return "", "", err
 	}
-	defer os.RemoveAll(dir)
+	defer func() { _ = os.RemoveAll(dir) }()
 
 	database, err := db.New(db.Config{Path: dir + "/test.db"})
 	if err != nil {
 		return "", "", err
 	}
-	defer database.Close()
+	defer func() { _ = database.Close() }()
 	if err := database.Migrate(); err != nil {
 		return "", "", err
 	}

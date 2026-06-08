@@ -169,12 +169,12 @@ func TestInstallationToken_FetchAndCache(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		_, _ = w.Write([]byte(fmt.Sprintf(`{
+		_, _ = fmt.Fprintf(w, `{
 			"token": "ghs_fake_install_token",
 			"expires_at": %q,
 			"permissions": {"issues": "write", "pull_requests": "write"},
 			"repositories": [{"id": 100}, {"id": 200}]
-		}`, time.Now().Add(time.Hour).UTC().Format(time.RFC3339))))
+		}`, time.Now().Add(time.Hour).UTC().Format(time.RFC3339))
 	}))
 	defer srv.Close()
 
@@ -228,11 +228,11 @@ func TestInstallationToken_Refresh_AfterExpiry(t *testing.T) {
 		w.WriteHeader(http.StatusCreated)
 		// Each call returns a token that expires in 30s — well inside
 		// the tokenRefreshSlack window so the next call must re-mint.
-		_, _ = w.Write([]byte(fmt.Sprintf(`{
+		_, _ = fmt.Fprintf(w, `{
 			"token": "ghs_short_lived_%d",
 			"expires_at": %q,
 			"permissions": {}
-		}`, calls.Load(), time.Now().Add(30*time.Second).UTC().Format(time.RFC3339))))
+		}`, calls.Load(), time.Now().Add(30*time.Second).UTC().Format(time.RFC3339))
 	}))
 	defer srv.Close()
 
@@ -280,10 +280,10 @@ func TestInvalidateInstallation_ForcesRefresh(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		calls.Add(1)
 		w.WriteHeader(http.StatusCreated)
-		_, _ = w.Write([]byte(fmt.Sprintf(`{
+		_, _ = fmt.Fprintf(w, `{
 			"token": "t%d",
 			"expires_at": %q
-		}`, calls.Load(), time.Now().Add(time.Hour).UTC().Format(time.RFC3339))))
+		}`, calls.Load(), time.Now().Add(time.Hour).UTC().Format(time.RFC3339))
 	}))
 	defer srv.Close()
 	c := NewAuthClient(creds, WithAPIBase(srv.URL), WithHTTPClient(srv.Client()))

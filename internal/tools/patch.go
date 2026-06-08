@@ -165,7 +165,7 @@ func (t *FilePatchTool) Execute(ctx context.Context, input map[string]interface{
 // stdin. Returns the combined output so the caller can include it in
 // a UserError when something goes wrong.
 func runGitApply(ctx context.Context, root, diff string, args []string) ([]byte, error) {
-	cmd := exec.CommandContext(ctx, "git", args...)
+	cmd := exec.CommandContext(ctx, "git", args...) //nolint:gosec // G204: fixed git invocation, args built by the patch tool
 	cmd.Dir = root
 	cmd.Stdin = strings.NewReader(diff)
 	cmd.Env = BuildSandboxEnv(nil)

@@ -38,7 +38,7 @@ func tailCmd(common *commonFlags, args []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		fmt.Fprintf(os.Stderr, "tail: HTTP %d\n", resp.StatusCode)
 		return 1

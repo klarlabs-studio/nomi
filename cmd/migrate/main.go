@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -12,6 +13,15 @@ import (
 )
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// run holds the migration logic so a single deferred database.Close()
+// reliably fires on every exit path — unlike log.Fatal in main(), which
+// would skip deferred cleanup.
+func run() error {
 	var (
 		up          = flag.Bool("up", false, "Run migrations up")
 		down        = flag.Bool("down", false, "Run migrations down")
@@ -22,41 +32,41 @@ func main() {
 	flag.Parse()
 
 	if *up && *down {
-		log.Fatal("cannot use -up and -down together")
+		return errors.New("cannot use -up and -down together")
 	}
 	if *steps < 0 {
-		log.Fatal("-steps must be >= 0")
+		return errors.New("-steps must be >= 0")
 	}
 	if *steps > 0 && !*down {
-		log.Fatal("-steps requires -down")
+		return errors.New("-steps requires -down")
 	}
 
 	config := db.DefaultConfig()
 	database, err := db.New(config)
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		return fmt.Errorf("connect to database: %w", err)
 	}
-	defer database.Close()
+	defer func() { _ = database.Close() }()
 
 	if *showVersion {
 		v, dirty, err := database.MigrateStatus()
 		if err != nil {
-			log.Fatalf("Failed to get migration status: %v", err)
+			return fmt.Errorf("get migration status: %w", err)
 		}
 		if v == 0 {
 			fmt.Println("Migration version: 0 (no migrations applied, dirty: false)")
-			return
+			return nil
 		}
 		fmt.Printf("Migration version: %d (dirty: %v)\n", v, dirty)
-		return
+		return nil
 	}
 
 	if *up {
 		if err := database.Migrate(); err != nil {
-			log.Fatalf("Failed to run migrations: %v", err)
+			return fmt.Errorf("run migrations: %w", err)
 		}
 		fmt.Println("Migrations completed successfully")
-		return
+		return nil
 	}
 
 	if *down {
@@ -65,33 +75,33 @@ func main() {
 			in := bufio.NewReader(os.Stdin)
 			answer, err := in.ReadString('\n')
 			if err != nil {
-				log.Fatalf("Failed to read confirmation: %v", err)
+				return fmt.Errorf("read confirmation: %w", err)
 			}
 			if strings.TrimSpace(strings.ToLower(answer)) != "yes" {
 				fmt.Println("Cancelled")
-				return
+				return nil
 			}
 		}
 
 		if *steps > 0 {
 			if err := database.MigrateDownSteps(*steps); err != nil {
-				log.Fatalf("Failed to run down migrations: %v", err)
+				return fmt.Errorf("run down migrations: %w", err)
 			}
 			fmt.Printf("Rolled back %d migration step(s) successfully\n", *steps)
-			return
+			return nil
 		}
 
 		if err := database.MigrateDown(); err != nil {
-			log.Fatalf("Failed to run down migrations: %v", err)
+			return fmt.Errorf("run down migrations: %w", err)
 		}
 		fmt.Println("Down migrations completed successfully")
-		return
+		return nil
 	}
 
 	// Default: show status
 	version, dirty, err := database.MigrateStatus()
 	if err != nil {
-		log.Fatalf("Failed to get migration status: %v", err)
+		return fmt.Errorf("get migration status: %w", err)
 	}
 
 	if version == 0 {
@@ -99,4 +109,5 @@ func main() {
 	} else {
 		fmt.Printf("Current migration: %d (dirty: %v)\n", version, dirty)
 	}
+	return nil
 }

@@ -236,7 +236,7 @@ func (p *Plugin) startConnection(ctx context.Context, conn *domain.Connection) {
 		log.Printf("[email plugin] %v; skipping connection %s", err, conn.ID)
 		return
 	}
-	loopCtx, cancel := context.WithCancel(ctx)
+	loopCtx, cancel := context.WithCancel(ctx) //nolint:gosec // G118: cancel is retained in cancelPerConn and invoked on Stop
 	p.mu.Lock()
 	p.cancelPerConn[conn.ID] = cancel
 	p.mu.Unlock()
@@ -385,7 +385,7 @@ func (p *Plugin) handleMessage(ctx context.Context, connID string, cfg transport
 					_ = p.conversations.Touch(c.ID, p.eventBus)
 				}
 			}
-			p.handleRuleMatch(ctx, connID, rule, conv, m)
+			p.handleRuleMatch(ctx, rule, conv, m)
 			return
 		}
 	}

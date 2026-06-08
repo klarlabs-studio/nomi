@@ -47,7 +47,7 @@ func (p *Plugin) noteRead(_ context.Context, conn *domain.Connection, input map[
 	if err != nil {
 		return nil, fmt.Errorf("obsidian.read_note: %w", err)
 	}
-	raw, err := os.ReadFile(abs)
+	raw, err := os.ReadFile(abs) //nolint:gosec // G304: path resolved within the vault root (ResolveInVault)
 	if err != nil {
 		return nil, fmt.Errorf("obsidian.read_note: read %s: %w", rel, err)
 	}
@@ -89,12 +89,12 @@ func (p *Plugin) noteCreate(_ context.Context, conn *domain.Connection, input ma
 
 	out := assembleNote(frontmatter, body)
 
-	if err := os.MkdirAll(filepath.Dir(abs), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(abs), 0o750); err != nil {
 		return nil, fmt.Errorf("obsidian.create_note: mkdir parent: %w", err)
 	}
 	// O_EXCL refuses to overwrite. Agents update existing notes via
 	// obsidian.update_note; create is "make a new one or fail loud".
-	f, err := os.OpenFile(abs, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
+	f, err := os.OpenFile(abs, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600) //nolint:gosec // G304: path resolved within the vault root (ResolveInVault)
 	if err != nil {
 		return nil, fmt.Errorf("obsidian.create_note: %w", err)
 	}
@@ -117,7 +117,7 @@ func (p *Plugin) noteUpdate(_ context.Context, conn *domain.Connection, input ma
 	if err != nil {
 		return nil, fmt.Errorf("obsidian.update_note: %w", err)
 	}
-	existingBytes, err := os.ReadFile(abs)
+	existingBytes, err := os.ReadFile(abs) //nolint:gosec // G304: path resolved within the vault root (ResolveInVault)
 	if err != nil {
 		return nil, fmt.Errorf("obsidian.update_note: read existing: %w", err)
 	}
@@ -149,7 +149,7 @@ func (p *Plugin) noteUpdate(_ context.Context, conn *domain.Connection, input ma
 	}
 
 	out := assembleNote(mergedFM, newBody)
-	if err := os.WriteFile(abs, []byte(out), 0o644); err != nil {
+	if err := os.WriteFile(abs, []byte(out), 0o600); err != nil {
 		return nil, fmt.Errorf("obsidian.update_note: write: %w", err)
 	}
 	return map[string]any{
