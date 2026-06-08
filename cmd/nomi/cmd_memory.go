@@ -114,7 +114,7 @@ func memoryImportCmd(common *commonFlags, args []string) int {
 	if path == "-" {
 		src = os.Stdin
 	} else {
-		f, err := os.Open(path)
+		f, err := os.Open(path) //nolint:gosec // G304: path is a user-supplied CLI argument
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return 1

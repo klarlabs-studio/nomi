@@ -81,7 +81,7 @@ func (p *Plugin) searchNotes(_ context.Context, conn *domain.Connection, input m
 		if !strings.EqualFold(filepath.Ext(d.Name()), ".md") {
 			return nil
 		}
-		raw, readErr := os.ReadFile(p)
+		raw, readErr := os.ReadFile(p) //nolint:gosec // G304: path produced by WalkDir over the vault root
 		if readErr != nil {
 			return nil
 		}

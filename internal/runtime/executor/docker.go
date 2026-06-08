@@ -140,7 +140,7 @@ func (d *DockerBackend) Available(ctx context.Context) bool {
 	if _, err := exec.LookPath(binary); err != nil {
 		return false
 	}
-	cmd := exec.CommandContext(ctx, binary, "info", "--format", "{{.ServerVersion}}")
+	cmd := exec.CommandContext(ctx, binary, "info", "--format", "{{.ServerVersion}}") //nolint:gosec // G204: docker binary path from trusted executor config
 	return cmd.Run() == nil
 }
 
@@ -219,7 +219,7 @@ func (d *DockerBackend) Run(ctx context.Context, req Request) (*Result, error) {
 	if binary == "" {
 		binary = "docker"
 	}
-	cmd := exec.CommandContext(runCtx, binary, args...)
+	cmd := exec.CommandContext(runCtx, binary, args...) //nolint:gosec // G204: docker binary + args built by the executor, not user shell input
 
 	output, runErr := cmd.CombinedOutput()
 	result := &Result{Output: output}

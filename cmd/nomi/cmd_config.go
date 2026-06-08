@@ -71,7 +71,7 @@ func importCmd(common *commonFlags, args []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	body, err := os.ReadFile(path)
+	body, err := os.ReadFile(path) //nolint:gosec // G304: path is a user-supplied CLI argument
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1

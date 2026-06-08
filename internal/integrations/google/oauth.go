@@ -17,7 +17,7 @@ import (
 
 const (
 	deviceCodeURL = "https://oauth2.googleapis.com/device/code"
-	tokenURL      = "https://oauth2.googleapis.com/token"
+	tokenURL      = "https://oauth2.googleapis.com/token" //nolint:gosec // G101: public Google OAuth token endpoint URL, not a credential
 	gmailScope    = "https://www.googleapis.com/auth/gmail.modify"
 	calendarScope = "https://www.googleapis.com/auth/calendar"
 )

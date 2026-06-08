@@ -46,7 +46,7 @@ func (p *Plugin) linkNotes(_ context.Context, conn *domain.Connection, input map
 	if err != nil {
 		return nil, fmt.Errorf("obsidian.link_notes: %w", err)
 	}
-	raw, err := os.ReadFile(abs)
+	raw, err := os.ReadFile(abs) //nolint:gosec // G304: path resolved within the vault root (ResolveInVault)
 	if err != nil {
 		return nil, fmt.Errorf("obsidian.link_notes: read source: %w", err)
 	}
@@ -73,7 +73,7 @@ func (p *Plugin) linkNotes(_ context.Context, conn *domain.Connection, input map
 	body += separator + linkText
 
 	out := assembleNote(fm, body)
-	if err := os.WriteFile(abs, []byte(out), 0o644); err != nil {
+	if err := os.WriteFile(abs, []byte(out), 0o600); err != nil {
 		return nil, fmt.Errorf("obsidian.link_notes: write: %w", err)
 	}
 	return map[string]any{

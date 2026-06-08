@@ -37,7 +37,7 @@ type ignoreRule struct {
 
 func loadObsidianIgnore(vaultPath string) *ignoreMatcher {
 	m := &ignoreMatcher{}
-	f, err := os.Open(filepath.Join(vaultPath, ".obsidianignore"))
+	f, err := os.Open(filepath.Join(vaultPath, ".obsidianignore")) //nolint:gosec // G304: .obsidianignore at the vault root
 	if err != nil {
 		return m
 	}

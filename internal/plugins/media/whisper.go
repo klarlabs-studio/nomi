@@ -129,14 +129,14 @@ func (w *WhisperBackend) Transcribe(ctx context.Context, audio []byte, languageH
 	runCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
-	cmd := exec.CommandContext(runCtx, w.binaryPath, args...)
+	cmd := exec.CommandContext(runCtx, w.binaryPath, args...) //nolint:gosec // G204: whisper binary path from plugin config
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
 		return "", "", fmt.Errorf("whisper exec: %w (stderr: %s)", err, strings.TrimSpace(stderr.String()))
 	}
 
-	transcriptBytes, err := os.ReadFile(outFile)
+	transcriptBytes, err := os.ReadFile(outFile) //nolint:gosec // G304: self-created temp output file
 	if err != nil {
 		return "", "", fmt.Errorf("read whisper output: %w", err)
 	}

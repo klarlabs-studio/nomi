@@ -288,10 +288,10 @@ func writeJSONResponse(ctx context.Context, mod api.Module, resp map[string]any)
 		log.Printf("[wasmhost] writeJSONResponse: alloc(%d) failed: %v", len(body), err)
 		return 0
 	}
-	ptr := uint32(results[0])
+	ptr := uint32(results[0]) //nolint:gosec // G115: wasm alloc returns a 32-bit linear-memory pointer
 	if !mod.Memory().Write(ptr, body) {
 		log.Printf("[wasmhost] writeJSONResponse: write(%d bytes @ %d) out of bounds", len(body), ptr)
 		return 0
 	}
-	return PackPtrLen(ptr, uint32(len(body)))
+	return PackPtrLen(ptr, uint32(len(body))) //nolint:gosec // G115: body length bounded by 32-bit wasm linear memory
 }

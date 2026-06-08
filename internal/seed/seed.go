@@ -85,7 +85,7 @@ type Deps struct {
 // daemon is expected to log the error but continue booting so a
 // malformed seed doesn't take down a previously-working install.
 func Apply(path string, deps Deps) error {
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(path) //nolint:gosec // G304: caller-supplied seed file path
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
