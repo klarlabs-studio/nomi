@@ -4,7 +4,6 @@ package egress
 
 import (
 	"crypto/rand"
-	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -62,7 +61,7 @@ func New(cfg Config) (Filter, error) {
 		dockerParent = filepath.Join(root, cgroupName)
 	}
 	cgroupPath := filepath.Join(root, cgroupName)
-	if err := os.Mkdir(cgroupPath, 0o755); err != nil && !errors.Is(err, os.ErrExist) {
+	if err := os.Mkdir(cgroupPath, 0o750); err != nil && !errors.Is(err, os.ErrExist) {
 		return nil, fmt.Errorf("egress: mkdir cgroup %s: %w", cgroupPath, err)
 	}
 
@@ -306,16 +305,4 @@ func buildProgram(v4Map, v6Map *ebpf.Map) asm.Instructions {
 		asm.Mov.Imm(asm.R0, retDrop).WithSymbol("drop"),
 		asm.Return(),
 	}
-}
-
-// ipv4ToBE is a small helper retained for tests; the IPv4 wire form
-// the BPF v4 map keys use is the big-endian 4-byte encoding.
-func ipv4ToBE(ip net.IP) []byte {
-	v4 := ip.To4()
-	if v4 == nil {
-		return nil
-	}
-	out := make([]byte, 4)
-	binary.BigEndian.PutUint32(out, binary.BigEndian.Uint32(v4))
-	return out
 }
