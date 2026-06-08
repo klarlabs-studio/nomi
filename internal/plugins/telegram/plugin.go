@@ -509,7 +509,7 @@ func (p *Plugin) startConnection(ctx context.Context, conn *domain.Connection) {
 		log.Printf("[telegram plugin] %v; skipping connection %s", err, conn.ID)
 		return
 	}
-	loopCtx, cancel := context.WithCancel(ctx)
+	loopCtx, cancel := context.WithCancel(ctx) //nolint:gosec // G118: cancel is retained in cancelPerConn and invoked on Stop
 	p.mu.Lock()
 	p.cancelPerConn[conn.ID] = cancel
 	p.mu.Unlock()

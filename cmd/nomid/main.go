@@ -688,9 +688,9 @@ func main() {
 	if err != nil {
 		strictPort := os.Getenv("NOMI_STRICT_PORT") == "1"
 		if strictPort || !isAddrInUse(err) {
-			log.Fatalf("Failed to bind API port %s: %v", port, err)
+			log.Fatalf("Failed to bind API port %s: %v", port, err) //nolint:gosec // G706: port is operator-supplied config, logged by the local daemon
 		}
-		log.Printf("API port %s in use, picking a free port", port)
+		log.Printf("API port %s in use, picking a free port", port) //nolint:gosec // G706: port is operator-supplied config, logged by the local daemon
 		apiListener, err = net.Listen("tcp", bindHost+":0")
 		if err != nil {
 			log.Fatalf("Failed to bind fallback port: %v", err)
@@ -718,7 +718,7 @@ func main() {
 				log.Printf("Tunnel start failed: %v — inbound webhooks disabled", err)
 				tunnelAdapter = nil
 			} else if publicURL != "" {
-				log.Printf("Tunnel public URL: %s", publicURL)
+				log.Printf("Tunnel public URL: %s", publicURL) //nolint:gosec // G706: tunnel URL from the configured provider, local daemon log
 				// Update all enabled connections that have webhooks enabled
 				connRepo := db.NewConnectionRepository(database)
 				conns, _ := connRepo.ListEnabled()
@@ -770,7 +770,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to publish API endpoint: %v", err)
 	}
-	log.Printf("API endpoint at %s (URL %s)", endpointPath, apiURL)
+	log.Printf("API endpoint at %s (URL %s)", endpointPath, apiURL) //nolint:gosec // G706: app-internal endpoint path/URL, local daemon log
 
 	server := &http.Server{
 		Handler:           router,

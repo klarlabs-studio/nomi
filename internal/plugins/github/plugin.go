@@ -110,7 +110,7 @@ func (p *Plugin) Manifest() plugins.PluginManifest {
 		},
 		Requires: plugins.Requirements{
 			Credentials: []plugins.CredentialSpec{
-				{
+				{ //nolint:gosec // G101: credential field descriptor (label/description), not a secret value
 					Kind:        "github_app_private_key",
 					Key:         credentialPrivateKey,
 					Label:       "GitHub App private key (PEM)",

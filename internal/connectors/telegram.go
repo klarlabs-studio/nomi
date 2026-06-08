@@ -231,7 +231,7 @@ func (c *TelegramConnector) Start(ctx context.Context) error {
 		if !conn.Enabled || conn.BotToken == "" {
 			continue
 		}
-		connCtx, cancel := context.WithCancel(ctx)
+		connCtx, cancel := context.WithCancel(ctx) //nolint:gosec // G118: cancel is retained in cancelFuncs and invoked on Stop
 		c.mu.Lock()
 		c.cancelFuncs[conn.ID] = cancel
 		c.mu.Unlock()

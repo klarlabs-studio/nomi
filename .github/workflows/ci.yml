@@ -31,7 +31,15 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      pull-requests: write   # shared security job posts nox annotations on PRs
     secrets: inherit
     with:
-      coverage: false
+      # go.mod requires >= 1.26.2; setup-go pins GOTOOLCHAIN=local, so the
+      # shared default can't auto-download a newer toolchain.
+      go-version: "1.26"
+      # The org-pinned golangci-lint must be built with go1.26 to lint a
+      # go1.26.2 module ("build Go version is lower than the targeted Go
+      # version"); v2.12.2 is.
+      golangci-version: "v2.12.2"
+      coverage: false      # no coverage threshold wired up yet (follow-up)
       cross-platform: false
