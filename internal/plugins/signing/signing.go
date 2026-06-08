@@ -97,16 +97,16 @@ func rootSignedClaim(fingerprint string, pubkey ed25519.PublicKey, expiry time.T
 	out := make([]byte, 0, 4+len(fpBytes)+4+len(pubkey)+8)
 
 	var u32 [4]byte
-	binary.BigEndian.PutUint32(u32[:], uint32(len(fpBytes))) //nolint:gosec // G115: fingerprint length is small and bounded, fits uint32
+	binary.BigEndian.PutUint32(u32[:], uint32(len(fpBytes)))
 	out = append(out, u32[:]...)
 	out = append(out, fpBytes...)
 
-	binary.BigEndian.PutUint32(u32[:], uint32(len(pubkey))) //nolint:gosec // G115: public key length is small and bounded, fits uint32
+	binary.BigEndian.PutUint32(u32[:], uint32(len(pubkey)))
 	out = append(out, u32[:]...)
 	out = append(out, pubkey...)
 
 	var i64 [8]byte
-	binary.BigEndian.PutUint64(i64[:], uint64(expiry.Unix())) //nolint:gosec // G115: expiry is a future unix timestamp, always positive
+	binary.BigEndian.PutUint64(i64[:], uint64(expiry.Unix()))
 	out = append(out, i64[:]...)
 
 	return out

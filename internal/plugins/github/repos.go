@@ -269,7 +269,7 @@ func (p *Plugin) reposClone(ctx context.Context, conn *domain.Connection, input 
 	// --depth 1 is the right default for agent-flavored "show me
 	// this repo" use cases. Agents that want history can pass
 	// depth=0 explicitly later.
-	cmd := exec.CommandContext(ctx, "git", "clone", "--depth", "1", "--quiet", cloneURL, target) //nolint:gosec // G204: fixed git clone invocation, clone URL is validated
+	cmd := exec.CommandContext(ctx, "git", "clone", "--depth", "1", "--quiet", cloneURL, target)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		// Scrub the token from any error path before returning to the

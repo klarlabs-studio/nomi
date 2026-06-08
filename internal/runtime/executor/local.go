@@ -31,7 +31,7 @@ func (LocalBackend) Run(ctx context.Context, req Request) (*Result, error) {
 		defer cancel()
 	}
 
-	cmd := exec.CommandContext(runCtx, req.Argv[0], req.Argv[1:]...) //nolint:gosec // G204: argv is the sandboxed command this executor exists to run
+	cmd := exec.CommandContext(runCtx, req.Argv[0], req.Argv[1:]...)
 	if req.WorkDir != "" {
 		cmd.Dir = req.WorkDir
 	}

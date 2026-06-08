@@ -46,7 +46,7 @@ func (p *Plugin) linkNotes(_ context.Context, conn *domain.Connection, input map
 	if err != nil {
 		return nil, fmt.Errorf("obsidian.link_notes: %w", err)
 	}
-	raw, err := os.ReadFile(abs) //nolint:gosec // G304: path resolved within the vault root (ResolveInVault)
+	raw, err := os.ReadFile(abs)
 	if err != nil {
 		return nil, fmt.Errorf("obsidian.link_notes: read source: %w", err)
 	}

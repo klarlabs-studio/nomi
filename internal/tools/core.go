@@ -60,7 +60,7 @@ func (t *FileReadTool) Execute(ctx context.Context, input map[string]interface{}
 		}
 	}
 
-	content, err := os.ReadFile(resolved) //nolint:gosec // G304: path resolved within the workspace root
+	content, err := os.ReadFile(resolved)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't read the file: %w", err)
 	}

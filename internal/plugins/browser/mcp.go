@@ -102,7 +102,7 @@ func startMCP(ctx context.Context, binPath string, args []string) (*mcpClient, e
 		return nil, errors.New("browser: scout binary path required")
 	}
 
-	cmd := exec.CommandContext(ctx, binPath, args...) //nolint:gosec // G204: MCP server binary path from plugin config
+	cmd := exec.CommandContext(ctx, binPath, args...)
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return nil, fmt.Errorf("browser: stdin pipe: %w", err)

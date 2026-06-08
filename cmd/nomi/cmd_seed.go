@@ -39,7 +39,7 @@ func seedCmd(common *commonFlags, args []string) int {
 		return 1
 	}
 
-	raw, err := os.ReadFile(path) //nolint:gosec // G304: path is a user-supplied CLI argument
+	raw, err := os.ReadFile(path)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1

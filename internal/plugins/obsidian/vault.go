@@ -140,7 +140,7 @@ func ResolveInVault(conn *domain.Connection, rel string) (string, error) {
 // propagating — this is best-effort metadata for the wizard, not a
 // validation pass.
 func scanFrontmatterTags(path string) []string {
-	f, err := os.Open(path) //nolint:gosec // G304: path produced by WalkDir over the vault root
+	f, err := os.Open(path)
 	if err != nil {
 		return nil
 	}

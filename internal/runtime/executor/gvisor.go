@@ -44,7 +44,7 @@ func (g *GvisorBackend) Available(ctx context.Context) bool {
 	if binary == "" {
 		binary = "docker"
 	}
-	out, err := exec.CommandContext(ctx, binary, "info", "--format", "{{range $k, $v := .Runtimes}}{{$k}} {{end}}").Output() //nolint:gosec // G204: docker binary path from trusted executor config
+	out, err := exec.CommandContext(ctx, binary, "info", "--format", "{{range $k, $v := .Runtimes}}{{$k}} {{end}}").Output()
 	if err != nil {
 		return false
 	}

@@ -46,7 +46,7 @@ func resolveURL(flagURL string) string {
 	// Read api.endpoint written by the daemon. JSON of the form
 	// {"url":"http://127.0.0.1:8080","port":"8080"}.
 	if path := dataDirPath("api.endpoint"); path != "" {
-		if data, err := os.ReadFile(path); err == nil { //nolint:gosec // G304: app-internal data-dir endpoint file
+		if data, err := os.ReadFile(path); err == nil {
 			var ep struct{ URL string }
 			if json.Unmarshal(data, &ep) == nil && ep.URL != "" {
 				return ep.URL
@@ -64,7 +64,7 @@ func resolveToken(flagTok string) (string, error) {
 		return strings.TrimSpace(v), nil
 	}
 	if path := dataDirPath("auth.token"); path != "" {
-		if data, err := os.ReadFile(path); err == nil { //nolint:gosec // G304: app-internal data-dir endpoint file
+		if data, err := os.ReadFile(path); err == nil {
 			return strings.TrimSpace(string(data)), nil
 		}
 	}

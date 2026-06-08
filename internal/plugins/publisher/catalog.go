@@ -118,7 +118,7 @@ func scanBundles(dir, baseURL string) ([]hub.Entry, error) {
 // bundle.Open populates as Bundle.Hash) so the daemon can confirm a
 // downloaded blob matches the catalog claim before installing.
 func bundleToEntry(path, bundleURL string) (hub.Entry, error) {
-	raw, err := os.ReadFile(path) //nolint:gosec // G304: local bundle path being published
+	raw, err := os.ReadFile(path)
 	if err != nil {
 		return hub.Entry{}, fmt.Errorf("read: %w", err)
 	}

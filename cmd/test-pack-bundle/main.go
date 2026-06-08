@@ -27,7 +27,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "ROOT_PRIV must be a base64 ed25519 private key")
 		os.Exit(1)
 	}
-	wasm, err := os.ReadFile(os.Args[1]) //nolint:gosec // G703: dev CLI tool; path is the user-supplied argv
+	wasm, err := os.ReadFile(os.Args[1])
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

@@ -434,7 +434,7 @@ func Unmarshal(raw []byte, snap *Snapshot) error { return yaml.Unmarshal(raw, sn
 // LoadFile is a convenience for `nomid` / `nomi` to read a snapshot
 // straight off disk.
 func LoadFile(path string) (*Snapshot, error) {
-	raw, err := os.ReadFile(path) //nolint:gosec // G304: caller-supplied config snapshot path
+	raw, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

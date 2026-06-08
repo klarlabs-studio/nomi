@@ -307,7 +307,7 @@ func performHTTPRequest(ctx context.Context, cfg *CallConfig, method, url string
 	const maxBytes = 5 * 1024 * 1024
 	respBody, err = io.ReadAll(io.LimitReader(resp.Body, maxBytes))
 	if err != nil {
-		return int32(resp.StatusCode), nil, err //nolint:gosec // G115: HTTP status code is in [100,599], fits int32
+		return int32(resp.StatusCode), nil, err
 	}
-	return int32(resp.StatusCode), respBody, nil //nolint:gosec // G115: HTTP status code is in [100,599], fits int32
+	return int32(resp.StatusCode), respBody, nil
 }

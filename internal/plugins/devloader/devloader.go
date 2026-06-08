@@ -91,7 +91,7 @@ func Load(ctx context.Context, dir string, loader *wasmhost.Loader) (*LoadResult
 // loadOne parses + verifies-structurally + instantiates one bundle.
 // Skips signature checks deliberately (dev bundles are unsigned).
 func loadOne(ctx context.Context, path string, loader *wasmhost.Loader) (Result, error) {
-	f, err := os.Open(path) //nolint:gosec // G304: dev bundle path from the local dev directory
+	f, err := os.Open(path)
 	if err != nil {
 		return Result{}, err
 	}

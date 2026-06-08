@@ -139,7 +139,7 @@ func (s *Store) WASM(pluginID string) ([]byte, error) {
 		return nil, fmt.Errorf("store: unsafe plugin id %q", pluginID)
 	}
 	path := filepath.Join(s.root, pluginID, "plugin.wasm")
-	body, err := os.ReadFile(path) //nolint:gosec // G304: path under the store root, plugin id validated by safePluginID
+	body, err := os.ReadFile(path)
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, fmt.Errorf("%w: %s", ErrNotInstalled, pluginID)
 	}
@@ -152,7 +152,7 @@ func (s *Store) Manifest(pluginID string) (plugins.PluginManifest, error) {
 		return plugins.PluginManifest{}, fmt.Errorf("store: unsafe plugin id %q", pluginID)
 	}
 	path := filepath.Join(s.root, pluginID, "manifest.json")
-	body, err := os.ReadFile(path) //nolint:gosec // G304: path under the store root, plugin id validated by safePluginID
+	body, err := os.ReadFile(path)
 	if errors.Is(err, fs.ErrNotExist) {
 		return plugins.PluginManifest{}, fmt.Errorf("%w: %s", ErrNotInstalled, pluginID)
 	}

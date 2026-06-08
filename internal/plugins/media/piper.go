@@ -124,7 +124,7 @@ func (p *PiperBackend) Speak(ctx context.Context, text, voice string) ([]byte, s
 	runCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(runCtx, p.binaryPath, //nolint:gosec // G204: piper binary path from plugin config
+	cmd := exec.CommandContext(runCtx, p.binaryPath,
 		"--model", modelPath,
 		"--output_file", tmpPath,
 	)
@@ -135,7 +135,7 @@ func (p *PiperBackend) Speak(ctx context.Context, text, voice string) ([]byte, s
 		return nil, "", fmt.Errorf("piper exec: %w (stderr: %s)", err, strings.TrimSpace(stderr.String()))
 	}
 
-	audio, err := os.ReadFile(tmpPath) //nolint:gosec // G304: self-created temp output file
+	audio, err := os.ReadFile(tmpPath)
 	if err != nil {
 		return nil, "", fmt.Errorf("read piper output: %w", err)
 	}
