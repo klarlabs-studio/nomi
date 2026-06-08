@@ -190,32 +190,32 @@ func (b *base) Capability() string { return b.cap }
 // resolveProvider runs the binding + connection + provider lookups
 // every Gmail tool needs. Mirrors the calendar plugin's helper so
 // the failure surface is consistent.
-func (b *base) resolveProvider(input map[string]interface{}) (Provider, *domain.Connection, error) {
+func (b *base) resolveProvider(input map[string]interface{}) (Provider, error) {
 	connectionID, _ := input["connection_id"].(string)
 	if connectionID == "" {
-		return nil, nil, fmt.Errorf("%s: connection_id is required", b.name)
+		return nil, fmt.Errorf("%s: connection_id is required", b.name)
 	}
 	if assistantID, _ := input["__assistant_id"].(string); assistantID != "" && b.plugin.bindings != nil {
 		ok, err := b.plugin.bindings.HasBinding(assistantID, connectionID, domain.BindingRoleTool)
 		if err != nil {
-			return nil, nil, fmt.Errorf("%s: binding check failed: %w", b.name, err)
+			return nil, fmt.Errorf("%s: binding check failed: %w", b.name, err)
 		}
 		if !ok {
-			return nil, nil, plugins.ConnectionNotBoundError(assistantID, connectionID, PluginID)
+			return nil, plugins.ConnectionNotBoundError(assistantID, connectionID, PluginID)
 		}
 	}
 	conn, err := b.plugin.connections.GetByID(connectionID)
 	if err != nil {
-		return nil, nil, fmt.Errorf("%s: %w", b.name, err)
+		return nil, fmt.Errorf("%s: %w", b.name, err)
 	}
 	if !conn.Enabled {
-		return nil, nil, fmt.Errorf("%s: connection %s is disabled", b.name, connectionID)
+		return nil, fmt.Errorf("%s: connection %s is disabled", b.name, connectionID)
 	}
 	provider, err := b.plugin.providerFor(conn)
 	if err != nil {
-		return nil, nil, fmt.Errorf("%s: %w", b.name, err)
+		return nil, fmt.Errorf("%s: %w", b.name, err)
 	}
-	return provider, conn, nil
+	return provider, nil
 }
 
 // --- tools ---
@@ -223,7 +223,7 @@ func (b *base) resolveProvider(input map[string]interface{}) (Provider, *domain.
 type sendTool struct{ base }
 
 func (t *sendTool) Execute(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
-	provider, _, err := t.resolveProvider(input)
+	provider, err := t.resolveProvider(input)
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +245,7 @@ func (t *sendTool) Execute(ctx context.Context, input map[string]interface{}) (m
 type searchThreadsTool struct{ base }
 
 func (t *searchThreadsTool) Execute(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
-	provider, _, err := t.resolveProvider(input)
+	provider, err := t.resolveProvider(input)
 	if err != nil {
 		return nil, err
 	}
@@ -268,7 +268,7 @@ func (t *searchThreadsTool) Execute(ctx context.Context, input map[string]interf
 type readThreadTool struct{ base }
 
 func (t *readThreadTool) Execute(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
-	provider, _, err := t.resolveProvider(input)
+	provider, err := t.resolveProvider(input)
 	if err != nil {
 		return nil, err
 	}
@@ -305,7 +305,7 @@ func (t *readThreadTool) Execute(ctx context.Context, input map[string]interface
 type labelTool struct{ base }
 
 func (t *labelTool) Execute(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
-	provider, _, err := t.resolveProvider(input)
+	provider, err := t.resolveProvider(input)
 	if err != nil {
 		return nil, err
 	}
@@ -327,7 +327,7 @@ func (t *labelTool) Execute(ctx context.Context, input map[string]interface{}) (
 type archiveTool struct{ base }
 
 func (t *archiveTool) Execute(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
-	provider, _, err := t.resolveProvider(input)
+	provider, err := t.resolveProvider(input)
 	if err != nil {
 		return nil, err
 	}

@@ -131,21 +131,6 @@ func pickEmbeddingCentroid(members []int, vectors [][]float32) int {
 	return best
 }
 
-// intersectTokensFromGoals re-runs the Jaccard tokeniser over the
-// cluster's goal strings and returns the cross-intersection. Used by
-// the embedding path to produce "common tokens" for the synthesised
-// recipe even when the clustering itself didn't use tokens.
-func intersectTokensFromGoals(members []int, goals []string) []string {
-	if len(members) == 0 {
-		return nil
-	}
-	sets := make([]map[string]struct{}, len(goals))
-	for i, g := range goals {
-		sets[i] = tokenize(g)
-	}
-	return intersectTokens(members, sets)
-}
-
 // sortClustersByMostInformative orders clusters so the highest-cohesion
 // ones surface first. Cohesion = average pairwise cosine; ties broken
 // by cluster size. The result is what the UI ranks before truncating

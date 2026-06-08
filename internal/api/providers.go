@@ -373,7 +373,7 @@ func (s *ProviderServer) SetOnboardingComplete(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, onboardingCompleteResponse{Complete: req.Complete})
+	c.JSON(http.StatusOK, onboardingCompleteResponse(req))
 }
 
 // GetSafetyProfile returns the global safety profile used for new assistants.
@@ -402,5 +402,5 @@ func (s *ProviderServer) SetSafetyProfile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, safetyProfileResponse{Profile: req.Profile})
+	c.JSON(http.StatusOK, safetyProfileResponse(req))
 }

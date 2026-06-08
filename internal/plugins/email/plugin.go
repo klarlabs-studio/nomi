@@ -385,7 +385,7 @@ func (p *Plugin) handleMessage(ctx context.Context, connID string, cfg transport
 					_ = p.conversations.Touch(c.ID, p.eventBus)
 				}
 			}
-			p.handleRuleMatch(ctx, connID, rule, conv, m)
+			p.handleRuleMatch(ctx, rule, conv, m)
 			return
 		}
 	}

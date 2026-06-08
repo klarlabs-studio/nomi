@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,7 +14,7 @@ func TestReposFileRead_Base64(t *testing.T) {
 	srv := newStubServer(t)
 	content := "package main\n\nfunc main() {}\n"
 	encoded := base64.StdEncoding.EncodeToString([]byte(content))
-	srv.stub("GET /repos/o/r/contents/main.go", http.StatusOK,
+	srv.stub("GET /repos/o/r/contents/main.go",
 		fmt.Sprintf(`{"type":"file","path":"main.go","sha":"abc","size":%d,"encoding":"base64","content":%q}`, len(content), encoded))
 	p, conn := stubPlugin(t, srv)
 	out, err := p.reposFileRead(context.Background(), conn, map[string]any{
@@ -38,7 +37,7 @@ func TestReposFileRead_RejectsDirectory(t *testing.T) {
 	// type=dir (which it does for some responses where the path is a
 	// directory; the canonical shape is an array but defensive code
 	// handles either).
-	srv.stub("GET /repos/o/r/contents/somedir", http.StatusOK,
+	srv.stub("GET /repos/o/r/contents/somedir",
 		`{"type":"dir","path":"somedir"}`)
 	p, conn := stubPlugin(t, srv)
 	_, err := p.reposFileRead(context.Background(), conn, map[string]any{
@@ -51,7 +50,7 @@ func TestReposFileRead_RejectsDirectory(t *testing.T) {
 
 func TestReposFileRead_RejectsLargeFile(t *testing.T) {
 	srv := newStubServer(t)
-	srv.stub("GET /repos/o/r/contents/big.bin", http.StatusOK,
+	srv.stub("GET /repos/o/r/contents/big.bin",
 		`{"type":"file","path":"big.bin","sha":"x","size":2000000,"encoding":"base64","content":""}`)
 	p, conn := stubPlugin(t, srv)
 	_, err := p.reposFileRead(context.Background(), conn, map[string]any{
@@ -106,7 +105,6 @@ func TestReposClone_RejectsPathOutsideRoot(t *testing.T) {
 func TestReposSearchCode_PinsToOwnerRepoWhenSpecified(t *testing.T) {
 	srv := newStubServer(t)
 	srv.stub("GET /search/code?q=func+main+repo%3Ao%2Fr",
-		http.StatusOK,
 		`{"total_count":1,"incomplete_results":false,"items":[{"name":"main.go","path":"cmd/x/main.go","sha":"a","html_url":"u","score":1.0,"repository":{"full_name":"o/r"}}]}`)
 	p, conn := stubPlugin(t, srv)
 
@@ -132,7 +130,6 @@ func TestReposSearchCode_PinsToOwnerRepoWhenSpecified(t *testing.T) {
 func TestReposSearchCode_AppliesAllowlistWhenUnscoped(t *testing.T) {
 	srv := newStubServer(t)
 	srv.stub("GET /search/code?q=func+main+repo%3Ao%2Fr+repo%3Ao%2Fother",
-		http.StatusOK,
 		`{"total_count":0,"incomplete_results":false,"items":[]}`)
 	p, conn := stubPlugin(t, srv)
 	conn.Config[configRepoAllowlist] = "o/r,o/other"
@@ -151,7 +148,6 @@ func TestReposSearchCode_AppliesAllowlistWhenUnscoped(t *testing.T) {
 func TestReposSearchCode_RespectsExplicitRepoQualifier(t *testing.T) {
 	srv := newStubServer(t)
 	srv.stub("GET /search/code?q=foo+repo%3Auser%2Fexisting",
-		http.StatusOK,
 		`{"total_count":0,"incomplete_results":false,"items":[]}`)
 	p, conn := stubPlugin(t, srv)
 	conn.Config[configRepoAllowlist] = "o/allowlisted"

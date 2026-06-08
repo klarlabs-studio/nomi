@@ -139,7 +139,7 @@ func (f *updateFixture) makeBundle(t *testing.T, version string) []byte {
 // install pretends the install handler ran already: writes the
 // bundle to the store, registers the plugin, sets the state row.
 // Tests that exercise Update from a clean install slate use this.
-func (f *updateFixture) install(t *testing.T, version string) []byte {
+func (f *updateFixture) install(t *testing.T, version string) {
 	t.Helper()
 	bundleBytes := f.makeBundle(t, version)
 	b, err := bundle.Open(bytes.NewReader(bundleBytes))
@@ -167,20 +167,19 @@ func (f *updateFixture) install(t *testing.T, version string) []byte {
 	}); err != nil {
 		t.Fatalf("state.Upsert: %v", err)
 	}
-	return bundleBytes
 }
 
 // stubCatalog wires Deps.Catalog to return an entry pointing at
 // canned bundle bytes (served by the stubFetch). bundleHash is what
 // Update will compare against the entry.SHA256.
-func (f *updateFixture) stubCatalog(latestVersion, bundleURL, bundleHash string, fetched *[]byte) {
+func (f *updateFixture) stubCatalog(bundleURL, bundleHash string, fetched *[]byte) {
 	f.deps.Catalog = func(ctx context.Context) (*hub.Catalog, error) {
 		return &hub.Catalog{
 			SchemaVersion: hub.SchemaVersion,
 			GeneratedAt:   time.Now().UTC(),
 			Entries: []hub.Entry{{
 				PluginID:      f.pluginID,
-				LatestVersion: latestVersion,
+				LatestVersion: "0.2.0",
 				BundleURL:     bundleURL,
 				SHA256:        bundleHash,
 				Capabilities:  []string{"echo.echo"},
@@ -198,7 +197,7 @@ func TestScan_FlagsNewerVersion(t *testing.T) {
 	f := newUpdateFixture(t)
 	f.install(t, "0.1.0")
 	bundleBytes := f.makeBundle(t, "0.2.0")
-	f.stubCatalog("0.2.0", "https://hub/echo-0.2.0.np", "irrelevant-for-scan", &bundleBytes)
+	f.stubCatalog("https://hub/echo-0.2.0.np", "irrelevant-for-scan", &bundleBytes)
 
 	flagged, err := Scan(context.Background(), f.deps)
 	if err != nil {
@@ -226,7 +225,7 @@ func TestScan_ClearsStaleAvailable(t *testing.T) {
 	_ = f.stateRepo.Upsert(st)
 
 	dummy := []byte{}
-	f.stubCatalog("0.2.0", "x", "x", &dummy)
+	f.stubCatalog("x", "x", &dummy)
 	if _, err := Scan(context.Background(), f.deps); err != nil {
 		t.Fatalf("Scan: %v", err)
 	}
@@ -243,7 +242,7 @@ func TestScan_IsIdempotentForRepeatedFlags(t *testing.T) {
 	f := newUpdateFixture(t)
 	f.install(t, "0.1.0")
 	bundleBytes := f.makeBundle(t, "0.2.0")
-	f.stubCatalog("0.2.0", "x", "x", &bundleBytes)
+	f.stubCatalog("x", "x", &bundleBytes)
 
 	first, _ := Scan(context.Background(), f.deps)
 	second, _ := Scan(context.Background(), f.deps)
@@ -260,7 +259,7 @@ func TestUpdate_HappyPath(t *testing.T) {
 
 	newBundle := f.makeBundle(t, "0.2.0")
 	b, _ := bundle.Open(bytes.NewReader(newBundle))
-	f.stubCatalog("0.2.0", "https://hub/echo-0.2.0.np", b.Hash, &newBundle)
+	f.stubCatalog("https://hub/echo-0.2.0.np", b.Hash, &newBundle)
 
 	st, err := Update(context.Background(), f.deps, f.pluginID)
 	if err != nil {
@@ -293,7 +292,7 @@ func TestUpdate_AbortsOnSignatureFailure(t *testing.T) {
 	// We do this by building a bundle and re-packing with a corrupted wasm.
 	tampered := f.makeBundleWithTamper(t, "0.2.0")
 	b, _ := bundle.Open(bytes.NewReader(newBundle))
-	f.stubCatalog("0.2.0", "https://hub/echo-0.2.0.np", b.Hash, &tampered)
+	f.stubCatalog("https://hub/echo-0.2.0.np", b.Hash, &tampered)
 
 	_, err := Update(context.Background(), f.deps, f.pluginID)
 	if err == nil {
@@ -316,7 +315,7 @@ func TestUpdate_AbortsOnHashMismatch(t *testing.T) {
 	f.install(t, "0.1.0")
 	newBundle := f.makeBundle(t, "0.2.0")
 	// Catalog claims a different SHA256.
-	f.stubCatalog("0.2.0", "x", "deadbeef-not-the-real-hash", &newBundle)
+	f.stubCatalog("x", "deadbeef-not-the-real-hash", &newBundle)
 	_, err := Update(context.Background(), f.deps, f.pluginID)
 	if !errors.Is(err, ErrBundleHashMismatch) {
 		t.Fatalf("want ErrBundleHashMismatch, got %v", err)
@@ -328,7 +327,7 @@ func TestUpdate_AbortsOnAlreadyAtLatest(t *testing.T) {
 	f.install(t, "0.2.0")
 	newBundle := f.makeBundle(t, "0.2.0")
 	b, _ := bundle.Open(bytes.NewReader(newBundle))
-	f.stubCatalog("0.2.0", "x", b.Hash, &newBundle)
+	f.stubCatalog("x", b.Hash, &newBundle)
 	_, err := Update(context.Background(), f.deps, f.pluginID)
 	if !errors.Is(err, ErrAlreadyAtLatest) {
 		t.Fatalf("want ErrAlreadyAtLatest, got %v", err)
@@ -339,7 +338,7 @@ func TestUpdate_RefusesSystemPlugin(t *testing.T) {
 	f := newUpdateFixture(t)
 	_ = f.stateRepo.EnsureSystemPlugin(f.pluginID, "0.1.0")
 	dummy := []byte{}
-	f.stubCatalog("0.2.0", "x", "x", &dummy)
+	f.stubCatalog("x", "x", &dummy)
 	_, err := Update(context.Background(), f.deps, f.pluginID)
 	if !errors.Is(err, ErrSystemPluginRefused) {
 		t.Fatalf("want ErrSystemPluginRefused, got %v", err)
@@ -349,7 +348,7 @@ func TestUpdate_RefusesSystemPlugin(t *testing.T) {
 func TestUpdate_NotInstalled(t *testing.T) {
 	f := newUpdateFixture(t)
 	dummy := []byte{}
-	f.stubCatalog("0.2.0", "x", "x", &dummy)
+	f.stubCatalog("x", "x", &dummy)
 	_, err := Update(context.Background(), f.deps, "com.never.installed")
 	if !errors.Is(err, ErrPluginNotInstalled) {
 		t.Fatalf("want ErrPluginNotInstalled, got %v", err)

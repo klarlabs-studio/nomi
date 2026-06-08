@@ -120,18 +120,6 @@ func coerceStringSlice(v interface{}) []string {
 	return nil
 }
 
-// extendManifestWithTools is a helper for tests — returns the manifest
-// with the tool contribution attached, without registering into a real
-// registry. Production code uses the Plugin.Manifest() method directly.
-func (p *Plugin) manifestToolContribution() plugins.ToolContribution {
-	return plugins.ToolContribution{
-		Name:               "email.send",
-		Capability:         "network.outgoing",
-		Description:        "Send an email from a connected mailbox. Inputs: connection_id, to, subject, body, in_reply_to?, references?",
-		RequiresConnection: true,
-	}
-}
-
 // Silence unused-import warning if json is not otherwise used.
 var _ = json.RawMessage{}
 

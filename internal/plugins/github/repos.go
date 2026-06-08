@@ -95,13 +95,13 @@ func (p *Plugin) reposSearchCode(ctx context.Context, conn *domain.Connection, i
 
 	values := url.Values{}
 	values.Set("q", q)
-	if pp := intFromInput(input, "per_page", 0); pp > 0 {
+	if pp := intFromInput(input, "per_page"); pp > 0 {
 		if pp > 100 {
 			pp = 100
 		}
 		values.Set("per_page", fmt.Sprintf("%d", pp))
 	}
-	if pg := intFromInput(input, "page", 0); pg > 0 {
+	if pg := intFromInput(input, "page"); pg > 0 {
 		values.Set("page", fmt.Sprintf("%d", pg))
 	}
 

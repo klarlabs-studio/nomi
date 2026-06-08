@@ -111,7 +111,7 @@ func firstMatchingRule(rules []domain.TriggerRule, m transport.Message) *domain.
 // the same assistant still sees one coherent thread. Source is "email"
 // regardless of which path produced it — the channel manifest is the
 // permission ceiling either way.
-func (p *Plugin) handleRuleMatch(ctx context.Context, connID string, rule *domain.TriggerRule, conv *domain.Conversation, m transport.Message) {
+func (p *Plugin) handleRuleMatch(ctx context.Context, rule *domain.TriggerRule, conv *domain.Conversation, m transport.Message) {
 	goal := m.Subject
 	if goal == "" {
 		goal = "(no subject)"

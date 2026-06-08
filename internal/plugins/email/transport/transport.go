@@ -12,7 +12,6 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/mail"
@@ -28,11 +27,6 @@ import (
 // package qualifier. base64.StdEncoding is the canonical RFC 4648
 // alphabet which all email clients understand.
 var stdEncoding = base64.StdEncoding
-
-// _json keeps encoding/json reachable; the legacy SendEmail path uses
-// it via downstream call sites elsewhere in the package once the
-// inbound IMAP fetcher decodes envelope JSON.
-var _json = json.Marshal
 
 // Config is the per-connection email-plugin configuration. Everything
 // callers need to open an IMAP connection for receive and an SMTP

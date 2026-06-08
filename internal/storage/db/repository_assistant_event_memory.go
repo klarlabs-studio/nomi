@@ -346,12 +346,6 @@ func (r *EventRepository) create(e execer, event *domain.Event, prevHash string)
 	return nil
 }
 
-// queryRower lets us share the latest-hash lookup between the
-// connection (DB) and transaction (sql.Tx) variants of Create.
-type queryRower interface {
-	QueryRow(query string, args ...interface{}) *sql.Row
-}
-
 const latestEntryHashQuery = `
 	SELECT entry_hash FROM events
 	WHERE entry_hash IS NOT NULL

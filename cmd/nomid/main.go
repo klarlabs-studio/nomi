@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -58,7 +59,6 @@ import (
 	"go.klarlabs.de/nomi/internal/storage/db"
 	"go.klarlabs.de/nomi/internal/tools"
 	"go.klarlabs.de/nomi/internal/tunnel"
-	"sync"
 )
 
 func main() {

@@ -16,7 +16,7 @@ import (
 	"go.klarlabs.de/nomi/pkg/statekit"
 )
 
-func setupTestRuntime(t *testing.T) (*Runtime, *db.DB, func()) {
+func setupTestRuntime(t *testing.T) (*Runtime, func()) {
 	// Create temp database file (shared across connections)
 	tmpFile, err := os.CreateTemp("", "nomi-test-*.db")
 	if err != nil {
@@ -60,11 +60,11 @@ func setupTestRuntime(t *testing.T) (*Runtime, *db.DB, func()) {
 		_ = os.Remove(tmpFile.Name())
 	}
 
-	return rt, database, cleanup
+	return rt, cleanup
 }
 
 func TestCreateRun(t *testing.T) {
-	rt, _, cleanup := setupTestRuntime(t)
+	rt, cleanup := setupTestRuntime(t)
 	defer cleanup()
 
 	ctx := context.Background()

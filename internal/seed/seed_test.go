@@ -42,7 +42,7 @@ func (s *inMemSecrets) Delete(k string) error {
 	return nil
 }
 
-func newDB(t *testing.T) (*db.DB, Deps) {
+func newDB(t *testing.T) Deps {
 	t.Helper()
 	dir := t.TempDir()
 	database, err := db.New(db.Config{Path: filepath.Join(dir, "test.db")})
@@ -54,7 +54,7 @@ func newDB(t *testing.T) (*db.DB, Deps) {
 		t.Fatal(err)
 	}
 	store := newInMemSecrets()
-	return database, Deps{
+	return Deps{
 		DB:         database,
 		Providers:  db.NewProviderProfileRepository(database),
 		Assistants: db.NewAssistantRepository(database),
@@ -74,14 +74,14 @@ func writeSeed(t *testing.T, dir, body string) string {
 }
 
 func TestApplyMissingFileIsNoop(t *testing.T) {
-	_, deps := newDB(t)
+	deps := newDB(t)
 	if err := Apply("/nonexistent/path.yaml", deps); err != nil {
 		t.Fatalf("missing file should not error, got %v", err)
 	}
 }
 
 func TestApplyFullSeed(t *testing.T) {
-	_, deps := newDB(t)
+	deps := newDB(t)
 	dir := t.TempDir()
 	path := writeSeed(t, dir, `
 provider:
@@ -128,7 +128,7 @@ settings:
 }
 
 func TestApplyIsIdempotent(t *testing.T) {
-	_, deps := newDB(t)
+	deps := newDB(t)
 	dir := t.TempDir()
 	path := writeSeed(t, dir, `
 provider:
@@ -157,7 +157,7 @@ assistants:
 }
 
 func TestApplyRejectsBadEndpoint(t *testing.T) {
-	_, deps := newDB(t)
+	deps := newDB(t)
 	dir := t.TempDir()
 	path := writeSeed(t, dir, `
 provider:
@@ -172,7 +172,7 @@ provider:
 }
 
 func TestApplyRejectsBadSafetyProfile(t *testing.T) {
-	_, deps := newDB(t)
+	deps := newDB(t)
 	dir := t.TempDir()
 	path := writeSeed(t, dir, `
 settings:

@@ -92,7 +92,7 @@ func decodeMCPResult(raw json.RawMessage) map[string]interface{} {
 	if err := json.Unmarshal(raw, &envelope); err != nil {
 		// Not the standard MCP shape — surface the raw JSON under
 		// `result` so callers can still see what came back.
-		return map[string]interface{}{"result": json.RawMessage(raw)}
+		return map[string]interface{}{"result": raw}
 	}
 	if len(envelope.Content) == 0 {
 		return map[string]interface{}{"is_error": envelope.IsError}

@@ -27,10 +27,7 @@ type Client struct {
 // error if neither flag nor file resolves to a usable value — better
 // than a confused HTTP 401 on the first call.
 func NewClient(c *commonFlags) (*Client, error) {
-	url, err := resolveURL(c.URL)
-	if err != nil {
-		return nil, fmt.Errorf("resolve URL: %w", err)
-	}
+	url := resolveURL(c.URL)
 	tok, err := resolveToken(c.Token)
 	if err != nil {
 		return nil, fmt.Errorf("resolve token: %w", err)
@@ -42,9 +39,9 @@ func NewClient(c *commonFlags) (*Client, error) {
 	}, nil
 }
 
-func resolveURL(flagURL string) (string, error) {
+func resolveURL(flagURL string) string {
 	if flagURL != "" {
-		return flagURL, nil
+		return flagURL
 	}
 	// Read api.endpoint written by the daemon. JSON of the form
 	// {"url":"http://127.0.0.1:8080","port":"8080"}.
@@ -52,11 +49,11 @@ func resolveURL(flagURL string) (string, error) {
 		if data, err := os.ReadFile(path); err == nil { //nolint:gosec // G304: app-internal data-dir endpoint file
 			var ep struct{ URL string }
 			if json.Unmarshal(data, &ep) == nil && ep.URL != "" {
-				return ep.URL, nil
+				return ep.URL
 			}
 		}
 	}
-	return "http://127.0.0.1:8080", nil
+	return "http://127.0.0.1:8080"
 }
 
 func resolveToken(flagTok string) (string, error) {

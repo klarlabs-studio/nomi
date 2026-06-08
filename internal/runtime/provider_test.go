@@ -10,7 +10,7 @@ import (
 
 // TestProviderProfileCRUD tests provider profile creation, update, delete
 func TestProviderProfileCRUD(t *testing.T) {
-	_, database, _, cleanup := setupTestRuntimeWithMemory(t)
+	_, database, cleanup := setupTestRuntimeWithMemory(t)
 	defer cleanup()
 
 	repo := db.NewProviderProfileRepository(database)
@@ -94,7 +94,7 @@ func TestProviderProfileCRUD(t *testing.T) {
 
 // TestAssistantModelPolicy tests that model policy is stored and retrieved with assistants
 func TestAssistantModelPolicy(t *testing.T) {
-	_, database, _, cleanup := setupTestRuntimeWithMemory(t)
+	_, database, cleanup := setupTestRuntimeWithMemory(t)
 	defer cleanup()
 
 	assistantRepo := db.NewAssistantRepository(database)

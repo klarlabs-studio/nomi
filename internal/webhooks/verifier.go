@@ -17,8 +17,8 @@ type Verifier interface {
 	EventType(headers map[string]string, body []byte) string
 }
 
-// chooseVerifier picks the right verifier based on plugin ID and headers.
-func chooseVerifier(pluginID string, headers map[string]string) Verifier {
+// chooseVerifier picks the right verifier based on plugin ID.
+func chooseVerifier(pluginID string) Verifier {
 	switch {
 	case strings.Contains(pluginID, "github"):
 		return &githubVerifier{}

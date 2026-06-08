@@ -75,8 +75,8 @@ func newStubServer(t *testing.T) *stubServer {
 	return s
 }
 
-func (s *stubServer) stub(methodPath string, status int, body string) {
-	s.pathMap[methodPath] = stubResponse{status: status, body: body}
+func (s *stubServer) stub(methodPath, body string) {
+	s.pathMap[methodPath] = stubResponse{status: http.StatusOK, body: body}
 }
 
 // stubPlugin wires a Plugin whose authClientFor returns an AuthClient
@@ -117,7 +117,6 @@ func stubPlugin(t *testing.T, srv *stubServer) (*Plugin, *domain.Connection) {
 func TestIssuesList_FiltersPRs(t *testing.T) {
 	srv := newStubServer(t)
 	srv.stub("GET /repos/o/r/issues",
-		http.StatusOK,
 		`[
 			{"number":1,"title":"A bug","state":"open","user":{"login":"alice"},"labels":[{"name":"bug"}]},
 			{"number":2,"title":"A PR","state":"open","pull_request":{"url":"x"}},
@@ -145,10 +144,9 @@ func TestIssuesList_FiltersPRs(t *testing.T) {
 
 func TestIssuesGet_BundlesComments(t *testing.T) {
 	srv := newStubServer(t)
-	srv.stub("GET /repos/o/r/issues/7", http.StatusOK,
+	srv.stub("GET /repos/o/r/issues/7",
 		`{"number":7,"title":"X","state":"open","body":"hi","user":{"login":"alice"}}`)
 	srv.stub("GET /repos/o/r/issues/7/comments",
-		http.StatusOK,
 		`[{"id":1,"body":"first","user":{"login":"bob"}},{"id":2,"body":"second","user":{"login":"alice"}}]`)
 	p, conn := stubPlugin(t, srv)
 	out, err := p.issuesGet(context.Background(), conn, map[string]any{
@@ -276,19 +274,18 @@ func TestRateLimitError_TypedSurface(t *testing.T) {
 // errorAs is a tiny errors.As wrapper. The dependency on errors is
 // minor but keeping the test imports tight has its own value.
 func errorAs(err error, target any) bool {
-	for {
-		if err == nil {
-			return false
-		}
-		if x, ok := err.(*gh.RateLimitError); ok {
-			if t, ok := target.(**gh.RateLimitError); ok {
-				*t = x
-				return true
-			}
-		}
-		// unwrap not needed; integration test wraps simply.
+	// No unwrapping: the integration test wraps errors simply, so a
+	// single type assertion on the top-level error is sufficient.
+	if err == nil {
 		return false
 	}
+	if x, ok := err.(*gh.RateLimitError); ok {
+		if t, ok := target.(**gh.RateLimitError); ok {
+			*t = x
+			return true
+		}
+	}
+	return false
 }
 
 // readAll reads an io.Reader fully without dragging in io.ReadAll

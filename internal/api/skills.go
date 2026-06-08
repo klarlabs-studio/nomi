@@ -214,11 +214,7 @@ func (s *SkillsServer) Synthesize(c *gin.Context) {
 		return
 	}
 
-	goals, err := s.fetchClusterGoals(target.SourceRunIDs)
-	if err != nil {
-		respondInternal(c, "failed to load cluster goals", err)
-		return
-	}
+	goals := s.fetchClusterGoals(target.SourceRunIDs)
 	client, _, err := s.llm.DefaultClient()
 	if err != nil || client == nil {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "default LLM provider is unavailable"})
@@ -239,7 +235,7 @@ func (s *SkillsServer) Synthesize(c *gin.Context) {
 // been deleted since the suggestion was generated are skipped silently
 // — the cluster centroid still has meaning even if a few rows are
 // missing.
-func (s *SkillsServer) fetchClusterGoals(runIDs []string) ([]string, error) {
+func (s *SkillsServer) fetchClusterGoals(runIDs []string) []string {
 	out := make([]string, 0, len(runIDs))
 	for _, id := range runIDs {
 		run, err := s.runs.GetByID(id)
@@ -248,7 +244,7 @@ func (s *SkillsServer) fetchClusterGoals(runIDs []string) ([]string, error) {
 		}
 		out = append(out, run.Goal)
 	}
-	return out, nil
+	return out
 }
 
 // inductionConfig stitches the default heuristic config together with
