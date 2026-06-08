@@ -29,13 +29,13 @@ var echoWASM []byte
 func TestEchoPlugin_FullRoundTrip(t *testing.T) {
 	ctx := context.Background()
 	loader := NewLoader(ctx)
-	defer loader.Close(ctx)
+	defer func() { _ = loader.Close(ctx) }()
 
 	mod, err := loader.Load(ctx, "com.example.echo", echoWASM)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	defer mod.Close(ctx)
+	defer func() { _ = mod.Close(ctx) }()
 
 	// Manifest round-trip: WASM emits JSON, host reads + parses it.
 	manifest, err := mod.Manifest(ctx)
@@ -85,7 +85,7 @@ func TestEchoPlugin_FullRoundTrip(t *testing.T) {
 func TestEchoPlugin_LoadRejectsMissingExports(t *testing.T) {
 	ctx := context.Background()
 	loader := NewLoader(ctx)
-	defer loader.Close(ctx)
+	defer func() { _ = loader.Close(ctx) }()
 
 	// Smallest valid WASM module (magic + version, no sections).
 	emptyModule := []byte{
@@ -107,7 +107,7 @@ func TestEchoPlugin_LoadRejectsMissingExports(t *testing.T) {
 func TestEchoFetch_AllowedHostRoundTrips(t *testing.T) {
 	ctx := context.Background()
 	loader := NewLoader(ctx)
-	defer loader.Close(ctx)
+	defer func() { _ = loader.Close(ctx) }()
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -122,7 +122,7 @@ func TestEchoFetch_AllowedHostRoundTrips(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	defer mod.Close(ctx)
+	defer func() { _ = mod.Close(ctx) }()
 
 	cfg := &CallConfig{
 		PluginID:         "com.example.echo",
@@ -172,13 +172,13 @@ func TestEchoFetch_AllowedHostRoundTrips(t *testing.T) {
 func TestEchoFetch_DeniedByPolicy(t *testing.T) {
 	ctx := context.Background()
 	loader := NewLoader(ctx)
-	defer loader.Close(ctx)
+	defer func() { _ = loader.Close(ctx) }()
 
 	mod, err := loader.Load(ctx, "com.example.echo", echoWASM)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	defer mod.Close(ctx)
+	defer func() { _ = mod.Close(ctx) }()
 
 	cfg := &CallConfig{
 		PluginID:         "com.example.echo",
@@ -211,13 +211,13 @@ func TestEchoFetch_DeniedByPolicy(t *testing.T) {
 func TestEchoFetch_DeniedByHostAllowlist(t *testing.T) {
 	ctx := context.Background()
 	loader := NewLoader(ctx)
-	defer loader.Close(ctx)
+	defer func() { _ = loader.Close(ctx) }()
 
 	mod, err := loader.Load(ctx, "com.example.echo", echoWASM)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	defer mod.Close(ctx)
+	defer func() { _ = mod.Close(ctx) }()
 
 	cfg := &CallConfig{
 		PluginID:         "com.example.echo",

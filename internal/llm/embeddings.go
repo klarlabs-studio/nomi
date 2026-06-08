@@ -128,7 +128,7 @@ func (c *openaiEmbeddingClient) Embed(ctx context.Context, texts []string) ([][]
 	if err != nil {
 		return nil, fmt.Errorf("embeddings: http: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 16*1024*1024))
 
 	if resp.StatusCode == http.StatusUnauthorized {

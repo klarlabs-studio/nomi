@@ -154,7 +154,7 @@ func TestPullsCreate_PassesPayload(t *testing.T) {
 		if strings.Contains(r.URL.Path, "/access_tokens") {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
-			fmt.Fprintf(w, `{"token":"ghs_stub","expires_at":%q}`, time.Now().Add(time.Hour).UTC().Format(time.RFC3339))
+			_, _ = fmt.Fprintf(w, `{"token":"ghs_stub","expires_at":%q}`, time.Now().Add(time.Hour).UTC().Format(time.RFC3339))
 			return
 		}
 		if r.Method == "POST" && r.URL.Path == "/repos/o/r/pulls" {

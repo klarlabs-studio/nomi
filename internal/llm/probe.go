@@ -52,7 +52,7 @@ func Probe(ctx context.Context, endpoint, apiKey string, requested []string) Pro
 	if err != nil {
 		return ProbeResult{Error: err.Error()}
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return ProbeResult{Error: fmt.Sprintf("http %d", resp.StatusCode)}

@@ -43,7 +43,7 @@ func newStubServer(t *testing.T) *stubServer {
 		if strings.Contains(r.URL.Path, "/access_tokens") {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
-			fmt.Fprintf(w, `{"token":"ghs_stub","expires_at":%q}`,
+			_, _ = fmt.Fprintf(w, `{"token":"ghs_stub","expires_at":%q}`,
 				time.Now().Add(time.Hour).UTC().Format(time.RFC3339))
 			return
 		}
@@ -59,7 +59,7 @@ func newStubServer(t *testing.T) *stubServer {
 		}
 		if !ok {
 			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprintf(w, `{"message":"unstubbed: %s"}`, key)
+			_, _ = fmt.Fprintf(w, `{"message":"unstubbed: %s"}`, key)
 			return
 		}
 		for k, vs := range resp.header {
@@ -182,7 +182,7 @@ func TestIssuesCreate_PassesPayload(t *testing.T) {
 		if strings.Contains(r.URL.Path, "/access_tokens") {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
-			fmt.Fprintf(w, `{"token":"ghs_stub","expires_at":%q}`, time.Now().Add(time.Hour).UTC().Format(time.RFC3339))
+			_, _ = fmt.Fprintf(w, `{"token":"ghs_stub","expires_at":%q}`, time.Now().Add(time.Hour).UTC().Format(time.RFC3339))
 			return
 		}
 		w.WriteHeader(http.StatusNotFound)

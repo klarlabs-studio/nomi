@@ -44,7 +44,7 @@ func (r *PluginStateRepository) List() ([]*domain.PluginState, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []*domain.PluginState
 	for rows.Next() {
 		s, err := scanPluginState(rows)

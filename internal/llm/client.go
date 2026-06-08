@@ -241,7 +241,7 @@ func (c *openaiClient) Chat(ctx context.Context, req ChatRequest) (ChatResponse,
 	if err != nil {
 		return ChatResponse{}, fmt.Errorf("llm: http error: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	raw, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -325,7 +325,7 @@ func (c *openaiClient) ChatStream(
 	if err != nil {
 		return ChatResponse{}, fmt.Errorf("llm: http error: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode >= 400 {
 		raw, _ := io.ReadAll(resp.Body)
@@ -472,7 +472,7 @@ func (c *anthropicClient) Chat(ctx context.Context, req ChatRequest) (ChatRespon
 	if err != nil {
 		return ChatResponse{}, fmt.Errorf("llm: http error: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	raw, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -582,7 +582,7 @@ func (c *anthropicClient) ChatStream(
 	if err != nil {
 		return ChatResponse{}, fmt.Errorf("llm: http error: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode >= 400 {
 		raw, _ := io.ReadAll(resp.Body)

@@ -45,7 +45,7 @@ func (r *EmailTriggerRepository) ListByConnection(connID string) ([]domain.Trigg
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	out := make([]domain.TriggerRule, 0)
 	for rows.Next() {

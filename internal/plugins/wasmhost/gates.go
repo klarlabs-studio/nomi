@@ -303,7 +303,7 @@ func performHTTPRequest(ctx context.Context, cfg *CallConfig, method, url string
 	if err != nil {
 		return 0, nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	const maxBytes = 5 * 1024 * 1024
 	respBody, err = io.ReadAll(io.LimitReader(resp.Body, maxBytes))
 	if err != nil {

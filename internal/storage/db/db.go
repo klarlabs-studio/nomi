@@ -86,7 +86,7 @@ func New(config Config) (*DB, error) {
 		PRAGMA synchronous = NORMAL;
 		PRAGMA busy_timeout = 5000;
 	`); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, fmt.Errorf("failed to configure database: %w", err)
 	}
 

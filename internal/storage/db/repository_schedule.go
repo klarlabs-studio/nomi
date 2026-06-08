@@ -58,7 +58,7 @@ func (r *ScheduleRepository) List() ([]*domain.Schedule, error) {
 	if err != nil {
 		return nil, fmt.Errorf("list schedules: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	out := []*domain.Schedule{}
 	for rows.Next() {
 		s, err := scanSchedule(rows)
@@ -81,7 +81,7 @@ func (r *ScheduleRepository) DueBefore(t time.Time) ([]*domain.Schedule, error) 
 	if err != nil {
 		return nil, fmt.Errorf("due schedules: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	out := []*domain.Schedule{}
 	for rows.Next() {
 		s, err := scanSchedule(rows)

@@ -82,7 +82,7 @@ func SendText(ctx context.Context, client *http.Client, opts SendTextOptions) (*
 	if err != nil {
 		return nil, fmt.Errorf("whatsapp send: http: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 64*1024))
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {

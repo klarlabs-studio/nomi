@@ -95,7 +95,7 @@ func loadOne(ctx context.Context, path string, loader *wasmhost.Loader) (Result,
 	if err != nil {
 		return Result{}, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	b, err := bundle.Open(f)
 	if err != nil {

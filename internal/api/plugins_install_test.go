@@ -56,7 +56,7 @@ func newInstallHarness(t *testing.T) *installHarness {
 	if err != nil {
 		t.Fatalf("open db: %v", err)
 	}
-	t.Cleanup(func() { database.Close() })
+	t.Cleanup(func() { _ = database.Close() })
 	if err := database.Migrate(); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
@@ -76,7 +76,7 @@ func newInstallHarness(t *testing.T) *installHarness {
 	}
 
 	loader := wasmhost.NewLoader(context.Background())
-	t.Cleanup(func() { loader.Close(context.Background()) })
+	t.Cleanup(func() { _ = loader.Close(context.Background()) })
 
 	registry := plugins.NewRegistry()
 	stateRepo := db.NewPluginStateRepository(database)
@@ -185,7 +185,7 @@ func (h *installHarness) uploadInstall(body []byte) *httptest.ResponseRecorder {
 	mw := multipart.NewWriter(&buf)
 	part, _ := mw.CreateFormFile("bundle", "plugin.nomi-plugin")
 	_, _ = io.Copy(part, bytes.NewReader(body))
-	mw.Close()
+	_ = mw.Close()
 
 	req := httptest.NewRequest(http.MethodPost, "/plugins/install", &buf)
 	req.Header.Set("Content-Type", mw.FormDataContentType())
@@ -397,7 +397,7 @@ func (h *installHarness) pluginServerWithUpdater(t *testing.T, fn func(ctx conte
 	srv := NewPluginServer(h.registry, db.NewConnectionRepository(stateDB(t, h.store)), nil, h.state, newMemorySecretStore())
 	verifier, _ := signing.NewVerifier(h.rootPub, nil)
 	loader := wasmhost.NewLoader(context.Background())
-	t.Cleanup(func() { loader.Close(context.Background()) })
+	t.Cleanup(func() { _ = loader.Close(context.Background()) })
 	srv.AttachInstall(InstallDependencies{
 		Store:    h.store,
 		Verifier: verifier,
@@ -420,7 +420,7 @@ func TestMarketplaceCatalog_ReturnsCatalogWhenConfigured(t *testing.T) {
 	// Re-attach install with the stub catalog provider.
 	verifier, _ := signing.NewVerifier(h.rootPub, nil)
 	loader := wasmhost.NewLoader(context.Background())
-	t.Cleanup(func() { loader.Close(context.Background()) })
+	t.Cleanup(func() { _ = loader.Close(context.Background()) })
 	pluginServer := NewPluginServer(h.registry,
 		db.NewConnectionRepository(stateDB(t, h.store)), nil, h.state, newMemorySecretStore())
 	pluginServer.AttachInstall(InstallDependencies{
@@ -452,7 +452,7 @@ func (h *installHarness) injectFetcher(fn func(ctx context.Context, url string) 
 	// the original deps it constructs fresh and re-attaches.
 	verifier, _ := signing.NewVerifier(h.rootPub, nil)
 	loader := wasmhost.NewLoader(context.Background())
-	h.t.Cleanup(func() { loader.Close(context.Background()) })
+	h.t.Cleanup(func() { _ = loader.Close(context.Background()) })
 
 	pluginServer := NewPluginServer(
 		h.registry,
@@ -487,6 +487,6 @@ func stateDB(t *testing.T, _ *store.Store) *db.DB {
 	if err := database.Migrate(); err != nil {
 		t.Fatalf("memory migrate: %v", err)
 	}
-	t.Cleanup(func() { database.Close() })
+	t.Cleanup(func() { _ = database.Close() })
 	return database
 }

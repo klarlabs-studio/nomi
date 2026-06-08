@@ -125,7 +125,7 @@ func (g *GoogleProvider) DeleteEvent(ctx context.Context, calendarID, eventID st
 	if err != nil {
 		return fmt.Errorf("delete event: %w", err)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if resp.StatusCode >= 400 && resp.StatusCode != http.StatusNotFound {
 		return fmt.Errorf("delete event: status %d", resp.StatusCode)
 	}
@@ -231,7 +231,7 @@ func (g *GoogleProvider) doGET(ctx context.Context, endpoint string, target any)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode >= 400 {
 		return fmt.Errorf("http %d", resp.StatusCode)
 	}
@@ -258,7 +258,7 @@ func (g *GoogleProvider) doJSON(ctx context.Context, method, endpoint string, bo
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode >= 400 {
 		return fmt.Errorf("http %d", resp.StatusCode)
 	}

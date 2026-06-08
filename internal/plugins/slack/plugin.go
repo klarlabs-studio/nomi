@@ -484,7 +484,7 @@ func (p *Plugin) handleSocketEvent(ctx context.Context, connID string, client *s
 			return
 		}
 		// Always ack so Slack doesn't retry.
-		sm.Ack(*evt.Request)
+		_ = sm.Ack(*evt.Request)
 		p.handleEventsAPI(ctx, connID, client, apiEvt)
 	case socketmode.EventTypeInteractive:
 		callback, ok := evt.Data.(slack.InteractionCallback)
@@ -492,7 +492,7 @@ func (p *Plugin) handleSocketEvent(ctx context.Context, connID string, client *s
 			return
 		}
 		// Ack immediately so Slack shows the button press as handled.
-		sm.Ack(*evt.Request)
+		_ = sm.Ack(*evt.Request)
 		p.handleInteraction(ctx, connID, callback)
 	case socketmode.EventTypeErrorWriteFailed,
 		socketmode.EventTypeErrorBadMessage,

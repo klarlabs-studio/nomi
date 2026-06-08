@@ -50,13 +50,13 @@ func echoManifest() plugins.PluginManifest {
 func TestPlugin_ToolsRoundTrip(t *testing.T) {
 	ctx := context.Background()
 	loader := wasmhost.NewLoader(ctx)
-	defer loader.Close(ctx)
+	defer func() { _ = loader.Close(ctx) }()
 	mod, err := loader.Load(ctx, "com.example.echo", loadEchoWASM(t))
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
 	p := New(echoManifest(), mod, nil)
-	defer p.Stop()
+	defer func() { _ = p.Stop() }()
 
 	if got := p.Manifest().ID; got != "com.example.echo" {
 		t.Fatalf("manifest id = %q", got)
@@ -81,7 +81,7 @@ func TestPlugin_ToolsRoundTrip(t *testing.T) {
 func TestPlugin_StopClosesModule(t *testing.T) {
 	ctx := context.Background()
 	loader := wasmhost.NewLoader(ctx)
-	defer loader.Close(ctx)
+	defer func() { _ = loader.Close(ctx) }()
 	mod, _ := loader.Load(ctx, "com.example.echo", loadEchoWASM(t))
 	p := New(echoManifest(), mod, nil)
 	if err := p.Stop(); err != nil {
@@ -100,7 +100,7 @@ func TestPlugin_StopClosesModule(t *testing.T) {
 func TestPlugin_StopIsIdempotent(t *testing.T) {
 	ctx := context.Background()
 	loader := wasmhost.NewLoader(ctx)
-	defer loader.Close(ctx)
+	defer func() { _ = loader.Close(ctx) }()
 	mod, _ := loader.Load(ctx, "com.example.echo", loadEchoWASM(t))
 	p := New(echoManifest(), mod, nil)
 	if err := p.Stop(); err != nil {

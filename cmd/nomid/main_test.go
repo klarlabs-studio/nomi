@@ -13,12 +13,12 @@ func TestIsAddrInUse(t *testing.T) {
 	if err != nil {
 		t.Fatalf("seed listen: %v", err)
 	}
-	defer occupier.Close()
+	defer func() { _ = occupier.Close() }()
 
 	addr := occupier.Addr().String()
 	conflict, err := net.Listen("tcp", addr)
 	if err == nil {
-		conflict.Close()
+		_ = conflict.Close()
 		t.Fatalf("expected EADDRINUSE binding %s, got nil", addr)
 	}
 	if !isAddrInUse(err) {

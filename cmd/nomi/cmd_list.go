@@ -74,12 +74,12 @@ func listRuns(cli *Client, c *commonFlags, n int) int {
 		return 0
 	}
 	w := newTab()
-	fmt.Fprintln(w, "ID\tSTATUS\tCREATED\tGOAL")
+	_, _ = fmt.Fprintln(w, "ID\tSTATUS\tCREATED\tGOAL")
 	for i, r := range resp.Runs {
 		if i >= n {
 			break
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
 			short(r.ID), r.Status, ago(r.CreatedAt), trunc(r.Goal, 60))
 	}
 	return doFlush(w)
@@ -101,12 +101,12 @@ func listAssistants(cli *Client, c *commonFlags, n int) int {
 		return 0
 	}
 	w := newTab()
-	fmt.Fprintln(w, "ID\tNAME\tROLE\tCAPABILITIES")
+	_, _ = fmt.Fprintln(w, "ID\tNAME\tROLE\tCAPABILITIES")
 	for i, a := range resp.Assistants {
 		if i >= n {
 			break
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
 			short(a.ID), a.Name, a.Role, strings.Join(a.Capabilities, ","))
 	}
 	return doFlush(w)
@@ -129,12 +129,12 @@ func listProviders(cli *Client, c *commonFlags, n int) int {
 		return 0
 	}
 	w := newTab()
-	fmt.Fprintln(w, "ID\tNAME\tTYPE\tENDPOINT\tMODELS")
+	_, _ = fmt.Fprintln(w, "ID\tNAME\tTYPE\tENDPOINT\tMODELS")
 	for i, p := range resp.Profiles {
 		if i >= n {
 			break
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
 			short(p.ID), p.Name, p.Type, p.Endpoint, strings.Join(p.ModelIDs, ","))
 	}
 	return doFlush(w)
@@ -155,12 +155,12 @@ func listApprovals(cli *Client, c *commonFlags, n int) int {
 		return 0
 	}
 	w := newTab()
-	fmt.Fprintln(w, "ID\tRUN\tSTATUS\tCAPABILITY")
+	_, _ = fmt.Fprintln(w, "ID\tRUN\tSTATUS\tCAPABILITY")
 	for i, a := range resp.Approvals {
 		if i >= n {
 			break
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
 			short(a.ID), short(a.RunID), a.Status, a.Capability)
 	}
 	return doFlush(w)
@@ -188,12 +188,12 @@ func listMemory(cli *Client, c *commonFlags, n int) int {
 		return 0
 	}
 	w := newTab()
-	fmt.Fprintln(w, "ID\tSCOPE\tCREATED\tCONTENT")
+	_, _ = fmt.Fprintln(w, "ID\tSCOPE\tCREATED\tCONTENT")
 	for i, m := range resp.Memories {
 		if i >= n {
 			break
 		}
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
 			short(m.ID), m.Scope, ago(m.CreatedAt), trunc(m.Content, 80))
 	}
 	return doFlush(w)

@@ -56,7 +56,7 @@ func (r *ConnectorConfigRepository) List() ([]*ConnectorConfigRecord, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to list connector configs: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	records := make([]*ConnectorConfigRecord, 0)
 	for rows.Next() {

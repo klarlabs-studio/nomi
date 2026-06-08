@@ -36,7 +36,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	defer database.Close()
+	defer func() { _ = database.Close() }()
 
 	if *showVersion {
 		v, dirty, err := database.MigrateStatus()

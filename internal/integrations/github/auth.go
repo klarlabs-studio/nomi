@@ -223,7 +223,7 @@ func (c *AuthClient) mintInstallationToken(ctx context.Context, installationID i
 	if err != nil {
 		return nil, fmt.Errorf("github: installation token request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusCreated {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 8<<10))

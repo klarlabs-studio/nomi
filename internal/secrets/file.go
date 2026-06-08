@@ -108,12 +108,12 @@ func (s *fileStore) writeVault(v map[string]string) error {
 	}
 	tmpPath := tmp.Name()
 	if _, err := tmp.Write(buf); err != nil {
-		tmp.Close()
+		_ = tmp.Close()
 		_ = os.Remove(tmpPath)
 		return fmt.Errorf("failed to write vault tmp: %w", err)
 	}
 	if err := tmp.Chmod(0o600); err != nil {
-		tmp.Close()
+		_ = tmp.Close()
 		_ = os.Remove(tmpPath)
 		return fmt.Errorf("failed to chmod vault tmp: %w", err)
 	}

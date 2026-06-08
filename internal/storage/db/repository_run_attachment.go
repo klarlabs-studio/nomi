@@ -58,7 +58,7 @@ func (r *RunAttachmentRepository) ListByRun(runID string) ([]*domain.RunAttachme
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []*domain.RunAttachment
 	for rows.Next() {
 		var a domain.RunAttachment

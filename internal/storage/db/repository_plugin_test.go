@@ -13,20 +13,20 @@ func newTestDB(t *testing.T) (*DB, func()) {
 	if err != nil {
 		t.Fatalf("temp file: %v", err)
 	}
-	f.Close()
+	_ = f.Close()
 	database, err := New(Config{Path: f.Name()})
 	if err != nil {
-		os.Remove(f.Name())
+		_ = os.Remove(f.Name())
 		t.Fatalf("open db: %v", err)
 	}
 	if err := database.Migrate(); err != nil {
-		database.Close()
-		os.Remove(f.Name())
+		_ = database.Close()
+		_ = os.Remove(f.Name())
 		t.Fatalf("migrate: %v", err)
 	}
 	return database, func() {
-		database.Close()
-		os.Remove(f.Name())
+		_ = database.Close()
+		_ = os.Remove(f.Name())
 	}
 }
 

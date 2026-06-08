@@ -135,7 +135,7 @@ func newReplanRuntime(t *testing.T, h http.HandlerFunc) (*Runtime, *db.DB) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { database.Close() })
+	t.Cleanup(func() { _ = database.Close() })
 	if err := database.Migrate(); err != nil {
 		t.Fatal(err)
 	}

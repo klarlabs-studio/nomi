@@ -22,19 +22,19 @@ func setupTestRuntime(t *testing.T) (*Runtime, *db.DB, func()) {
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
-	tmpFile.Close()
+	_ = tmpFile.Close()
 
 	config := db.Config{Path: tmpFile.Name()}
 	database, err := db.New(config)
 	if err != nil {
-		os.Remove(tmpFile.Name())
+		_ = os.Remove(tmpFile.Name())
 		t.Fatalf("Failed to create test database: %v", err)
 	}
 
 	// Run migrations
 	if err := database.Migrate(); err != nil {
-		database.Close()
-		os.Remove(tmpFile.Name())
+		_ = database.Close()
+		_ = os.Remove(tmpFile.Name())
 		t.Fatalf("Failed to run migrations: %v", err)
 	}
 
@@ -46,8 +46,8 @@ func setupTestRuntime(t *testing.T) (*Runtime, *db.DB, func()) {
 	approvalMgr := permissions.NewApprovalManager(approvalStore, eventBus)
 	toolRegistry := tools.NewRegistry()
 	if err := tools.RegisterCoreTools(toolRegistry); err != nil {
-		database.Close()
-		os.Remove(tmpFile.Name())
+		_ = database.Close()
+		_ = os.Remove(tmpFile.Name())
 		t.Fatalf("Failed to register tools: %v", err)
 	}
 	toolExecutor := tools.NewExecutor(toolRegistry)
@@ -56,8 +56,8 @@ func setupTestRuntime(t *testing.T) (*Runtime, *db.DB, func()) {
 	rt := NewRuntime(database, eventBus, permEngine, approvalMgr, toolExecutor, memManager, DefaultConfig())
 
 	cleanup := func() {
-		database.Close()
-		os.Remove(tmpFile.Name())
+		_ = database.Close()
+		_ = os.Remove(tmpFile.Name())
 	}
 
 	return rt, database, cleanup
@@ -156,7 +156,7 @@ func TestToolExecution(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create workspace root: %v", err)
 	}
-	defer os.RemoveAll(workspaceRoot)
+	defer func() { _ = os.RemoveAll(workspaceRoot) }()
 
 	testFile := filepath.Join(workspaceRoot, "hello.txt")
 	testContent := "Hello, Nomi!"

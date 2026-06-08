@@ -157,7 +157,7 @@ func Open(r io.Reader) (*Bundle, error) {
 	if err != nil {
 		return nil, fmt.Errorf("bundle: gzip: %w", err)
 	}
-	defer gz.Close()
+	defer func() { _ = gz.Close() }()
 
 	files := map[string][]byte{}
 	tr := tar.NewReader(gz)
@@ -265,10 +265,10 @@ func Pack(w io.Writer, src Sources) error {
 	gz.ModTime = zeroTime()
 	gz.Name = ""
 	gz.OS = 0
-	defer gz.Close()
+	defer func() { _ = gz.Close() }()
 
 	tw := tar.NewWriter(gz)
-	defer tw.Close()
+	defer func() { _ = tw.Close() }()
 
 	entries := map[string][]byte{}
 	if src.ManifestJSON != nil {

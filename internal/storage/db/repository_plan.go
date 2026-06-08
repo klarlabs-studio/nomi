@@ -50,7 +50,7 @@ func (r *PlanRepository) Create(plan *domain.Plan) error {
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	// Insert plan
 	_, err = tx.Exec(
@@ -153,7 +153,7 @@ func (r *PlanRepository) GetStepDefinitions(planID string) ([]domain.StepDefinit
 	if err != nil {
 		return nil, fmt.Errorf("failed to get step definitions: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	steps := make([]domain.StepDefinition, 0)
 	stepIDs := make([]string, 0)
@@ -214,7 +214,7 @@ func (r *PlanRepository) loadDependenciesBatch(stepIDs []string) (map[string][]s
 	if err != nil {
 		return nil, fmt.Errorf("failed to load step dependencies: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	for rows.Next() {
 		var stepID, depID string
 		if err := rows.Scan(&stepID, &depID); err != nil {
@@ -245,7 +245,7 @@ func (r *PlanRepository) ListByRunID(runID string) ([]domain.Plan, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to list plans: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	plans := make([]domain.Plan, 0)
 	for rows.Next() {

@@ -320,7 +320,7 @@ func (c *TelegramConnector) SendMessage(connectionID string, chatID string, mess
 	if err != nil {
 		return fmt.Errorf("failed to send message: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		var errResp struct {
@@ -414,12 +414,12 @@ func (c *TelegramConnector) pollLoop(ctx context.Context, conn TelegramConnectio
 
 		var updateResp telegramGetUpdatesResponse
 		if err := json.NewDecoder(resp.Body).Decode(&updateResp); err != nil {
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			log.Printf("[Telegram] Failed to decode getUpdates response: %v", err)
 			time.Sleep(5 * time.Second)
 			continue
 		}
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		if !updateResp.OK {
 			log.Printf("[Telegram] getUpdates returned not OK")

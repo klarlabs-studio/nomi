@@ -107,7 +107,7 @@ func (r *ChannelIdentityRepository) ListByConnection(connectionID string) ([]*do
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return collectIdentities(rows)
 }
 

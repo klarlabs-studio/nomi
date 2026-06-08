@@ -121,12 +121,12 @@ func BenchmarkCallTool_StdGo(b *testing.B) {
 func benchCallTool(b *testing.B, wasm []byte, pluginID string, reactor bool) {
 	ctx := context.Background()
 	loader := NewLoader(ctx)
-	defer loader.Close(ctx)
+	defer func() { _ = loader.Close(ctx) }()
 	mod, err := loadForBench(ctx, loader, pluginID, wasm, reactor)
 	if err != nil {
 		b.Fatalf("Load: %v", err)
 	}
-	defer mod.Close(ctx)
+	defer func() { _ = mod.Close(ctx) }()
 
 	input := map[string]any{"message": "ping", "n": float64(42)}
 	b.ResetTimer()

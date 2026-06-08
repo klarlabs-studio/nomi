@@ -31,7 +31,7 @@ func exportCmd(common *commonFlags, args []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	body, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		fmt.Fprintf(os.Stderr, "export: HTTP %d: %s\n", resp.StatusCode, body)
@@ -87,7 +87,7 @@ func importCmd(common *commonFlags, args []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	respBody, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
 		fmt.Fprintf(os.Stderr, "import: HTTP %d: %s\n", resp.StatusCode, respBody)

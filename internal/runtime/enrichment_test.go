@@ -18,20 +18,20 @@ func newTestDBLite(t *testing.T) (*db.DB, func()) {
 	if err != nil {
 		t.Fatalf("temp file: %v", err)
 	}
-	f.Close()
+	_ = f.Close()
 	database, err := db.New(db.Config{Path: f.Name()})
 	if err != nil {
-		os.Remove(f.Name())
+		_ = os.Remove(f.Name())
 		t.Fatalf("open db: %v", err)
 	}
 	if err := database.Migrate(); err != nil {
-		database.Close()
-		os.Remove(f.Name())
+		_ = database.Close()
+		_ = os.Remove(f.Name())
 		t.Fatalf("migrate: %v", err)
 	}
 	return database, func() {
-		database.Close()
-		os.Remove(f.Name())
+		_ = database.Close()
+		_ = os.Remove(f.Name())
 	}
 }
 
@@ -90,7 +90,7 @@ func TestEnrich_TranscribesAudioWhenBackendAvailable(t *testing.T) {
 
 	// Stand up a tiny HTTP server hosting fake audio bytes.
 	audioSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte{0x01, 0x02, 0x03})
+		_, _ = w.Write([]byte{0x01, 0x02, 0x03})
 	}))
 	defer audioSrv.Close()
 

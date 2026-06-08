@@ -97,17 +97,17 @@ func (w *WhisperBackend) Transcribe(ctx context.Context, audio []byte, languageH
 		return "", "", fmt.Errorf("create temp audio: %w", err)
 	}
 	audioPath := audioFile.Name()
-	defer os.Remove(audioPath)
+	defer func() { _ = os.Remove(audioPath) }()
 	if _, err := audioFile.Write(audio); err != nil {
-		audioFile.Close()
+		_ = audioFile.Close()
 		return "", "", fmt.Errorf("write temp audio: %w", err)
 	}
-	audioFile.Close()
+	_ = audioFile.Close()
 
 	// Output base — whisper-cli appends .txt automatically.
 	outBase := strings.TrimSuffix(audioPath, ".wav") + "-out"
 	outFile := outBase + ".txt"
-	defer os.Remove(outFile)
+	defer func() { _ = os.Remove(outFile) }()
 
 	modelPath := filepath.Join(w.modelDir, "ggml-"+w.modelSize+".bin")
 

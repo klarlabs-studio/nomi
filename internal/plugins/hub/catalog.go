@@ -164,7 +164,7 @@ func (c *Client) download(ctx context.Context, url string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrCatalogFetchFailed, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("%w: HTTP %d from %s", ErrCatalogFetchFailed, resp.StatusCode, url)
 	}

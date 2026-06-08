@@ -48,7 +48,7 @@ func newUpdateFixture(t *testing.T) *updateFixture {
 	if err != nil {
 		t.Fatalf("db: %v", err)
 	}
-	t.Cleanup(func() { database.Close() })
+	t.Cleanup(func() { _ = database.Close() })
 	if err := database.Migrate(); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}
@@ -58,7 +58,7 @@ func newUpdateFixture(t *testing.T) *updateFixture {
 
 	verifier, _ := signing.NewVerifier(rootPub, nil)
 	loader := wasmhost.NewLoader(ctx)
-	t.Cleanup(func() { loader.Close(ctx) })
+	t.Cleanup(func() { _ = loader.Close(ctx) })
 
 	stateRepo := db.NewPluginStateRepository(database)
 

@@ -114,8 +114,8 @@ func (p *PiperBackend) Speak(ctx context.Context, text, voice string) ([]byte, s
 		return nil, "", fmt.Errorf("create temp file: %w", err)
 	}
 	tmpPath := tmpFile.Name()
-	tmpFile.Close()
-	defer os.Remove(tmpPath)
+	_ = tmpFile.Close()
+	defer func() { _ = os.Remove(tmpPath) }()
 
 	// Bound the subprocess: 30s upper bound on a single utterance is
 	// generous (Piper does ~5x realtime on a modern CPU; a 30s budget
