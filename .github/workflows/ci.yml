@@ -1,0 +1,37 @@
+# Thin caller for the shared klarlabs-studio Go CI bar.
+# All gate logic lives in the reusable workflow — bump versions / add
+# jobs there, once, org-wide.
+#
+# Scope: the GO core only. Nomi is a Tauri desktop app (Go daemon + a
+# JS/TS frontend under app/, Rust via app/src-tauri/). The Go module is
+# at the repo root, so the reusable workflow targets it cleanly. The
+# multi-OS Tauri bundle build lives in release.yml; the JS/TS frontend
+# lint/test is a follow-up (a dedicated JS CI job).
+#
+# coverage: false      — no coverage threshold wired up yet (follow-up).
+# cross-platform: false — the Go core is platform-agnostic; the multi-OS
+#                         build stays in release.yml. Lint/test on ubuntu.
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["**.md", "docs/**", "LICENSE"]
+  pull_request:
+    branches: [main]
+    paths-ignore: ["**.md", "docs/**", "LICENSE"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: klarlabs-studio/.github/.github/workflows/go-ci.yml@main
+    permissions:
+      contents: read
+      security-events: write
+    secrets: inherit
+    with:
+      coverage: false
+      cross-platform: false
