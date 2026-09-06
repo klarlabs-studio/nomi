@@ -364,8 +364,9 @@ fn truncate_label(s: &str, max: usize) -> String {
 }
 
 fn tray_requires_window(a: &PendingApproval) -> bool {
-    // Irreversible commands and filesystem writes need the in-app forcing
-    // function / diff preview. Tray Approve would skip those safeguards.
+    // Irreversible commands, filesystem writes, and mutate-shaped MCP
+    // tools need the in-app forcing function / diff preview. Tray
+    // Approve would skip those safeguards.
     a.danger_signal == "irreversible" || a.capability == "filesystem.write"
 }
 

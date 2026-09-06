@@ -173,6 +173,24 @@ func TestDispatchCallAndDiscover(t *testing.T) {
 		t.Fatalf("discovered execute = %#v", out)
 	}
 
+	search, err := reg.Get("mcp.docs.search")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if search.Capability() != "mcp.docs.search" {
+		t.Fatalf("search capability = %q, want per-tool mcp.docs.search", search.Capability())
+	}
+	fetch, err := reg.Get("mcp.docs.fetch")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fetch.Capability() != "mcp.docs.fetch" {
+		t.Fatalf("fetch capability = %q, want per-tool mcp.docs.fetch", fetch.Capability())
+	}
+	if search.Capability() == fetch.Capability() {
+		t.Fatal("distinct tools must not share a capability")
+	}
+
 	health, ok := p.ConnectionHealth(conn.ID)
 	if !ok || len(health.DiscoveredTools) != 2 {
 		t.Fatalf("health discovered = %#v ok=%v", health, ok)

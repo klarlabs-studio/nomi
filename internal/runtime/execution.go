@@ -70,6 +70,7 @@ func (r *Runtime) executeStep(ctx context.Context, run *domain.Run, step *domain
 	// values. Without this, a remembered "approve writes to notes.md"
 	// would silently apply to a later step whose path was /etc/hosts.
 	toolInput := buildToolInputFromDef(step, assistant, toolName, def)
+	capability = r.refineMCPCapability(toolName, capability, toolInput)
 	inputSig := approvalInputSignature(capability, toolInput)
 
 	// Ceiling check first so the user-facing error names the *real*

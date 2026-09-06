@@ -112,8 +112,39 @@ func TestEvaluateEmptyPolicy(t *testing.T) {
 	if got := e.Evaluate(policy, "mcp.tools"); got != domain.PermissionConfirm {
 		t.Fatalf("empty policy should confirm first-party plugin caps: got %s", got)
 	}
+	if got := e.Evaluate(policy, "mcp.docs.search"); got != domain.PermissionConfirm {
+		t.Fatalf("empty policy should confirm per-tool MCP caps: got %s", got)
+	}
 	if got := e.Evaluate(policy, "document.delete"); got != domain.PermissionDeny {
 		t.Fatalf("empty policy must deny unknown dotted names: got %s", got)
+	}
+}
+
+func TestEvaluatePerToolMCPIndependent(t *testing.T) {
+	e := NewEngine()
+	policy := domain.PermissionPolicy{Rules: []domain.PermissionRule{
+		{Capability: "mcp.docs.search", Mode: domain.PermissionAllow},
+		{Capability: "mcp.docs.write_file", Mode: domain.PermissionConfirm},
+	}}
+	if got := e.Evaluate(policy, "mcp.docs.search"); got != domain.PermissionAllow {
+		t.Fatalf("search = %s, want allow", got)
+	}
+	if got := e.Evaluate(policy, "mcp.docs.write_file"); got != domain.PermissionConfirm {
+		t.Fatalf("write_file = %s, want confirm", got)
+	}
+	// Wildcard allow on one connection must not cover a sibling tool
+	// unless the pattern matches.
+	policy = domain.PermissionPolicy{Rules: []domain.PermissionRule{
+		{Capability: "mcp.docs.search", Mode: domain.PermissionAllow},
+	}}
+	if got := e.Evaluate(policy, "mcp.docs.delete"); got != domain.PermissionConfirm {
+		t.Fatalf("unmatched sibling tool should confirm, got %s", got)
+	}
+	policy = domain.PermissionPolicy{Rules: []domain.PermissionRule{
+		{Capability: "mcp.docs.*", Mode: domain.PermissionAllow},
+	}}
+	if got := e.Evaluate(policy, "mcp.docs.write_file"); got != domain.PermissionAllow {
+		t.Fatalf("mcp.docs.* should allow write_file, got %s", got)
 	}
 }
 

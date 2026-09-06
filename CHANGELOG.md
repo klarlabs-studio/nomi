@@ -4,6 +4,24 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.5] - 2026-09-06 — Compete: per-tool MCP capabilities
+
+Generic MCP only wins the Goose/Cline comparison if Allow on one
+discovered tool never silently covers another. Discovered tools now
+carry their own capability (`mcp.<connection>.<tool>`); mutate-shaped
+names force the in-app Review path from the tray.
+
+### Changed
+- Hot-registered MCP tools gate on `mcp.<slug>.<tool>` instead of the
+  shared `mcp.tools` capability. Static `mcp.list_tools` / `mcp.call`
+  still use `mcp.tools`; `mcp.call` is refined to the discovered
+  per-tool capability when the upstream tool is already registered.
+- Approval copy and tray quick-approve treat mutate-shaped MCP tool
+  names (`write`, `delete`, `exec`, …) as irreversible — Review opens
+  Approvals instead of resolving from the tray.
+- Policy wildcards like `mcp.docs.*` still work; unmatched sibling
+  tools default to confirm independently.
+
 ## [0.2.4] - 2026-08-18 — Compete: generic MCP + tray quick-approve
 
 The reviewable-agents thesis only wins against OpenClaw / Goose / Cline
