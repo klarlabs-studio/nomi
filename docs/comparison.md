@@ -3,7 +3,7 @@
 How Nomi differs from other agent platforms. Facts only — every column
 maps to behavior shipped today, not roadmap claims.
 
-> **Disclosure:** rows describe Nomi as of v0.2.5 and competitor projects
+> **Disclosure:** rows describe Nomi as of v0.2.6 and competitor projects
 > as of early 2026. Competitor capabilities evolve quickly; if a row is
 > stale, please open an issue.
 
@@ -151,7 +151,7 @@ companion only, no workflow execution.
 | Recipe registry | ✅ Signed (SHA-256) shareable YAML bundles + install/export | ✕ | ✕ | ◐ Skills (different shape) | n/a |
 | Skill induction | ✅ Heuristic clustering + LLM synthesis from run history | ✕ | ✕ | ✅ Self-improving (opaque) | n/a |
 | Connector breadth (shipped) | Telegram, Slack, Discord, WhatsApp, Email, Gmail, GitHub, Obsidian, Calendar + generic MCP | 20+ messaging apps + email | 13+ (WhatsApp, Telegram, Slack, Teams, Gmail, iMessage, Matrix, GitHub, Linear, …) | Telegram-primary + others | n/a |
-| Tray / menu-bar approve | ✅ Approve/Deny from the tray without opening the window | ✕ | ✕ | ✕ | n/a |
+| Tray / menu-bar approve | ✅ Approve/Deny tool approvals **and** safe plans from the tray (write/patch plans force Review) | ✕ | ✕ | ✕ | n/a |
 | Model strategy | ✅ BYO any (Ollama, Anthropic, OpenAI, OpenAI-compatible) | ✅ BYO API key | ◐ Anthropic Agents SDK bias | ✅ 300+ via OpenRouter + direct | ✕ Inflection 2.5 only |
 | License | Apache-2.0 | Apache-2.0 (non-profit stewardship) | MIT | Open source | Proprietary |
 | Threat model | Agent does the wrong thing → gated by capability engine + plan review | Agent has broad reach by design → user trusts the agent | Agent escapes execution boundary → contained by Docker / micro-VM | Agent does the wrong thing → confirm-per-action | n/a |

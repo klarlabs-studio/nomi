@@ -41,7 +41,7 @@ export function useEventConnection(): EventConnectionState {
  *   step.*          → runs.detail(runID) + events.list
  *   approval.*      → approvals.list + runs.approvals(runID) + events.list
  *   memory.*        → memory.all
- *   plan.*          → runs.detail(runID)
+ *   plan.*          → runs.list + runs.detail(runID)
  *   connector.*     → connectors.all
  */
 export function EventProvider({ children }: { children: React.ReactNode }) {
@@ -154,6 +154,8 @@ function handleEventInvalidations(
   }
 
   if (ev.type.startsWith("plan.")) {
+    // List too — tray plan-approve keys off plan_review rows in runs.list.
+    qc.invalidateQueries({ queryKey: queryKeys.runs.list() });
     qc.invalidateQueries({ queryKey: queryKeys.runs.detail(ev.run_id) });
     return;
   }

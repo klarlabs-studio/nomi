@@ -4,6 +4,24 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.6] - 2026-09-20 — Compete: tray plan approve
+
+Plan review should not mean "open the full window." Safe plans can be
+approved or denied from the tray; write/patch/irreversible plans still
+force Review so DiffPreview and PlanReviewCard stay in the loop.
+
+### Added
+- **Tray plan approve.** Runs in `plan_review` appear as Approve plan /
+  Deny plan / Review plan items in the tray menu (shared 4-slot budget
+  with tool approvals). Approve calls `POST /runs/:id/plan/approve`;
+  Deny calls `POST /runs/:id/cancel`.
+- Plan tray copy aggregates step capabilities so mutate-shaped MCP tools
+  and `filesystem.write` / `filesystem.patch` force the in-app Review path.
+
+### Changed
+- `plan.*` events invalidate `runs.list` (not only detail) so the tray
+  refreshes when a plan is proposed without waiting for the poll tick.
+
 ## [0.2.5] - 2026-09-06 — Compete: per-tool MCP capabilities
 
 Generic MCP only wins the Goose/Cline comparison if Allow on one
@@ -21,6 +39,7 @@ names force the in-app Review path from the tray.
   Approvals instead of resolving from the tray.
 - Policy wildcards like `mcp.docs.*` still work; unmatched sibling
   tools default to confirm independently.
+
 
 ## [0.2.4] - 2026-08-18 — Compete: generic MCP + tray quick-approve
 
