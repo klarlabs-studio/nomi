@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"strings"
 
 	"go.klarlabs.de/nomi/internal/tools"
@@ -32,19 +31,20 @@ type planPayload struct {
 	Steps   []planStep `json:"steps"`
 }
 
-// formatPlanReview writes a human-readable plan to w (typically stderr).
+// formatPlanReview returns a human-readable plan for stderr.
 // Mirrors the channel plugins' layout, plus argument/diff detail so the
 // CLI can do Claude Code-style review without the desktop DiffPreview.
-func formatPlanReview(w io.Writer, goal string, plan *planPayload) {
+func formatPlanReview(goal string, plan *planPayload) string {
+	var b strings.Builder
 	if plan == nil {
-		fmt.Fprintln(w, "▶ plan ready (empty)")
-		return
+		b.WriteString("▶ plan ready (empty)\n")
+		return b.String()
 	}
-	fmt.Fprintln(w, "▶ Plan ready for review")
+	b.WriteString("▶ Plan ready for review\n")
 	if goal != "" {
-		fmt.Fprintf(w, "  Goal: %s\n", truncateRunes(goal, 200))
+		fmt.Fprintf(&b, "  Goal: %s\n", truncateRunes(goal, 200))
 	}
-	fmt.Fprintln(w)
+	b.WriteByte('\n')
 
 	steps := plan.Steps
 	limit := maxPlanStepsPrinted
@@ -64,29 +64,30 @@ func formatPlanReview(w io.Writer, goal string, plan *planPayload) {
 		if cap == "" {
 			cap = s.ExpectedTool
 		}
-		fmt.Fprintf(w, "  %d. %s", i+1, truncateRunes(title, 100))
+		fmt.Fprintf(&b, "  %d. %s", i+1, truncateRunes(title, 100))
 		if cap != "" {
-			fmt.Fprintf(w, " — `%s`", cap)
+			fmt.Fprintf(&b, " — `%s`", cap)
 		}
-		fmt.Fprintln(w)
+		b.WriteByte('\n')
 		if s.Description != "" {
-			fmt.Fprintf(w, "     %s\n", truncateRunes(s.Description, 200))
+			fmt.Fprintf(&b, "     %s\n", truncateRunes(s.Description, 200))
 		}
 		if s.Why != "" {
-			fmt.Fprintf(w, "     why: %s\n", truncateRunes(s.Why, 160))
+			fmt.Fprintf(&b, "     why: %s\n", truncateRunes(s.Why, 160))
 		}
-		writeStepArguments(w, s)
+		writeStepArguments(&b, s)
 	}
 	if len(steps) > maxPlanStepsPrinted {
-		fmt.Fprintf(w, "  (+%d more)\n", len(steps)-maxPlanStepsPrinted)
+		fmt.Fprintf(&b, "  (+%d more)\n", len(steps)-maxPlanStepsPrinted)
 	}
 	if planRequiresCaution(plan) {
-		fmt.Fprintln(w)
-		fmt.Fprintln(w, "  ⚠ This plan writes files or runs shell/mutating tools — review carefully.")
+		b.WriteByte('\n')
+		b.WriteString("  ⚠ This plan writes files or runs shell/mutating tools — review carefully.\n")
 	}
+	return b.String()
 }
 
-func writeStepArguments(w io.Writer, s planStep) {
+func writeStepArguments(b *strings.Builder, s planStep) {
 	if s.Arguments == nil {
 		return
 	}
@@ -99,32 +100,34 @@ func writeStepArguments(w io.Writer, s planStep) {
 		}
 		files, added, removed, err := tools.SummarizeDiff(diff)
 		if err == nil {
-			fmt.Fprintf(w, "     diff: +%d −%d", added, removed)
+			fmt.Fprintf(b, "     diff: +%d −%d", added, removed)
 			if len(files) > 0 {
-				fmt.Fprintf(w, " in %s", strings.Join(files, ", "))
+				fmt.Fprintf(b, " in %s", strings.Join(files, ", "))
 			}
-			fmt.Fprintln(w)
+			b.WriteByte('\n')
 		}
-		fmt.Fprintln(w, "     ---")
-		fmt.Fprintln(w, indentBlock(truncateRunes(diff, maxDiffPrintRunes), "     "))
-		fmt.Fprintln(w, "     ---")
+		b.WriteString("     ---\n")
+		b.WriteString(indentBlock(truncateRunes(diff, maxDiffPrintRunes), "     "))
+		b.WriteByte('\n')
+		b.WriteString("     ---\n")
 	case "filesystem.write":
 		path, _ := s.Arguments["path"].(string)
 		content, _ := s.Arguments["content"].(string)
 		if path != "" {
-			fmt.Fprintf(w, "     write: %s\n", path)
+			fmt.Fprintf(b, "     write: %s\n", path)
 		}
 		if content != "" {
-			fmt.Fprintln(w, indentBlock(truncateLines(content, maxWriteContentLines), "     | "))
+			b.WriteString(indentBlock(truncateLines(content, maxWriteContentLines), "     | "))
+			b.WriteByte('\n')
 		}
 	case "filesystem.read":
 		if path, _ := s.Arguments["path"].(string); path != "" {
-			fmt.Fprintf(w, "     read: %s\n", path)
+			fmt.Fprintf(b, "     read: %s\n", path)
 		}
 	case "command.exec":
 		cmd := stepCommand(s)
 		if cmd != "" {
-			fmt.Fprintf(w, "     $ %s\n", truncateRunes(cmd, 200))
+			fmt.Fprintf(b, "     $ %s\n", truncateRunes(cmd, 200))
 		}
 	default:
 		// MCP / unknown — show a compact key list, not full payloads.
@@ -133,7 +136,7 @@ func writeStepArguments(w io.Writer, s planStep) {
 			keys = append(keys, k)
 		}
 		if len(keys) > 0 {
-			fmt.Fprintf(w, "     args: %s\n", strings.Join(keys, ", "))
+			fmt.Fprintf(b, "     args: %s\n", strings.Join(keys, ", "))
 		}
 	}
 }

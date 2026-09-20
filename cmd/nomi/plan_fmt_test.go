@@ -18,9 +18,7 @@ func TestFormatPlanReview_IncludesGoalStepsAndDiff(t *testing.T) {
 			Arguments: map[string]any{"path": "README.md"},
 		},
 	}}
-	var b strings.Builder
-	formatPlanReview(&b, "Fix the flaky test", plan)
-	out := b.String()
+	out := formatPlanReview("Fix the flaky test", plan)
 	if !strings.Contains(out, "Fix the flaky test") {
 		t.Fatalf("goal missing: %s", out)
 	}
@@ -65,9 +63,8 @@ func TestFormatPlanReview_CommandExec(t *testing.T) {
 		Title: "Run tests", ExpectedTool: "command.exec", ExpectedCapability: "command.exec",
 		Arguments: map[string]any{"command": "go test ./..."},
 	}}}
-	var b strings.Builder
-	formatPlanReview(&b, "test", plan)
-	if !strings.Contains(b.String(), "$ go test ./...") {
-		t.Fatalf("command missing: %s", b.String())
+	out := formatPlanReview("test", plan)
+	if !strings.Contains(out, "$ go test ./...") {
+		t.Fatalf("command missing: %s", out)
 	}
 }

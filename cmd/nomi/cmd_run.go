@@ -87,7 +87,7 @@ func runCmd(common *commonFlags, args []string) int {
 				continue
 			}
 			if *review {
-				formatPlanReview(os.Stderr, detail.Run.Goal, detail.Plan)
+				fmt.Fprint(os.Stderr, formatPlanReview(detail.Run.Goal, detail.Plan))
 				ok, err := promptPlanDecision(stdin)
 				if err != nil {
 					fmt.Fprintln(os.Stderr, err)
