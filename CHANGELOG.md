@@ -4,6 +4,27 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.8] - 2026-09-20 — Compete: MCP one-click presets
+
+Goose wins when adding an MCP server feels like picking from a catalog.
+Nomi already speaks any stdio/HTTP MCP server; the Plugins tab now
+ships popular presets so you fill a path (or nothing) instead of
+hand-writing `npx`/`uvx` lines. Discovered tools still gate per-tool
+and go through plan review.
+
+### Added
+- **MCP server presets** in Settings → Plugins → MCP Server: Filesystem,
+  Memory, Fetch, Git, Time, Sequential Thinking, Remote HTTP/SSE, plus
+  Custom. Selecting a preset fills transport/command/args (or endpoint)
+  and a suggested display name.
+- Quick-pick chips on the MCP card open Add connection with that
+  preset already applied.
+
+### Notes
+- Env-only servers (GitHub PAT via env, Postgres connection string in
+  env) are omitted until the MCP plugin grows an env map — secrets
+  must not land in SQLite config plaintext.
+
 ## [0.2.7] - 2026-09-20 — Compete: channel plan review
 
 Plan review should not mean "open the desktop app." Telegram and Slack
