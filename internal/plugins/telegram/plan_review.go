@@ -105,14 +105,14 @@ func (p *Plugin) onPlanProposed(ctx context.Context, evt *domain.Event) {
 	edited, _ := evt.Payload["edited"].(bool)
 	if edited && haveRef {
 		if err := p.editPlanPrompt(ctx, token, ref.ChatID, ref.MessageID, text, run.ID, requiresDesktop); err != nil {
-			log.Printf("[telegram plugin] edit plan prompt: %v", err)
+			log.Printf("[telegram plugin] edit plan prompt failed")
 		}
 		return
 	}
 
 	msgID, err := p.sendPlanPrompt(ctx, token, conv.ExternalConversationID, text, run.ID, requiresDesktop)
 	if err != nil {
-		log.Printf("[telegram plugin] post plan prompt: %v", err)
+		log.Printf("[telegram plugin] post plan prompt failed")
 		return
 	}
 	p.mu.Lock()

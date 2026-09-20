@@ -106,7 +106,7 @@ func (p *Plugin) onPlanProposed(ctx context.Context, evt *domain.Event) {
 			slack.MsgOptionBlocks(blocks...),
 		)
 		if err != nil {
-			log.Printf("[slack plugin] edit plan prompt: %v", err)
+			log.Printf("[slack plugin] edit plan prompt failed")
 		}
 		return
 	}
@@ -120,7 +120,7 @@ func (p *Plugin) onPlanProposed(ctx context.Context, evt *domain.Event) {
 	}
 	postedChannel, postedTS, err := client.PostMessageContext(ctx, channel, opts...)
 	if err != nil {
-		log.Printf("[slack plugin] post plan block: %v", err)
+		log.Printf("[slack plugin] post plan block failed")
 		return
 	}
 	p.mu.Lock()
@@ -151,7 +151,7 @@ func (p *Plugin) clearPlanPrompt(ctx context.Context, runID, label string) {
 	}
 	_, _, _, err := client.UpdateMessageContext(ctx, ref.Channel, ref.TS, slack.MsgOptionText(label, false))
 	if err != nil {
-		log.Printf("[slack plugin] clear plan prompt: %v", err)
+		log.Printf("[slack plugin] clear plan prompt failed")
 	}
 }
 
