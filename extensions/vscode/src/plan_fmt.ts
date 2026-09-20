@@ -195,3 +195,62 @@ export function formatPlanReview(goal: string, plan: Plan | null | undefined): s
   }
   return lines.join("\n");
 }
+
+/**
+ * Drop 1-based step indices from a plan (CLI dropPlanSteps parity).
+ * Strips DependsOn edges that pointed at removed steps.
+ */
+export function dropPlanSteps(plan: Plan, oneBased: number[]): Plan {
+  if (plan.steps.length === 0) {
+    throw new Error("plan has no steps to edit");
+  }
+  if (oneBased.length === 0) {
+    throw new Error("no step numbers given");
+  }
+  const drop = new Set<number>();
+  for (const n of oneBased) {
+    if (n < 1 || n > plan.steps.length) {
+      throw new Error(`step ${n} out of range (1–${plan.steps.length})`);
+    }
+    drop.add(n - 1);
+  }
+  if (drop.size >= plan.steps.length) {
+    throw new Error("cannot drop every step — deny the plan instead");
+  }
+  const droppedIds = new Set<string>();
+  for (const i of drop) {
+    const id = plan.steps[i]?.id;
+    if (id) droppedIds.add(id);
+  }
+  const kept: PlanStep[] = [];
+  for (let i = 0; i < plan.steps.length; i++) {
+    if (drop.has(i)) continue;
+    const s = plan.steps[i]!;
+    const deps = (s.depends_on ?? []).filter((d) => !droppedIds.has(d));
+    kept.push({ ...s, depends_on: deps.length > 0 ? deps : undefined });
+  }
+  return { ...plan, steps: kept };
+}
+
+/** Keep steps whose 0-based indices are in `keepIndices`. */
+export function keepPlanSteps(plan: Plan, keepIndices: number[]): Plan {
+  const keep = new Set(keepIndices);
+  const oneBasedDrop: number[] = [];
+  for (let i = 0; i < plan.steps.length; i++) {
+    if (!keep.has(i)) oneBasedDrop.push(i + 1);
+  }
+  return dropPlanSteps(plan, oneBasedDrop);
+}
+
+export function toEditPlanSteps(plan: Plan): import("./client").EditPlanStep[] {
+  return plan.steps.map((s) => {
+    const out: import("./client").EditPlanStep = { title: s.title || s.expected_tool || "step" };
+    if (s.id) out.id = s.id;
+    if (s.description) out.description = s.description;
+    if (s.expected_tool) out.expected_tool = s.expected_tool;
+    if (s.expected_capability) out.expected_capability = s.expected_capability;
+    if (s.depends_on && s.depends_on.length > 0) out.depends_on = s.depends_on;
+    if (s.arguments && Object.keys(s.arguments).length > 0) out.arguments = s.arguments;
+    return out;
+  });
+}

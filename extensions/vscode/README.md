@@ -8,8 +8,9 @@ plans and tool calls from the editor without rebuilding the desktop UI.
 - Status-bar badge with pending **tool approvals** + **plan_review** runs
 - **Live SSE** on `/events/stream` — badge refreshes on `approval.*` /
   `plan.*` / `run.cancelled` (15s poll fallback when the stream drops)
-- **Plan Review panel** — steps + unified diffs / write excerpts (CLI
-  `--review` parity); Approve / Deny without leaving the editor
+- **Plan Review panel** — steps + unified diffs / write excerpts; uncheck
+  steps to drop via `/plan/edit` (CLI `--review` [E]dit parity); Approve /
+  Deny without leaving the editor
 - Quick Pick for tool approvals (plan deny = cancel, same as tray/channels)
 - **Run with editor context** — starts a Nomi run with open tabs + active
   selection attached (paths only; secrets filtered; selection ≤ 4 KiB)
@@ -44,4 +45,4 @@ npm run compile
 
 ## Out of scope (v1)
 
-Per-hunk skip, Shiki highlighting, plan edit — use the Tauri desktop app.
+Per-hunk skip, Shiki highlighting — use the Tauri desktop DiffPreview.

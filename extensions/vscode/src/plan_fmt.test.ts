@@ -3,8 +3,10 @@ import { describe, it } from "node:test";
 import type { Plan } from "./client.js";
 import {
   formatPlanReview,
+  keepPlanSteps,
   planRequiresCaution,
   summarizeDiff,
+  toEditPlanSteps,
 } from "./plan_fmt.js";
 
 describe("summarizeDiff", () => {
@@ -86,5 +88,50 @@ describe("formatPlanReview", () => {
     assert.match(text, /diff: \+1 −1/);
     assert.match(text, /\+new/);
     assert.match(text, /writes files/);
+  });
+});
+
+describe("keepPlanSteps / toEditPlanSteps", () => {
+  it("drops unchecked steps and cleans depends_on", () => {
+    const plan: Plan = {
+      id: "p1",
+      version: 1,
+      steps: [
+        { id: "a", title: "One", expected_tool: "filesystem.read", order: 0 },
+        {
+          id: "b",
+          title: "Two",
+          expected_tool: "filesystem.write",
+          depends_on: ["a"],
+          order: 1,
+        },
+        {
+          id: "c",
+          title: "Three",
+          expected_tool: "filesystem.read",
+          depends_on: ["a", "b"],
+          order: 2,
+        },
+      ],
+    };
+    const kept = keepPlanSteps(plan, [0, 2]);
+    assert.deepEqual(
+      kept.steps.map((s) => s.id),
+      ["a", "c"],
+    );
+    assert.deepEqual(kept.steps[1]!.depends_on, ["a"]);
+    const body = toEditPlanSteps(kept);
+    assert.equal(body.length, 2);
+    assert.equal(body[0]!.id, "a");
+    assert.equal(body[1]!.expected_tool, "filesystem.read");
+  });
+
+  it("rejects dropping every step", () => {
+    const plan: Plan = {
+      id: "p1",
+      version: 1,
+      steps: [{ id: "a", title: "One", order: 0 }],
+    };
+    assert.throws(() => keepPlanSteps(plan, []), /deny/);
   });
 });
