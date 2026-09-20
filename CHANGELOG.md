@@ -4,6 +4,22 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.17] - 2026-09-20 — Compete: MCP catalog UX polish
+
+Goose’s catalog is browsable, not a chip dump. Nomi’s MCP presets now
+search/filter by category, show runtime badges, block create while
+placeholders remain, and offer an empty-state CTA.
+
+### Added
+- **Searchable MCP catalog** on the Plugins card — filter by query +
+  Local / Cloud / Data / Reasoning / Remote.
+- **Runtime badges** (`npx` / `uvx` / `docker` / `http`) on catalog rows
+  and in the Add-connection preset panel.
+- **Placeholder / secret create guard** — refuses `/path/to/…` and
+  `mcp.example.com` until edited; required env secrets still enforced.
+- **Empty-state CTA** — Memory · Fetch · Filesystem when no connections.
+- Preset `<select>` grouped with optgroups + description/docs panel.
+
 ## [0.2.16] - 2026-09-20 — Compete: Extension SSE badge
 
 Cline refreshes the pending count the instant a plan lands. The VS Code

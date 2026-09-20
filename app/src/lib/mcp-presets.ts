@@ -12,6 +12,30 @@
 
 export type McpTransport = "stdio" | "http";
 
+/** Install / launch runtime shown as a badge in the catalog. */
+export type McpRuntime = "npx" | "uvx" | "docker" | "http" | "manual";
+
+/** Browse grouping for the MCP catalog strip. */
+export type McpPresetCategory =
+  | "local"
+  | "cloud"
+  | "data"
+  | "reasoning"
+  | "remote"
+  | "custom";
+
+export const MCP_PRESET_CATEGORIES: {
+  id: McpPresetCategory | "all";
+  label: string;
+}[] = [
+  { id: "all", label: "All" },
+  { id: "local", label: "Local" },
+  { id: "cloud", label: "Cloud" },
+  { id: "data", label: "Data" },
+  { id: "reasoning", label: "Reasoning" },
+  { id: "remote", label: "Remote" },
+];
+
 /** Secret env var collected in the UI and stored via credential_refs. */
 export interface McpEnvCredential {
   /** Environment variable name, e.g. GITHUB_PERSONAL_ACCESS_TOKEN. */
@@ -28,6 +52,8 @@ export interface McpServerPreset {
   /** Pre-filled connection display name (user can edit). */
   suggestedName: string;
   transport: McpTransport;
+  category: McpPresetCategory;
+  runtime: McpRuntime;
   command?: string;
   args?: string;
   endpoint?: string;
@@ -52,6 +78,8 @@ export const MCP_SERVER_PRESETS: McpServerPreset[] = [
     description: "Read/write files under an allowlisted directory.",
     suggestedName: "Filesystem",
     transport: "stdio",
+    category: "local",
+    runtime: "npx",
     command: "npx",
     args: "-y @modelcontextprotocol/server-filesystem /path/to/allowed",
     setupNote:
@@ -66,6 +94,8 @@ export const MCP_SERVER_PRESETS: McpServerPreset[] = [
     description: "Knowledge-graph scratch memory across turns.",
     suggestedName: "Memory",
     transport: "stdio",
+    category: "local",
+    runtime: "npx",
     command: "npx",
     args: "-y @modelcontextprotocol/server-memory",
     setupNote: "Requires Node.js + npx. No extra config.",
@@ -79,6 +109,8 @@ export const MCP_SERVER_PRESETS: McpServerPreset[] = [
     description: "Fetch URLs and convert HTML to markdown.",
     suggestedName: "Fetch",
     transport: "stdio",
+    category: "local",
+    runtime: "uvx",
     command: "uvx",
     args: "mcp-server-fetch",
     setupNote: "Requires uv (Astral). Alternative: pip install mcp-server-fetch.",
@@ -91,6 +123,8 @@ export const MCP_SERVER_PRESETS: McpServerPreset[] = [
     description: "Inspect and manipulate a local Git repository.",
     suggestedName: "Git",
     transport: "stdio",
+    category: "local",
+    runtime: "uvx",
     command: "uvx",
     args: "mcp-server-git --repository /path/to/repo",
     setupNote: "Replace /path/to/repo with the repository root. Requires uv.",
@@ -103,6 +137,8 @@ export const MCP_SERVER_PRESETS: McpServerPreset[] = [
     description: "GitHub issues, PRs, and repo tools via the official MCP server.",
     suggestedName: "GitHub",
     transport: "stdio",
+    category: "cloud",
+    runtime: "docker",
     command: "docker",
     args: "run -i --rm -e GITHUB_PERSONAL_ACCESS_TOKEN ghcr.io/github/github-mcp-server",
     setupNote:
@@ -124,6 +160,8 @@ export const MCP_SERVER_PRESETS: McpServerPreset[] = [
     description: "Read-only SQL against a Postgres database.",
     suggestedName: "Postgres",
     transport: "stdio",
+    category: "data",
+    runtime: "npx",
     command: "npx",
     args: "-y @modelcontextprotocol/server-postgres ${DATABASE_URL}",
     setupNote:
@@ -146,6 +184,8 @@ export const MCP_SERVER_PRESETS: McpServerPreset[] = [
     description: "Time and timezone conversion helpers.",
     suggestedName: "Time",
     transport: "stdio",
+    category: "local",
+    runtime: "uvx",
     command: "uvx",
     args: "mcp-server-time",
     setupNote: "Requires uv. No extra config.",
@@ -158,6 +198,8 @@ export const MCP_SERVER_PRESETS: McpServerPreset[] = [
     description: "Structured multi-step reasoning tool.",
     suggestedName: "Sequential Thinking",
     transport: "stdio",
+    category: "reasoning",
+    runtime: "npx",
     command: "npx",
     args: "-y @modelcontextprotocol/server-sequential-thinking",
     setupNote: "Requires Node.js + npx. No extra config.",
@@ -171,6 +213,8 @@ export const MCP_SERVER_PRESETS: McpServerPreset[] = [
     description: "Any MCP server that speaks HTTP+SSE.",
     suggestedName: "Remote MCP",
     transport: "http",
+    category: "remote",
+    runtime: "http",
     endpoint: "https://mcp.example.com/sse",
     setupNote:
       "Replace the endpoint with your server URL. Optional bearer token goes in the credential field below.",
@@ -183,6 +227,8 @@ export const MCP_SERVER_PRESETS: McpServerPreset[] = [
     description: "Blank form — enter command/args or endpoint yourself.",
     suggestedName: "",
     transport: "stdio",
+    category: "custom",
+    runtime: "manual",
     command: "",
     args: "",
     setupNote:
@@ -191,6 +237,53 @@ export const MCP_SERVER_PRESETS: McpServerPreset[] = [
     readyToCreate: false,
   },
 ];
+
+/** Popular one-click picks for the empty-state CTA. */
+export const MCP_EMPTY_STATE_PRESET_IDS = ["memory", "fetch", "filesystem"] as const;
+
+const PLACEHOLDER_RE = /\/path\/to\/|mcp\.example\.com/i;
+
+/** True when command/args/endpoint still contain catalog placeholders. */
+export function mcpConfigHasPlaceholder(config: Record<string, string>): boolean {
+  const hay = `${config.command ?? ""} ${config.args ?? ""} ${config.endpoint ?? ""}`;
+  return PLACEHOLDER_RE.test(hay);
+}
+
+/**
+ * Why Add connection should stay blocked for this preset + form state.
+ * Returns null when submit is allowed.
+ */
+export function mcpPresetCreateBlockedReason(
+  preset: McpServerPreset | null | undefined,
+  config: Record<string, string>,
+  credentials: Record<string, string>,
+): string | null {
+  for (const cred of preset?.envCredentials ?? []) {
+    if (cred.required && !(credentials[cred.key] ?? "").trim()) {
+      return `${cred.label} is required`;
+    }
+  }
+  if (mcpConfigHasPlaceholder(config)) {
+    return "Replace the placeholder path or endpoint before creating.";
+  }
+  return null;
+}
+
+export function filterMcpPresets(
+  query: string,
+  category: McpPresetCategory | "all" = "all",
+  opts?: { includeCustom?: boolean },
+): McpServerPreset[] {
+  const q = query.trim().toLowerCase();
+  const includeCustom = opts?.includeCustom ?? false;
+  return MCP_SERVER_PRESETS.filter((p) => {
+    if (!includeCustom && p.id === "custom") return false;
+    if (category !== "all" && p.category !== category) return false;
+    if (!q) return true;
+    const hay = `${p.label} ${p.description} ${p.runtime} ${p.category} ${p.setupNote}`.toLowerCase();
+    return hay.includes(q);
+  });
+}
 
 /** Apply a preset onto the connection config form (string values). */
 export function applyMcpPresetConfig(
@@ -232,4 +325,19 @@ export function parseEnvLiteralLines(text: string): Record<string, string> {
     if (key) out[key] = val;
   }
   return out;
+}
+
+export function mcpRuntimeLabel(runtime: McpRuntime): string {
+  switch (runtime) {
+    case "npx":
+      return "npx";
+    case "uvx":
+      return "uvx";
+    case "docker":
+      return "docker";
+    case "http":
+      return "http";
+    case "manual":
+      return "manual";
+  }
 }

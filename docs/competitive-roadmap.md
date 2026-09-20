@@ -26,7 +26,9 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - Skills + schedules inspectability (`nomi list schedules|skills`,
   schedule last-run deep-link, skill source-run links) — #43
 - MCP env map (stdio secret env + GitHub/Postgres presets) — #44
-- Extension SSE live badge (`/events/stream` + poll fallback) — this PR
+- Extension SSE live badge (`/events/stream` + poll fallback) — #45
+- MCP catalog UX polish (search, categories, runtime badges, create
+  guards, empty-state CTA) — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -34,17 +36,18 @@ per-tool capabilities, sandbox, and hash-chained audit.
 | Competitor | Gap |
 |---|---|
 | OpenClaw | Messaging long-tail + “just do it” friction |
-| Goose | Broader MCP catalog UX polish (env map shipped) |
+| Goose | Remote/synced marketplace catalog (local browse shipped) |
 | Cline | Richer in-editor plan/diff UI (we send context; DiffPreview stays desktop) |
 | Claude Code | Full TUI / hunk-edit in terminal (CLI now shows plan+diff; edit stays desktop) |
 | Hermes | Pocket-first mobile UX (schedules/skills now inspectable from CLI + UI) |
 
 ## Next moves (priority)
 
-1. **MCP catalog UX polish** — richer preset discoverability / docs
-2. **In-editor DiffPreview** (stretch) — keep plan edit on desktop for now
+1. **In-editor DiffPreview** (stretch) — keep plan edit on desktop for now
+2. **OpenClaw long-tail connectors** — only if channel demand justifies
 
 ## Defer
 
 OpenClaw connector long-tail, hosted Mnemos, cross-device sync, native
-mobile apps, Pi-style companion, micro-VM isolation race.
+mobile apps, Pi-style companion, micro-VM isolation race,
+remote/synced Goose-style MCP marketplace.
