@@ -1,12 +1,12 @@
 package telegram
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"bytes"
 	"strings"
 
 	"go.klarlabs.de/nomi/internal/domain"
@@ -169,18 +169,18 @@ func formatPlanReviewText(goal string, plan *domain.Plan) string {
 		if title == "" {
 			title = "step"
 		}
-		b.WriteString(fmt.Sprintf("%d. %s", i+1, escapeTelegramMarkdown(truncateRunes(title, 80))))
+		fmt.Fprintf(&b, "%d. %s", i+1, escapeTelegramMarkdown(truncateRunes(title, 80)))
 		cap := s.ExpectedCapability
 		if cap == "" {
 			cap = s.ExpectedTool
 		}
 		if cap != "" {
-			b.WriteString(fmt.Sprintf(" — `%s`", escapeTelegramMarkdown(cap)))
+			fmt.Fprintf(&b, " — `%s`", escapeTelegramMarkdown(cap))
 		}
 		b.WriteString("\n")
 	}
 	if len(steps) > maxPlanStepsInMsg {
-		b.WriteString(fmt.Sprintf("(+%d more)\n", len(steps)-maxPlanStepsInMsg))
+		fmt.Fprintf(&b, "(+%d more)\n", len(steps)-maxPlanStepsInMsg)
 	}
 	if planRequiresDesktopReview(plan) {
 		b.WriteString("\n_This plan writes files or runs shell/mutating tools. Approve in the Nomi desktop app to review diffs._")

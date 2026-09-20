@@ -103,7 +103,7 @@ func NewPlugin(
 		runConnMap:    map[string]string{},
 		healthPerConn: map[string]*plugins.ConnectionHealth{},
 		approvalMsg:   map[string]approvalMsgRef{},
-		planMsg:      map[string]approvalMsgRef{},
+		planMsg:       map[string]approvalMsgRef{},
 	}
 }
 

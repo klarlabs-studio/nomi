@@ -177,18 +177,18 @@ func formatPlanReviewText(goal string, plan *domain.Plan) string {
 		if title == "" {
 			title = "step"
 		}
-		b.WriteString(fmt.Sprintf("%d. %s", i+1, truncateRunes(title, 80)))
+		fmt.Fprintf(&b, "%d. %s", i+1, truncateRunes(title, 80))
 		cap := s.ExpectedCapability
 		if cap == "" {
 			cap = s.ExpectedTool
 		}
 		if cap != "" {
-			b.WriteString(fmt.Sprintf(" — `%s`", cap))
+			fmt.Fprintf(&b, " — `%s`", cap)
 		}
 		b.WriteString("\n")
 	}
 	if len(steps) > maxPlanStepsInMsg {
-		b.WriteString(fmt.Sprintf("(+%d more)\n", len(steps)-maxPlanStepsInMsg))
+		fmt.Fprintf(&b, "(+%d more)\n", len(steps)-maxPlanStepsInMsg)
 	}
 	if planRequiresDesktopReview(plan) {
 		b.WriteString("\n_This plan writes files or runs shell/mutating tools. Approve in the Nomi desktop app to review diffs._")
