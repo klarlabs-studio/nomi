@@ -21,7 +21,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - Editor context injection — open tabs + selection on `POST /runs`
 - OpenRouter provider preset + attribution headers — #40
 - Discord + WhatsApp channel plan approve (Message Components /
-  interactive reply buttons) — this PR
+  interactive reply buttons) — #41
+- CLI `nomi run --review` Plan→Diff→Approve loop — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -31,15 +32,14 @@ per-tool capabilities, sandbox, and hash-chained audit.
 | OpenClaw | Messaging long-tail + “just do it” friction |
 | Goose | MCP env map for GitHub/Postgres-style secrets |
 | Cline | Richer in-editor plan/diff UI (we send context; DiffPreview stays desktop) |
-| Claude Code | Terminal-native Plan→Diff→Approve loop |
+| Claude Code | Full TUI / hunk-edit in terminal (CLI now shows plan+diff; edit stays desktop) |
 | Hermes | Pocket-first always-on (OpenRouter model menu is covered) |
 
 ## Next moves (priority)
 
-1. **CLI plan/diff/approve loop** (`cursor/cli-plan-approve-loop-4135`) — Claude Code refugees
-2. **Skills + schedules polish** (`cursor/skills-schedules-polish-4135`) — Hermes always-on, inspectable
-3. **MCP env map** (follow-up to presets) — GitHub / Postgres servers that need secrets in env
-4. **Extension SSE** — live badge without polling
+1. **Skills + schedules polish** (`cursor/skills-schedules-polish-4135`) — Hermes always-on, inspectable
+2. **MCP env map** (follow-up to presets) — GitHub / Postgres servers that need secrets in env
+3. **Extension SSE** — live badge without polling
 
 ## Defer
 

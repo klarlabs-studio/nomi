@@ -28,6 +28,8 @@ USAGE
 SUBCOMMANDS
     run "<goal>"           Submit a goal, auto-approve plans, prompt on
                            confirm-mode capabilities, print the output.
+                           Pass --review for interactive Plan→Diff→Approve
+                           (print plan + diffs, then [A]pprove / [D]eny).
     tail                   Follow the server-sent event stream live.
     list runs              Show the most recent runs.
     list assistants        Show every configured assistant.
@@ -54,6 +56,7 @@ FLAGS (apply to every subcommand)
 
 EXAMPLES
     nomi run "summarize notes.md in one sentence"
+    nomi run --review "fix the flaky test in foo_test.go"
     nomi list runs
     nomi tail
     NOMI_TOKEN=$(ssh server 'docker exec nomi cat /data/auth.token') \

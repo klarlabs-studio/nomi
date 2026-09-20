@@ -13,15 +13,18 @@ import (
 //
 //	nomi run "summarize notes.md"
 //	nomi run --assistant=Researcher --auto-approve "ack"
+//	nomi run --review "fix the flaky test"
 //
-// Auto-approves plans by default (the typical headless flow). For
-// confirm-mode capabilities (filesystem.write, command.exec), prompts
-// the user on stdin unless --auto-approve is passed.
+// Plans are auto-approved by default (typical headless flow). Pass
+// --review for an interactive Plan→Diff→Approve loop (Claude Code
+// style). Confirm-mode capabilities (filesystem.write, command.exec)
+// still prompt on stdin unless --auto-approve is passed.
 func runCmd(common *commonFlags, args []string) int {
 	fs := flag.NewFlagSet("run", flag.ExitOnError)
 	bindCommonFlags(fs, common)
 	assistant := fs.String("assistant", "", "assistant name (default: first configured)")
 	autoApprove := fs.Bool("auto-approve", false, "auto-approve confirm-mode capabilities (DANGEROUS)")
+	review := fs.Bool("review", false, "interactive plan review: print plan + diffs, prompt Approve/Deny")
 	timeout := fs.Duration("timeout", 5*time.Minute, "give up after this long if the run doesn't reach a terminal state")
 	_ = fs.Parse(args)
 
@@ -56,11 +59,15 @@ func runCmd(common *commonFlags, args []string) int {
 
 	deadline := time.Now().Add(*timeout)
 	stdin := bufio.NewReader(os.Stdin)
+	planHandled := false
 	for time.Now().Before(deadline) {
 		var detail struct {
 			Run struct {
+				ID     string `json:"id"`
+				Goal   string `json:"goal"`
 				Status string `json:"status"`
 			} `json:"run"`
+			Plan  *planPayload `json:"plan"`
 			Steps []struct {
 				Title  string `json:"title"`
 				Status string `json:"status"`
@@ -75,8 +82,35 @@ func runCmd(common *commonFlags, args []string) int {
 
 		switch detail.Run.Status {
 		case "plan_review":
-			fmt.Fprintln(os.Stderr, "▶ plan ready, approving")
-			_ = cli.Post("/runs/"+created.ID+"/plan/approve", map[string]any{}, nil)
+			if planHandled {
+				time.Sleep(500 * time.Millisecond)
+				continue
+			}
+			if *review {
+				formatPlanReview(os.Stderr, detail.Run.Goal, detail.Plan)
+				ok, err := promptPlanDecision(stdin)
+				if err != nil {
+					fmt.Fprintln(os.Stderr, err)
+					return 1
+				}
+				if !ok {
+					fmt.Fprintln(os.Stderr, "▶ denying plan (cancelling run)")
+					if err := cli.Post("/runs/"+created.ID+"/cancel", map[string]any{}, nil); err != nil {
+						fmt.Fprintln(os.Stderr, err)
+						return 1
+					}
+					planHandled = true
+					continue
+				}
+				fmt.Fprintln(os.Stderr, "▶ approving plan")
+			} else {
+				fmt.Fprintln(os.Stderr, "▶ plan ready, approving")
+			}
+			if err := cli.Post("/runs/"+created.ID+"/plan/approve", map[string]any{}, nil); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return 1
+			}
+			planHandled = true
 		case "awaiting_approval":
 			if !handleApproval(cli, created.ID, *autoApprove, stdin) {
 				return 1
@@ -104,6 +138,24 @@ func runCmd(common *commonFlags, args []string) int {
 	}
 	fmt.Fprintf(os.Stderr, "✗ timed out after %s\n", *timeout)
 	return 1
+}
+
+func promptPlanDecision(stdin *bufio.Reader) (approve bool, err error) {
+	fmt.Fprint(os.Stderr, "? [A]pprove / [D]eny plan: ")
+	line, err := stdin.ReadString('\n')
+	if err != nil {
+		return false, err
+	}
+	ans := strings.ToLower(strings.TrimSpace(line))
+	switch ans {
+	case "a", "approve", "y", "yes":
+		return true, nil
+	case "d", "deny", "n", "no", "":
+		return false, nil
+	default:
+		fmt.Fprintln(os.Stderr, "  (expected a/d — denying)")
+		return false, nil
+	}
 }
 
 func resolveAssistant(cli *Client, name string) (id, resolvedName string, err error) {
@@ -146,7 +198,7 @@ func handleApproval(cli *Client, runID string, auto bool, stdin *bufio.Reader) b
 			RunID      string         `json:"run_id"`
 			Status     string         `json:"status"`
 			Capability string         `json:"capability"`
-			Metadata   map[string]any `json:"metadata"`
+			Context    map[string]any `json:"context"`
 		} `json:"approvals"`
 	}
 	if err := cli.Get("/approvals", &list); err != nil {
@@ -160,8 +212,11 @@ func handleApproval(cli *Client, runID string, auto bool, stdin *bufio.Reader) b
 		ok := auto
 		if !auto {
 			fmt.Fprintf(os.Stderr, "? approve %s ", a.Capability)
-			if t, _ := a.Metadata["tool"].(string); t != "" {
+			if t, _ := a.Context["tool"].(string); t != "" {
 				fmt.Fprintf(os.Stderr, "(tool: %s) ", t)
+			}
+			if in, _ := a.Context["input"].(string); in != "" {
+				fmt.Fprintf(os.Stderr, "%q ", truncateRunes(in, 80))
 			}
 			fmt.Fprint(os.Stderr, "[y/N]: ")
 			line, _ := stdin.ReadString('\n')

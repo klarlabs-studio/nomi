@@ -4,6 +4,23 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.13] - 2026-09-20 — Compete: CLI plan→diff→approve
+
+`nomi run` already auto-approved plans for headless use. Claude Code
+refugees want to *see* the plan (and the unified diff) before yes.
+`--review` prints the plan + patch/write/command args and prompts
+Approve/Deny — same endpoints as tray/VS Code/channels.
+
+### Added
+- **`nomi run --review`** — interactive plan review: numbered steps,
+  `SummarizeDiff` badges + raw unified diffs for `filesystem.patch`,
+  truncated write content, command lines; `[A]pprove` /
+  `[D]eny` (deny = `POST /runs/:id/cancel`).
+
+### Fixed
+- Tool-approval prompts now read `context.tool` / `context.input`
+  (was looking at a non-existent `metadata` field).
+
 ## [0.2.12] - 2026-09-20 — Compete: Discord + WhatsApp plan review
 
 Telegram and Slack already approve safe plans in-thread. Discord and
