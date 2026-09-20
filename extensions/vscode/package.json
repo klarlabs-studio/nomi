@@ -105,7 +105,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "tsc -p ./ --noEmit",
-    "test": "npm run compile && node --test out/discovery.test.js out/editor_context.test.js out/event_stream.test.js out/plan_fmt.test.js",
+    "test": "npm run compile && node --test out/discovery.test.js out/editor_context.test.js out/event_stream.test.js out/plan_fmt.test.js out/diff_hunks.test.js",
     "vscode:prepublish": "npm run compile"
   },
   "devDependencies": {

@@ -1,7 +1,8 @@
 // CLI-parity plan formatting for the VS Code plan-review panel.
 // Mirrors cmd/nomi/plan_fmt.go — read-only steps + diffs, no Shiki / hunk edit.
 
-import type { Plan, PlanStep } from "./client";
+import type { EditPlanStep, Plan, PlanStep } from "./client";
+import { applySkippedHunks } from "./diff_hunks";
 
 export const MAX_PLAN_STEPS_PRINTED = 12;
 export const MAX_WRITE_CONTENT_LINES = 20;
@@ -242,9 +243,9 @@ export function keepPlanSteps(plan: Plan, keepIndices: number[]): Plan {
   return dropPlanSteps(plan, oneBasedDrop);
 }
 
-export function toEditPlanSteps(plan: Plan): import("./client").EditPlanStep[] {
+export function toEditPlanSteps(plan: Plan): EditPlanStep[] {
   return plan.steps.map((s) => {
-    const out: import("./client").EditPlanStep = { title: s.title || s.expected_tool || "step" };
+    const out: EditPlanStep = { title: s.title || s.expected_tool || "step" };
     if (s.id) out.id = s.id;
     if (s.description) out.description = s.description;
     if (s.expected_tool) out.expected_tool = s.expected_tool;
@@ -253,4 +254,27 @@ export function toEditPlanSteps(plan: Plan): import("./client").EditPlanStep[] {
     if (s.arguments && Object.keys(s.arguments).length > 0) out.arguments = s.arguments;
     return out;
   });
+}
+
+/** Apply per-step skipped hunk keys to filesystem.patch arguments.diff. */
+export function applyHunkSkips(
+  plan: Plan,
+  skippedByStepId: Record<string, string[]>,
+): { steps: PlanStep[]; hunksChanged: boolean } {
+  let hunksChanged = false;
+  const steps = plan.steps.map((s) => {
+    const skipped = skippedByStepId[s.id] ?? skippedByStepId[String(s.order)];
+    if (!skipped || skipped.length === 0) return s;
+    if (s.expected_tool !== "filesystem.patch") return s;
+    const diff = typeof s.arguments?.diff === "string" ? s.arguments.diff : "";
+    if (!diff) return s;
+    const nextDiff = applySkippedHunks(diff, new Set(skipped));
+    if (nextDiff === diff) return s;
+    hunksChanged = true;
+    return {
+      ...s,
+      arguments: { ...s.arguments, diff: nextDiff },
+    };
+  });
+  return { steps, hunksChanged };
 }

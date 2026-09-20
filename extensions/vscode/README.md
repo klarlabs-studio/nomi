@@ -46,4 +46,4 @@ npm run compile
 
 ## Out of scope (v1)
 
-Per-hunk skip, Shiki highlighting — use the Tauri desktop DiffPreview.
+Shiki highlighting / side-by-side — use the Tauri desktop DiffPreview.

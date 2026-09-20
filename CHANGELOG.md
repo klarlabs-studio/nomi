@@ -4,6 +4,17 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.22] - 2026-09-20 — Compete: in-editor hunk skip
+
+Desktop DiffPreview can skip hunks before Approve. The VS Code Plan
+Review panel now does the same for `filesystem.patch` steps — uncheck
+hunks, Apply edit rebuilds `arguments.diff` via `/plan/edit`.
+
+### Added
+- **`diff_hunks`** parse/rebuild helpers (desktop DiffPreview parity,
+  no Shiki).
+- Per-hunk checkboxes under patch steps in the Plan Review webview.
+
 ## [0.2.21] - 2026-09-20 — Compete: Ask Nomi context menu
 
 Cline starts from the caret. Right-click → **Ask Nomi** (or Command
