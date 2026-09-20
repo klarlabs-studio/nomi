@@ -30,14 +30,13 @@ per-tool capabilities, sandbox, and hash-chained audit.
 
 ## Next moves (priority)
 
-1. **Land #33 + #35** — finish “approve without opening the app”
-2. **MCP one-click presets** (`cursor/mcp-presets-catalog-4135`) — Goose UX parity
-3. **VS Code / Cursor thin client** (`cursor/vscode-thin-client-4135`) — Cline switch lever
-4. **Editor context injection** (`cursor/editor-context-inject-4135`) — open files / selection into planner
-5. **OpenRouter provider** (`cursor/openrouter-provider-4135`) — Hermes/Goose model menu
-6. **Discord + WhatsApp plan review** (`cursor/discord-whatsapp-plan-review-4135`)
-7. **CLI plan/diff/approve loop** (`cursor/cli-plan-approve-loop-4135`) — Claude Code refugees
-8. **Skills + schedules polish** (`cursor/skills-schedules-polish-4135`) — Hermes always-on, inspectable
+1. **MCP one-click presets** (`cursor/mcp-presets-catalog-4135`) — Goose UX parity
+2. **VS Code / Cursor thin client** (`cursor/vscode-thin-client-4135`) — Cline switch lever
+3. **Editor context injection** (`cursor/editor-context-inject-4135`) — open files / selection into planner
+4. **OpenRouter provider** (`cursor/openrouter-provider-4135`) — Hermes/Goose model menu
+5. **Discord + WhatsApp plan review** (`cursor/discord-whatsapp-plan-review-4135`)
+6. **CLI plan/diff/approve loop** (`cursor/cli-plan-approve-loop-4135`) — Claude Code refugees
+7. **Skills + schedules polish** (`cursor/skills-schedules-polish-4135`) — Hermes always-on, inspectable
 
 ## Defer
 
