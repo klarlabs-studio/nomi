@@ -34,6 +34,7 @@ type Plugin struct {
 	bindings      *db.AssistantBindingRepository
 	conversations *db.ConversationRepository
 	identities    *db.ChannelIdentityRepository
+	runs          *db.RunRepository
 	secrets       secrets.Store
 	eventBus      *events.EventBus
 
@@ -41,15 +42,22 @@ type Plugin struct {
 	running       bool
 	sessions      map[string]*discordgo.Session // connection_id → session
 	healthPerConn map[string]*plugins.ConnectionHealth
+	// planMsg tracks the plan-review prompt message keyed by run ID.
+	planMsg map[string]planMsgRef
 }
 
 // NewPlugin wires the Discord plugin.
+//
+// runs and eventBus enable plan-review buttons (Approve/Deny) in the
+// originating Discord channel when a run reaches plan_review — same
+// semantics as Telegram/Slack. Pass nil runs to skip that integration.
 func NewPlugin(
 	rt *runtime.Runtime,
 	conns *db.ConnectionRepository,
 	binds *db.AssistantBindingRepository,
 	convs *db.ConversationRepository,
 	idents *db.ChannelIdentityRepository,
+	runs *db.RunRepository,
 	secrets secrets.Store,
 	eventBus *events.EventBus,
 ) *Plugin {
@@ -59,8 +67,12 @@ func NewPlugin(
 		bindings:      binds,
 		conversations: convs,
 		identities:    idents,
+		runs:          runs,
 		secrets:       secrets,
 		eventBus:      eventBus,
+		sessions:      map[string]*discordgo.Session{},
+		healthPerConn: map[string]*plugins.ConnectionHealth{},
+		planMsg:       map[string]planMsgRef{},
 	}
 }
 
@@ -152,6 +164,9 @@ func (p *Plugin) Start(ctx context.Context) error {
 		}
 		p.startConnection(ctx, conn)
 	}
+	if p.eventBus != nil && p.rt != nil && p.runs != nil {
+		go p.subscribePlanReview(ctx)
+	}
 	return nil
 }
 
@@ -211,6 +226,9 @@ func (p *Plugin) startConnection(ctx context.Context, conn *domain.Connection) {
 	connID := conn.ID
 	sess.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
 		p.onMessage(ctx, connID, s, m)
+	})
+	sess.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		p.handlePlanInteraction(ctx, connID, s, i)
 	})
 	if err := sess.Open(); err != nil {
 		log.Printf("[discord plugin] open session %s: %v", conn.ID, err)

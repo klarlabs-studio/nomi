@@ -95,3 +95,99 @@ func SendText(ctx context.Context, client *http.Client, opts SendTextOptions) (*
 	}
 	return &parsed, nil
 }
+
+// InteractiveButton is one reply button on an interactive message.
+// Title is capped at 20 characters by the Cloud API; ID at 256.
+type InteractiveButton struct {
+	ID    string
+	Title string
+}
+
+// SendInteractiveOptions are the inputs for an interactive button message.
+type SendInteractiveOptions struct {
+	PhoneNumberID string
+	AccessToken   string
+	To            string
+	Body          string // body text; Cloud API caps at 1024 chars for interactive
+	Buttons       []InteractiveButton
+}
+
+// SendInteractiveButtons posts a reply-button interactive message.
+// WhatsApp allows at most 3 buttons; callers should pass 1–3.
+func SendInteractiveButtons(ctx context.Context, client *http.Client, opts SendInteractiveOptions) (*SendTextResponse, error) {
+	if opts.PhoneNumberID == "" {
+		return nil, fmt.Errorf("whatsapp interactive: phone_number_id is required")
+	}
+	if opts.AccessToken == "" {
+		return nil, fmt.Errorf("whatsapp interactive: access_token is required")
+	}
+	if opts.To == "" {
+		return nil, fmt.Errorf("whatsapp interactive: to is required")
+	}
+	if opts.Body == "" {
+		return nil, fmt.Errorf("whatsapp interactive: body is required")
+	}
+	if len(opts.Buttons) == 0 || len(opts.Buttons) > 3 {
+		return nil, fmt.Errorf("whatsapp interactive: need 1–3 buttons, got %d", len(opts.Buttons))
+	}
+
+	buttons := make([]map[string]interface{}, 0, len(opts.Buttons))
+	for _, b := range opts.Buttons {
+		title := b.Title
+		if len([]rune(title)) > 20 {
+			title = string([]rune(title)[:20])
+		}
+		buttons = append(buttons, map[string]interface{}{
+			"type": "reply",
+			"reply": map[string]string{
+				"id":    b.ID,
+				"title": title,
+			},
+		})
+	}
+
+	payload := map[string]interface{}{
+		"messaging_product": "whatsapp",
+		"to":                opts.To,
+		"type":              "interactive",
+		"interactive": map[string]interface{}{
+			"type": "button",
+			"body": map[string]string{"text": opts.Body},
+			"action": map[string]interface{}{
+				"buttons": buttons,
+			},
+		},
+	}
+	buf, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("whatsapp interactive: marshal: %w", err)
+	}
+
+	url := fmt.Sprintf("%s/%s/messages", GraphAPIBase, opts.PhoneNumberID)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(buf))
+	if err != nil {
+		return nil, fmt.Errorf("whatsapp interactive: build request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+opts.AccessToken)
+
+	if client == nil {
+		client = &http.Client{Timeout: 15 * time.Second}
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("whatsapp interactive: http: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 64*1024))
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("whatsapp interactive: status %d: %s", resp.StatusCode, string(respBody))
+	}
+
+	var parsed SendTextResponse
+	if err := json.Unmarshal(respBody, &parsed); err != nil {
+		return nil, fmt.Errorf("whatsapp interactive: parse response: %w", err)
+	}
+	return &parsed, nil
+}
