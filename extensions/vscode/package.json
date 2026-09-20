@@ -77,13 +77,29 @@
       },
       {
         "command": "nomi.runWithEditorContext",
-        "title": "Nomi: Run with editor context"
+        "title": "Ask Nomi",
+        "category": "Nomi"
       },
       {
         "command": "nomi.reviewPlan",
         "title": "Nomi: Review pending plan"
       }
-    ]
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "nomi.runWithEditorContext",
+          "when": "editorTextFocus",
+          "group": "nomi@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "nomi.runWithEditorContext",
+          "when": "true"
+        }
+      ]
+    }
   },
   "scripts": {
     "compile": "tsc -p ./",

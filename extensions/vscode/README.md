@@ -12,8 +12,9 @@ plans and tool calls from the editor without rebuilding the desktop UI.
   steps to drop via `/plan/edit` (CLI `--review` [E]dit parity); Approve /
   Deny without leaving the editor
 - Quick Pick for tool approvals (plan deny = cancel, same as tray/channels)
-- **Run with editor context** — starts a Nomi run with open tabs + active
-  selection attached (paths only; secrets filtered; selection ≤ 4 KiB)
+- **Ask Nomi** — editor context menu + command palette; starts a run with
+  open tabs + active selection attached (paths only; secrets filtered;
+  selection ≤ 4 KiB)
 - Auto-discovers `auth.token` + `api.endpoint` from the Nomi data dir
   (same paths as `nomi` CLI / Tauri)
 
@@ -41,7 +42,7 @@ npm run compile
 | `nomi.token` | Override bearer (prefer `$NOMI_TOKEN`) |
 | `nomi.dataDir` | Override data directory |
 | `nomi.pollIntervalMs` | Badge refresh fallback when SSE is down (default 15s) |
-| `nomi.defaultAssistantId` | Skip assistant Quick Pick on Run with editor context |
+| `nomi.defaultAssistantId` | Skip assistant Quick Pick on Ask Nomi |
 
 ## Out of scope (v1)
 

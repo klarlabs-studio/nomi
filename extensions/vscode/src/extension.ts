@@ -268,9 +268,15 @@ async function resolveAssistantId(client: NomiClient): Promise<string | undefine
 }
 
 async function runWithEditorContext(): Promise<void> {
+  const ed = vscode.window.activeTextEditor;
+  const hasSelection = !!ed && !ed.selection.isEmpty;
   const goal = await vscode.window.showInputBox({
-    prompt: "What should Nomi do?",
-    placeHolder: "e.g. Refactor the selection to return Result",
+    prompt: hasSelection
+      ? "What should Nomi do with the selection?"
+      : "What should Nomi do?",
+    placeHolder: hasSelection
+      ? "e.g. Refactor this to return Result, add tests, explain"
+      : "e.g. Refactor the open file to return Result",
     ignoreFocusOut: true,
   });
   if (!goal?.trim()) return;
@@ -282,7 +288,7 @@ async function runWithEditorContext(): Promise<void> {
     const editorContext = gatherEditorContext();
     const run = await client.createRun(goal.trim(), assistantId, editorContext);
     const ctxNote = editorContext
-      ? ` (tabs=${editorContext.open_tabs.length}, selection=${editorContext.active?.selection ? "yes" : "no"})`
+      ? ` (tabs=${editorContext.open_tabs?.length ?? 0}, selection=${editorContext.active?.selection ? "yes" : "no"})`
       : " (no editor context)";
     vscode.window.showInformationMessage(`Nomi: run ${run.id.slice(0, 8)} created${ctxNote}`);
     await refreshBadge(true);

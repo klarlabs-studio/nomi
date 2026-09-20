@@ -31,7 +31,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
   guards, empty-state CTA) — #46
 - In-editor Plan Review (read-only steps + diffs; Approve/Deny) — #47
 - CLI `--review` step drop via `/plan/edit` — #48
-- Extension Plan Review step drop (checkboxes → `/plan/edit`) — this PR
+- Extension Plan Review step drop (checkboxes → `/plan/edit`) — #49
+- Ask Nomi editor context menu — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -40,14 +41,14 @@ per-tool capabilities, sandbox, and hash-chained audit.
 |---|---|
 | OpenClaw | Messaging long-tail + “just do it” friction |
 | Goose | Remote/synced marketplace catalog (local browse shipped) |
-| Cline | Per-hunk DiffPreview in-editor (step drop shipped; hunk skip desktop) |
+| Cline | Per-hunk DiffPreview in-editor (step drop + Ask Nomi shipped) |
 | Claude Code | Full TUI / hunk-edit in terminal (CLI + extension can drop steps) |
 | Hermes | Pocket-first mobile UX (schedules/skills now inspectable from CLI + UI) |
 
 ## Next moves (priority)
 
 1. **OpenClaw long-tail connectors** — only if channel demand justifies
-2. **Ask Nomi from editor context menu** — one-click run from selection
+2. **In-editor hunk skip** (stretch) — port DiffPreview skip when needed
 
 ## Defer
 
