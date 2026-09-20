@@ -76,13 +76,12 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "tsc -p ./ --noEmit",
-    "test": "vitest run",
+    "test": "npm run compile && node --test out/discovery.test.js",
     "vscode:prepublish": "npm run compile"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
     "@types/vscode": "^1.85.0",
-    "typescript": "^5.7.2",
-    "vitest": "^4.1.5"
+    "typescript": "^5.7.2"
   }
 }
