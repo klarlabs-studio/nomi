@@ -22,6 +22,7 @@ type planStep struct {
 	ExpectedCapability string         `json:"expected_capability"`
 	Why                string         `json:"why"`
 	Arguments          map[string]any `json:"arguments"`
+	DependsOn          []string       `json:"depends_on"`
 	Order              int            `json:"order"`
 }
 
@@ -225,4 +226,80 @@ func indentBlock(s, prefix string) string {
 		lines[i] = prefix + line
 	}
 	return strings.Join(lines, "\n")
+}
+
+// dropPlanSteps returns a copy of plan with 1-based step numbers removed.
+// DependsOn edges pointing at dropped steps are stripped. Returns an
+// error if indices are out of range, empty, or would drop every step.
+func dropPlanSteps(plan *planPayload, oneBased []int) (*planPayload, error) {
+	if plan == nil || len(plan.Steps) == 0 {
+		return nil, fmt.Errorf("plan has no steps to edit")
+	}
+	if len(oneBased) == 0 {
+		return nil, fmt.Errorf("no step numbers given")
+	}
+	drop := make(map[int]bool, len(oneBased))
+	for _, n := range oneBased {
+		if n < 1 || n > len(plan.Steps) {
+			return nil, fmt.Errorf("step %d out of range (1–%d)", n, len(plan.Steps))
+		}
+		drop[n-1] = true
+	}
+	if len(drop) >= len(plan.Steps) {
+		return nil, fmt.Errorf("cannot drop every step — deny the plan instead")
+	}
+	droppedIDs := make(map[string]bool)
+	for i, s := range plan.Steps {
+		if drop[i] && s.ID != "" {
+			droppedIDs[s.ID] = true
+		}
+	}
+	kept := make([]planStep, 0, len(plan.Steps)-len(drop))
+	for i, s := range plan.Steps {
+		if drop[i] {
+			continue
+		}
+		cp := s
+		if len(s.DependsOn) > 0 {
+			deps := make([]string, 0, len(s.DependsOn))
+			for _, d := range s.DependsOn {
+				if !droppedIDs[d] {
+					deps = append(deps, d)
+				}
+			}
+			cp.DependsOn = deps
+		}
+		kept = append(kept, cp)
+	}
+	return &planPayload{ID: plan.ID, Version: plan.Version, Steps: kept}, nil
+}
+
+// editPlanBody is the JSON body for POST /runs/:id/plan/edit.
+func editPlanBody(plan *planPayload) map[string]any {
+	steps := make([]map[string]any, 0, len(plan.Steps))
+	for _, s := range plan.Steps {
+		m := map[string]any{
+			"title": s.Title,
+		}
+		if s.ID != "" {
+			m["id"] = s.ID
+		}
+		if s.Description != "" {
+			m["description"] = s.Description
+		}
+		if s.ExpectedTool != "" {
+			m["expected_tool"] = s.ExpectedTool
+		}
+		if s.ExpectedCapability != "" {
+			m["expected_capability"] = s.ExpectedCapability
+		}
+		if len(s.DependsOn) > 0 {
+			m["depends_on"] = s.DependsOn
+		}
+		if len(s.Arguments) > 0 {
+			m["arguments"] = s.Arguments
+		}
+		steps = append(steps, m)
+	}
+	return map[string]any{"steps": steps}
 }
