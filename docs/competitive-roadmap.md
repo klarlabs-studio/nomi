@@ -18,6 +18,7 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - Telegram/Slack channel plan approve — #35
 - MCP one-click presets (Filesystem / Memory / Fetch / Git / …) — #37
 - VS Code / Cursor thin client (`extensions/vscode`) — badge + Approve/Deny
+- Editor context injection — open tabs + selection on `POST /runs`
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -26,19 +27,18 @@ per-tool capabilities, sandbox, and hash-chained audit.
 |---|---|
 | OpenClaw | Messaging long-tail + “just do it” friction |
 | Goose | MCP env map for GitHub/Postgres-style secrets |
-| Cline | Deep editor context (open files / selection) — thin client is only the door |
+| Cline | Richer in-editor plan/diff UI (we send context; DiffPreview stays desktop) |
 | Claude Code | Terminal-native Plan→Diff→Approve loop |
 | Hermes | Pocket-first always-on + OpenRouter model menu |
 
 ## Next moves (priority)
 
-1. **Editor context injection** (`cursor/editor-context-inject-4135`) — open files / selection into planner
-2. **OpenRouter provider** (`cursor/openrouter-provider-4135`) — Hermes/Goose model menu
-3. **Discord + WhatsApp plan review** (`cursor/discord-whatsapp-plan-review-4135`)
-4. **CLI plan/diff/approve loop** (`cursor/cli-plan-approve-loop-4135`) — Claude Code refugees
-5. **Skills + schedules polish** (`cursor/skills-schedules-polish-4135`) — Hermes always-on, inspectable
-6. **MCP env map** (follow-up to presets) — GitHub / Postgres servers that need secrets in env
-7. **Extension SSE** — live badge without polling
+1. **OpenRouter provider** (`cursor/openrouter-provider-4135`) — Hermes/Goose model menu
+2. **Discord + WhatsApp plan review** (`cursor/discord-whatsapp-plan-review-4135`)
+3. **CLI plan/diff/approve loop** (`cursor/cli-plan-approve-loop-4135`) — Claude Code refugees
+4. **Skills + schedules polish** (`cursor/skills-schedules-polish-4135`) — Hermes always-on, inspectable
+5. **MCP env map** (follow-up to presets) — GitHub / Postgres servers that need secrets in env
+6. **Extension SSE** — live badge without polling
 
 ## Defer
 

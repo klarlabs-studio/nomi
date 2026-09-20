@@ -20,8 +20,9 @@ func NewServer(rt *runtime.Runtime) *Server {
 
 // CreateRunRequest represents a request to create a run
 type CreateRunRequest struct {
-	Goal        string `json:"goal" binding:"required"`
-	AssistantID string `json:"assistant_id" binding:"required"`
+	Goal          string                `json:"goal" binding:"required"`
+	AssistantID   string                `json:"assistant_id" binding:"required"`
+	EditorContext *domain.EditorContext `json:"editor_context,omitempty"`
 }
 
 // CreateRun creates a new run
@@ -32,7 +33,15 @@ func (s *Server) CreateRun(c *gin.Context) {
 		return
 	}
 
-	run, err := s.runtime.CreateRun(c.Request.Context(), req.Goal, req.AssistantID)
+	var (
+		run *domain.Run
+		err error
+	)
+	if req.EditorContext != nil {
+		run, err = s.runtime.CreateRunWithEditorContext(c.Request.Context(), req.Goal, req.AssistantID, req.EditorContext)
+	} else {
+		run, err = s.runtime.CreateRun(c.Request.Context(), req.Goal, req.AssistantID)
+	}
 	if err != nil {
 		respondError(c, http.StatusInternalServerError, err)
 		return

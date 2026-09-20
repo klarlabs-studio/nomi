@@ -7,6 +7,8 @@ plans and tool calls from the editor without rebuilding the desktop UI.
 
 - Status-bar badge with pending **tool approvals** + **plan_review** runs
 - Quick Pick to Approve / Deny (plan deny = cancel, same as tray/channels)
+- **Run with editor context** — starts a Nomi run with open tabs + active
+  selection attached (paths only; secrets filtered; selection ≤ 4 KiB)
 - Auto-discovers `auth.token` + `api.endpoint` from the Nomi data dir
   (same paths as `nomi` CLI / Tauri)
 
@@ -14,12 +16,13 @@ plans and tool calls from the editor without rebuilding the desktop UI.
 
 - `nomid` running on this machine (or a reachable host with token override)
 - VS Code ≥ 1.85 or Cursor
+- At least one assistant (or set `nomi.defaultAssistantId`)
 
 ## Install (dev)
 
 ```bash
 cd extensions/vscode
-npm ci
+npm ci --legacy-peer-deps
 npm run compile
 # In VS Code/Cursor: Extensions → Install from VSIX… after `npx @vscode/vsce package`
 # Or: F5 from this folder with the Extension Development Host
@@ -33,8 +36,9 @@ npm run compile
 | `nomi.token` | Override bearer (prefer `$NOMI_TOKEN`) |
 | `nomi.dataDir` | Override data directory |
 | `nomi.pollIntervalMs` | Badge refresh when idle (default 15s) |
+| `nomi.defaultAssistantId` | Skip assistant Quick Pick on Run with editor context |
 
 ## Out of scope (v1)
 
-Chat, plan edit, DiffPreview, MCP settings — use the Tauri desktop app.
-SSE live push lands in a follow-up; v1 polls.
+In-editor DiffPreview / plan edit — use the Tauri desktop app.
+SSE live badge push is a follow-up; v1 polls.

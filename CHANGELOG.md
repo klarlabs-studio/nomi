@@ -4,6 +4,25 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.10] - 2026-09-20 — Compete: editor context injection
+
+The VS Code thin client was only Approve/Deny. Now it can start a run
+with open tabs + active selection attached so the planner sees what you
+are looking at — Cline’s context-switch killer without rebuilding chat.
+
+### Added
+- **`editor_context` on `POST /runs`** — optional IDE payload (workspace
+  folders, open tabs, active path + selection). Sanitized at the API
+  boundary (8 KiB / 4 KiB selection / secret-path filter) and merged
+  into the planner prompt as `<editor_context trusted="false">`.
+- **VS Code command `Nomi: Run with editor context`** — gathers tabs /
+  selection, picks an assistant (`nomi.defaultAssistantId` or Quick Pick),
+  creates the run.
+
+### Security
+- Paths that look like secrets (`.env`, `*.pem`, `.ssh/`, …) are dropped
+  client- and server-side. Full buffers are never sent — selection only.
+
 ## [0.2.9] - 2026-09-20 — Compete: VS Code / Cursor thin client
 
 Cline wins when review never leaves the editor. Nomi stays a daemon +

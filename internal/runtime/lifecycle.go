@@ -91,6 +91,20 @@ func (r *Runtime) executePlanningPhase(ctx context.Context, run *domain.Run, ass
 		}
 	}
 
+	// Editor context from the VS Code / Cursor thin client (paths +
+	// selection only). Always untrusted — same trust tags as folder /
+	// plugin blocks. Consumed once so a replan doesn't see stale tabs.
+	if ec := r.takeEditorContext(run.ID); ec != nil {
+		if block := FormatEditorContext(ec); block != "" {
+			tagged := wrapUntrusted("editor_context", block)
+			if contextData != "" {
+				contextData = contextData + "\n\n" + tagged
+			} else {
+				contextData = tagged
+			}
+		}
+	}
+
 	// Inbound media enrichment (ADR 0001 §rich-media, task media-10).
 	// Channel plugins captured attachments on inbound; the planner sees
 	// a goal that includes transcripts + extracted text so the

@@ -3,7 +3,7 @@
 How Nomi differs from other agent platforms. Facts only — every column
 maps to behavior shipped today, not roadmap claims.
 
-> **Disclosure:** rows describe Nomi as of v0.2.9 and competitor projects
+> **Disclosure:** rows describe Nomi as of v0.2.10 and competitor projects
 > as of early 2026. Competitor capabilities evolve quickly; if a row is
 > stale, please open an issue.
 
@@ -58,7 +58,9 @@ on the plan-review axis. Two structural differences:
   surface in the desktop client over REST + SSE. A thin VS Code /
   Cursor extension (`extensions/vscode`) covers the pending badge +
   Approve/Deny loop so you are not forced out of the editor for routine
-  reviews.
+  reviews. **Run with editor context** attaches open tabs and the active
+  selection to `POST /runs` so the planner sees what you are looking at
+  (still gated by plan review).
 - **What the audit trail looks like.** Cline keeps a session/editor
   history. Nomi persists every event (run, plan, step, approval, tool
   call) to SQLite, queryable via `/events` and streamable via SSE.
