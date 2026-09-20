@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -33,22 +34,24 @@ type EmbeddingClient interface {
 // the model id is whatever the upstream provider advertises (e.g.
 // "text-embedding-3-small" for OpenAI, "nomic-embed-text" for Ollama).
 type openaiEmbeddingClient struct {
-	baseURL    string
-	apiKey     string
-	model      string
-	dimensions int
-	http       *http.Client
-	provider   string
+	baseURL      string
+	apiKey       string
+	model        string
+	dimensions   int
+	http         *http.Client
+	provider     string
+	extraHeaders map[string]string
 }
 
 // EmbeddingConfig configures the embedding client.
 type EmbeddingConfig struct {
-	BaseURL    string // e.g. https://api.openai.com/v1
-	APIKey     string
-	Model      string        // e.g. "text-embedding-3-small"
-	Dimensions int           // expected output dim; 0 = learn from first response
-	Timeout    time.Duration // 0 = DefaultEmbeddingTimeout
-	Provider   string        // free-form label for metrics ("openai", "ollama", ...)
+	BaseURL      string // e.g. https://api.openai.com/v1
+	APIKey       string
+	Model        string        // e.g. "text-embedding-3-small"
+	Dimensions   int           // expected output dim; 0 = learn from first response
+	Timeout      time.Duration // 0 = DefaultEmbeddingTimeout
+	Provider     string        // free-form label for metrics ("openai", "ollama", ...)
+	ExtraHeaders map[string]string
 }
 
 // DefaultEmbeddingTimeout caps an embedding request. Embeddings are
@@ -72,13 +75,21 @@ func NewEmbeddingClient(cfg EmbeddingConfig) (EmbeddingClient, error) {
 	if provider == "" {
 		provider = "openai"
 	}
+	if IsOpenRouterEndpoint(cfg.BaseURL) && provider == "openai" {
+		provider = "openrouter"
+	}
+	extra := cfg.ExtraHeaders
+	if extra == nil {
+		extra = ExtraHeadersForEndpoint(cfg.BaseURL)
+	}
 	return &openaiEmbeddingClient{
-		baseURL:    cfg.BaseURL,
-		apiKey:     cfg.APIKey,
-		model:      cfg.Model,
-		dimensions: cfg.Dimensions,
-		http:       &http.Client{Timeout: timeout},
-		provider:   provider,
+		baseURL:      strings.TrimRight(cfg.BaseURL, "/"),
+		apiKey:       cfg.APIKey,
+		model:        cfg.Model,
+		dimensions:   cfg.Dimensions,
+		http:         &http.Client{Timeout: timeout},
+		provider:     provider,
+		extraHeaders: extra,
 	}, nil
 }
 
@@ -122,6 +133,11 @@ func (c *openaiEmbeddingClient) Embed(ctx context.Context, texts []string) ([][]
 	req.Header.Set("Content-Type", "application/json")
 	if c.apiKey != "" {
 		req.Header.Set("Authorization", "Bearer "+c.apiKey)
+	}
+	for k, v := range c.extraHeaders {
+		if k != "" && v != "" {
+			req.Header.Set(k, v)
+		}
 	}
 
 	resp, err := c.http.Do(req)

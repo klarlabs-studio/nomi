@@ -19,6 +19,7 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - MCP one-click presets (Filesystem / Memory / Fetch / Git / …) — #37
 - VS Code / Cursor thin client (`extensions/vscode`) — badge + Approve/Deny
 - Editor context injection — open tabs + selection on `POST /runs`
+- OpenRouter provider preset + attribution headers
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -29,16 +30,15 @@ per-tool capabilities, sandbox, and hash-chained audit.
 | Goose | MCP env map for GitHub/Postgres-style secrets |
 | Cline | Richer in-editor plan/diff UI (we send context; DiffPreview stays desktop) |
 | Claude Code | Terminal-native Plan→Diff→Approve loop |
-| Hermes | Pocket-first always-on + OpenRouter model menu |
+| Hermes | Pocket-first always-on (OpenRouter model menu is covered) |
 
 ## Next moves (priority)
 
-1. **OpenRouter provider** (`cursor/openrouter-provider-4135`) — Hermes/Goose model menu
-2. **Discord + WhatsApp plan review** (`cursor/discord-whatsapp-plan-review-4135`)
-3. **CLI plan/diff/approve loop** (`cursor/cli-plan-approve-loop-4135`) — Claude Code refugees
-4. **Skills + schedules polish** (`cursor/skills-schedules-polish-4135`) — Hermes always-on, inspectable
-5. **MCP env map** (follow-up to presets) — GitHub / Postgres servers that need secrets in env
-6. **Extension SSE** — live badge without polling
+1. **Discord + WhatsApp plan review** (`cursor/discord-whatsapp-plan-review-4135`)
+2. **CLI plan/diff/approve loop** (`cursor/cli-plan-approve-loop-4135`) — Claude Code refugees
+3. **Skills + schedules polish** (`cursor/skills-schedules-polish-4135`) — Hermes always-on, inspectable
+4. **MCP env map** (follow-up to presets) — GitHub / Postgres servers that need secrets in env
+5. **Extension SSE** — live badge without polling
 
 ## Defer
 

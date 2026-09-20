@@ -3,7 +3,7 @@
 How Nomi differs from other agent platforms. Facts only — every column
 maps to behavior shipped today, not roadmap claims.
 
-> **Disclosure:** rows describe Nomi as of v0.2.10 and competitor projects
+> **Disclosure:** rows describe Nomi as of v0.2.11 and competitor projects
 > as of early 2026. Competitor capabilities evolve quickly; if a row is
 > stale, please open an issue.
 
@@ -16,7 +16,7 @@ maps to behavior shipped today, not roadmap claims.
 | Capability-gated tools | ✅ Per-assistant `allow / confirm / deny` rules | ◐ Per-tool prompts | ◐ Per-action prompts | ◐ Per-block confirm | ◐ Allowlist | ✕ | ✕ |
 | Persisted event log | ✅ Full event stream in SQLite, queryable + streamable + hash-chained (`GET /audit/verify` walks the chain) | ◐ Session log | ◐ Editor history | ◐ Console log | ◐ Session transcripts | ✕ | ✕ |
 | Approval workflow (out-of-band) | ✅ Approval cards in desktop UI; resolvable later | ✕ Inline only | ✕ Inline only | ✕ Inline only | ✕ Inline only | ✕ | ✕ |
-| BYO LLM | ✅ Anthropic, OpenAI, Ollama; per-assistant override | ✅ | ✅ | ✅ | ✕ Anthropic only | ✅ | ✅ |
+| BYO LLM | ✅ Anthropic, OpenAI, Ollama, OpenRouter + any OpenAI-compat; per-assistant override | ✅ | ✅ | ✅ | ✕ Anthropic only | ✅ | ✅ |
 | Desktop UI | ✅ Tauri shell (macOS / Linux / Windows) | ✅ Goose Desktop | ◐ VSCode extension | ◐ Terminal + 01 device | ✕ CLI | ◐ Web UI | ✕ |
 | Plugin sandbox | ✅ WASM (wazero) + ed25519 signing **and** generic MCP (`com.nomi.mcp`) | ✅ MCP servers | ✅ MCP servers | ✕ | ◐ MCP servers | ◐ Python plugins | ◐ Python tools |
 | Network egress isolation | ✅ `--network=none` default + DNS allowlist (`--add-host` pinning) + optional eBPF cgroup_skb filter (IPv4 + IPv6, both docker cgroup drivers) | ✕ | ✕ | ✕ | ◐ tool-level allowlist | ✕ | ✕ |

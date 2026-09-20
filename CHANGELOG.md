@@ -4,6 +4,19 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.11] - 2026-09-20 — Compete: OpenRouter provider
+
+Hermes/Goose win when picking a model is a menu, not a custom endpoint
+paste. OpenRouter is OpenAI-compatible and already worked if you typed
+the URL; now it is a first-class preset with attribution headers and
+a dedicated metrics label.
+
+### Added
+- **OpenRouter preset** in Settings → AI Providers (and model catalog).
+- Automatic `HTTP-Referer` + `X-Title` on chat, stream, embeddings, and
+  `/models` probe when the endpoint host is `openrouter.ai`.
+- Metrics provider label `openrouter` (was collapsed into `openai-compat`).
+
 ## [0.2.10] - 2026-09-20 — Compete: editor context injection
 
 The VS Code thin client was only Approve/Deny. Now it can start a run
