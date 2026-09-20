@@ -16,7 +16,7 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - Generic MCP + per-tool caps (`mcp.<conn>.<tool>`) — #32
 - Tray tool quick-approve; tray plan approve — #33
 - Telegram/Slack channel plan approve — #35
-- MCP one-click presets (Filesystem / Memory / Fetch / Git / …)
+- MCP one-click presets (Filesystem / Memory / Fetch / Git / …) — #37
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
