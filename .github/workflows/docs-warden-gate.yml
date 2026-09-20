@@ -1,0 +1,59 @@
+# Docs-only PRs skip the main CI workflow (paths-ignore on **.md / docs/**),
+# which also skips the job that posts the required commit status
+# "warden/gate". Branch protection then blocks merge forever.
+#
+# This workflow runs on PRs that touch docs/markdown and posts warden/gate
+# only when every changed file is docs-scoped — so a mixed docs+code PR
+# still waits on the real CI warden-gate job.
+name: Docs warden gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ["**.md", "docs/**", "LICENSE"]
+
+concurrency:
+  group: docs-warden-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  warden-gate-docs:
+    name: Publish warden/gate (docs-only)
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Detect docs-only change set
+        id: scope
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          files=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" \
+            --paginate --jq '.[].filename')
+          docs_only=true
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            case "$f" in
+              *.md|docs/*|LICENSE) ;;
+              *) docs_only=false; break ;;
+            esac
+          done <<< "$files"
+          echo "docs_only=${docs_only}" >> "$GITHUB_OUTPUT"
+          echo "Changed files:"
+          printf '%s\n' "$files"
+
+      - name: Post warden/gate success
+        if: steps.scope.outputs.docs_only == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          SHA="${{ github.event.pull_request.head.sha }}"
+          gh api --method POST "repos/${{ github.repository }}/statuses/${SHA}" \
+            -f state=success \
+            -f context=warden/gate \
+            -f description='Docs-only PR (CI path-skipped; gate via Actions)' \
+            -f "target_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
