@@ -6,6 +6,8 @@ plans and tool calls from the editor without rebuilding the desktop UI.
 ## What it does
 
 - Status-bar badge with pending **tool approvals** + **plan_review** runs
+- **Live SSE** on `/events/stream` — badge refreshes on `approval.*` /
+  `plan.*` / `run.cancelled` (15s poll fallback when the stream drops)
 - Quick Pick to Approve / Deny (plan deny = cancel, same as tray/channels)
 - **Run with editor context** — starts a Nomi run with open tabs + active
   selection attached (paths only; secrets filtered; selection ≤ 4 KiB)
@@ -35,10 +37,9 @@ npm run compile
 | `nomi.apiUrl` | Override base URL |
 | `nomi.token` | Override bearer (prefer `$NOMI_TOKEN`) |
 | `nomi.dataDir` | Override data directory |
-| `nomi.pollIntervalMs` | Badge refresh when idle (default 15s) |
+| `nomi.pollIntervalMs` | Badge refresh fallback when SSE is down (default 15s) |
 | `nomi.defaultAssistantId` | Skip assistant Quick Pick on Run with editor context |
 
 ## Out of scope (v1)
 
 In-editor DiffPreview / plan edit — use the Tauri desktop app.
-SSE live badge push is a follow-up; v1 polls.

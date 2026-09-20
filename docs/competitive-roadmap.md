@@ -25,7 +25,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - CLI `nomi run --review` Plan→Diff→Approve loop — #42
 - Skills + schedules inspectability (`nomi list schedules|skills`,
   schedule last-run deep-link, skill source-run links) — #43
-- MCP env map (stdio secret env + GitHub/Postgres presets) — this PR
+- MCP env map (stdio secret env + GitHub/Postgres presets) — #44
+- Extension SSE live badge (`/events/stream` + poll fallback) — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -40,7 +41,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 
 ## Next moves (priority)
 
-1. **Extension SSE** — live badge without polling
+1. **MCP catalog UX polish** — richer preset discoverability / docs
+2. **In-editor DiffPreview** (stretch) — keep plan edit on desktop for now
 
 ## Defer
 
