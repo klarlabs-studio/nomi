@@ -34,10 +34,17 @@ import {
   type EmailProviderPreset,
 } from "@/lib/email-presets";
 import {
+  MCP_EMPTY_STATE_PRESET_IDS,
+  MCP_PRESET_CATEGORIES,
   MCP_SERVER_PRESETS,
   applyMcpPresetConfig,
+  filterMcpPresets,
+  findMcpPreset,
+  mcpPresetCreateBlockedReason,
+  mcpRuntimeLabel,
   parseEnvLiteralLines,
   type McpEnvCredential,
+  type McpPresetCategory,
   type McpServerPreset,
 } from "@/lib/mcp-presets";
 
@@ -326,39 +333,80 @@ function AddConnectionDialog({
       )}
 
       {isMcp && (
-        <div className="space-y-1">
+        <div className="space-y-2">
           <label className="text-sm font-medium">MCP server preset</label>
           <select
             className="w-full text-sm border rounded px-2 py-1 bg-background"
             value={mcpPreset?.id ?? "custom"}
             onChange={(e) => {
-              const p = MCP_SERVER_PRESETS.find((x) => x.id === e.target.value);
+              const p = findMcpPreset(e.target.value);
               if (p) applyMcpPreset(p);
             }}
           >
-            {MCP_SERVER_PRESETS.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.label}
-              </option>
-            ))}
+            <optgroup label="Local">
+              {MCP_SERVER_PRESETS.filter((p) => p.category === "local").map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.label}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Cloud & data">
+              {MCP_SERVER_PRESETS.filter(
+                (p) => p.category === "cloud" || p.category === "data",
+              ).map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.label}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Reasoning & remote">
+              {MCP_SERVER_PRESETS.filter(
+                (p) => p.category === "reasoning" || p.category === "remote",
+              ).map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.label}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Custom">
+              {MCP_SERVER_PRESETS.filter((p) => p.category === "custom").map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.label}
+                </option>
+              ))}
+            </optgroup>
           </select>
           {mcpPreset && (
-            <p className="text-xs text-muted-foreground">
-              {mcpPreset.setupNote}
-              {mcpPreset.docURL && (
-                <>
-                  {" "}
-                  <a
-                    href={mcpPreset.docURL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline"
-                  >
-                    Docs
-                  </a>
-                </>
-              )}
-            </p>
+            <div className="rounded-md border bg-muted/30 px-2.5 py-2 space-y-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-sm font-medium">{mcpPreset.label}</span>
+                <Badge variant="outline" className="text-[10px] font-mono">
+                  {mcpRuntimeLabel(mcpPreset.runtime)}
+                </Badge>
+                {mcpPreset.readyToCreate && (
+                  <Badge variant="secondary" className="text-[10px]">
+                    ready
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">{mcpPreset.description}</p>
+              <p className="text-xs text-muted-foreground">
+                {mcpPreset.setupNote}
+                {mcpPreset.docURL && (
+                  <>
+                    {" "}
+                    <a
+                      href={mcpPreset.docURL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline"
+                    >
+                      Docs
+                    </a>
+                  </>
+                )}
+              </p>
+            </div>
           )}
         </div>
       )}
@@ -550,6 +598,13 @@ function AddConnectionDialog({
             for (const cred of mcpPreset?.envCredentials ?? []) {
               if (cred.required && !credentials[cred.key]) {
                 setError(`${cred.label} is required`);
+                return;
+              }
+            }
+            if (isMcp) {
+              const blocked = mcpPresetCreateBlockedReason(mcpPreset, config, credentials);
+              if (blocked) {
+                setError(blocked);
                 return;
               }
             }
@@ -912,6 +967,72 @@ function ConnectionRow({
   );
 }
 
+function McpCatalogStrip({ onPick }: { onPick: (presetId: string) => void }) {
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<McpPresetCategory | "all">("all");
+  const filtered = useMemo(
+    () => filterMcpPresets(query, category, { includeCustom: false }),
+    [query, category],
+  );
+
+  return (
+    <div className="space-y-2 rounded-md border bg-muted/20 p-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-medium text-muted-foreground">MCP catalog</p>
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search servers…"
+          className="h-7 max-w-[180px] text-xs"
+        />
+      </div>
+      <div className="flex flex-wrap gap-1">
+        {MCP_PRESET_CATEGORIES.map((c) => (
+          <Button
+            key={c.id}
+            type="button"
+            size="sm"
+            variant={category === c.id ? "secondary" : "ghost"}
+            className="h-6 px-2 text-[11px]"
+            onClick={() => setCategory(c.id)}
+          >
+            {c.label}
+          </Button>
+        ))}
+      </div>
+      {filtered.length === 0 ? (
+        <p className="text-xs text-muted-foreground py-1">No presets match.</p>
+      ) : (
+        <div className="grid gap-1.5 sm:grid-cols-2">
+          {filtered.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => onPick(p.id)}
+              className="text-left rounded-md border bg-background px-2.5 py-2 hover:border-foreground/30 transition-colors"
+            >
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-xs font-medium">{p.label}</span>
+                <Badge variant="outline" className="text-[10px] font-mono">
+                  {mcpRuntimeLabel(p.runtime)}
+                </Badge>
+                {p.readyToCreate && (
+                  <Badge variant="secondary" className="text-[10px]">
+                    ready
+                  </Badge>
+                )}
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
+                {p.description}
+              </p>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PluginCard({ plugin }: { plugin: Plugin }) {
   const [adding, setAdding] = useState(false);
   const [mcpPresetId, setMcpPresetId] = useState<string | undefined>(undefined);
@@ -1161,7 +1282,32 @@ function PluginCard({ plugin }: { plugin: Plugin }) {
             Connections ({plugin.connections.length})
           </p>
           {plugin.connections.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No connections configured yet.</p>
+            isMcp ? (
+              <div className="space-y-2 rounded-md border border-dashed px-3 py-3">
+                <p className="text-sm text-muted-foreground">
+                  No MCP servers yet. Start from a popular preset:
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {MCP_EMPTY_STATE_PRESET_IDS.map((id) => {
+                    const p = findMcpPreset(id);
+                    if (!p) return null;
+                    return (
+                      <Button
+                        key={id}
+                        size="sm"
+                        variant="secondary"
+                        className="h-7 text-xs"
+                        onClick={() => openAdd(id)}
+                      >
+                        {p.label}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No connections configured yet.</p>
+            )
           ) : (
             <div className="space-y-2">
               {plugin.connections.map((conn) => (
@@ -1175,22 +1321,7 @@ function PluginCard({ plugin }: { plugin: Plugin }) {
             <>
               {!adding ? (
                 <div className="space-y-2">
-                  {isMcp && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {MCP_SERVER_PRESETS.filter((p) => p.id !== "custom").map((p) => (
-                        <Button
-                          key={p.id}
-                          size="sm"
-                          variant="secondary"
-                          className="h-7 text-xs"
-                          title={p.description}
-                          onClick={() => openAdd(p.id)}
-                        >
-                          {p.label}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
+                  {isMcp && <McpCatalogStrip onPick={(id) => openAdd(id)} />}
                   <Button size="sm" variant="outline" onClick={() => openAdd(isMcp ? "custom" : undefined)}>
                     <Plus className="w-4 h-4 mr-1" /> Add connection
                   </Button>
