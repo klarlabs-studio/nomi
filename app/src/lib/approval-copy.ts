@@ -31,6 +31,28 @@ function isIrreversibleCommand(cmd: string): boolean {
   );
 }
 
+/** Heuristic: MCP tool names that look like writes/deletes/execs. */
+function isMutatingMCPTool(name: string): boolean {
+  const n = name.toLowerCase();
+  return (
+    n.includes("write") ||
+    n.includes("delete") ||
+    n.includes("remove") ||
+    n.includes("create") ||
+    n.includes("update") ||
+    n.includes("patch") ||
+    n.includes("put") ||
+    n.includes("send") ||
+    n.includes("post") ||
+    n.includes("exec") ||
+    n.includes("run") ||
+    n.includes("destroy") ||
+    n.includes("drop") ||
+    n.includes("insert") ||
+    n.includes("mutate")
+  );
+}
+
 export function approvalCopy(
   capability: string,
   context?: Record<string, unknown>,
@@ -93,12 +115,22 @@ export function approvalCopy(
     return { summary: "Run a shell command", dangerSignal: "shell" };
   }
 
-  if (capability === "mcp.tools") {
-    const tool = asString(input.tool || ctx.tool);
+  if (capability === "mcp.tools" || capability.startsWith("mcp.")) {
+    const tool =
+      asString(input.tool || ctx.tool) ||
+      capability.split(".").slice(2).join(".") ||
+      "";
+    const mutate = isMutatingMCPTool(tool || capability);
     if (tool) {
-      return { summary: `Call MCP tool ${tool}`, dangerSignal: "network" };
+      return {
+        summary: `Call MCP tool ${tool}`,
+        dangerSignal: mutate ? "irreversible" : "network",
+      };
     }
-    return { summary: "Call a tool on a connected MCP server", dangerSignal: "network" };
+    return {
+      summary: "Call a tool on a connected MCP server",
+      dangerSignal: "network",
+    };
   }
 
   if (capability === "network.outgoing") {
@@ -124,6 +156,12 @@ export function approvalCopy(
 }
 
 function humanizeCapability(capability: string): string {
+  // Per-tool MCP caps: "mcp.docs.write_file" → "call MCP tool write_file"
+  const mcpParts = capability.split(".");
+  if (mcpParts.length >= 3 && mcpParts[0] === "mcp") {
+    const tool = mcpParts.slice(2).join(".");
+    return `call MCP tool ${tool}`;
+  }
   // "filesystem.write" → "perform a filesystem write"
   // Falls back to the raw capability string when it doesn't fit the
   // dotted-namespace convention so we never invent meaning we don't have.

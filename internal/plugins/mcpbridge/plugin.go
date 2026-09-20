@@ -1,6 +1,8 @@
 // Package mcpbridge is the generic MCP-server plugin: any stdio or
-// HTTP+SSE MCP server becomes a set of Nomi tools, gated by the
-// mcp.tools capability and the plan-review / approval loop.
+// HTTP+SSE MCP server becomes a set of Nomi tools. Static dispatch
+// (mcp.list_tools / mcp.call) is gated by mcp.tools; each discovered
+// upstream tool is gated by its own capability (mcp.<slug>.<tool>)
+// so Allow on one tool never covers another.
 //
 // Scout (com.nomi.scout) remains the opinionated browser-shaped
 // client with a fixed six-tool surface. This plugin is the
@@ -26,9 +28,11 @@ import (
 // PluginID is the stable reverse-DNS identifier.
 const PluginID = "com.nomi.mcp"
 
-// Capability is the single permission string every MCP tool (static
-// dispatch and discovered) is gated by. Default unmatched mode is
-// confirm, so a newly bound server asks before it acts.
+// Capability is the permission string for the static dispatch tools
+// (mcp.list_tools / mcp.call). Discovered upstream tools use a
+// per-tool capability equal to their registry name
+// (mcp.<connection-slug>.<tool>) so Allow on one tool never silently
+// covers another — Goose/Cline parity on fine-grained MCP consent.
 const Capability = "mcp.tools"
 
 const maxDiscoveredPerConnection = 32
@@ -95,7 +99,7 @@ func (p *Plugin) Manifest() plugins.PluginManifest {
 		Name:        "MCP Server",
 		Version:     "0.1.0",
 		Author:      "Nomi",
-		Description: "Connect any MCP server (stdio or HTTP+SSE). Discovered tools are gated by mcp.tools and surface in plan review. Use this to match OpenClaw/Goose/Cline plugin breadth without writing a Nomi plugin.",
+		Description: "Connect any MCP server (stdio or HTTP+SSE). Discovered tools are gated per-tool (mcp.<connection>.<tool>) and surface in plan review. Use this to match OpenClaw/Goose/Cline plugin breadth without writing a Nomi plugin.",
 		Cardinality: plugins.ConnectionMulti,
 		Capabilities: []string{
 			Capability,

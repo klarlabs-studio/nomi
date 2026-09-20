@@ -94,8 +94,12 @@ type discoveredTool struct {
 	schema      any
 }
 
-func (t *discoveredTool) Name() string        { return t.nomiName }
-func (t *discoveredTool) Capability() string  { return Capability }
+func (t *discoveredTool) Name() string { return t.nomiName }
+
+// Capability is the registry name (mcp.<slug>.<tool>). Remembered
+// approvals and policy rules therefore apply per discovered tool, not
+// to the whole MCP connection.
+func (t *discoveredTool) Capability() string  { return t.nomiName }
 func (t *discoveredTool) Description() string { return t.description }
 func (t *discoveredTool) InputSchema() any    { return t.schema }
 

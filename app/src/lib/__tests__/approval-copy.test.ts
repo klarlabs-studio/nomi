@@ -51,4 +51,16 @@ describe("approvalCopy", () => {
     expect(copy.summary).toContain("search");
     expect(copy.dangerSignal).toBe("network");
   });
+
+  it("uses per-tool MCP capabilities in copy", () => {
+    const copy = approvalCopy("mcp.docs.search", {});
+    expect(copy.summary).toContain("search");
+    expect(copy.dangerSignal).toBe("network");
+  });
+
+  it("flags mutate-shaped MCP tools as irreversible", () => {
+    const copy = approvalCopy("mcp.docs.write_file", {});
+    expect(copy.summary).toContain("write_file");
+    expect(copy.dangerSignal).toBe("irreversible");
+  });
 });
