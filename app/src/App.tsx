@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ChatInterface } from "@/components/chat-interface";
@@ -21,6 +21,7 @@ import { EventProvider } from "@/providers/event-provider";
 import { warmHighlighter } from "@/lib/highlighter";
 import { approvalsApi, assistantsApi, healthApi, runsApi, settingsApi } from "@/lib/api";
 import { approvalCopy } from "@/lib/approval-copy";
+import { planTrayCopy } from "@/lib/plan-tray-copy";
 import { queryKeys } from "@/lib/query-keys";
 import type { Assistant } from "@/types/api";
 import {
@@ -255,6 +256,23 @@ function App() {
             await queryClient.invalidateQueries({ queryKey: queryKeys.approvals.list() });
             return;
           }
+          if (action === "plans-resolved") {
+            await queryClient.invalidateQueries({ queryKey: queryKeys.runs.list() });
+            return;
+          }
+          if (action.startsWith("plans-resolve-failed:")) {
+            const runId = action.slice("plans-resolve-failed:".length);
+            setMainTab("chats");
+            if (runId) setDeepLinkChatId(runId);
+            await queryClient.invalidateQueries({ queryKey: queryKeys.runs.list() });
+            return;
+          }
+          if (action.startsWith("plans-review:")) {
+            const runId = action.slice("plans-review:".length);
+            setMainTab("chats");
+            if (runId) setDeepLinkChatId(runId);
+            return;
+          }
           if (action === "pause-agents") {
             try {
               const { runs } = await runsApi.list();
@@ -296,10 +314,43 @@ function App() {
     refetchInterval: 30_000,
   });
 
+  const planReviewIds = (runsQuery.data?.runs ?? [])
+    .filter((r) => r.status === "plan_review")
+    .map((r) => r.id)
+    .sort()
+    .join(",");
+  const planReviewRuns = (runsQuery.data?.runs ?? []).filter(
+    (r) => r.status === "plan_review",
+  );
+  const planDetailQueries = useQueries({
+    queries: planReviewRuns.map((r) => ({
+      queryKey: queryKeys.runs.detail(r.id),
+      queryFn: () => runsApi.get(r.id),
+      staleTime: 5_000,
+    })),
+  });
+  // Stable fingerprint so the tray sync effect does not re-fire every render
+  // just because planReviewRuns / planDetailQueries are new array identities.
+  const planDetailsFingerprint = planDetailQueries
+    .map((q) => `${q.dataUpdatedAt}:${q.data?.plan?.version ?? ""}:${(q.data?.plan?.steps ?? []).length}`)
+    .join("|");
+
   useEffect(() => {
-    const pendingCount = (approvalsQuery.data?.approvals ?? []).filter(
+    const pendingApprovals = (approvalsQuery.data?.approvals ?? []).filter(
       (a) => a.status === "pending",
-    ).length;
+    );
+    const pendingPlans = planReviewRuns
+      .map((r, i) => {
+        const detail = planDetailQueries[i]?.data;
+        const copy = planTrayCopy(r, detail?.plan);
+        return {
+          id: r.id,
+          summary: copy.summary,
+          danger_signal: copy.dangerSignal ?? "",
+          step_count: detail?.plan?.steps?.length ?? 0,
+        };
+      });
+    const pendingCount = pendingApprovals.length + pendingPlans.length;
     const hasActiveRun = (runsQuery.data?.runs ?? []).some(
       (r) => r.status === "executing",
     );
@@ -309,19 +360,23 @@ function App() {
 
     void invoke("set_approvals_badge", { count: pendingCount }).catch(() => {});
     void invoke("set_tray_state", { state: trayState }).catch(() => {});
-    const pending = (approvalsQuery.data?.approvals ?? [])
-      .filter((a) => a.status === "pending")
-      .map((a) => {
-        const copy = approvalCopy(a.capability, a.context);
-        return {
-          id: a.id,
-          capability: a.capability,
-          summary: copy.summary,
-          danger_signal: copy.dangerSignal ?? "",
-        };
-      });
-    void invoke("sync_approval_menu", { approvals: pending }).catch(() => {});
-  }, [approvalsQuery.data, runsQuery.data]);
+    const pending = pendingApprovals.map((a) => {
+      const copy = approvalCopy(a.capability, a.context);
+      return {
+        id: a.id,
+        capability: a.capability,
+        summary: copy.summary,
+        danger_signal: copy.dangerSignal ?? "",
+      };
+    });
+    void invoke("sync_approval_menu", {
+      approvals: pending,
+      plans: pendingPlans,
+    }).catch(() => {});
+  // planReviewIds + planDetailsFingerprint stand in for planReviewRuns /
+  // planDetailQueries so we don't re-sync the tray on every render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
+  }, [approvalsQuery.data, runsQuery.data, planReviewIds, planDetailsFingerprint]);
 
   // Refs to every tab button, in SIDEBAR_TABS order, so arrow keys can
   // focus the neighbor.

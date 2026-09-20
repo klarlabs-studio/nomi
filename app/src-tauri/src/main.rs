@@ -354,6 +354,17 @@ struct PendingApproval {
     danger_signal: String,
 }
 
+#[derive(Clone, serde::Deserialize)]
+struct PendingPlan {
+    id: String,
+    #[serde(default)]
+    summary: String,
+    #[serde(default)]
+    danger_signal: String,
+    #[serde(default)]
+    step_count: u32,
+}
+
 fn truncate_label(s: &str, max: usize) -> String {
     let count = s.chars().count();
     if count <= max {
@@ -370,14 +381,22 @@ fn tray_requires_window(a: &PendingApproval) -> bool {
     a.danger_signal == "irreversible" || a.capability == "filesystem.write"
 }
 
+fn plan_requires_window(p: &PendingPlan) -> bool {
+    // Plans with write/patch/irreversible steps need PlanReviewCard /
+    // DiffPreview. Tray Approve would skip hunk edits and forcing UX.
+    p.danger_signal == "irreversible"
+}
+
 fn build_tray_menu(
     app: &tauri::AppHandle,
     approvals: &[PendingApproval],
+    plans: &[PendingPlan],
 ) -> Result<tauri::menu::Menu<tauri::Wry>, tauri::Error> {
-    let approvals_label = if approvals.is_empty() {
+    let needs_count = approvals.len() + plans.len();
+    let approvals_label = if needs_count == 0 {
         "Approvals".to_string()
     } else {
-        format!("Approvals ({})", approvals.len())
+        format!("Approvals ({})", needs_count)
     };
 
     let new_chat = tauri::menu::MenuItemBuilder::new("New Chat")
@@ -398,7 +417,43 @@ fn build_tray_menu(
     let quit = tauri::menu::MenuItemBuilder::new("Quit").id("quit").build(app)?;
 
     let mut quick: Vec<tauri::menu::MenuItem<tauri::Wry>> = Vec::new();
-    for a in approvals.iter().take(4) {
+    let mut slots_left: usize = 4;
+
+    for p in plans.iter() {
+        if slots_left == 0 {
+            break;
+        }
+        let label = if p.summary.is_empty() {
+            truncate_label("plan", 36)
+        } else {
+            truncate_label(&p.summary, 36)
+        };
+        if plan_requires_window(p) {
+            quick.push(
+                tauri::menu::MenuItemBuilder::new(format!("Review plan: {label}"))
+                    .id(format!("review-plan:{}", p.id))
+                    .build(app)?,
+            );
+            slots_left = slots_left.saturating_sub(1);
+            continue;
+        }
+        quick.push(
+            tauri::menu::MenuItemBuilder::new(format!("Approve plan: {label}"))
+                .id(format!("approve-plan:{}", p.id))
+                .build(app)?,
+        );
+        quick.push(
+            tauri::menu::MenuItemBuilder::new(format!("Deny plan: {label}"))
+                .id(format!("deny-plan:{}", p.id))
+                .build(app)?,
+        );
+        slots_left = slots_left.saturating_sub(1);
+    }
+
+    for a in approvals.iter() {
+        if slots_left == 0 {
+            break;
+        }
         let label = if a.summary.is_empty() {
             truncate_label(&a.capability, 36)
         } else {
@@ -410,6 +465,7 @@ fn build_tray_menu(
                     .id(format!("review:{}", a.id))
                     .build(app)?,
             );
+            slots_left = slots_left.saturating_sub(1);
             continue;
         }
         quick.push(
@@ -422,6 +478,7 @@ fn build_tray_menu(
                 .id(format!("deny:{}", a.id))
                 .build(app)?,
         );
+        slots_left = slots_left.saturating_sub(1);
     }
 
     let mut builder = tauri::menu::MenuBuilder::new(app)
@@ -461,6 +518,31 @@ async fn resolve_approval_http(approval_id: &str, approved: bool) -> Result<(), 
         .map_err(|e| e.to_string())?;
     if !resp.status().is_success() {
         return Err(format!("resolve failed: {}", resp.status()));
+    }
+    Ok(())
+}
+
+async fn resolve_plan_http(run_id: &str, approved: bool) -> Result<(), String> {
+    let token = read_auth_token()?;
+    let base = read_api_endpoint();
+    let url = if approved {
+        format!("{base}/runs/{run_id}/plan/approve")
+    } else {
+        // Deny a plan = cancel the run (same as PlanReviewCard Cancel).
+        format!("{base}/runs/{run_id}/cancel")
+    };
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build()
+        .map_err(|e| e.to_string())?;
+    let resp = client
+        .post(url)
+        .header("Authorization", format!("Bearer {token}"))
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+    if !resp.status().is_success() {
+        return Err(format!("plan resolve failed: {}", resp.status()));
     }
     Ok(())
 }
@@ -515,6 +597,46 @@ fn handle_tray_menu(app: &AppHandle, id: &str) {
             });
             app.exit(0);
         }
+        other if other.starts_with("review-plan:") => {
+            let run_id = other
+                .split_once(':')
+                .map(|(_, rest)| rest.to_string())
+                .unwrap_or_default();
+            let _ = app.emit(
+                "tray-menu-clicked",
+                format!("plans-review:{run_id}"),
+            );
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }
+        other if other.starts_with("approve-plan:") || other.starts_with("deny-plan:") => {
+            let approved = other.starts_with("approve-plan:");
+            let run_id = other
+                .split_once(':')
+                .map(|(_, rest)| rest.to_string())
+                .unwrap_or_default();
+            let app_clone = app.clone();
+            tauri::async_runtime::spawn(async move {
+                match resolve_plan_http(&run_id, approved).await {
+                    Ok(()) => {
+                        let _ = app_clone.emit("tray-menu-clicked", "plans-resolved");
+                    }
+                    Err(e) => {
+                        eprintln!("[nomi-app] tray plan approve/deny failed: {e}");
+                        let _ = app_clone.emit(
+                            "tray-menu-clicked",
+                            format!("plans-resolve-failed:{run_id}"),
+                        );
+                        if let Some(window) = app_clone.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                }
+            });
+        }
         other if other.starts_with("approve:") || other.starts_with("deny:") => {
             let approved = other.starts_with("approve:");
             let aid = other
@@ -548,8 +670,11 @@ fn handle_tray_menu(app: &AppHandle, id: &str) {
 async fn sync_approval_menu(
     app: AppHandle,
     approvals: Vec<PendingApproval>,
+    #[allow(unused_mut)]
+    mut plans: Option<Vec<PendingPlan>>,
 ) -> Result<(), String> {
-    let menu = build_tray_menu(&app, &approvals).map_err(|e| e.to_string())?;
+    let plan_items = plans.take().unwrap_or_default();
+    let menu = build_tray_menu(&app, &approvals, &plan_items).map_err(|e| e.to_string())?;
     if let Some(tray) = app.tray_by_id("main-tray") {
         tray.set_menu(Some(menu)).map_err(|e| e.to_string())?;
     }
@@ -710,7 +835,7 @@ fn main() {
                 });
             }
 
-            let menu = build_tray_menu(app.handle(), &[])?;
+            let menu = build_tray_menu(app.handle(), &[], &[])?;
 
             // Build the tray with or without an icon. Previously this unwrap()
             // panicked in headless test environments where the bundled icon
