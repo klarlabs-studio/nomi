@@ -8,10 +8,10 @@ package domain
 // Not persisted on the Run row for v1: planning starts immediately in
 // the same process, so an in-memory hand-off is enough.
 type EditorContext struct {
-	Source           string              `json:"source,omitempty"` // e.g. "vscode"
-	WorkspaceFolders []string            `json:"workspace_folders,omitempty"`
-	OpenTabs         []string            `json:"open_tabs,omitempty"`
-	Active           *EditorActiveFile   `json:"active,omitempty"`
+	Source           string            `json:"source,omitempty"` // e.g. "vscode"
+	WorkspaceFolders []string          `json:"workspace_folders,omitempty"`
+	OpenTabs         []string          `json:"open_tabs,omitempty"`
+	Active           *EditorActiveFile `json:"active,omitempty"`
 }
 
 // EditorActiveFile is the focused editor buffer metadata + optional selection.
