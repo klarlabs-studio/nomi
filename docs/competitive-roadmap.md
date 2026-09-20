@@ -32,7 +32,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - In-editor Plan Review (read-only steps + diffs; Approve/Deny) — #47
 - CLI `--review` step drop via `/plan/edit` — #48
 - Extension Plan Review step drop (checkboxes → `/plan/edit`) — #49
-- Ask Nomi editor context menu — this PR
+- Ask Nomi editor context menu — #50
+- In-editor hunk skip on Plan Review (`filesystem.patch`) — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -41,18 +42,18 @@ per-tool capabilities, sandbox, and hash-chained audit.
 |---|---|
 | OpenClaw | Messaging long-tail + “just do it” friction |
 | Goose | Remote/synced marketplace catalog (local browse shipped) |
-| Cline | Per-hunk DiffPreview in-editor (step drop + Ask Nomi shipped) |
-| Claude Code | Full TUI / hunk-edit in terminal (CLI + extension can drop steps) |
+| Cline | Shiki / side-by-side DiffPreview polish (hunk skip shipped) |
+| Claude Code | Full TUI / hunk-edit in terminal (CLI + extension can drop steps/hunks) |
 | Hermes | Pocket-first mobile UX (schedules/skills now inspectable from CLI + UI) |
 
 ## Next moves (priority)
 
 1. **OpenClaw long-tail connectors** — only if channel demand justifies
-2. **In-editor hunk skip** (stretch) — port DiffPreview skip when needed
+2. **Shiki / side-by-side in extension** (stretch) — optional polish
 
 ## Defer
 
 OpenClaw connector long-tail, hosted Mnemos, cross-device sync, native
 mobile apps, Pi-style companion, micro-VM isolation race,
 remote/synced Goose-style MCP marketplace,
-full in-editor DiffPreview (Shiki / side-by-side / hunk skip).
+full in-editor DiffPreview chrome (Shiki / side-by-side).

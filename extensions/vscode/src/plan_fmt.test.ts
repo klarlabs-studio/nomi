@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { Plan } from "./client.js";
 import {
+  applyHunkSkips,
   formatPlanReview,
   keepPlanSteps,
   planRequiresCaution,
@@ -133,5 +134,39 @@ describe("keepPlanSteps / toEditPlanSteps", () => {
       steps: [{ id: "a", title: "One", order: 0 }],
     };
     assert.throws(() => keepPlanSteps(plan, []), /deny/);
+  });
+});
+
+describe("applyHunkSkips", () => {
+  it("rebuilds patch arguments.diff for skipped hunks", () => {
+    const diff = `--- a/foo.ts
++++ b/foo.ts
+@@ -1 +1 @@
+-old1
++new1
+@@ -2 +2 @@
+-old2
++new2
+`;
+    const plan: Plan = {
+      id: "p1",
+      version: 1,
+      steps: [
+        {
+          id: "s1",
+          title: "Patch",
+          expected_tool: "filesystem.patch",
+          order: 0,
+          arguments: { diff },
+        },
+      ],
+    };
+    const { steps, hunksChanged } = applyHunkSkips(plan, {
+      s1: ["foo.ts#1"],
+    });
+    assert.equal(hunksChanged, true);
+    const next = steps[0]!.arguments!.diff as string;
+    assert.match(next, /\+new1/);
+    assert.doesNotMatch(next, /\+new2/);
   });
 });

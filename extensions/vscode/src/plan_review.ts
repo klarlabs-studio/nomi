@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
 import type { NomiClient, Plan, PlanStep, Run } from "./client";
+import { listHunks, type HunkListItem } from "./diff_hunks";
 import {
+  applyHunkSkips,
   formatPlanReview,
   keepPlanSteps,
   planRequiresCaution,
@@ -12,9 +14,16 @@ export type PlanReviewCallbacks = {
   onResolved: () => void | Promise<void>;
 };
 
+type EditMessage = {
+  type?: string;
+  keep?: number[];
+  /** Unchecked hunk keys → skip (desktop DiffPreview parity). */
+  skippedHunks?: Record<string, string[]>;
+};
+
 /**
- * Plan+diff review panel with optional step drop (CLI --review [E]dit parity).
- * Hunk skip / Shiki stay on the desktop DiffPreview.
+ * Plan+diff review panel: drop steps and skip patch hunks via /plan/edit.
+ * Shiki / side-by-side stay on the desktop DiffPreview.
  */
 export async function openPlanReview(
   client: NomiClient,
@@ -40,50 +49,56 @@ export async function openPlanReview(
   };
   render();
 
-  const sub = panel.webview.onDidReceiveMessage(
-    async (msg: { type?: string; keep?: number[] }) => {
-      try {
-        if (msg.type === "approve") {
-          await client.approvePlan(run.id);
-          vscode.window.showInformationMessage("Nomi: plan approved");
-          panel.dispose();
-          await callbacks.onResolved();
-        } else if (msg.type === "deny") {
-          await client.denyPlan(run.id);
-          vscode.window.showInformationMessage("Nomi: plan denied (run cancelled)");
-          panel.dispose();
-          await callbacks.onResolved();
-        } else if (msg.type === "edit") {
-          if (!plan || plan.steps.length === 0) {
-            vscode.window.showWarningMessage("Nomi: nothing to edit");
-            return;
-          }
-          const keep = Array.isArray(msg.keep) ? msg.keep : [];
-          if (keep.length === 0) {
-            vscode.window.showWarningMessage("Nomi: keep at least one step (or Deny)");
-            return;
-          }
-          if (keep.length === plan.steps.length) {
-            vscode.window.showInformationMessage("Nomi: no steps dropped");
-            return;
-          }
-          const edited = keepPlanSteps(plan, keep);
-          await client.editPlan(run.id, toEditPlanSteps(edited));
-          detail = await client.getRun(run.id);
-          plan = detail.plan;
-          goal = detail.run?.goal ?? goal;
-          vscode.window.showInformationMessage(
-            `Nomi: plan updated — ${edited.steps.length} step(s) kept`,
-          );
-          render();
+  const sub = panel.webview.onDidReceiveMessage(async (msg: EditMessage) => {
+    try {
+      if (msg.type === "approve") {
+        await client.approvePlan(run.id);
+        vscode.window.showInformationMessage("Nomi: plan approved");
+        panel.dispose();
+        await callbacks.onResolved();
+      } else if (msg.type === "deny") {
+        await client.denyPlan(run.id);
+        vscode.window.showInformationMessage("Nomi: plan denied (run cancelled)");
+        panel.dispose();
+        await callbacks.onResolved();
+      } else if (msg.type === "edit") {
+        if (!plan || plan.steps.length === 0) {
+          vscode.window.showWarningMessage("Nomi: nothing to edit");
+          return;
         }
-      } catch (err) {
-        vscode.window.showErrorMessage(
-          `Nomi: ${err instanceof Error ? err.message : String(err)}`,
-        );
+        const keep = Array.isArray(msg.keep) ? msg.keep : [];
+        if (keep.length === 0) {
+          vscode.window.showWarningMessage("Nomi: keep at least one step (or Deny)");
+          return;
+        }
+        let nextPlan =
+          keep.length === plan.steps.length ? plan : keepPlanSteps(plan, keep);
+        const skippedByStep = msg.skippedHunks ?? {};
+        const { steps: editedSteps, hunksChanged } = applyHunkSkips(nextPlan, skippedByStep);
+        nextPlan = { ...nextPlan, steps: editedSteps };
+
+        const stepsDropped = keep.length !== plan.steps.length;
+        if (!stepsDropped && !hunksChanged) {
+          vscode.window.showInformationMessage("Nomi: no changes to apply");
+          return;
+        }
+
+        await client.editPlan(run.id, toEditPlanSteps(nextPlan));
+        detail = await client.getRun(run.id);
+        plan = detail.plan;
+        goal = detail.run?.goal ?? goal;
+        const parts: string[] = [];
+        if (stepsDropped) parts.push(`${nextPlan.steps.length} step(s) kept`);
+        if (hunksChanged) parts.push("hunks updated");
+        vscode.window.showInformationMessage(`Nomi: plan updated — ${parts.join(", ")}`);
+        render();
       }
-    },
-  );
+    } catch (err) {
+      vscode.window.showErrorMessage(
+        `Nomi: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  });
   panel.onDidDispose(() => sub.dispose());
 }
 
@@ -98,10 +113,28 @@ function escapeHtml(s: string): string {
 function stepCheckboxRow(s: PlanStep, index: number): string {
   const title = escapeHtml(truncateChars(s.title || s.expected_tool || "step", 80));
   const cap = escapeHtml(s.expected_capability || s.expected_tool || "");
-  return `<label class="step">
-    <input type="checkbox" class="keep" data-idx="${index}" checked />
-    <span><strong>${index + 1}.</strong> ${title}${cap ? ` <code>${cap}</code>` : ""}</span>
-  </label>`;
+  const stepId = escapeHtml(s.id || String(index));
+  let hunksHtml = "";
+  if (s.expected_tool === "filesystem.patch" && typeof s.arguments?.diff === "string") {
+    const hunks: HunkListItem[] = listHunks(s.arguments.diff);
+    if (hunks.length > 0) {
+      hunksHtml = `<div class="hunks">${hunks
+        .map(
+          (h) => `<label class="hunk">
+          <input type="checkbox" class="keep-hunk" data-step="${stepId}" data-key="${escapeHtml(h.key)}" checked />
+          <span><code>${escapeHtml(h.fileLabel)}</code> +${h.added} −${h.removed} <span class="hdr">${escapeHtml(truncateChars(h.header, 60))}</span></span>
+        </label>`,
+        )
+        .join("")}</div>`;
+    }
+  }
+  return `<div class="step-block">
+    <label class="step">
+      <input type="checkbox" class="keep" data-idx="${index}" checked />
+      <span><strong>${index + 1}.</strong> ${title}${cap ? ` <code>${cap}</code>` : ""}</span>
+    </label>
+    ${hunksHtml}
+  </div>`;
 }
 
 function renderHtml(
@@ -119,7 +152,7 @@ function renderHtml(
   const stepList =
     steps.length > 0
       ? `<div class="steps">${steps.map((s, i) => stepCheckboxRow(s, i)).join("")}</div>
-         <p class="edit-hint">Uncheck steps to drop, then Apply edit (same as CLI <code>--review</code> [E]dit).</p>`
+         <p class="edit-hint">Uncheck steps to drop, or uncheck hunks to skip — then Apply edit.</p>`
       : "";
   return `<!DOCTYPE html>
 <html lang="en">
@@ -179,20 +212,28 @@ function renderHtml(
     .steps {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 10px;
       margin-bottom: 8px;
       padding: 8px 10px;
       border: 1px solid var(--vscode-widget-border, #444);
       border-radius: 4px;
     }
-    .step {
+    .step, .hunk {
       display: flex;
       align-items: flex-start;
       gap: 8px;
       cursor: pointer;
       font-size: 13px;
     }
-    .step code {
+    .hunks {
+      margin: 4px 0 0 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .hunk { font-size: 12px; opacity: 0.9; }
+    .hunk .hdr { opacity: 0.65; font-family: var(--vscode-editor-font-family, monospace); }
+    .step code, .hunk code {
       font-size: 11px;
       opacity: 0.8;
     }
@@ -216,7 +257,7 @@ function renderHtml(
     <button class="approve" id="approve">Approve plan</button>
     <button class="edit" id="edit">Apply edit</button>
     <button class="deny" id="deny">Deny</button>
-    <span class="hint">Hunk skip → Nomi desktop app</span>
+    <span class="hint">Shiki / side-by-side → desktop</span>
   </div>
   ${caution ? `<div class="caution">This plan writes files or runs shell/mutating tools. Review the diff before approving.</div>` : ""}
   ${stepList}
@@ -230,7 +271,16 @@ function renderHtml(
       document.querySelectorAll('input.keep').forEach((el) => {
         if (el.checked) keep.push(Number(el.getAttribute('data-idx')));
       });
-      vscode.postMessage({ type: 'edit', keep });
+      const skippedHunks = {};
+      document.querySelectorAll('input.keep-hunk').forEach((el) => {
+        if (el.checked) return;
+        const step = el.getAttribute('data-step');
+        const key = el.getAttribute('data-key');
+        if (!step || !key) return;
+        if (!skippedHunks[step]) skippedHunks[step] = [];
+        skippedHunks[step].push(key);
+      });
+      vscode.postMessage({ type: 'edit', keep, skippedHunks });
     });
   </script>
 </body>
