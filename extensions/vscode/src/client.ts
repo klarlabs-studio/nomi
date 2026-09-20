@@ -25,6 +25,26 @@ export interface PendingSnapshot {
   plans: Run[];
 }
 
+export interface EditorContextPayload {
+  source: string;
+  workspace_folders?: string[];
+  open_tabs?: string[];
+  active?: {
+    path: string;
+    language_id?: string;
+    selection?: {
+      start_line: number;
+      end_line: number;
+      text: string;
+    };
+  };
+}
+
+export interface AssistantSummary {
+  id: string;
+  name: string;
+}
+
 export class NomiClient {
   constructor(
     public readonly url: string,
@@ -77,6 +97,28 @@ export class NomiClient {
       this.listPlanReviewRuns(),
     ]);
     return { approvals, plans };
+  }
+
+  async listAssistants(): Promise<AssistantSummary[]> {
+    const res = await this.request("GET", "/assistants");
+    const data = (await res.json()) as { assistants?: AssistantSummary[] };
+    return data.assistants ?? [];
+  }
+
+  async createRun(
+    goal: string,
+    assistantId: string,
+    editorContext?: EditorContextPayload,
+  ): Promise<Run> {
+    const body: Record<string, unknown> = {
+      goal,
+      assistant_id: assistantId,
+    };
+    if (editorContext) {
+      body.editor_context = editorContext;
+    }
+    const res = await this.request("POST", "/runs", body);
+    return (await res.json()) as Run;
   }
 
   async resolveApproval(id: string, approved: boolean): Promise<void> {

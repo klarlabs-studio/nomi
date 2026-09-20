@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { NomiClient, pendingCount, type Approval, type PendingSnapshot, type Run } from "./client";
 import { discoverConnection } from "./discovery";
+import { buildEditorContext, type EditorContextPayload } from "./editor_context";
 
 let statusItem: vscode.StatusBarItem | undefined;
 let pollTimer: ReturnType<typeof setInterval> | undefined;
@@ -146,6 +147,82 @@ async function openStatus(): Promise<void> {
   }
 }
 
+function gatherEditorContext(): EditorContextPayload | undefined {
+  const folders = (vscode.workspace.workspaceFolders ?? []).map((f) => f.uri.fsPath);
+  const tabs: string[] = [];
+  for (const group of vscode.window.tabGroups.all) {
+    for (const tab of group.tabs) {
+      const input = tab.input;
+      if (input instanceof vscode.TabInputText) {
+        tabs.push(input.uri.fsPath);
+      }
+    }
+  }
+  const ed = vscode.window.activeTextEditor;
+  let active:
+    | {
+        path: string;
+        languageId?: string;
+        selectionText?: string;
+        startLine?: number;
+        endLine?: number;
+      }
+    | undefined;
+  if (ed) {
+    const sel = ed.selection;
+    const text = !sel.isEmpty ? ed.document.getText(sel) : "";
+    active = {
+      path: ed.document.uri.fsPath,
+      languageId: ed.document.languageId,
+      selectionText: text || undefined,
+      startLine: sel.start.line + 1,
+      endLine: sel.end.line + 1,
+    };
+  }
+  return buildEditorContext({ workspaceFolders: folders, openTabs: tabs, active });
+}
+
+async function resolveAssistantId(client: NomiClient): Promise<string | undefined> {
+  const cfg = vscode.workspace.getConfiguration("nomi");
+  const configured = (cfg.get<string>("defaultAssistantId") ?? "").trim();
+  if (configured) return configured;
+  const assistants = await client.listAssistants();
+  if (assistants.length === 0) {
+    vscode.window.showErrorMessage("Nomi: no assistants configured. Create one in the desktop app.");
+    return undefined;
+  }
+  if (assistants.length === 1) return assistants[0]!.id;
+  const picked = await vscode.window.showQuickPick(
+    assistants.map((a) => ({ label: a.name, description: a.id, id: a.id })),
+    { placeHolder: "Choose a Nomi assistant" },
+  );
+  return picked?.id;
+}
+
+async function runWithEditorContext(): Promise<void> {
+  const goal = await vscode.window.showInputBox({
+    prompt: "What should Nomi do?",
+    placeHolder: "e.g. Refactor the selection to return Result",
+    ignoreFocusOut: true,
+  });
+  if (!goal?.trim()) return;
+
+  try {
+    const client = buildClient();
+    const assistantId = await resolveAssistantId(client);
+    if (!assistantId) return;
+    const editorContext = gatherEditorContext();
+    const run = await client.createRun(goal.trim(), assistantId, editorContext);
+    const ctxNote = editorContext
+      ? ` (tabs=${editorContext.open_tabs.length}, selection=${editorContext.active?.selection ? "yes" : "no"})`
+      : " (no editor context)";
+    vscode.window.showInformationMessage(`Nomi: run ${run.id.slice(0, 8)} created${ctxNote}`);
+    await refreshBadge(true);
+  } catch (err) {
+    vscode.window.showErrorMessage(`Nomi: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
 export function activate(context: vscode.ExtensionContext): void {
   statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
   statusItem.command = "nomi.showPending";
@@ -159,6 +236,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("nomi.approveSelected", () => approveSelected()),
     vscode.commands.registerCommand("nomi.denySelected", () => denySelected()),
     vscode.commands.registerCommand("nomi.openStatus", () => openStatus()),
+    vscode.commands.registerCommand("nomi.runWithEditorContext", () => runWithEditorContext()),
   );
 
   void refreshBadge(true);

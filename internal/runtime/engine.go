@@ -113,6 +113,12 @@ type Runtime struct {
 	// persisting the counter isn't worth a migration.
 	replanMu     sync.Mutex
 	replanCounts map[string]int
+
+	// editorContexts holds ephemeral IDE context attached at CreateRun
+	// so the planning goroutine can merge it into the prompt. Consumed
+	// once at plan time; not persisted (v1).
+	editorMu       sync.Mutex
+	editorContexts map[string]*domain.EditorContext
 }
 
 // MaxReplansPerRun bounds the automatic replan loop. After hitting this
@@ -307,6 +313,7 @@ func NewRuntime(
 		planApprovals:    make(map[string]chan struct{}),
 		pauseSignals:     make(map[string]chan struct{}),
 		replanCounts:     make(map[string]int),
+		editorContexts:   make(map[string]*domain.EditorContext),
 		limiter: newRateLimiter(
 			config.RunsPerMinutePerSource, config.RunsBurst,
 			config.ToolCallsPerMinutePerRun, config.ToolCallsBurst,
@@ -450,7 +457,14 @@ func (r *Runtime) ResumeOrphanedRuns() error {
 // Source is left nil, which the runtime treats as "trusted local user" for
 // permission evaluation.
 func (r *Runtime) CreateRun(ctx context.Context, goal, assistantID string) (*domain.Run, error) {
-	return r.createRun(ctx, goal, assistantID, nil, "")
+	return r.createRun(ctx, goal, assistantID, nil, "", nil)
+}
+
+// CreateRunWithEditorContext is CreateRun plus optional IDE context
+// (open tabs / selection) merged into the planner prompt as
+// trusted="false" data. Used by the VS Code / Cursor thin client.
+func (r *Runtime) CreateRunWithEditorContext(ctx context.Context, goal, assistantID string, ec *domain.EditorContext) (*domain.Run, error) {
+	return r.createRun(ctx, goal, assistantID, nil, "", SanitizeEditorContext(ec))
 }
 
 // CreateRunFromSource creates a new run initiated by a connector. The
@@ -458,9 +472,9 @@ func (r *Runtime) CreateRun(ctx context.Context, goal, assistantID string) (*dom
 // permission policy at tool-execution time.
 func (r *Runtime) CreateRunFromSource(ctx context.Context, goal, assistantID, source string) (*domain.Run, error) {
 	if source == "" {
-		return r.createRun(ctx, goal, assistantID, nil, "")
+		return r.createRun(ctx, goal, assistantID, nil, "", nil)
 	}
-	return r.createRun(ctx, goal, assistantID, &source, "")
+	return r.createRun(ctx, goal, assistantID, &source, "", nil)
 }
 
 // AttachToRun records inbound media metadata for an existing run.
@@ -498,12 +512,12 @@ func (r *Runtime) ListRunAttachments(runID string) ([]*domain.RunAttachment, err
 // conversationID falls back to the legacy per-run behavior.
 func (r *Runtime) CreateRunInConversation(ctx context.Context, goal, assistantID, source, conversationID string) (*domain.Run, error) {
 	if source == "" {
-		return r.createRun(ctx, goal, assistantID, nil, conversationID)
+		return r.createRun(ctx, goal, assistantID, nil, conversationID, nil)
 	}
-	return r.createRun(ctx, goal, assistantID, &source, conversationID)
+	return r.createRun(ctx, goal, assistantID, &source, conversationID, nil)
 }
 
-func (r *Runtime) createRun(ctx context.Context, goal, assistantID string, source *string, conversationID string) (*domain.Run, error) {
+func (r *Runtime) createRun(ctx context.Context, goal, assistantID string, source *string, conversationID string, editorCtx *domain.EditorContext) (*domain.Run, error) {
 	// Rate-limit connector-sourced run creation. Desktop runs are trusted
 	// local user intent and bypass the limiter.
 	if source != nil && *source != "" {
@@ -536,6 +550,12 @@ func (r *Runtime) createRun(ctx context.Context, goal, assistantID string, sourc
 		return nil, fmt.Errorf("failed to create run: %w", err)
 	}
 
+	if editorCtx != nil {
+		r.editorMu.Lock()
+		r.editorContexts[run.ID] = editorCtx
+		r.editorMu.Unlock()
+	}
+
 	metrics.RunsCreatedTotal.Inc()
 	slog.Info("run created", "run_id", run.ID, "assistant_id", assistantID, "goal", goal, "source", source)
 	payload := map[string]interface{}{
@@ -544,6 +564,9 @@ func (r *Runtime) createRun(ctx context.Context, goal, assistantID string, sourc
 	}
 	if source != nil {
 		payload["source"] = *source
+	}
+	if editorCtx != nil {
+		payload["has_editor_context"] = true
 	}
 	_, err = r.eventBus.Publish(ctx, domain.EventRunCreated, run.ID, nil, payload)
 	if err != nil {
@@ -558,6 +581,15 @@ func (r *Runtime) createRun(ctx context.Context, goal, assistantID string, sourc
 	go r.executeRun(r.rootCtx, &runCopy, assistant)
 
 	return run, nil
+}
+
+// takeEditorContext pops any IDE context attached at create time.
+func (r *Runtime) takeEditorContext(runID string) *domain.EditorContext {
+	r.editorMu.Lock()
+	defer r.editorMu.Unlock()
+	ec := r.editorContexts[runID]
+	delete(r.editorContexts, runID)
+	return ec
 }
 
 // GetRun retrieves a run by ID with its steps and plan.

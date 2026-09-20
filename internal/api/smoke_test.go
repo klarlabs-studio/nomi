@@ -369,6 +369,42 @@ func TestCreateRunHappyPath(t *testing.T) {
 	}
 }
 
+func TestCreateRunWithEditorContext(t *testing.T) {
+	h := newHarness(t)
+	aid := createAssistant(t, h)
+
+	w := h.do(http.MethodPost, "/runs", map[string]any{
+		"goal":         "refactor selection",
+		"assistant_id": aid,
+		"editor_context": map[string]any{
+			"source":            "vscode",
+			"workspace_folders": []string{"/proj"},
+			"open_tabs":         []string{"src/a.ts", ".env"},
+			"active": map[string]any{
+				"path":        "src/a.ts",
+				"language_id": "typescript",
+				"selection": map[string]any{
+					"start_line": 1,
+					"end_line":   2,
+					"text":       "const x = 1;",
+				},
+			},
+		},
+	})
+	if w.Code != http.StatusCreated && w.Code != http.StatusOK {
+		t.Fatalf("create run: %d %s", w.Code, w.Body.String())
+	}
+	var out struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &out); err != nil {
+		t.Fatalf("unmarshal run: %v", err)
+	}
+	if out.ID == "" {
+		t.Fatal("run response missing id")
+	}
+}
+
 // --- events list + SSE stream -------------------------------------------
 
 func TestListEventsEmpty(t *testing.T) {

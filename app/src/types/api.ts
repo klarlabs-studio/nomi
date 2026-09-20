@@ -310,6 +310,21 @@ export interface RunWithSteps {
 export interface CreateRunRequest {
   goal: string;
   assistant_id: string;
+  /** Optional IDE context from the VS Code / Cursor thin client. */
+  editor_context?: {
+    source?: string;
+    workspace_folders?: string[];
+    open_tabs?: string[];
+    active?: {
+      path: string;
+      language_id?: string;
+      selection?: {
+        start_line: number;
+        end_line: number;
+        text: string;
+      };
+    };
+  };
 }
 
 export interface CreateAssistantRequest {
