@@ -24,7 +24,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
   interactive reply buttons) — #41
 - CLI `nomi run --review` Plan→Diff→Approve loop — #42
 - Skills + schedules inspectability (`nomi list schedules|skills`,
-  schedule last-run deep-link, skill source-run links) — this PR
+  schedule last-run deep-link, skill source-run links) — #43
+- MCP env map (stdio secret env + GitHub/Postgres presets) — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -32,15 +33,14 @@ per-tool capabilities, sandbox, and hash-chained audit.
 | Competitor | Gap |
 |---|---|
 | OpenClaw | Messaging long-tail + “just do it” friction |
-| Goose | MCP env map for GitHub/Postgres-style secrets |
+| Goose | Broader MCP catalog UX polish (env map shipped) |
 | Cline | Richer in-editor plan/diff UI (we send context; DiffPreview stays desktop) |
 | Claude Code | Full TUI / hunk-edit in terminal (CLI now shows plan+diff; edit stays desktop) |
 | Hermes | Pocket-first mobile UX (schedules/skills now inspectable from CLI + UI) |
 
 ## Next moves (priority)
 
-1. **MCP env map** (follow-up to presets) — GitHub / Postgres servers that need secrets in env
-2. **Extension SSE** — live badge without polling
+1. **Extension SSE** — live badge without polling
 
 ## Defer
 

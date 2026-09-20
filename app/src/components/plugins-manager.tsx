@@ -36,6 +36,8 @@ import {
 import {
   MCP_SERVER_PRESETS,
   applyMcpPresetConfig,
+  parseEnvLiteralLines,
+  type McpEnvCredential,
   type McpServerPreset,
 } from "@/lib/mcp-presets";
 
@@ -55,7 +57,7 @@ function configFieldVisibleForTransport(
     return key === "endpoint" || key === "timeout_seconds";
   }
   // stdio (default)
-  return key === "command" || key === "args" || key === "timeout_seconds";
+  return key === "command" || key === "args" || key === "env" || key === "timeout_seconds";
 }
 
 function canAddConnection(plugin: Plugin): boolean {
@@ -209,6 +211,16 @@ function AddConnectionDialog({
     setMcpPreset(p);
     setConfig((prev) => applyMcpPresetConfig(p, prev));
     setName((prev) => (prev.trim() === "" || prev === mcpPreset?.suggestedName ? p.suggestedName : prev));
+    // Drop secret fields that belonged to the previous preset so we don't
+    // accidentally submit a GitHub PAT under a Memory connection.
+    setCredentials((prev) => {
+      const next: Record<string, string> = {};
+      if (prev.token) next.token = prev.token;
+      for (const c of p.envCredentials ?? []) {
+        if (prev[c.key]) next[c.key] = prev[c.key]!;
+      }
+      return next;
+    });
   };
 
   const create = useMutation({
@@ -216,6 +228,13 @@ function AddConnectionDialog({
       const configPayload: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(config)) {
         if (v === "") continue;
+        if (k === "env" && isMcp) {
+          const envMap = parseEnvLiteralLines(v);
+          if (Object.keys(envMap).length > 0) {
+            configPayload.env = envMap;
+          }
+          continue;
+        }
         // Pass numeric-looking fields as numbers to match the Go config shape.
         const field = plugin.manifest.requires?.config_schema?.[k];
         if (field?.type === "number") {
@@ -346,6 +365,7 @@ function AddConnectionDialog({
 
       {configSchema.map(([key, field]) => {
         const isUsername = isEmail && key === "username";
+        const isEnvLiteral = isMcp && key === "env";
         return (
           <div key={key} className="space-y-1">
             <label className="text-sm font-medium">
@@ -355,7 +375,15 @@ function AddConnectionDialog({
             {field.description && (
               <p className="text-xs text-muted-foreground">{field.description}</p>
             )}
-            {field.type === "boolean" ? (
+            {isEnvLiteral ? (
+              <textarea
+                className="w-full text-sm border rounded px-2 py-1 bg-background font-mono min-h-[72px]"
+                spellCheck={false}
+                value={config[key] ?? ""}
+                onChange={(e) => setConfig((prev) => ({ ...prev, [key]: e.target.value }))}
+                placeholder={"LOG_LEVEL=info\n# KEY=value per line — no secrets"}
+              />
+            ) : field.type === "boolean" ? (
               <label className="inline-flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
@@ -388,6 +416,41 @@ function AddConnectionDialog({
                 placeholder={field.default ?? ""}
               />
             )}
+          </div>
+        );
+      })}
+
+      {(mcpPreset?.envCredentials ?? []).map((cred: McpEnvCredential) => {
+        const visible = showSecret[cred.key];
+        return (
+          <div key={cred.key} className="space-y-1">
+            <label className="text-sm font-medium">
+              {cred.label}
+              {cred.required && <span className="text-destructive ml-1">*</span>}
+            </label>
+            {cred.description && (
+              <p className="text-xs text-muted-foreground">{cred.description}</p>
+            )}
+            <div className="relative">
+              <Input
+                type={visible ? "text" : "password"}
+                value={credentials[cred.key] ?? ""}
+                onChange={(e) =>
+                  setCredentials((prev) => ({ ...prev, [cred.key]: e.target.value }))
+                }
+                placeholder={cred.key}
+                autoComplete="off"
+              />
+              <button
+                type="button"
+                onClick={() =>
+                  setShowSecret((prev) => ({ ...prev, [cred.key]: !prev[cred.key] }))
+                }
+                className="absolute right-2 top-2 text-muted-foreground hover:text-foreground"
+              >
+                {visible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
         );
       })}
@@ -484,6 +547,12 @@ function AddConnectionDialog({
                 return;
               }
             }
+            for (const cred of mcpPreset?.envCredentials ?? []) {
+              if (cred.required && !credentials[cred.key]) {
+                setError(`${cred.label} is required`);
+                return;
+              }
+            }
             create.mutate();
           }}
           disabled={create.isPending}
@@ -514,7 +583,13 @@ function ConnectionRow({
   const [configDraft, setConfigDraft] = useState<Record<string, string>>(() => {
     const out: Record<string, string> = {};
     for (const [k, v] of Object.entries(connection.config ?? {})) {
-      out[k] = v == null ? "" : String(v);
+      if (k === "env" && v && typeof v === "object" && !Array.isArray(v)) {
+        out[k] = Object.entries(v as Record<string, unknown>)
+          .map(([ek, ev]) => `${ek}=${ev == null ? "" : String(ev)}`)
+          .join("\n");
+      } else {
+        out[k] = v == null ? "" : String(v);
+      }
     }
     return out;
   });
@@ -525,6 +600,13 @@ function ConnectionRow({
       const configPayload: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(configDraft)) {
         if (v === "") continue;
+        if (k === "env" && plugin.manifest.id === MCP_PLUGIN_ID) {
+          const envMap = parseEnvLiteralLines(v);
+          if (Object.keys(envMap).length > 0) {
+            configPayload.env = envMap;
+          }
+          continue;
+        }
         const field = plugin.manifest.requires?.config_schema?.[k];
         if (field?.type === "number") {
           const n = Number(v);
