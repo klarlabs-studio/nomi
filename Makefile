@@ -1,4 +1,4 @@
-.PHONY: all build dev test clean app-dev app-build migrate sidecar roady-guard reliability-evals
+.PHONY: all build dev test clean app-dev app-build migrate sidecar roady-guard reliability-evals vscode-ext vscode-ext-test
 
 # Build metadata injected into internal/buildinfo via -ldflags. CI overrides
 # VERSION with the release tag (e.g. VERSION=v0.2.0 make build); local builds
@@ -85,12 +85,21 @@ app-build: sidecar
 	@echo "Building Tauri app (sidecar pre-staged at app/src-tauri/bin/nomid-$(HOST_TRIPLE))..."
 	@cd app && npm run tauri build
 
+# VS Code / Cursor thin client
+vscode-ext:
+	@cd extensions/vscode && npm ci --legacy-peer-deps && npm run compile
+
+vscode-ext-test:
+	@cd extensions/vscode && npm ci --legacy-peer-deps && npm test && npm run lint
+
 # Dependencies
 deps:
 	@echo "Downloading Go dependencies..."
 	@go mod download
 	@echo "Installing app dependencies..."
 	@cd app && npm install
+	@echo "Installing VS Code extension dependencies..."
+	@cd extensions/vscode && npm ci --legacy-peer-deps
 
 # Lint
 lint:

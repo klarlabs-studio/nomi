@@ -63,6 +63,29 @@ jobs:
         working-directory: app
         run: npm run test:unit
 
+  vscode-extension:
+    name: VS Code extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: extensions/vscode/package-lock.json
+      - name: Install deps
+        working-directory: extensions/vscode
+        run: npm ci --legacy-peer-deps
+      - name: Typecheck
+        working-directory: extensions/vscode
+        run: npm run lint
+      - name: Unit tests
+        working-directory: extensions/vscode
+        run: npm test
+      - name: Compile
+        working-directory: extensions/vscode
+        run: npm run compile
+
   # Branch protection requires commit status "warden/gate" (normally posted
   # by local `warden` when status.enabled is true). Cloud-agent pushes skip
   # that hook, so the check stays "expected" forever and blocks merge even
@@ -70,7 +93,7 @@ jobs:
   # Actions jobs remain the real evidence.
   warden-gate:
     name: Publish warden/gate
-    needs: [ci, frontend]
+    needs: [ci, frontend, vscode-extension]
     runs-on: ubuntu-latest
     if: success()
     permissions:
