@@ -99,7 +99,7 @@ func (p *Plugin) onPlanProposed(ctx context.Context, evt *domain.Event) {
 	}
 	creds, err := p.resolveSendCreds(conn)
 	if err != nil {
-		log.Printf("[whatsapp plugin] plan prompt creds: %v", err)
+		log.Printf("[whatsapp plugin] plan prompt creds unavailable")
 		return
 	}
 
