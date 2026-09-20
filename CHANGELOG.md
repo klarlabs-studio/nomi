@@ -4,6 +4,17 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.21] - 2026-09-20 — Compete: Ask Nomi context menu
+
+Cline starts from the caret. Right-click → **Ask Nomi** (or Command
+Palette) opens the same editor-context run flow with a selection-aware
+prompt — no need to hunt for the command.
+
+### Added
+- **`editor/context` menu** contribution for `nomi.runWithEditorContext`
+  (title: Ask Nomi).
+- Selection-aware input prompt when text is highlighted.
+
 ## [0.2.20] - 2026-09-20 — Compete: extension plan step drop
 
 CLI `--review` can drop steps; the VS Code Plan Review panel now matches —
