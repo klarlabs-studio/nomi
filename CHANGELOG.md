@@ -4,6 +4,23 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.16] - 2026-09-20 — Compete: Extension SSE badge
+
+Cline refreshes the pending count the instant a plan lands. The VS Code
+thin client now opens the same `/events/stream` as `nomi tail` / Tauri —
+badge updates on approval and plan events without waiting for the poll.
+
+### Added
+- **`NomiEventStream`** in `extensions/vscode` — long-lived SSE with
+  exponential reconnect; filters `approval.*` / `plan.*` /
+  `run.cancelled` into a debounced badge refresh.
+- Status-bar tooltip shows `· live` when the stream is up, `· polling`
+  when it falls back.
+
+### Changed
+- `nomi.pollIntervalMs` is the offline fallback (still default 15s), not
+  the primary refresh path.
+
 ## [0.2.15] - 2026-09-20 — Compete: MCP env map
 
 Goose wins when GitHub/Postgres MCP servers take a secret from env.
@@ -121,7 +138,7 @@ as the `nomi` CLI.
 
 ### Notes
 - No chat / DiffPreview / plan edit in v1 — open the Tauri app for rich
-  review. SSE badge push is a follow-up; v1 polls.
+  review.
 
 ## [0.2.8] - 2026-09-20 — Compete: MCP one-click presets
 

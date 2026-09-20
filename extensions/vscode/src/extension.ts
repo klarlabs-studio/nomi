@@ -2,10 +2,15 @@ import * as vscode from "vscode";
 import { NomiClient, pendingCount, type Approval, type PendingSnapshot, type Run } from "./client";
 import { discoverConnection } from "./discovery";
 import { buildEditorContext, type EditorContextPayload } from "./editor_context";
+import { isBadgeEvent } from "./badge_events";
+import { NomiEventStream } from "./event_stream";
 
 let statusItem: vscode.StatusBarItem | undefined;
 let pollTimer: ReturnType<typeof setInterval> | undefined;
+let eventStream: NomiEventStream | undefined;
+let refreshDebounce: ReturnType<typeof setTimeout> | undefined;
 let lastSnapshot: PendingSnapshot = { approvals: [], plans: [] };
+let liveConnected = false;
 
 type PendingItem =
   | { itemKind: "approval"; label: string; description: string; approval: Approval }
@@ -28,10 +33,11 @@ async function refreshBadge(silent = false): Promise<void> {
     const n = pendingCount(lastSnapshot);
     if (statusItem) {
       statusItem.text = n > 0 ? `$(shield) Nomi ${n}` : "$(shield) Nomi";
+      const live = liveConnected ? " · live" : " · polling";
       statusItem.tooltip =
         n > 0
-          ? `${lastSnapshot.approvals.length} tool approval(s), ${lastSnapshot.plans.length} plan(s) awaiting review`
-          : `Connected to ${client.url} — no pending reviews`;
+          ? `${lastSnapshot.approvals.length} tool approval(s), ${lastSnapshot.plans.length} plan(s) awaiting review${live}`
+          : `Connected to ${client.url} — no pending reviews${live}`;
       statusItem.backgroundColor =
         n > 0 ? new vscode.ThemeColor("statusBarItem.warningBackground") : undefined;
     }
@@ -46,6 +52,41 @@ async function refreshBadge(silent = false): Promise<void> {
         `Nomi: ${err instanceof Error ? err.message : String(err)}`,
       );
     }
+  }
+}
+
+function scheduleBadgeRefresh(): void {
+  if (refreshDebounce) clearTimeout(refreshDebounce);
+  refreshDebounce = setTimeout(() => void refreshBadge(true), 150);
+}
+
+function startEventStream(): void {
+  eventStream?.dispose();
+  eventStream = undefined;
+  liveConnected = false;
+  try {
+    const cfg = vscode.workspace.getConfiguration("nomi");
+    const discovered = discoverConnection({
+      apiUrl: cfg.get<string>("apiUrl") || undefined,
+      token: cfg.get<string>("token") || undefined,
+      dataDir: cfg.get<string>("dataDir") || undefined,
+    });
+    eventStream = new NomiEventStream(discovered.url, discovered.token, {
+      onEvent: (ev) => {
+        if (isBadgeEvent(ev.type)) scheduleBadgeRefresh();
+      },
+      onConnect: () => {
+        liveConnected = true;
+        void refreshBadge(true);
+      },
+      onDisconnect: () => {
+        liveConnected = false;
+        void refreshBadge(true);
+      },
+    });
+    eventStream.start();
+  } catch {
+    // Discovery can fail before nomid writes api.endpoint — poll covers it.
   }
 }
 
@@ -240,17 +281,36 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   void refreshBadge(true);
+  startEventStream();
   const cfg = vscode.workspace.getConfiguration("nomi");
   const interval = Math.max(3000, cfg.get<number>("pollIntervalMs") ?? 15_000);
   pollTimer = setInterval(() => void refreshBadge(true), interval);
   context.subscriptions.push({
     dispose: () => {
       if (pollTimer) clearInterval(pollTimer);
+      if (refreshDebounce) clearTimeout(refreshDebounce);
+      eventStream?.dispose();
     },
   });
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (
+        e.affectsConfiguration("nomi.apiUrl") ||
+        e.affectsConfiguration("nomi.token") ||
+        e.affectsConfiguration("nomi.dataDir")
+      ) {
+        startEventStream();
+        void refreshBadge(true);
+      }
+    }),
+  );
 }
 
 export function deactivate(): void {
   if (pollTimer) clearInterval(pollTimer);
   pollTimer = undefined;
+  if (refreshDebounce) clearTimeout(refreshDebounce);
+  refreshDebounce = undefined;
+  eventStream?.dispose();
+  eventStream = undefined;
 }
