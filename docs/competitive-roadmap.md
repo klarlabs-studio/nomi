@@ -29,7 +29,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - Extension SSE live badge (`/events/stream` + poll fallback) — #45
 - MCP catalog UX polish (search, categories, runtime badges, create
   guards, empty-state CTA) — #46
-- In-editor Plan Review (read-only steps + diffs; Approve/Deny) — this PR
+- In-editor Plan Review (read-only steps + diffs; Approve/Deny) — #47
+- CLI `--review` step drop via `/plan/edit` — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -39,13 +40,13 @@ per-tool capabilities, sandbox, and hash-chained audit.
 | OpenClaw | Messaging long-tail + “just do it” friction |
 | Goose | Remote/synced marketplace catalog (local browse shipped) |
 | Cline | Per-hunk DiffPreview / plan edit in-editor (read-only review shipped) |
-| Claude Code | Full TUI / hunk-edit in terminal (CLI now shows plan+diff; edit stays desktop) |
+| Claude Code | Full TUI / hunk-edit in terminal (CLI can drop steps; hunk edit stays desktop) |
 | Hermes | Pocket-first mobile UX (schedules/skills now inspectable from CLI + UI) |
 
 ## Next moves (priority)
 
 1. **OpenClaw long-tail connectors** — only if channel demand justifies
-2. **In-editor hunk skip** (stretch) — port DiffPreview skip when needed
+2. **In-editor step drop / hunk skip** (stretch) — mirror CLI edit in the extension
 
 ## Defer
 

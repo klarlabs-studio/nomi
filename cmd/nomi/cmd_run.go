@@ -24,7 +24,7 @@ func runCmd(common *commonFlags, args []string) int {
 	bindCommonFlags(fs, common)
 	assistant := fs.String("assistant", "", "assistant name (default: first configured)")
 	autoApprove := fs.Bool("auto-approve", false, "auto-approve confirm-mode capabilities (DANGEROUS)")
-	review := fs.Bool("review", false, "interactive plan review: print plan + diffs, prompt Approve/Deny")
+	review := fs.Bool("review", false, "interactive plan review: print plan + diffs, Approve/Deny/Edit (drop steps)")
 	timeout := fs.Duration("timeout", 5*time.Minute, "give up after this long if the run doesn't reach a terminal state")
 	_ = fs.Parse(args)
 
@@ -87,30 +87,63 @@ func runCmd(common *commonFlags, args []string) int {
 				continue
 			}
 			if *review {
-				fmt.Fprint(os.Stderr, formatPlanReview(detail.Run.Goal, detail.Plan))
-				ok, err := promptPlanDecision(stdin)
-				if err != nil {
-					fmt.Fprintln(os.Stderr, err)
-					return 1
-				}
-				if !ok {
-					fmt.Fprintln(os.Stderr, "▶ denying plan (cancelling run)")
-					if err := cli.Post("/runs/"+created.ID+"/cancel", map[string]any{}, nil); err != nil {
+				for {
+					fmt.Fprint(os.Stderr, formatPlanReview(detail.Run.Goal, detail.Plan))
+					decision, err := promptPlanDecision(stdin)
+					if err != nil {
 						fmt.Fprintln(os.Stderr, err)
 						return 1
 					}
-					planHandled = true
-					continue
+					switch decision {
+					case planDecisionDeny:
+						fmt.Fprintln(os.Stderr, "▶ denying plan (cancelling run)")
+						if err := cli.Post("/runs/"+created.ID+"/cancel", map[string]any{}, nil); err != nil {
+							fmt.Fprintln(os.Stderr, err)
+							return 1
+						}
+						planHandled = true
+					case planDecisionEdit:
+						nums, err := promptDropSteps(stdin, detail.Plan)
+						if err != nil {
+							fmt.Fprintln(os.Stderr, err)
+							continue
+						}
+						edited, err := dropPlanSteps(detail.Plan, nums)
+						if err != nil {
+							fmt.Fprintf(os.Stderr, "  edit failed: %v\n", err)
+							continue
+						}
+						fmt.Fprintf(os.Stderr, "▶ dropping %d step(s), keeping %d\n",
+							len(detail.Plan.Steps)-len(edited.Steps), len(edited.Steps))
+						if err := cli.Post("/runs/"+created.ID+"/plan/edit", editPlanBody(edited), nil); err != nil {
+							fmt.Fprintln(os.Stderr, err)
+							return 1
+						}
+						// Re-fetch so the next loop iteration shows the
+						// edited plan (version bumped server-side).
+						if err := cli.Get("/runs/"+created.ID, &detail); err != nil {
+							fmt.Fprintln(os.Stderr, err)
+							return 1
+						}
+						continue
+					default: // approve
+						fmt.Fprintln(os.Stderr, "▶ approving plan")
+						if err := cli.Post("/runs/"+created.ID+"/plan/approve", map[string]any{}, nil); err != nil {
+							fmt.Fprintln(os.Stderr, err)
+							return 1
+						}
+						planHandled = true
+					}
+					break
 				}
-				fmt.Fprintln(os.Stderr, "▶ approving plan")
 			} else {
 				fmt.Fprintln(os.Stderr, "▶ plan ready, approving")
+				if err := cli.Post("/runs/"+created.ID+"/plan/approve", map[string]any{}, nil); err != nil {
+					fmt.Fprintln(os.Stderr, err)
+					return 1
+				}
+				planHandled = true
 			}
-			if err := cli.Post("/runs/"+created.ID+"/plan/approve", map[string]any{}, nil); err != nil {
-				fmt.Fprintln(os.Stderr, err)
-				return 1
-			}
-			planHandled = true
 		case "awaiting_approval":
 			if !handleApproval(cli, created.ID, *autoApprove, stdin) {
 				return 1
@@ -140,22 +173,69 @@ func runCmd(common *commonFlags, args []string) int {
 	return 1
 }
 
-func promptPlanDecision(stdin *bufio.Reader) (approve bool, err error) {
-	fmt.Fprint(os.Stderr, "? [A]pprove / [D]eny plan: ")
+type planDecision int
+
+const (
+	planDecisionApprove planDecision = iota
+	planDecisionDeny
+	planDecisionEdit
+)
+
+func promptPlanDecision(stdin *bufio.Reader) (planDecision, error) {
+	fmt.Fprint(os.Stderr, "? [A]pprove / [D]eny / [E]dit (drop steps): ")
 	line, err := stdin.ReadString('\n')
 	if err != nil {
-		return false, err
+		return planDecisionDeny, err
 	}
 	ans := strings.ToLower(strings.TrimSpace(line))
 	switch ans {
 	case "a", "approve", "y", "yes":
-		return true, nil
+		return planDecisionApprove, nil
+	case "e", "edit", "drop":
+		return planDecisionEdit, nil
 	case "d", "deny", "n", "no", "":
-		return false, nil
+		return planDecisionDeny, nil
 	default:
-		fmt.Fprintln(os.Stderr, "  (expected a/d — denying)")
-		return false, nil
+		fmt.Fprintln(os.Stderr, "  (expected a/d/e — denying)")
+		return planDecisionDeny, nil
 	}
+}
+
+// promptDropSteps asks which 1-based step numbers to remove.
+func promptDropSteps(stdin *bufio.Reader, plan *planPayload) ([]int, error) {
+	n := 0
+	if plan != nil {
+		n = len(plan.Steps)
+	}
+	fmt.Fprintf(os.Stderr, "? Drop which steps (1–%d, comma-separated; empty cancels): ", n)
+	line, err := stdin.ReadString('\n')
+	if err != nil {
+		return nil, err
+	}
+	line = strings.TrimSpace(line)
+	if line == "" {
+		return nil, fmt.Errorf("edit cancelled")
+	}
+	parts := strings.FieldsFunc(line, func(r rune) bool {
+		return r == ',' || r == ' ' || r == ';'
+	})
+	out := make([]int, 0, len(parts))
+	seen := make(map[int]bool)
+	for _, p := range parts {
+		var v int
+		if _, err := fmt.Sscanf(p, "%d", &v); err != nil {
+			return nil, fmt.Errorf("invalid step number %q", p)
+		}
+		if seen[v] {
+			continue
+		}
+		seen[v] = true
+		out = append(out, v)
+	}
+	if len(out) == 0 {
+		return nil, fmt.Errorf("edit cancelled")
+	}
+	return out, nil
 }
 
 func resolveAssistant(cli *Client, name string) (id, resolvedName string, err error) {
