@@ -54,6 +54,7 @@ export interface PlanStep {
   expected_capability?: string;
   why?: string;
   arguments?: Record<string, unknown>;
+  depends_on?: string[];
   order: number;
 }
 
@@ -67,6 +68,17 @@ export interface RunDetail {
   run: Run;
   plan: Plan | null;
   steps?: unknown[];
+}
+
+/** Body step for POST /runs/:id/plan/edit. */
+export interface EditPlanStep {
+  id?: string;
+  title: string;
+  description?: string;
+  expected_tool?: string;
+  expected_capability?: string;
+  depends_on?: string[];
+  arguments?: Record<string, unknown>;
 }
 
 export class NomiClient {
@@ -160,6 +172,11 @@ export class NomiClient {
 
   async approvePlan(runId: string): Promise<void> {
     await this.request("POST", `/runs/${encodeURIComponent(runId)}/plan/approve`);
+  }
+
+  /** Replace proposed steps (CLI / desktop DiffPreview skip parity). */
+  async editPlan(runId: string, steps: EditPlanStep[]): Promise<void> {
+    await this.request("POST", `/runs/${encodeURIComponent(runId)}/plan/edit`, { steps });
   }
 
   /** Deny a plan = cancel the run (same semantics as tray / channels). */

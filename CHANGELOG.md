@@ -4,6 +4,19 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.20] - 2026-09-20 — Compete: extension plan step drop
+
+CLI `--review` can drop steps; the VS Code Plan Review panel now matches —
+uncheck steps, Apply edit (`POST /plan/edit`), then Approve.
+
+### Added
+- **Step checkboxes** in the Plan Review webview + **Apply edit**.
+- `editPlan` client + `keepPlanSteps` / `toEditPlanSteps` helpers
+  (DependsOn cleaned like the CLI).
+
+### Notes
+- Per-hunk DiffPreview skip remains desktop-only.
+
 ## [0.2.19] - 2026-09-20 — Compete: CLI --review step drop
 
 Claude Code lets you steer the plan in the terminal. `nomi run --review`
