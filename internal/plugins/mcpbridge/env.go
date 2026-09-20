@@ -11,7 +11,7 @@ import (
 )
 
 // httpTokenCredKey is the reserved credential_refs key that maps to the
-// HTTP Authorization: Bearer header — never injected into stdio env.
+// HTTP Authorization header value — never injected into stdio env.
 const httpTokenCredKey = "token"
 
 var envVarNameRE = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
