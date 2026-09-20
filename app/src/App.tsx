@@ -549,7 +549,14 @@ function App() {
             <ChatInterface resetToken={chatResetToken} deepLinkChatId={deepLinkChatId} />
           )}
           {mainTab === "assistants" && <AssistantManager />}
-          {mainTab === "recipes" && <RecipesManager />}
+          {mainTab === "recipes" && (
+            <RecipesManager
+              onOpenChat={(runId) => {
+                setDeepLinkChatId(runId);
+                setMainTab("chats");
+              }}
+            />
+          )}
           {mainTab === "approvals" && (
             <ApprovalPanel
               onOpenChat={(runId) => {
@@ -558,7 +565,14 @@ function App() {
               }}
             />
           )}
-          {mainTab === "schedules" && <SchedulesManager />}
+          {mainTab === "schedules" && (
+            <SchedulesManager
+              onOpenChat={(runId) => {
+                setDeepLinkChatId(runId);
+                setMainTab("chats");
+              }}
+            />
+          )}
           {mainTab === "memory" && <MemoryInspector />}
           {mainTab === "events" && <EventLog />}
           {mainTab === "settings" && (

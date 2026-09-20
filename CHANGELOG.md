@@ -4,6 +4,24 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.14] - 2026-09-20 — Compete: skills + schedules inspectability
+
+Always-on schedules and on-demand skill induction already shipped; the
+gap vs Hermes was *seeing* them from SSH/CLI and linking last fires
+back into Chats. No scheduler rewrite — just surface what the API
+already stores.
+
+### Added
+- **`nomi list schedules`** — next/last fire, last run id, errors,
+  enabled flag (`--json` supported).
+- **`nomi list skills`** — induced suggestion clusters (size, tokens,
+  representative goal).
+- **`nomi status`** — schedule summary (`N enabled, M with errors`).
+- **Schedules UI** — “View last run →” deep-link + last-run status
+  badge; soft refresh every 30s (matches scheduler tick).
+- **Recipes → Suggested skills** — source run ids are clickable links
+  into Chats (was opaque `sha:…`).
+
 ## [0.2.13] - 2026-09-20 — Compete: CLI plan→diff→approve
 
 `nomi run` already auto-approved plans for headless use. Claude Code
