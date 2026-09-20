@@ -4,19 +4,23 @@
 // arrives via webhooks (the webhooks/router.go path); outbound replies
 // go through the Graph API client in send.go.
 //
-// Scope of v1: text messages in + out. Media (images, audio), interactive
-// templates, and message status callbacks (delivered/read) are out of
-// scope for v1 — additive without changing the wire contract.
+// Text inbound prefers channel-role binding + Conversation linking so
+// plan review can reply in-thread with interactive Approve/Deny
+// buttons. Trigger-only setups still fall back to TriggerEvent →
+// CreateRunFromSource. Media (images, audio) and message status
+// callbacks (delivered/read) remain additive follow-ups.
 package whatsapp
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"log/slog"
 	"sync"
 	"time"
 
+	"go.klarlabs.de/nomi/internal/domain"
 	"go.klarlabs.de/nomi/internal/events"
 	"go.klarlabs.de/nomi/internal/plugins"
 	"go.klarlabs.de/nomi/internal/runtime"
@@ -35,21 +39,30 @@ type Plugin struct {
 	bindings      *db.AssistantBindingRepository
 	conversations *db.ConversationRepository
 	identities    *db.ChannelIdentityRepository
+	runs          *db.RunRepository
 	eventBus      *events.EventBus
 	secrets       secrets.Store
 
 	mu            sync.RWMutex
 	running       bool
 	healthPerConn map[string]*plugins.ConnectionHealth
+	// planMsg tracks that a plan-review interactive prompt was sent for
+	// a run so clear signals can send a follow-up status (Cloud API has
+	// no edit-in-place for interactive messages).
+	planMsg map[string]planMsgRef
 }
 
 // NewPlugin wires the WhatsApp plugin.
+//
+// runs enables plan-review interactive buttons when a conversation-
+// linked run reaches plan_review. Pass nil to skip that integration.
 func NewPlugin(
 	rt *runtime.Runtime,
 	conns *db.ConnectionRepository,
 	binds *db.AssistantBindingRepository,
 	convs *db.ConversationRepository,
 	idents *db.ChannelIdentityRepository,
+	runs *db.RunRepository,
 	eventBus *events.EventBus,
 	secretStore secrets.Store,
 ) *Plugin {
@@ -59,9 +72,11 @@ func NewPlugin(
 		bindings:      binds,
 		conversations: convs,
 		identities:    idents,
+		runs:          runs,
 		eventBus:      eventBus,
 		secrets:       secretStore,
 		healthPerConn: map[string]*plugins.ConnectionHealth{},
+		planMsg:       map[string]planMsgRef{},
 	}
 }
 
@@ -70,9 +85,9 @@ func (p *Plugin) Manifest() plugins.PluginManifest {
 	return plugins.PluginManifest{
 		ID:          PluginID,
 		Name:        "WhatsApp",
-		Version:     "0.1.0",
+		Version:     "0.2.0",
 		Author:      "Nomi",
-		Description: "WhatsApp Business Cloud API integration. Inbound messages route to the bound assistant; the assistant can reply through the whatsapp.send_message tool.",
+		Description: "WhatsApp Business Cloud API integration. Inbound messages route to the bound assistant; the assistant can reply through the whatsapp.send_message tool. Safe plans can be approved or denied via in-chat buttons.",
 		Cardinality: plugins.ConnectionMulti,
 		Capabilities: []string{
 			"whatsapp.send",
@@ -150,31 +165,40 @@ func (p *Plugin) ConnectionHealth(connectionID string) (plugins.ConnectionHealth
 	return *h, true
 }
 
-// Start primes per-connection health structs. WhatsApp uses inbound
-// webhooks rather than a long-lived socket so there's nothing to spin up
-// here beyond marking the plugin running.
-func (p *Plugin) Start(_ context.Context) error {
+// Start primes per-connection health structs and (when wired) subscribes
+// to plan.proposed for interactive Approve/Deny prompts. WhatsApp uses
+// inbound webhooks rather than a long-lived socket so there's nothing
+// else to spin up here.
+func (p *Plugin) Start(ctx context.Context) error {
 	p.mu.Lock()
-	defer p.mu.Unlock()
 	if p.running {
+		p.mu.Unlock()
 		return nil
 	}
 	p.running = true
+	p.mu.Unlock()
+
 	conns, err := p.connections.ListByPlugin(PluginID)
 	if err != nil {
 		return fmt.Errorf("list whatsapp connections: %w", err)
 	}
+	p.mu.Lock()
 	for _, conn := range conns {
 		if conn.Enabled {
 			p.healthPerConn[conn.ID] = &plugins.ConnectionHealth{Running: true}
 		}
+	}
+	p.mu.Unlock()
+
+	if p.eventBus != nil && p.rt != nil && p.runs != nil {
+		go p.subscribePlanReview(ctx)
 	}
 	return nil
 }
 
 // Stop marks the plugin not running. There are no goroutines or sockets
 // to tear down — inbound stops automatically when the daemon's HTTP
-// server shuts down.
+// server shuts down; the plan-review subscriber exits on ctx cancel.
 func (p *Plugin) Stop() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -215,15 +239,26 @@ type webhookPayload struct {
 					Text      struct {
 						Body string `json:"body"`
 					} `json:"text"`
+					Interactive *struct {
+						Type        string `json:"type"`
+						ButtonReply *struct {
+							ID    string `json:"id"`
+							Title string `json:"title"`
+						} `json:"button_reply"`
+					} `json:"interactive"`
 				} `json:"messages"`
 			} `json:"value"`
 		} `json:"changes"`
 	} `json:"entry"`
 }
 
-// ReceiveWebhook parses a verified WhatsApp Cloud API event, fires one
-// TriggerEvent per inbound text message, and updates the connection
-// health on success.
+// ReceiveWebhook parses a verified WhatsApp Cloud API event.
+//
+// Text messages prefer channel-role binding + Conversation linking
+// (CreateRunInConversation) so plan review can reply in-thread. When no
+// channel binding exists, falls back to TriggerEvent → onFire (legacy
+// trigger-only setups). Interactive button replies resolve plan
+// Approve/Deny without creating a new run.
 func (p *Plugin) ReceiveWebhook(ctx context.Context, connectionID string, body []byte, _ map[string]string, onFire plugins.TriggerCallback) error {
 	var payload webhookPayload
 	if err := json.Unmarshal(body, &payload); err != nil {
@@ -242,12 +277,6 @@ func (p *Plugin) ReceiveWebhook(ctx context.Context, connectionID string, body [
 				continue
 			}
 			for _, msg := range change.Value.Messages {
-				if msg.Type != "text" || msg.Text.Body == "" {
-					// v1 handles text only; other message types are silently
-					// dropped so the webhook still 200s and the platform
-					// doesn't retry.
-					continue
-				}
 				profileName := "WhatsApp user"
 				for _, c := range change.Value.Contacts {
 					if c.WAID == msg.From && c.Profile.Name != "" {
@@ -255,6 +284,33 @@ func (p *Plugin) ReceiveWebhook(ctx context.Context, connectionID string, body [
 						break
 					}
 				}
+
+				if msg.Type == "interactive" && msg.Interactive != nil &&
+					msg.Interactive.Type == "button_reply" && msg.Interactive.ButtonReply != nil {
+					p.handlePlanButtonReply(ctx, connectionID, msg.From, msg.Interactive.ButtonReply.ID)
+					fired++
+					continue
+				}
+
+				if msg.Type != "text" || msg.Text.Body == "" {
+					// Media and other types are silently dropped so the
+					// webhook still 200s and the platform doesn't retry.
+					continue
+				}
+
+				handled, err := p.handleInboundText(ctx, connectionID, msg.From, profileName, msg.Text.Body)
+				if err != nil {
+					slog.Error("whatsapp: inbound text failed",
+						"connection_id", connectionID, "message_id", msg.ID, "error", err)
+					p.recordError(connectionID, err.Error())
+					return err
+				}
+				if handled {
+					fired++
+					continue
+				}
+
+				// Legacy trigger path — no channel binding configured.
 				event := plugins.TriggerEvent{
 					ConnectionID: connectionID,
 					Kind:         "whatsapp",
@@ -283,6 +339,104 @@ func (p *Plugin) ReceiveWebhook(ctx context.Context, connectionID string, body [
 		p.recordActivity(connectionID, now)
 	}
 	return nil
+}
+
+// handleInboundText creates a conversation-linked run when a channel-
+// role binding exists. Returns handled=false so the caller can fall
+// back to TriggerEvent when no channel assistant is bound.
+func (p *Plugin) handleInboundText(ctx context.Context, connID, from, profileName, text string) (bool, error) {
+	if p.rt == nil || p.bindings == nil {
+		return false, nil
+	}
+	assistantID, err := p.resolveChannelAssistant(connID)
+	if err != nil {
+		return false, nil
+	}
+	if !p.senderAllowed(connID, assistantID, from) {
+		p.handleFirstContact(connID, from, profileName)
+		return true, nil // consumed (dropped / queued) — don't also fire trigger
+	}
+
+	var conversationID string
+	if p.conversations != nil {
+		conv, _, err := p.conversations.FindOrCreate(PluginID, connID, from, assistantID, p.eventBus)
+		if err == nil {
+			conversationID = conv.ID
+			_ = p.conversations.Touch(conv.ID, p.eventBus)
+		}
+	}
+
+	goal := text
+	if profileName != "" && profileName != "WhatsApp user" {
+		goal = fmt.Sprintf("WhatsApp message from %s (%s): %s", profileName, from, text)
+	}
+	_, err = p.rt.CreateRunInConversation(ctx, goal, assistantID, "whatsapp", conversationID)
+	if err != nil {
+		return true, fmt.Errorf("create run: %w", err)
+	}
+	return true, nil
+}
+
+func (p *Plugin) resolveChannelAssistant(connID string) (string, error) {
+	binds, err := p.bindings.ListByConnection(connID)
+	if err != nil {
+		return "", err
+	}
+	var fallback *domain.AssistantConnectionBinding
+	for _, b := range binds {
+		if !b.Enabled || b.Role != domain.BindingRoleChannel {
+			continue
+		}
+		if b.IsPrimary {
+			return b.AssistantID, nil
+		}
+		if fallback == nil {
+			fallback = b
+		}
+	}
+	if fallback != nil {
+		return fallback.AssistantID, nil
+	}
+	return "", fmt.Errorf("no channel-role binding for connection %s", connID)
+}
+
+func (p *Plugin) senderAllowed(connID, assistantID, userID string) bool {
+	if p.identities == nil || userID == "" {
+		return true
+	}
+	existing, err := p.identities.ListByConnection(connID)
+	if err != nil || len(existing) == 0 {
+		return true
+	}
+	ok, _ := p.identities.IsAllowed(PluginID, connID, userID, assistantID)
+	return ok
+}
+
+func (p *Plugin) handleFirstContact(connID, userID, display string) {
+	policy := domain.FirstContactDrop
+	if p.connections != nil {
+		conn, err := p.connections.GetByID(connID)
+		if err == nil && conn != nil {
+			raw, _ := conn.Config["first_contact_policy"].(string)
+			if domain.FirstContactPolicy(raw).IsValid() {
+				policy = domain.FirstContactPolicy(raw)
+			}
+		}
+	}
+	switch policy {
+	case domain.FirstContactQueueApproval:
+		if p.identities != nil && userID != "" {
+			_ = p.identities.Create(&domain.ChannelIdentity{
+				PluginID:           PluginID,
+				ConnectionID:       connID,
+				ExternalIdentifier: userID,
+				DisplayName:        display,
+				Enabled:            false,
+			})
+		}
+	case domain.FirstContactDrop, domain.FirstContactReplyRequestAccess:
+		log.Printf("[whatsapp plugin] dropped unknown sender on %s", connID)
+	}
 }
 
 func (p *Plugin) recordActivity(connectionID string, at time.Time) {

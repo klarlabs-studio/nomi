@@ -4,6 +4,27 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.12] - 2026-09-20 — Compete: Discord + WhatsApp plan review
+
+Telegram and Slack already approve safe plans in-thread. Discord and
+WhatsApp now match — OpenClaw-style channel reach without skipping
+DiffPreview for write/patch/irreversible work.
+
+### Added
+- **Discord plan review.** `plan.proposed` posts Approve plan / Deny
+  plan Message Components in the originating DM or guild channel.
+  Deny cancels the run; Approve calls `Runtime.ApprovePlan`. Button
+  taps re-check the identity allowlist.
+- **WhatsApp plan review.** Same UX via Cloud API interactive reply
+  buttons. Conversation-linked inbound (channel-role binding +
+  `FindOrCreate`) so prompts can reply to the right `wa_id`; trigger-
+  only setups still fall back to `CreateRunFromSource`.
+
+### Changed
+- Write / patch / irreversible shell / mutate-shaped MCP plans omit the
+  channel Approve button on Discord and WhatsApp (Deny + desktop hint
+  only), matching Telegram/Slack/tray gating.
+
 ## [0.2.11] - 2026-09-20 — Compete: OpenRouter provider
 
 Hermes/Goose win when picking a model is a menu, not a custom endpoint

@@ -279,7 +279,10 @@ func main() {
 	// Discord plugin — Gateway WebSocket. User creates a Discord
 	// application, pastes the bot token, invites the bot to servers they
 	// want it in.
-	discordPlugin := discordplugin.NewPlugin(rt, connectionRepo, bindingRepo, conversationRepo, identityRepo, secretStore, eventBus)
+	discordPlugin := discordplugin.NewPlugin(
+		rt, connectionRepo, bindingRepo, conversationRepo, identityRepo,
+		db.NewRunRepository(database), secretStore, eventBus,
+	)
 	if err := pluginRegistry.Register(discordPlugin); err != nil {
 		log.Fatalf("Failed to register Discord plugin: %v", err)
 	}
@@ -290,7 +293,8 @@ func main() {
 	// Account, sets up a phone number, and pastes the access token + app
 	// secret into the assistant builder.
 	whatsappPlugin := whatsappplugin.NewPlugin(
-		rt, connectionRepo, bindingRepo, conversationRepo, identityRepo, eventBus, secretStore,
+		rt, connectionRepo, bindingRepo, conversationRepo, identityRepo,
+		db.NewRunRepository(database), eventBus, secretStore,
 	)
 	if err := pluginRegistry.Register(whatsappPlugin); err != nil {
 		log.Fatalf("Failed to register WhatsApp plugin: %v", err)

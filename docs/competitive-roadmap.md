@@ -19,7 +19,9 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - MCP one-click presets (Filesystem / Memory / Fetch / Git / …) — #37
 - VS Code / Cursor thin client (`extensions/vscode`) — badge + Approve/Deny
 - Editor context injection — open tabs + selection on `POST /runs`
-- OpenRouter provider preset + attribution headers
+- OpenRouter provider preset + attribution headers — #40
+- Discord + WhatsApp channel plan approve (Message Components /
+  interactive reply buttons) — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -34,11 +36,10 @@ per-tool capabilities, sandbox, and hash-chained audit.
 
 ## Next moves (priority)
 
-1. **Discord + WhatsApp plan review** (`cursor/discord-whatsapp-plan-review-4135`)
-2. **CLI plan/diff/approve loop** (`cursor/cli-plan-approve-loop-4135`) — Claude Code refugees
-3. **Skills + schedules polish** (`cursor/skills-schedules-polish-4135`) — Hermes always-on, inspectable
-4. **MCP env map** (follow-up to presets) — GitHub / Postgres servers that need secrets in env
-5. **Extension SSE** — live badge without polling
+1. **CLI plan/diff/approve loop** (`cursor/cli-plan-approve-loop-4135`) — Claude Code refugees
+2. **Skills + schedules polish** (`cursor/skills-schedules-polish-4135`) — Hermes always-on, inspectable
+3. **MCP env map** (follow-up to presets) — GitHub / Postgres servers that need secrets in env
+4. **Extension SSE** — live badge without polling
 
 ## Defer
 
