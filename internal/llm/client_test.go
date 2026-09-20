@@ -255,6 +255,7 @@ func TestProviderLabels(t *testing.T) {
 		{"openai", EndpointOpenAI, "https://api.openai.com/v1", "openai"},
 		{"ollama-localhost", EndpointOpenAI, "http://localhost:11434/v1", "ollama"},
 		{"ollama-127", EndpointOpenAI, "http://127.0.0.1:11434/v1", "ollama"},
+		{"openrouter", EndpointOpenAI, "https://openrouter.ai/api/v1", "openrouter"},
 		{"openai-compat-fork", EndpointOpenAI, "https://api.together.xyz/v1", "openai-compat"},
 	}
 	for _, c := range cases {

@@ -116,6 +116,11 @@ type Config struct {
 	APIKey    string        // already-resolved plaintext (not a secret:// reference)
 	Timeout   time.Duration // 0 → DefaultRequestTimeout
 	UserAgent string
+	// ExtraHeaders are applied on every OpenAI-compat request after the
+	// standard Authorization / Content-Type / User-Agent headers. Used
+	// for OpenRouter attribution (HTTP-Referer, X-Title) and similar
+	// provider-specific requirements.
+	ExtraHeaders map[string]string
 }
 
 // DefaultRequestTimeout caps any single LLM call. Long-context requests
@@ -143,7 +148,13 @@ func NewClient(cfg Config) (Client, error) {
 	case EndpointOpenAI, "":
 		// Treat empty type as OpenAI-compat since that's the default for
 		// any OpenAI-compat backend including Ollama.
-		return &openaiClient{baseURL: strings.TrimRight(cfg.BaseURL, "/"), apiKey: cfg.APIKey, http: httpClient, ua: ua}, nil
+		return &openaiClient{
+			baseURL:      strings.TrimRight(cfg.BaseURL, "/"),
+			apiKey:       cfg.APIKey,
+			http:         httpClient,
+			ua:           ua,
+			extraHeaders: cfg.ExtraHeaders,
+		}, nil
 	default:
 		return nil, fmt.Errorf("llm: unknown endpoint type %q", cfg.Type)
 	}
@@ -152,27 +163,38 @@ func NewClient(cfg Config) (Client, error) {
 // ---- OpenAI-compat adapter ---------------------------------------------
 
 type openaiClient struct {
-	baseURL string
-	apiKey  string
-	http    *http.Client
-	ua      string
+	baseURL      string
+	apiKey       string
+	http         *http.Client
+	ua           string
+	extraHeaders map[string]string
 }
 
 // Provider returns a label for the metrics. The openai-compat schema
 // covers several real backends; we discriminate by URL because the
 // adapter is the same code path. Local 11434 is the Ollama default;
-// api.openai.com is OpenAI proper; everything else is collapsed to
-// "openai-compat" (Together, Groq, vLLM, LM Studio, etc.) — fine
-// because operators usually run one of those at a time and the goal
-// is just to separate the bucket, not enumerate every fork.
+// api.openai.com is OpenAI proper; openrouter.ai is OpenRouter;
+// everything else is collapsed to "openai-compat" (Together, Groq,
+// vLLM, LM Studio, etc.).
 func (c *openaiClient) Provider() string {
 	switch {
 	case strings.Contains(c.baseURL, "127.0.0.1:11434") || strings.Contains(c.baseURL, "localhost:11434"):
 		return "ollama"
 	case strings.Contains(c.baseURL, "api.openai.com"):
 		return "openai"
+	case strings.Contains(c.baseURL, "openrouter.ai"):
+		return "openrouter"
 	default:
 		return "openai-compat"
+	}
+}
+
+func (c *openaiClient) applyExtraHeaders(req *http.Request) {
+	for k, v := range c.extraHeaders {
+		if k == "" || v == "" {
+			continue
+		}
+		req.Header.Set(k, v)
 	}
 }
 
@@ -236,6 +258,7 @@ func (c *openaiClient) Chat(ctx context.Context, req ChatRequest) (ChatResponse,
 	if c.apiKey != "" {
 		httpReq.Header.Set("Authorization", "Bearer "+c.apiKey)
 	}
+	c.applyExtraHeaders(httpReq)
 
 	resp, err := c.http.Do(httpReq)
 	if err != nil {
@@ -320,6 +343,7 @@ func (c *openaiClient) ChatStream(
 	if c.apiKey != "" {
 		httpReq.Header.Set("Authorization", "Bearer "+c.apiKey)
 	}
+	c.applyExtraHeaders(httpReq)
 
 	resp, err := c.http.Do(httpReq)
 	if err != nil {

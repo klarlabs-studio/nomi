@@ -113,9 +113,10 @@ func (r *Resolver) ClientForProfile(id string) (Client, error) {
 	}
 
 	client, err := NewClient(Config{
-		Type:    endpointType,
-		BaseURL: baseURL,
-		APIKey:  apiKey,
+		Type:         endpointType,
+		BaseURL:      baseURL,
+		APIKey:       apiKey,
+		ExtraHeaders: ExtraHeadersForEndpoint(baseURL),
 	})
 	if err != nil {
 		return nil, err
@@ -175,10 +176,11 @@ func (r *Resolver) DefaultEmbeddingClient() (EmbeddingClient, error) {
 	}
 
 	return NewEmbeddingClient(EmbeddingConfig{
-		BaseURL:  profile.Endpoint,
-		APIKey:   apiKey,
-		Model:    profile.EmbeddingModelID,
-		Provider: providerID,
+		BaseURL:      profile.Endpoint,
+		APIKey:       apiKey,
+		Model:        profile.EmbeddingModelID,
+		Provider:     providerID,
+		ExtraHeaders: ExtraHeadersForEndpoint(profile.Endpoint),
 	})
 }
 

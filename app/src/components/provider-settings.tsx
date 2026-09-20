@@ -30,6 +30,17 @@ interface ProviderPreset {
 const PROVIDER_PRESETS: ProviderPreset[] = [
   { name: "OpenAI", type: "remote", endpoint: "https://api.openai.com/v1", models: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"] },
   { name: "Anthropic", type: "remote", endpoint: "https://api.anthropic.com/v1", models: ["claude-3-5-sonnet-20241022", "claude-3-opus-20240229", "claude-3-haiku-20240307"] },
+  {
+    name: "OpenRouter",
+    type: "remote",
+    endpoint: "https://openrouter.ai/api/v1",
+    models: [
+      "openai/gpt-4o",
+      "anthropic/claude-sonnet-4",
+      "google/gemini-2.5-flash",
+      "meta-llama/llama-3.3-70b-instruct",
+    ],
+  },
   { name: "Google (Gemini)", type: "remote", endpoint: "https://generativelanguage.googleapis.com/v1", models: ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro"] },
   { name: "AWS Bedrock", type: "remote", endpoint: "https://bedrock-runtime.us-east-1.amazonaws.com", models: ["anthropic.claude-3-5-sonnet", "amazon.titan-text-express", "meta.llama3-1-70b"] },
   { name: "Azure OpenAI", type: "remote", endpoint: "https://your-resource.openai.azure.com/openai/deployments", models: ["gpt-4o", "gpt-4", "gpt-35-turbo"] },
@@ -47,6 +58,15 @@ const MODEL_CATALOG: Record<string, { category: string; models: string[] }[]> = 
   remote: [
     { category: "OpenAI", models: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"] },
     { category: "Anthropic", models: ["claude-3-5-sonnet", "claude-3-opus", "claude-3-haiku"] },
+    {
+      category: "OpenRouter",
+      models: [
+        "openai/gpt-4o",
+        "anthropic/claude-sonnet-4",
+        "google/gemini-2.5-flash",
+        "meta-llama/llama-3.3-70b-instruct",
+      ],
+    },
     { category: "Google", models: ["gemini-1.5-pro", "gemini-1.5-flash"] },
     { category: "Meta (Llama)", models: ["llama3.1", "llama3.2"] },
     { category: "Mistral", models: ["mistral", "codellama"] },

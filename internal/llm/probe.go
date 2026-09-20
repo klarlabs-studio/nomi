@@ -46,6 +46,9 @@ func Probe(ctx context.Context, endpoint, apiKey string, requested []string) Pro
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", "nomid-probe/0.1")
+	for k, v := range ExtraHeadersForEndpoint(endpoint) {
+		req.Header.Set(k, v)
+	}
 
 	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Do(req)
