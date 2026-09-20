@@ -17,7 +17,11 @@ import {
 // diff/preview UI — install button POSTs straight after a confirm()
 // prompt. The /recipes/:id/preview endpoint exists for a future
 // expansion that surfaces the assistant spec inline before commit.
-export function RecipesManager() {
+export function RecipesManager({
+  onOpenChat,
+}: {
+  onOpenChat?: (runId: string) => void;
+}) {
   const [items, setItems] = useState<RecipeCatalogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [installing, setInstalling] = useState<string | null>(null);
@@ -186,7 +190,32 @@ export function RecipesManager() {
                 <div className="flex-1 min-w-0">
                   <div className="font-medium truncate">{s.representative_goal}</div>
                   <div className="text-xs text-muted-foreground">
-                    {s.size} similar runs · sha:{s.id}
+                    {s.size} similar runs
+                    {s.source_run_ids.length > 0 && (
+                      <>
+                        {" · "}
+                        {s.source_run_ids.slice(0, 3).map((id, i) => (
+                          <span key={id}>
+                            {i > 0 && ", "}
+                            {onOpenChat ? (
+                              <button
+                                type="button"
+                                className="underline underline-offset-2 hover:text-foreground font-mono"
+                                onClick={() => onOpenChat(id)}
+                                title="Open source run in Chats"
+                              >
+                                {id.slice(0, 8)}
+                              </button>
+                            ) : (
+                              <code className="font-mono">{id.slice(0, 8)}</code>
+                            )}
+                          </span>
+                        ))}
+                        {s.source_run_ids.length > 3 && (
+                          <span> +{s.source_run_ids.length - 3} more</span>
+                        )}
+                      </>
+                    )}
                   </div>
                   {s.common_tokens && s.common_tokens.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1">

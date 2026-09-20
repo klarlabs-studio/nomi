@@ -36,7 +36,9 @@ SUBCOMMANDS
     list providers         Show every configured LLM provider.
     list approvals         Show pending approval cards.
     list memory            Show stored memory entries.
-    status                 Show daemon health + version + active default.
+    list schedules         Show cron schedules (next/last fire, last run, errors).
+    list skills            Show induced skill suggestions from run history.
+    status                 Show daemon health + version + schedule summary.
     seed <path>            Apply a seed.yaml manifest against the running
                            daemon (useful for ad-hoc reconfig).
     export [-o file]       Snapshot the daemon's full config as YAML

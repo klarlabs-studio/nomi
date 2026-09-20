@@ -5,18 +5,31 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ToggleSwitch } from "@/components/ui/toggle-switch";
-import { assistantsApi, schedulesApi, type Schedule, type TranslateResult } from "@/lib/api";
+import {
+  assistantsApi,
+  runsApi,
+  schedulesApi,
+  type Schedule,
+  type TranslateResult,
+} from "@/lib/api";
 import type { Assistant } from "@/types/api";
+
+type Props = {
+  /** Deep-link into Chats when the user clicks a schedule's last run. */
+  onOpenChat?: (runId: string) => void;
+};
 
 // Schedules tab. Cron-driven Runs against a chosen assistant — the
 // NL phrase input calls /schedules/translate so users don't need to
 // remember cron syntax. After the translator returns, the parsed cron
 // + the LLM's explanation are surfaced for confirmation before save.
-export function SchedulesManager() {
+export function SchedulesManager({ onOpenChat }: Props) {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [assistants, setAssistants] = useState<Assistant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // last-run status badges keyed by run id (best-effort; missing = still loading / gone)
+  const [runStatus, setRunStatus] = useState<Record<string, string>>({});
 
   // Create form state.
   const [phrase, setPhrase] = useState("");
@@ -32,6 +45,21 @@ export function SchedulesManager() {
       setSchedules(s.schedules);
       setAssistants(a.assistants);
       setError(null);
+      // Soft-fetch last-run statuses for rows that have one.
+      const ids = s.schedules.map((sch) => sch.last_run_id).filter((id): id is string => !!id);
+      if (ids.length > 0) {
+        const entries = await Promise.all(
+          ids.map(async (id) => {
+            try {
+              const detail = await runsApi.get(id);
+              return [id, detail.run.status] as const;
+            } catch {
+              return [id, "unknown"] as const;
+            }
+          }),
+        );
+        setRunStatus(Object.fromEntries(entries));
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -41,6 +69,12 @@ export function SchedulesManager() {
 
   useEffect(() => {
     void refresh();
+    // Match the scheduler's 30s tick so the list picks up fires without
+    // a manual reload — inspectability without a new SSE subscription.
+    const tick = window.setInterval(() => {
+      void refresh();
+    }, 30_000);
+    return () => window.clearInterval(tick);
   }, []);
 
   const translate = async () => {
@@ -214,6 +248,7 @@ export function SchedulesManager() {
         <div className="space-y-2">
           {schedules.map((s) => {
             const assistant = assistants.find((a) => a.id === s.assistant_id);
+            const lastStatus = s.last_run_id ? runStatus[s.last_run_id] : undefined;
             return (
               <Card key={s.id}>
                 <CardContent className="p-3 space-y-1">
@@ -231,6 +266,24 @@ export function SchedulesManager() {
                         {s.last_fire_at &&
                           ` · last fire: ${new Date(s.last_fire_at).toLocaleString()}`}
                       </div>
+                      {s.last_run_id && (
+                        <div className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap">
+                          <span>
+                            Last run:{" "}
+                            <code className="font-mono">{s.last_run_id.slice(0, 8)}</code>
+                            {lastStatus ? ` (${lastStatus})` : ""}
+                          </span>
+                          {onOpenChat && (
+                            <button
+                              type="button"
+                              className="underline underline-offset-2 hover:text-foreground"
+                              onClick={() => onOpenChat(s.last_run_id!)}
+                            >
+                              View last run →
+                            </button>
+                          )}
+                        </div>
+                      )}
                       {s.last_error && (
                         <div className="text-xs text-destructive">Last error: {s.last_error}</div>
                       )}

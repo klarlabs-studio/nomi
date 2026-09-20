@@ -19,7 +19,7 @@ import (
 //	nomi list memory
 func listCmd(common *commonFlags, args []string) int {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "nomi list: target required (runs, assistants, providers, approvals, memory)")
+		fmt.Fprintln(os.Stderr, "nomi list: target required (runs, assistants, providers, approvals, memory, schedules, skills)")
 		return 2
 	}
 	target := args[0]
@@ -45,6 +45,10 @@ func listCmd(common *commonFlags, args []string) int {
 		return listApprovals(cli, common, *limit)
 	case "memory":
 		return listMemory(cli, common, *limit)
+	case "schedules":
+		return listSchedules(cli, common, *limit)
+	case "skills":
+		return listSkills(cli, common, *limit)
 	default:
 		fmt.Fprintf(os.Stderr, "nomi list: unknown target %q\n", target)
 		return 2
@@ -199,6 +203,91 @@ func listMemory(cli *Client, c *commonFlags, n int) int {
 	return doFlush(w)
 }
 
+func listSchedules(cli *Client, c *commonFlags, n int) int {
+	var resp struct {
+		Schedules []struct {
+			ID         string  `json:"id"`
+			Prompt     string  `json:"prompt"`
+			CronExpr   string  `json:"cron_expr"`
+			NLPhrase   string  `json:"nl_phrase"`
+			Enabled    bool    `json:"enabled"`
+			NextFireAt string  `json:"next_fire_at"`
+			LastFireAt *string `json:"last_fire_at"`
+			LastRunID  string  `json:"last_run_id"`
+			LastError  string  `json:"last_error"`
+		} `json:"schedules"`
+	}
+	if err := cli.Get("/schedules", &resp); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	if c.JSON {
+		printJSON(resp)
+		return 0
+	}
+	w := newTab()
+	_, _ = fmt.Fprintln(w, "ID\tON\tNEXT\tLAST\tLAST_RUN\tERROR\tPROMPT")
+	for i, s := range resp.Schedules {
+		if i >= n {
+			break
+		}
+		on := "no"
+		if s.Enabled {
+			on = "yes"
+		}
+		next := formatWhen(s.NextFireAt)
+		last := "-"
+		if s.LastFireAt != nil && *s.LastFireAt != "" {
+			last = ago(*s.LastFireAt)
+		}
+		lastRun := "-"
+		if s.LastRunID != "" {
+			lastRun = short(s.LastRunID)
+		}
+		errCol := trunc(s.LastError, 24)
+		if errCol == "" {
+			errCol = "-"
+		}
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+			short(s.ID), on, next, last, lastRun, errCol, trunc(s.Prompt, 40))
+	}
+	return doFlush(w)
+}
+
+func listSkills(cli *Client, c *commonFlags, n int) int {
+	var resp struct {
+		Suggestions []struct {
+			ID                 string   `json:"id"`
+			RepresentativeGoal string   `json:"representative_goal"`
+			CommonTokens       []string `json:"common_tokens"`
+			SourceRunIDs       []string `json:"source_run_ids"`
+			Size               int      `json:"size"`
+		} `json:"suggestions"`
+	}
+	if err := cli.Get("/skills/suggestions", &resp); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	if c.JSON {
+		printJSON(resp)
+		return 0
+	}
+	w := newTab()
+	_, _ = fmt.Fprintln(w, "ID\tSIZE\tRUNS\tTOKENS\tGOAL")
+	for i, s := range resp.Suggestions {
+		if i >= n {
+			break
+		}
+		tokens := strings.Join(s.CommonTokens, ",")
+		if tokens == "" {
+			tokens = "-"
+		}
+		_, _ = fmt.Fprintf(w, "%s\t%d\t%d\t%s\t%s\n",
+			short(s.ID), s.Size, len(s.SourceRunIDs), trunc(tokens, 24), trunc(s.RepresentativeGoal, 50))
+	}
+	return doFlush(w)
+}
+
 // doFlush writes the buffered table and returns 0/1 for `os.Exit`.
 func doFlush(w *tabwriter.Writer) int {
 	if err := w.Flush(); err != nil {
@@ -246,5 +335,31 @@ func ago(ts string) string {
 		return "yesterday"
 	default:
 		return fmt.Sprintf("%dd ago", int(d.Hours()/24))
+	}
+}
+
+// formatWhen renders a timestamp that may be in the future (next fire)
+// as "in 5m" / "in 3h" or falls back to ago() for past times.
+func formatWhen(ts string) string {
+	t, err := time.Parse(time.RFC3339, ts)
+	if err != nil {
+		t, err = time.Parse(time.RFC3339Nano, ts)
+	}
+	if err != nil {
+		return ts
+	}
+	d := time.Until(t)
+	if d <= 0 {
+		return ago(ts)
+	}
+	switch {
+	case d < time.Minute:
+		return "soon"
+	case d < time.Hour:
+		return fmt.Sprintf("in %dm", int(d.Minutes()))
+	case d < 24*time.Hour:
+		return fmt.Sprintf("in %dh", int(d.Hours()))
+	default:
+		return fmt.Sprintf("in %dd", int(d.Hours()/24))
 	}
 }
