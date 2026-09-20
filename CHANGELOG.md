@@ -4,6 +4,20 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.18] - 2026-09-20 — Compete: in-editor Plan Review
+
+Cline shows the plan before yes. The VS Code thin client now opens a
+read-only Plan Review panel (CLI `--review` parity) with steps and
+unified diffs — no blind Approve for write/patch plans.
+
+### Added
+- **`GET /runs/:id` client** + `formatPlanReview` (steps, patch diffs,
+  write excerpts, caution banner).
+- **Webview Plan Review** — Approve / Deny; hunk skip and plan edit stay
+  on the desktop DiffPreview.
+- Command **`Nomi: Review pending plan`**; pending plan picks open the
+  panel instead of a one-click Approve.
+
 ## [0.2.17] - 2026-09-20 — Compete: MCP catalog UX polish
 
 Goose’s catalog is browsable, not a chip dump. Nomi’s MCP presets now

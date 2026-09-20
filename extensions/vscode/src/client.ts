@@ -45,6 +45,30 @@ export interface AssistantSummary {
   name: string;
 }
 
+/** Subset of domain.StepDefinition needed for plan review. */
+export interface PlanStep {
+  id: string;
+  title: string;
+  description?: string;
+  expected_tool?: string;
+  expected_capability?: string;
+  why?: string;
+  arguments?: Record<string, unknown>;
+  order: number;
+}
+
+export interface Plan {
+  id: string;
+  version: number;
+  steps: PlanStep[];
+}
+
+export interface RunDetail {
+  run: Run;
+  plan: Plan | null;
+  steps?: unknown[];
+}
+
 export class NomiClient {
   constructor(
     public readonly url: string,
@@ -119,6 +143,12 @@ export class NomiClient {
     }
     const res = await this.request("POST", "/runs", body);
     return (await res.json()) as Run;
+  }
+
+  /** Full run + plan (steps with arguments) for in-editor plan review. */
+  async getRun(id: string): Promise<RunDetail> {
+    const res = await this.request("GET", `/runs/${encodeURIComponent(id)}`);
+    return (await res.json()) as RunDetail;
   }
 
   async resolveApproval(id: string, approved: boolean): Promise<void> {
