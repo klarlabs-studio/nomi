@@ -4,6 +4,23 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.9] - 2026-09-20 — Compete: VS Code / Cursor thin client
+
+Cline wins when review never leaves the editor. Nomi stays a daemon +
+desktop product; this extension is the switch lever — pending badge,
+Approve/Deny for tool approvals and plan_review, same auth discovery
+as the `nomi` CLI.
+
+### Added
+- **`extensions/vscode`** — VS Code / Cursor extension (status bar badge,
+  Quick Pick Approve/Deny, daemon discovery via `auth.token` /
+  `api.endpoint`). Plan deny = cancel (tray/channel semantics).
+- CI job **VS Code extension** (typecheck + unit + compile).
+
+### Notes
+- No chat / DiffPreview / plan edit in v1 — open the Tauri app for rich
+  review. SSE badge push is a follow-up; v1 polls.
+
 ## [0.2.8] - 2026-09-20 — Compete: MCP one-click presets
 
 Goose wins when adding an MCP server feels like picking from a catalog.

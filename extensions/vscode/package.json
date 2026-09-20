@@ -1,0 +1,88 @@
+{
+  "name": "nomi",
+  "displayName": "Nomi",
+  "description": "Thin client for Nomi reviewable agents — approve plans and tool calls without leaving the editor.",
+  "version": "0.1.0",
+  "publisher": "klarlabs",
+  "license": "Apache-2.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "nomi",
+    "agent",
+    "approval",
+    "plan review",
+    "mcp"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Nomi",
+      "properties": {
+        "nomi.apiUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Override nomid base URL (default: read api.endpoint from the Nomi data dir, else http://127.0.0.1:8080)."
+        },
+        "nomi.token": {
+          "type": "string",
+          "default": "",
+          "description": "Override bearer token (default: $NOMI_TOKEN or auth.token in the Nomi data dir). Prefer the Secret Storage command for remote hosts."
+        },
+        "nomi.dataDir": {
+          "type": "string",
+          "default": "",
+          "description": "Override Nomi data directory (default: $NOMI_DATA_DIR or OS app-data path)."
+        },
+        "nomi.pollIntervalMs": {
+          "type": "number",
+          "default": 15000,
+          "minimum": 3000,
+          "description": "How often to refresh the pending badge when SSE is unavailable."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "nomi.refresh",
+        "title": "Nomi: Refresh pending"
+      },
+      {
+        "command": "nomi.showPending",
+        "title": "Nomi: Show pending approvals & plans"
+      },
+      {
+        "command": "nomi.approveSelected",
+        "title": "Nomi: Approve selected"
+      },
+      {
+        "command": "nomi.denySelected",
+        "title": "Nomi: Deny selected"
+      },
+      {
+        "command": "nomi.openStatus",
+        "title": "Nomi: Daemon status"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "tsc -p ./ --noEmit",
+    "test": "vitest run",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.5"
+  }
+}

@@ -17,6 +17,7 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - Tray tool quick-approve; tray plan approve — #33
 - Telegram/Slack channel plan approve — #35
 - MCP one-click presets (Filesystem / Memory / Fetch / Git / …) — #37
+- VS Code / Cursor thin client (`extensions/vscode`) — badge + Approve/Deny
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -24,20 +25,20 @@ per-tool capabilities, sandbox, and hash-chained audit.
 | Competitor | Gap |
 |---|---|
 | OpenClaw | Messaging long-tail + “just do it” friction |
-| Goose | MCP setup feels lighter (presets / one-click) |
-| Cline | Zero context-switch inside the editor |
+| Goose | MCP env map for GitHub/Postgres-style secrets |
+| Cline | Deep editor context (open files / selection) — thin client is only the door |
 | Claude Code | Terminal-native Plan→Diff→Approve loop |
 | Hermes | Pocket-first always-on + OpenRouter model menu |
 
 ## Next moves (priority)
 
-1. **VS Code / Cursor thin client** (`cursor/vscode-thin-client-4135`) — Cline switch lever
-2. **Editor context injection** (`cursor/editor-context-inject-4135`) — open files / selection into planner
-3. **OpenRouter provider** (`cursor/openrouter-provider-4135`) — Hermes/Goose model menu
-4. **Discord + WhatsApp plan review** (`cursor/discord-whatsapp-plan-review-4135`)
-5. **CLI plan/diff/approve loop** (`cursor/cli-plan-approve-loop-4135`) — Claude Code refugees
-6. **Skills + schedules polish** (`cursor/skills-schedules-polish-4135`) — Hermes always-on, inspectable
-7. **MCP env map** (follow-up to presets) — GitHub / Postgres servers that need secrets in env
+1. **Editor context injection** (`cursor/editor-context-inject-4135`) — open files / selection into planner
+2. **OpenRouter provider** (`cursor/openrouter-provider-4135`) — Hermes/Goose model menu
+3. **Discord + WhatsApp plan review** (`cursor/discord-whatsapp-plan-review-4135`)
+4. **CLI plan/diff/approve loop** (`cursor/cli-plan-approve-loop-4135`) — Claude Code refugees
+5. **Skills + schedules polish** (`cursor/skills-schedules-polish-4135`) — Hermes always-on, inspectable
+6. **MCP env map** (follow-up to presets) — GitHub / Postgres servers that need secrets in env
+7. **Extension SSE** — live badge without polling
 
 ## Defer
 
