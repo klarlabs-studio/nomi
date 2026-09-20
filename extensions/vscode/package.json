@@ -78,6 +78,10 @@
       {
         "command": "nomi.runWithEditorContext",
         "title": "Nomi: Run with editor context"
+      },
+      {
+        "command": "nomi.reviewPlan",
+        "title": "Nomi: Review pending plan"
       }
     ]
   },
@@ -85,7 +89,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "tsc -p ./ --noEmit",
-    "test": "npm run compile && node --test out/discovery.test.js out/editor_context.test.js out/event_stream.test.js",
+    "test": "npm run compile && node --test out/discovery.test.js out/editor_context.test.js out/event_stream.test.js out/plan_fmt.test.js",
     "vscode:prepublish": "npm run compile"
   },
   "devDependencies": {

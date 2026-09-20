@@ -4,6 +4,7 @@ import { discoverConnection } from "./discovery";
 import { buildEditorContext, type EditorContextPayload } from "./editor_context";
 import { isBadgeEvent } from "./badge_events";
 import { NomiEventStream } from "./event_stream";
+import { openPlanReview } from "./plan_review";
 
 let statusItem: vscode.StatusBarItem | undefined;
 let pollTimer: ReturnType<typeof setInterval> | undefined;
@@ -131,11 +132,11 @@ async function approveSelected(): Promise<void> {
   if (item.itemKind === "approval") {
     await client.resolveApproval(item.approval.id, true);
     vscode.window.showInformationMessage(`Nomi: approved ${item.approval.capability}`);
-  } else {
-    await client.approvePlan(item.run.id);
-    vscode.window.showInformationMessage("Nomi: plan approved");
+    await refreshBadge(true);
+    return;
   }
-  await refreshBadge(true);
+  // Plans always open the review panel (no blind approve for write/patch).
+  await openPlanReview(client, item.run, { onResolved: () => refreshBadge(true) });
 }
 
 async function denySelected(): Promise<void> {
@@ -155,24 +156,50 @@ async function denySelected(): Promise<void> {
 async function showPending(): Promise<void> {
   const item = await pickPending("Pending Nomi reviews");
   if (!item) return;
+  if (item.itemKind === "plan") {
+    const client = buildClient();
+    await openPlanReview(client, item.run, { onResolved: () => refreshBadge(true) });
+    return;
+  }
   const choice = await vscode.window.showQuickPick(
     [
       { label: "Approve", id: "approve" as const },
       { label: "Deny", id: "deny" as const },
     ],
-    { placeHolder: item.itemKind === "plan" ? "Plan review" : "Tool approval" },
+    { placeHolder: "Tool approval" },
   );
   if (!choice) return;
+  const client = buildClient();
   if (choice.id === "approve") {
-    const client = buildClient();
-    if (item.itemKind === "approval") await client.resolveApproval(item.approval.id, true);
-    else await client.approvePlan(item.run.id);
+    await client.resolveApproval(item.approval.id, true);
   } else {
-    const client = buildClient();
-    if (item.itemKind === "approval") await client.resolveApproval(item.approval.id, false);
-    else await client.denyPlan(item.run.id);
+    await client.resolveApproval(item.approval.id, false);
   }
   await refreshBadge(true);
+}
+
+async function reviewPlanCommand(): Promise<void> {
+  await refreshBadge(true);
+  const plans = lastSnapshot.plans;
+  if (plans.length === 0) {
+    vscode.window.showInformationMessage("Nomi: no plans awaiting review.");
+    return;
+  }
+  let run = plans[0]!;
+  if (plans.length > 1) {
+    const picked = await vscode.window.showQuickPick(
+      plans.map((r) => ({
+        label: r.goal.length > 80 ? `${r.goal.slice(0, 77)}…` : r.goal || "(no goal)",
+        description: r.id.slice(0, 8),
+        run: r,
+      })),
+      { placeHolder: "Review which plan?" },
+    );
+    if (!picked) return;
+    run = picked.run;
+  }
+  const client = buildClient();
+  await openPlanReview(client, run, { onResolved: () => refreshBadge(true) });
 }
 
 async function openStatus(): Promise<void> {
@@ -278,6 +305,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("nomi.denySelected", () => denySelected()),
     vscode.commands.registerCommand("nomi.openStatus", () => openStatus()),
     vscode.commands.registerCommand("nomi.runWithEditorContext", () => runWithEditorContext()),
+    vscode.commands.registerCommand("nomi.reviewPlan", () => reviewPlanCommand()),
   );
 
   void refreshBadge(true);
