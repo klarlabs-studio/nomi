@@ -4,6 +4,25 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.7] - 2026-09-20 — Compete: channel plan review
+
+Plan review should not mean "open the desktop app." Telegram and Slack
+can approve or deny a safe plan in-thread; write/patch/irreversible
+plans still force desktop Review so DiffPreview stays in the loop.
+
+### Added
+- **Telegram plan review.** `plan.proposed` posts an Approve plan /
+  Deny plan inline keyboard in the originating chat. Deny cancels the
+  run; Approve calls `Runtime.ApprovePlan`.
+- **Slack plan review.** Same UX via Block Kit action buttons in the
+  originating thread.
+- Callback / interaction taps re-check the identity allowlist (same
+  gate as inbound messages) before resolving approvals or plans.
+
+### Changed
+- Write / patch / irreversible shell / mutate-shaped MCP plans omit the
+  channel Approve button and point users at the desktop app.
+
 ## [0.2.6] - 2026-09-20 — Compete: tray plan approve
 
 Plan review should not mean "open the full window." Safe plans can be

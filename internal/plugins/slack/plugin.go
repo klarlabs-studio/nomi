@@ -55,6 +55,8 @@ type Plugin struct {
 	// the approve/deny buttons for a given approval_id, so we can
 	// update it in place once the approval resolves.
 	approvalMsgTS map[string]approvalMsgRef
+	// planMsgTS tracks the plan-review prompt message keyed by run ID.
+	planMsgTS map[string]approvalMsgRef
 }
 
 type approvalMsgRef struct {
@@ -95,6 +97,7 @@ func NewPlugin(
 		clients:       map[string]*slack.Client{},
 		healthPerConn: map[string]*plugins.ConnectionHealth{},
 		approvalMsgTS: map[string]approvalMsgRef{},
+		planMsgTS:     map[string]approvalMsgRef{},
 	}
 }
 
@@ -199,6 +202,9 @@ func (p *Plugin) Start(ctx context.Context) error {
 	}
 	if p.eventBus != nil && p.approvals != nil && p.runs != nil {
 		go p.subscribeApprovals(ctx)
+	}
+	if p.eventBus != nil && p.rt != nil && p.runs != nil {
+		go p.subscribePlanReview(ctx)
 	}
 	return nil
 }
@@ -827,15 +833,26 @@ func slackFallbackFilename(kind plugins.AttachmentKind) string {
 	return "file.bin"
 }
 
-// handleInteraction resolves an approval when the user clicks one of
-// the Block Kit buttons. Action ids are encoded as "nomi_approve:<id>"
-// or "nomi_deny:<id>" so we can parse action + approval_id in one pass.
+// handleInteraction resolves an approval or plan-review action when the
+// user clicks a Block Kit button. Action ids encode the action type +
+// id so we can parse without a lookup table. Sender must pass the
+// identity allowlist when one is configured.
 func (p *Plugin) handleInteraction(ctx context.Context, connID string, cb slack.InteractionCallback) {
-	if p.approvals == nil {
+	assistantID, _ := p.resolveChannelAssistant(connID)
+	if !p.senderAllowed(connID, assistantID, cb.User.ID) {
+		log.Printf("[slack plugin] blocking interaction from unknown sender %s on %s", cb.User.ID, connID)
 		return
 	}
 	for _, action := range cb.ActionCallback.BlockActions {
 		id := action.ActionID
+		switch {
+		case strings.HasPrefix(id, actionPlanApprove), strings.HasPrefix(id, actionPlanDeny):
+			p.handlePlanAction(ctx, id)
+			continue
+		}
+		if p.approvals == nil {
+			continue
+		}
 		var approved bool
 		var approvalID string
 		switch {
@@ -855,6 +872,42 @@ func (p *Plugin) handleInteraction(ctx context.Context, connID string, cb slack.
 			log.Printf("[slack plugin] resolve approval %s (connection %s): %v", approvalID, connID, err)
 		}
 	}
+}
+
+func (p *Plugin) handlePlanAction(ctx context.Context, actionID string) {
+	if p.rt == nil {
+		return
+	}
+	var approve bool
+	var runID string
+	switch {
+	case strings.HasPrefix(actionID, actionPlanApprove):
+		approve = true
+		runID = strings.TrimPrefix(actionID, actionPlanApprove)
+	case strings.HasPrefix(actionID, actionPlanDeny):
+		approve = false
+		runID = strings.TrimPrefix(actionID, actionPlanDeny)
+	default:
+		return
+	}
+	if runID == "" {
+		return
+	}
+	if approve {
+		if err := p.rt.ApprovePlan(ctx, runID); err != nil {
+			log.Printf("[slack plugin] approve plan %s: %v", runID, err)
+			p.clearPlanPrompt(ctx, runID, "Could not approve — open Nomi to review.")
+			return
+		}
+		p.clearPlanPrompt(ctx, runID, "Plan approved — executing.")
+		return
+	}
+	if err := p.rt.CancelRun(ctx, runID); err != nil {
+		log.Printf("[slack plugin] deny plan %s: %v", runID, err)
+		p.clearPlanPrompt(ctx, runID, "Could not deny — open Nomi to review.")
+		return
+	}
+	p.clearPlanPrompt(ctx, runID, "Plan denied — run cancelled.")
 }
 
 func splitExternalID(id string) (channelID, threadTS string, err error) {

@@ -61,7 +61,9 @@ type Plugin struct {
 	// the inline keyboard for a given approval_id so we can edit it in
 	// place when the approval resolves.
 	approvalMsg map[string]approvalMsgRef
-	status      plugins.PluginStatus
+	// planMsg tracks the plan-review prompt message keyed by run ID.
+	planMsg map[string]approvalMsgRef
+	status  plugins.PluginStatus
 }
 
 // approvalMsgRef pins an approval-prompt message to the bot+chat that
@@ -101,6 +103,7 @@ func NewPlugin(
 		runConnMap:    map[string]string{},
 		healthPerConn: map[string]*plugins.ConnectionHealth{},
 		approvalMsg:   map[string]approvalMsgRef{},
+		planMsg:      map[string]approvalMsgRef{},
 	}
 }
 
@@ -241,6 +244,9 @@ func (p *Plugin) Start(ctx context.Context) error {
 	log.Printf("[telegram plugin] started %d active connection(s)", len(p.cancelPerConn))
 	if p.eventBus != nil && p.approvals != nil && p.runs != nil {
 		go p.subscribeApprovals(ctx)
+	}
+	if p.eventBus != nil && p.rt != nil && p.runs != nil {
+		go p.subscribePlanReview(ctx)
 	}
 	return nil
 }
@@ -394,11 +400,22 @@ func (p *Plugin) sendApprovalPrompt(ctx context.Context, token, chatID, text, ap
 }
 
 // handleCallback routes an inline-keyboard tap. callback_data encodes
-// the action + approval_id as "nomi_approve:<id>" or "nomi_deny:<id>"
-// so we can parse without a lookup table. answerCallbackQuery is called
-// unconditionally so the Telegram client's loading spinner clears.
-func (p *Plugin) handleCallback(ctx context.Context, token, queryID, data string) {
+// approval actions as "nomi_approve:<id>" / "nomi_deny:<id>" and plan
+// review as "nomi_plan_approve:<runID>" / "nomi_plan_deny:<runID>".
+// answerCallbackQuery is called unconditionally so the Telegram client's
+// loading spinner clears. Sender must pass the identity allowlist when
+// one is configured (same gate as inbound messages).
+func (p *Plugin) handleCallback(ctx context.Context, token, connID, senderID, queryID, data string) {
 	defer p.answerCallbackQuery(ctx, token, queryID)
+	if !p.callbackSenderAllowed(connID, senderID) {
+		log.Printf("[telegram plugin] blocking callback from unknown sender %s on %s", senderID, connID)
+		return
+	}
+	switch {
+	case strings.HasPrefix(data, callbackPlanApprove), strings.HasPrefix(data, callbackPlanDeny):
+		p.handlePlanCallback(ctx, data)
+		return
+	}
 	if p.approvals == nil {
 		return
 	}
@@ -420,6 +437,58 @@ func (p *Plugin) handleCallback(ctx context.Context, token, queryID, data string
 	if err := p.approvals.Resolve(ctx, approvalID, approved); err != nil {
 		log.Printf("[telegram plugin] resolve approval %s: %v", approvalID, err)
 	}
+}
+
+func (p *Plugin) callbackSenderAllowed(connID, senderID string) bool {
+	if p.identities == nil || senderID == "" {
+		return true
+	}
+	existing, err := p.identities.ListByConnection(connID)
+	if err != nil || len(existing) == 0 {
+		return true
+	}
+	assistantID, err := p.resolveChannelAssistant(connID)
+	if err != nil {
+		assistantID = ""
+	}
+	ok, _ := p.identities.IsAllowed(PluginID, connID, senderID, assistantID)
+	return ok
+}
+
+func (p *Plugin) handlePlanCallback(ctx context.Context, data string) {
+	if p.rt == nil {
+		return
+	}
+	var approve bool
+	var runID string
+	switch {
+	case strings.HasPrefix(data, callbackPlanApprove):
+		approve = true
+		runID = strings.TrimPrefix(data, callbackPlanApprove)
+	case strings.HasPrefix(data, callbackPlanDeny):
+		approve = false
+		runID = strings.TrimPrefix(data, callbackPlanDeny)
+	default:
+		return
+	}
+	if runID == "" {
+		return
+	}
+	if approve {
+		if err := p.rt.ApprovePlan(ctx, runID); err != nil {
+			log.Printf("[telegram plugin] approve plan %s: %v", runID, err)
+			p.clearPlanPrompt(ctx, runID, "Could not approve — open Nomi to review.")
+			return
+		}
+		p.clearPlanPrompt(ctx, runID, "Plan approved — executing.")
+		return
+	}
+	if err := p.rt.CancelRun(ctx, runID); err != nil {
+		log.Printf("[telegram plugin] deny plan %s: %v", runID, err)
+		p.clearPlanPrompt(ctx, runID, "Could not deny — open Nomi to review.")
+		return
+	}
+	p.clearPlanPrompt(ctx, runID, "Plan denied — run cancelled.")
 }
 
 // answerCallbackQuery is a best-effort acknowledgement so the inline
@@ -666,8 +735,12 @@ func (p *Plugin) pollLoop(ctx context.Context, connID, token string) {
 				offset = update.UpdateID + 1
 			}
 			if update.CallbackQuery != nil && update.CallbackQuery.Data != "" {
-				// Route approval-button taps to the ApprovalManager.
-				p.handleCallback(ctx, token, update.CallbackQuery.ID, update.CallbackQuery.Data)
+				senderID := ""
+				if update.CallbackQuery.From.ID != 0 {
+					senderID = fmt.Sprintf("%d", update.CallbackQuery.From.ID)
+				}
+				// Route approval / plan-review button taps.
+				p.handleCallback(ctx, token, connID, senderID, update.CallbackQuery.ID, update.CallbackQuery.Data)
 				continue
 			}
 			if update.Message == nil {
