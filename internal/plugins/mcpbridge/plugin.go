@@ -137,11 +137,15 @@ func (p *Plugin) Manifest() plugins.PluginManifest {
 				},
 				"args": {
 					Type: "string", Label: "Args (stdio, comma- or space-separated)",
-					Description: "CLI args passed to the binary, e.g. `run --dir /path`.",
+					Description: "CLI args passed to the binary, e.g. `run --dir /path`. Use ${VAR} to expand spawn env (including secret env credentials).",
 				},
 				"endpoint": {
 					Type: "string", Label: "Endpoint (http)",
 					Description: "Base URL of the MCP server. Used only when transport=http.",
+				},
+				"env": {
+					Type: "string", Label: "Environment (non-secret, KEY=value lines)",
+					Description: "Optional literal env for the stdio subprocess. Do not put secrets here — use Environment secrets (credential fields) instead.",
 				},
 			},
 		},

@@ -4,6 +4,20 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.15] - 2026-09-20 — Compete: MCP env map
+
+Goose wins when GitHub/Postgres MCP servers take a secret from env.
+Nomi already had credential_refs for HTTP bearer tokens; stdio servers
+can now declare env secrets the same way — resolved at spawn, never
+written into SQLite config.
+
+### Added
+- **Stdio env injection** for `com.nomi.mcp`: non-`token` credential_refs
+  become subprocess env; optional `config.env` for non-secret literals.
+- **`${VAR}` expansion** in MCP args (Postgres connection URL pattern).
+- **GitHub** and **PostgreSQL** MCP presets with env-credential fields.
+- Plugins UI: Environment (non-secret) textarea + preset secret fields.
+
 ## [0.2.14] - 2026-09-20 — Compete: skills + schedules inspectability
 
 Always-on schedules and on-demand skill induction already shipped; the

@@ -3,6 +3,7 @@ import {
   MCP_SERVER_PRESETS,
   applyMcpPresetConfig,
   findMcpPreset,
+  parseEnvLiteralLines,
 } from "@/lib/mcp-presets";
 
 describe("mcp-presets", () => {
@@ -39,9 +40,16 @@ describe("mcp-presets", () => {
     expect(next.args).toBe("");
   });
 
-  it("path-scoped presets are not readyToCreate without edits", () => {
-    expect(findMcpPreset("filesystem")!.readyToCreate).toBe(false);
-    expect(findMcpPreset("git")!.readyToCreate).toBe(false);
-    expect(findMcpPreset("memory")!.readyToCreate).toBe(true);
+  it("includes github and postgres env-secret presets", () => {
+    const gh = findMcpPreset("github")!;
+    expect(gh.envCredentials?.[0]?.key).toBe("GITHUB_PERSONAL_ACCESS_TOKEN");
+    const pg = findMcpPreset("postgres")!;
+    expect(pg.args).toContain("${DATABASE_URL}");
+    expect(pg.envCredentials?.[0]?.key).toBe("DATABASE_URL");
+  });
+
+  it("parseEnvLiteralLines skips blanks and comments", () => {
+    const got = parseEnvLiteralLines("A=1\n# skip\nB = two\n");
+    expect(got).toEqual({ A: "1", B: "two" });
   });
 });

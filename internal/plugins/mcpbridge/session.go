@@ -61,8 +61,13 @@ func (p *Plugin) buildTransport(conn *domain.Connection) (mcpclient.Transport, e
 		if cmd == "" {
 			return nil, fmt.Errorf("mcp: stdio transport requires command config")
 		}
+		envSlice, envMap, err := p.resolveSpawnEnv(conn)
+		if err != nil {
+			return nil, err
+		}
 		argsCSV, _ := conn.Config["args"].(string)
-		return mcpclient.NewStdioTransport(cmd, splitArgs(argsCSV)...)
+		argsCSV = expandArgsSubstitutions(argsCSV, envMap)
+		return newStdioTransportWithEnv(cmd, splitArgs(argsCSV), envSlice)
 	case "http":
 		endpoint, _ := conn.Config["endpoint"].(string)
 		if endpoint == "" {
