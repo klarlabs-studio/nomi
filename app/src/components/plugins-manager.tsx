@@ -33,6 +33,11 @@ import {
   detectProviderFromEmail,
   type EmailProviderPreset,
 } from "@/lib/email-presets";
+import {
+  MCP_SERVER_PRESETS,
+  applyMcpPresetConfig,
+  type McpServerPreset,
+} from "@/lib/mcp-presets";
 
 const EMAIL_PLUGIN_ID = "com.nomi.email";
 const MCP_PLUGIN_ID = "com.nomi.mcp";
@@ -157,26 +162,40 @@ function initialConfig(plugin: Plugin): Record<string, string> {
 function AddConnectionDialog({
   plugin,
   onClose,
+  initialMcpPresetId,
 }: {
   plugin: Plugin;
   onClose: () => void;
+  /** When opening from an MCP quick-pick chip. */
+  initialMcpPresetId?: string;
 }) {
   const qc = useQueryClient();
   const isEmail = plugin.manifest.id === EMAIL_PLUGIN_ID;
+  const isMcp = plugin.manifest.id === MCP_PLUGIN_ID;
 
-  const [name, setName] = useState("");
+  const initialMcpPreset: McpServerPreset | null = (() => {
+    if (!isMcp) return null;
+    if (initialMcpPresetId) {
+      return MCP_SERVER_PRESETS.find((p) => p.id === initialMcpPresetId) ?? MCP_SERVER_PRESETS[0]!;
+    }
+    return MCP_SERVER_PRESETS[0]!;
+  })();
+
+  const [name, setName] = useState(() => initialMcpPreset?.suggestedName ?? "");
   const [credentials, setCredentials] = useState<Record<string, string>>({});
   const [showSecret, setShowSecret] = useState<Record<string, boolean>>({});
-  const [config, setConfig] = useState<Record<string, string>>(() =>
-    initialConfig(plugin),
-  );
+  const [config, setConfig] = useState<Record<string, string>>(() => {
+    const base = initialConfig(plugin);
+    return initialMcpPreset ? applyMcpPresetConfig(initialMcpPreset, base) : base;
+  });
   const [error, setError] = useState<string | null>(null);
-  const [preset, setPreset] = useState<EmailProviderPreset | null>(
+  const [emailPreset, setEmailPreset] = useState<EmailProviderPreset | null>(
     isEmail ? EMAIL_PROVIDER_PRESETS[0] : null,
   );
+  const [mcpPreset, setMcpPreset] = useState<McpServerPreset | null>(initialMcpPreset);
 
-  const applyPreset = (p: EmailProviderPreset) => {
-    setPreset(p);
+  const applyEmailPreset = (p: EmailProviderPreset) => {
+    setEmailPreset(p);
     setConfig((prev) => ({
       ...prev,
       imap_host: p.imapHost,
@@ -184,6 +203,12 @@ function AddConnectionDialog({
       smtp_host: p.smtpHost,
       smtp_port: String(p.smtpPort),
     }));
+  };
+
+  const applyMcpPreset = (p: McpServerPreset) => {
+    setMcpPreset(p);
+    setConfig((prev) => applyMcpPresetConfig(p, prev));
+    setName((prev) => (prev.trim() === "" || prev === mcpPreset?.suggestedName ? p.suggestedName : prev));
   };
 
   const create = useMutation({
@@ -227,8 +252,8 @@ function AddConnectionDialog({
     setConfig((prev) => ({ ...prev, username: value }));
     if (!isEmail) return;
     const detected = detectProviderFromEmail(value);
-    if (detected.id !== "generic" && detected.id !== preset?.id) {
-      applyPreset(detected);
+    if (detected.id !== "generic" && detected.id !== emailPreset?.id) {
+      applyEmailPreset(detected);
     }
   };
 
@@ -248,10 +273,10 @@ function AddConnectionDialog({
           <label className="text-sm font-medium">Email provider</label>
           <select
             className="w-full text-sm border rounded px-2 py-1 bg-background"
-            value={preset?.id ?? "generic"}
+            value={emailPreset?.id ?? "generic"}
             onChange={(e) => {
               const p = EMAIL_PROVIDER_PRESETS.find((x) => x.id === e.target.value);
-              if (p) applyPreset(p);
+              if (p) applyEmailPreset(p);
             }}
           >
             {EMAIL_PROVIDER_PRESETS.map((p) => (
@@ -260,19 +285,57 @@ function AddConnectionDialog({
               </option>
             ))}
           </select>
-          {preset && preset.id !== "generic" && (
+          {emailPreset && emailPreset.id !== "generic" && (
             <p className="text-xs text-muted-foreground">
-              {preset.authNote}
-              {preset.docURL && (
+              {emailPreset.authNote}
+              {emailPreset.docURL && (
                 <>
                   {" "}
                   <a
-                    href={preset.docURL}
+                    href={emailPreset.docURL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="underline"
                   >
                     Setup guide
+                  </a>
+                </>
+              )}
+            </p>
+          )}
+        </div>
+      )}
+
+      {isMcp && (
+        <div className="space-y-1">
+          <label className="text-sm font-medium">MCP server preset</label>
+          <select
+            className="w-full text-sm border rounded px-2 py-1 bg-background"
+            value={mcpPreset?.id ?? "custom"}
+            onChange={(e) => {
+              const p = MCP_SERVER_PRESETS.find((x) => x.id === e.target.value);
+              if (p) applyMcpPreset(p);
+            }}
+          >
+            {MCP_SERVER_PRESETS.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+          {mcpPreset && (
+            <p className="text-xs text-muted-foreground">
+              {mcpPreset.setupNote}
+              {mcpPreset.docURL && (
+                <>
+                  {" "}
+                  <a
+                    href={mcpPreset.docURL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    Docs
                   </a>
                 </>
               )}
@@ -769,6 +832,17 @@ function ConnectionRow({
 
 function PluginCard({ plugin }: { plugin: Plugin }) {
   const [adding, setAdding] = useState(false);
+  const [mcpPresetId, setMcpPresetId] = useState<string | undefined>(undefined);
+  const isMcp = plugin.manifest.id === MCP_PLUGIN_ID;
+
+  const openAdd = (presetId?: string) => {
+    setMcpPresetId(presetId);
+    setAdding(true);
+  };
+  const closeAdd = () => {
+    setAdding(false);
+    setMcpPresetId(undefined);
+  };
   const [confirmingUninstall, setConfirmingUninstall] = useState(false);
   const [cascadeUninstall, setCascadeUninstall] = useState(false);
   const qc = useQueryClient();
@@ -1018,11 +1092,33 @@ function PluginCard({ plugin }: { plugin: Plugin }) {
         {canAddConnection(plugin) && (
             <>
               {!adding ? (
-                <Button size="sm" variant="outline" onClick={() => setAdding(true)}>
-                  <Plus className="w-4 h-4 mr-1" /> Add connection
-                </Button>
+                <div className="space-y-2">
+                  {isMcp && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {MCP_SERVER_PRESETS.filter((p) => p.id !== "custom").map((p) => (
+                        <Button
+                          key={p.id}
+                          size="sm"
+                          variant="secondary"
+                          className="h-7 text-xs"
+                          title={p.description}
+                          onClick={() => openAdd(p.id)}
+                        >
+                          {p.label}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                  <Button size="sm" variant="outline" onClick={() => openAdd(isMcp ? "custom" : undefined)}>
+                    <Plus className="w-4 h-4 mr-1" /> Add connection
+                  </Button>
+                </div>
               ) : (
-                <AddConnectionDialog plugin={plugin} onClose={() => setAdding(false)} />
+                <AddConnectionDialog
+                  plugin={plugin}
+                  onClose={closeAdd}
+                  initialMcpPresetId={mcpPresetId}
+                />
               )}
             </>
           )}

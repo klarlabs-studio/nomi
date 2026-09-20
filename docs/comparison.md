@@ -3,7 +3,7 @@
 How Nomi differs from other agent platforms. Facts only — every column
 maps to behavior shipped today, not roadmap claims.
 
-> **Disclosure:** rows describe Nomi as of v0.2.7 and competitor projects
+> **Disclosure:** rows describe Nomi as of v0.2.8 and competitor projects
 > as of early 2026. Competitor capabilities evolve quickly; if a row is
 > stale, please open an issue.
 
@@ -75,7 +75,9 @@ Goose ships a desktop client and a strong MCP story. Differences:
 - **Plugin sandbox.** Goose extends through MCP servers (subprocesses).
   Nomi does both: signed WASM via wazero, plus a generic MCP plugin
   (`com.nomi.mcp`) so any stdio/HTTP MCP server is a capability-gated
-  tool that still goes through plan review.
+  tool that still goes through plan review. The Plugins tab ships
+  one-click presets (Filesystem, Memory, Fetch, Git, …) so setup
+  matches Goose’s catalog feel without hand-writing `npx`/`uvx`.
 
 When Goose wins: you want MCP-first interop with no extra daemon.
 When Nomi wins: you want MCP *and* signed-WASM isolation, with
