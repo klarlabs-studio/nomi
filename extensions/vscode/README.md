@@ -21,7 +21,9 @@ plans and tool calls from the editor without rebuilding the desktop UI.
   `plan.proposed` (disable via `nomi.autoOpenPlanReview`)
 - Quick Pick for tool approvals (plan deny = cancel, same as tray/channels).
   Live **Approve / Deny toast** on `approval.requested` (desktop OS-notif
-  parity; disable via `nomi.approvalToast`)
+  parity; disable via `nomi.approvalToast`). Channel / untracked plans get
+  a **Review** toast on `plan.proposed` (`nomi.planToast`; Ask Nomi still
+  auto-opens)
 - **Ask Nomi** — editor context menu + command palette +
   `Ctrl/Cmd+Shift+Alt+N`; starts a run with open tabs + active selection
   attached (paths only; secrets filtered; selection ≤ 4 KiB)
@@ -63,6 +65,7 @@ npm run compile
 | `nomi.defaultAssistantId` | Skip assistant Quick Pick on Ask Nomi |
 | `nomi.autoOpenPlanReview` | Auto-open Plan Review on first `plan.proposed` for tracked runs (default on) |
 | `nomi.approvalToast` | Approve / Deny toast on `approval.requested` (default on) |
+| `nomi.planToast` | Review toast on `plan.proposed` for untracked / channel plans (default on) |
 
 ## Keybindings
 

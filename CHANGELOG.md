@@ -4,6 +4,15 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.45] - 2026-09-21 — Compete: extension plan toast for untracked runs
+
+Ask Nomi auto-opens Plan Review (#65); channel / schedule / CLI plans
+only bumped the badge. On `plan.proposed` for untracked runs (or when
+auto-open is off), show a **Review** toast. Edits/replans stay quiet.
+
+### Added
+- Extension **plan toast** + setting **`nomi.planToast`** (default on).
+
 ## [0.2.44] - 2026-09-21 — Compete: plan.proposed OS notification
 
 Tool approvals already OS-notified (#71); plans only updated the tray.
