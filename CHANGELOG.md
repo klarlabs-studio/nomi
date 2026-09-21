@@ -4,6 +4,17 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.42] - 2026-09-21 — Compete: notification click → Approvals
+
+Approval OS notifications said "Click to review" but Tauri
+`sendNotification` had no click handler (web only `window.focus()`).
+Click now opens the Approvals tab and focuses the window — same
+deep-link as the tray Approvals item.
+
+### Fixed
+- Tauri **`onAction`** + stamped `extra.nomi=approvals`.
+- Web Notification **`onclick`** switches to Approvals.
+
 ## [0.2.41] - 2026-09-21 — Compete: CLI nomi watch
 
 `nomi review` only attaches in `plan_review`; once a run is executing /
