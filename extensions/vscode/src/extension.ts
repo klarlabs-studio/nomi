@@ -1,9 +1,10 @@
 import * as vscode from "vscode";
+import { shouldAutoOpenPlanReview } from "./auto_open_plan";
 import { isCancelableStatus, preferCancelCandidates } from "./cancel_run";
 import { NomiClient, pendingCount, type Approval, type PendingSnapshot, type Run } from "./client";
 import { discoverConnection } from "./discovery";
 import { buildEditorContext, type EditorContextPayload } from "./editor_context";
-import { isBadgeEvent } from "./badge_events";
+import { isBadgeEvent, type NomiStreamEvent } from "./badge_events";
 import { NomiEventStream } from "./event_stream";
 import { warmHighlighter } from "./highlighter";
 import { openPlanReview } from "./plan_review";
@@ -22,6 +23,9 @@ let liveConnected = false;
 let progressChannel: vscode.OutputChannel | undefined;
 const progressFormatter = new StepProgressFormatter();
 const trackedRuns = new Set<string>();
+/** Runs whose Plan Review panel was already auto-opened this session. */
+const autoOpenedPlans = new Set<string>();
+const autoOpenInflight = new Set<string>();
 
 function trackRun(runId: string): void {
   if (runId) trackedRuns.add(runId);
@@ -32,6 +36,38 @@ function appendProgress(line: string, reveal: boolean): void {
   progressChannel.appendLine(line);
   if (reveal) {
     progressChannel.show(true); // preserveFocus
+  }
+}
+
+async function maybeAutoOpenPlanReview(ev: NomiStreamEvent): Promise<void> {
+  const cfg = vscode.workspace.getConfiguration("nomi");
+  const enabled = cfg.get<boolean>("autoOpenPlanReview") ?? true;
+  if (!shouldAutoOpenPlanReview(ev, trackedRuns, enabled, autoOpenedPlans)) {
+    return;
+  }
+  const runId = ev.run_id!;
+  if (autoOpenInflight.has(runId)) return;
+  autoOpenedPlans.add(runId);
+  autoOpenInflight.add(runId);
+  try {
+    const client = buildClient();
+    const detail = await client.getRun(runId);
+    if (detail.run.status !== "plan_review") return;
+    appendProgress(`▶ [${runId.slice(0, 8)}] opening Plan Review`, true);
+    await openPlanReview(client, detail.run, {
+      onResolved: () => {
+        trackRun(runId);
+        return refreshBadge(true);
+      },
+    });
+    await refreshBadge(true);
+  } catch (err) {
+    autoOpenedPlans.delete(runId);
+    vscode.window.showErrorMessage(
+      `Nomi: auto Plan Review failed — ${err instanceof Error ? err.message : String(err)}`,
+    );
+  } finally {
+    autoOpenInflight.delete(runId);
   }
 }
 
@@ -109,7 +145,11 @@ function startEventStream(): void {
               ev.type === "run.cancelled")
           ) {
             trackedRuns.delete(ev.run_id);
+            autoOpenedPlans.delete(ev.run_id);
           }
+        }
+        if (ev.type === "plan.proposed") {
+          void maybeAutoOpenPlanReview(ev);
         }
       },
       onConnect: () => {

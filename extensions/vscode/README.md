@@ -12,7 +12,9 @@ plans and tool calls from the editor without rebuilding the desktop UI.
   fallback when the stream drops)
 - **Plan Review panel** — steps + Shiki-highlighted DiffPreview (unified /
   side-by-side toggle); uncheck steps or hunks to edit via `/plan/edit`
-  (CLI `--review` [E]dit parity); Approve / Deny without leaving the editor
+  (CLI `--review` [E]dit parity); Approve / Deny without leaving the editor.
+  Ask Nomi / tracked runs **auto-open** the panel on the first
+  `plan.proposed` (disable via `nomi.autoOpenPlanReview`)
 - Quick Pick for tool approvals (plan deny = cancel, same as tray/channels)
 - **Ask Nomi** — editor context menu + command palette +
   `Ctrl/Cmd+Shift+Alt+N`; starts a run with open tabs + active selection
@@ -50,6 +52,7 @@ npm run compile
 | `nomi.dataDir` | Override data directory |
 | `nomi.pollIntervalMs` | Badge refresh fallback when SSE is down (default 15s) |
 | `nomi.defaultAssistantId` | Skip assistant Quick Pick on Ask Nomi |
+| `nomi.autoOpenPlanReview` | Auto-open Plan Review on first `plan.proposed` for tracked runs (default on) |
 
 ## Keybindings
 

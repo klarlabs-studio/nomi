@@ -46,7 +46,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - CLI `nomi approve` / `nomi deny` for tool approvals — #61
 - Desktop DiffPreview click-to-open path — #62
 - CLI `nomi cancel` + Ctrl+C cancels active run — #63
-- Extension Cancel active run (Ask Nomi / Plan Review Stop) — this PR
+- Extension Cancel active run (Ask Nomi / Plan Review Stop) — #64
+- Extension auto-open Plan Review on `plan.proposed` — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -55,7 +56,7 @@ per-tool capabilities, sandbox, and hash-chained audit.
 |---|---|
 | OpenClaw | Matrix / Teams / Signal / iMessage / Beeper (not one-PR each) |
 | Goose | Remote/synced marketplace catalog (local browse shipped) |
-| Cline | (closed) DiffPreview chrome + open-from-diff + extension Cancel |
+| Cline | (closed) DiffPreview + Cancel + auto-open Plan Review |
 | Claude Code | Full TUI deferred; CLI review/approve/deny/cancel + live progress; extension Cancel |
 | Hermes | Pocket-first mobile UX (schedules/skills now inspectable from CLI + UI) |
 

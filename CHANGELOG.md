@@ -4,6 +4,18 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.36] - 2026-09-21 — Compete: extension auto-open Plan Review
+
+Ask Nomi tracked progress in the OutputChannel but still required
+`Ctrl/Cmd+Shift+Alt+R` once a plan landed. On the first `plan.proposed`
+for a tracked run, the Plan Review panel opens automatically (Cline
+zero context-switch). Edits/replans and channel plans stay quiet.
+Disable with `nomi.autoOpenPlanReview: false`.
+
+### Added
+- SSE → **auto-open Plan Review** for tracked Ask Nomi / Review runs.
+- Setting **`nomi.autoOpenPlanReview`** (default `true`).
+
 ## [0.2.35] - 2026-09-21 — Compete: extension Cancel active run
 
 CLI `#63` can stop a runaway from SSH; the editor could start Ask Nomi
