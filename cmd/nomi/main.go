@@ -38,6 +38,9 @@ SUBCOMMANDS
     approve [id]           Resolve a pending tool approval (omit id when
                            only one is pending; --list to print).
     deny [id]              Deny a pending tool approval (same id rules).
+    cancel [run-id]        Cancel an active run (omit id when only one is
+                           active; --list to print). Ctrl+C during
+                           nomi run / nomi review also cancels.
     tail                   Follow the server-sent event stream live.
     list runs              Show the most recent runs.
     list assistants        Show every configured assistant.
@@ -71,6 +74,7 @@ EXAMPLES
     nomi review --list
     nomi approve           # sole pending tool approval
     nomi deny <id>
+    nomi cancel            # sole active run
     nomi list runs
     nomi tail
     NOMI_TOKEN=$(ssh server 'docker exec nomi cat /data/auth.token') \
@@ -101,6 +105,8 @@ func main() {
 		os.Exit(approveCmd(common, args))
 	case "deny":
 		os.Exit(denyCmd(common, args))
+	case "cancel":
+		os.Exit(cancelCmd(common, args))
 	case "tail":
 		os.Exit(tailCmd(common, args))
 	case "list", "ls":
