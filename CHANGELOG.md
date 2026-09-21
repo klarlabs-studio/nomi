@@ -4,6 +4,15 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.47] - 2026-09-21 — Compete: nomi status pending counts
+
+SSH users had to run `nomi review --list` / `nomi approve --list` to see
+what was waiting. `nomi status` now prints pending plan reviews, tool
+approvals, and active-run counts (JSON `pending` object too).
+
+### Added
+- **`nomi status`** pending plan_review / tool approval / active run lines.
+
 ## [0.2.46] - 2026-09-21 — Docs: comparison honesty post compete sprint
 
 Public comparison still disclosed v0.2.11 and described the VS Code

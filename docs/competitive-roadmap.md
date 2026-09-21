@@ -57,7 +57,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - Extension status-bar plan click → Plan Review — #72
 - Desktop OS notification on `plan.proposed` — #73
 - Extension plan toast for untracked / channel plans — #74
-- Docs comparison honesty (Cline / Claude Code + version kickers) — this PR
+- Docs comparison honesty (Cline / Claude Code + version kickers) — #75
+- CLI `nomi status` pending plan/approval counts — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
