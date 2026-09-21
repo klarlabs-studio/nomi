@@ -15,9 +15,9 @@ const maxPlanStepsInMsg = 5
 // planMsgRef remembers the prompt event so reactions and room replies
 // can resolve Approve/Deny without opening the desktop app.
 type planMsgRef struct {
-	ConnectionID string
-	RoomID       string
-	EventID      string
+	ConnectionID    string
+	RoomID          string
+	EventID         string
 	RequiresDesktop bool
 }
 
@@ -115,7 +115,7 @@ func (p *Plugin) onPlanProposed(ctx context.Context, evt *domain.Event) {
 
 	eventID, err := cli.sendText(ctx, conv.ExternalConversationID, text)
 	if err != nil {
-		log.Printf("[matrix plugin] post plan prompt failed: %v", err)
+		log.Printf("[matrix plugin] post plan prompt failed")
 		return
 	}
 	p.mu.Lock()
@@ -308,12 +308,12 @@ func (p *Plugin) resolvePlan(ctx context.Context, runID string, approve, require
 	}
 	if approve {
 		if err := p.rt.ApprovePlan(ctx, runID); err != nil {
-			log.Printf("[matrix plugin] ApprovePlan failed: %v", err)
+			log.Printf("[matrix plugin] ApprovePlan failed")
 			return true
 		}
 	} else {
 		if err := p.rt.CancelRun(ctx, runID); err != nil {
-			log.Printf("[matrix plugin] CancelRun failed: %v", err)
+			log.Printf("[matrix plugin] CancelRun failed")
 			return true
 		}
 	}
