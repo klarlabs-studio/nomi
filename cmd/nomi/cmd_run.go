@@ -74,7 +74,7 @@ type driveOpts struct {
 }
 
 // driveRun polls a run through plan_review / approvals / terminal states.
-// Shared by `nomi run` (after create) and `nomi review` (attach existing).
+// Shared by `nomi run` (after create), `nomi review`, and `nomi watch`.
 // Ctrl+C / SIGTERM posts POST /runs/:id/cancel so the daemon stops too.
 func driveRun(cli *Client, runID string, opts driveOpts, stdin *bufio.Reader) int {
 	sigCh := make(chan os.Signal, 1)
