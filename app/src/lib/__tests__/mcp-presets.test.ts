@@ -5,8 +5,10 @@ import {
   applyMcpPresetConfig,
   filterMcpPresets,
   findMcpPreset,
+  mapRemoteMcpPreset,
   mcpConfigHasPlaceholder,
   mcpPresetCreateBlockedReason,
+  mergeMcpPresets,
   parseEnvLiteralLines,
 } from "@/lib/mcp-presets";
 
@@ -80,6 +82,58 @@ describe("mcp-presets", () => {
 
     const docker = filterMcpPresets("docker");
     expect(docker.some((p) => p.id === "github")).toBe(true);
+  });
+
+  it("mergeMcpPresets keeps builtins and namespaces remote collisions", () => {
+    const remote = [
+      {
+        ...findMcpPreset("memory")!,
+        id: "memory",
+        label: "Remote Memory",
+        source: "remote" as const,
+      },
+      {
+        id: "neon",
+        label: "Neon",
+        description: "Serverless Postgres",
+        suggestedName: "Neon",
+        transport: "http" as const,
+        category: "remote" as const,
+        runtime: "http" as const,
+        endpoint: "https://mcp.neon.tech/mcp",
+        setupNote: "Bearer token in credential",
+        docURL: "https://neon.tech",
+        readyToCreate: false,
+        source: "remote" as const,
+      },
+    ];
+    const merged = mergeMcpPresets(MCP_SERVER_PRESETS, remote);
+    expect(merged.find((p) => p.id === "memory")?.label).toBe("Memory");
+    expect(merged.find((p) => p.id === "remote:memory")?.label).toBe("Remote Memory");
+    expect(merged.find((p) => p.id === "neon")?.source).toBe("remote");
+  });
+
+  it("mapRemoteMcpPreset normalizes snake_case API rows", () => {
+    const p = mapRemoteMcpPreset({
+      id: "exa",
+      label: "Exa",
+      description: "Search",
+      suggested_name: "Exa",
+      transport: "stdio",
+      category: "cloud",
+      runtime: "npx",
+      command: "npx",
+      args: "-y exa-mcp-server",
+      setup_note: "Needs API key",
+      doc_url: "https://exa.ai",
+      ready_to_create: false,
+      env_credentials: [{ key: "EXA_API_KEY", label: "Exa Api Key", required: true }],
+      catalog_origin: "raw.githubusercontent.com",
+    });
+    expect(p.suggestedName).toBe("Exa");
+    expect(p.docURL).toBe("https://exa.ai");
+    expect(p.envCredentials?.[0]?.key).toBe("EXA_API_KEY");
+    expect(p.source).toBe("remote");
   });
 
   it("mcpConfigHasPlaceholder catches path and example endpoint tokens", () => {

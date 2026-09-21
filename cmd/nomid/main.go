@@ -28,6 +28,7 @@ import (
 	"go.klarlabs.de/nomi/internal/integrations/google"
 	"go.klarlabs.de/nomi/internal/learning"
 	"go.klarlabs.de/nomi/internal/llm"
+	"go.klarlabs.de/nomi/internal/mcpcatalog"
 	"go.klarlabs.de/nomi/internal/memory"
 	"go.klarlabs.de/nomi/internal/permissions"
 	"go.klarlabs.de/nomi/internal/plugins"
@@ -793,6 +794,23 @@ func main() {
 		}
 	}
 
+	// Remote MCP preset catalog (Goose-style marketplace URL). Optional —
+	// empty setting means built-in UI presets only.
+	mcpCatalogClient := mcpcatalog.NewClient(nil)
+	if catalogURL := strings.TrimSpace(settingsRepo.GetOrDefault(mcpcatalog.SettingKey, "")); catalogURL != "" {
+		if err := mcpCatalogClient.SetURL(catalogURL); err != nil {
+			log.Printf("mcp preset catalog url invalid (%q): %v", catalogURL, err)
+		} else {
+			go func() {
+				ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+				defer cancel()
+				if _, err := mcpCatalogClient.Refresh(ctx); err != nil {
+					log.Printf("mcp preset catalog warm: %v", err)
+				}
+			}()
+		}
+	}
+
 	// API Server — bind to loopback only. Any listener beyond loopback would
 	// expose the daemon (which can execute arbitrary commands) to the local
 	// network, so this is a hard default, not a setting.
@@ -819,6 +837,7 @@ func main() {
 		ScheduleRepo:    scheduleRepo,
 		Scheduler:       sched,
 		LLMResolver:     llmResolver,
+		MCPCatalog:      mcpCatalogClient,
 	})
 
 	// Publish the endpoint so non-Go clients (the Tauri shell, e2e

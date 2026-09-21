@@ -11,6 +11,7 @@ import (
 	"go.klarlabs.de/nomi/internal/domain"
 	"go.klarlabs.de/nomi/internal/events"
 	"go.klarlabs.de/nomi/internal/llm"
+	"go.klarlabs.de/nomi/internal/mcpcatalog"
 	"go.klarlabs.de/nomi/internal/memory"
 	"go.klarlabs.de/nomi/internal/memstore"
 	"go.klarlabs.de/nomi/internal/metrics"
@@ -79,6 +80,10 @@ type RouterConfig struct {
 	// LLMResolver enables /schedules/translate (NL → cron). Optional;
 	// when nil the translate endpoint returns 503.
 	LLMResolver *llm.Resolver
+
+	// MCPCatalog backs GET /mcp/presets + settings for a Goose-style
+	// remote MCP preset marketplace URL. nil disables the surface.
+	MCPCatalog *mcpcatalog.Client
 }
 
 // NewRouter assembles the HTTP routes and wraps them in CORS + auth middleware.
@@ -377,6 +382,20 @@ func NewRouter(cfg RouterConfig) *gin.Engine {
 		settings.PUT("/safety-profile", providerServer.SetSafetyProfile)
 		settings.GET("/auto-approve-safe-plans", providerServer.GetAutoApproveSafePlans)
 		settings.PUT("/auto-approve-safe-plans", providerServer.SetAutoApproveSafePlans)
+	}
+
+	// Remote MCP preset catalog (Goose-style marketplace URL). Built-in
+	// presets stay in the desktop client; this surface only serves the
+	// optional remote index configured via app_settings.
+	if cfg.DB != nil {
+		mcpPresetServer := NewMCPPresetServer(cfg.MCPCatalog, db.NewAppSettingsRepository(cfg.DB))
+		mcpGroup := r.Group("/mcp")
+		{
+			mcpGroup.GET("/presets", mcpPresetServer.ListMCPPresets)
+			mcpGroup.POST("/presets/refresh", mcpPresetServer.RefreshMCPPresets)
+		}
+		settings.GET("/mcp-preset-catalog", mcpPresetServer.GetMCPPresetCatalog)
+		settings.PUT("/mcp-preset-catalog", mcpPresetServer.SetMCPPresetCatalog)
 	}
 
 	auditServer := NewAuditServer(cfg.DB, cfg.AuthToken)

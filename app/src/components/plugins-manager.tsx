@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { pluginsApi } from "@/lib/api";
+import { pluginsApi, mcpPresetsApi, settingsApi } from "@/lib/api";
 import { errorMessage } from "@/lib/utils";
 import type { Plugin, PluginConnection, PluginManifest } from "@/types/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,8 +40,10 @@ import {
   applyMcpPresetConfig,
   filterMcpPresets,
   findMcpPreset,
+  mapRemoteMcpPreset,
   mcpPresetCreateBlockedReason,
   mcpRuntimeLabel,
+  mergeMcpPresets,
   parseEnvLiteralLines,
   type McpEnvCredential,
   type McpPresetCategory,
@@ -168,15 +170,34 @@ function initialConfig(plugin: Plugin): Record<string, string> {
   return out;
 }
 
+function useMergedMcpPresets() {
+  const remoteQuery = useQuery({
+    queryKey: ["mcp-presets"],
+    queryFn: () => mcpPresetsApi.list(),
+    staleTime: 60_000,
+  });
+  const remote = useMemo(
+    () => (remoteQuery.data?.presets ?? []).map(mapRemoteMcpPreset),
+    [remoteQuery.data?.presets],
+  );
+  const presets = useMemo(
+    () => mergeMcpPresets(MCP_SERVER_PRESETS, remote),
+    [remote],
+  );
+  return { presets, remoteQuery };
+}
+
 function AddConnectionDialog({
   plugin,
   onClose,
   initialMcpPresetId,
+  mcpPresets = MCP_SERVER_PRESETS,
 }: {
   plugin: Plugin;
   onClose: () => void;
   /** When opening from an MCP quick-pick chip. */
   initialMcpPresetId?: string;
+  mcpPresets?: McpServerPreset[];
 }) {
   const qc = useQueryClient();
   const isEmail = plugin.manifest.id === EMAIL_PLUGIN_ID;
@@ -185,9 +206,9 @@ function AddConnectionDialog({
   const initialMcpPreset: McpServerPreset | null = (() => {
     if (!isMcp) return null;
     if (initialMcpPresetId) {
-      return MCP_SERVER_PRESETS.find((p) => p.id === initialMcpPresetId) ?? MCP_SERVER_PRESETS[0]!;
+      return findMcpPreset(initialMcpPresetId, mcpPresets) ?? mcpPresets[0]!;
     }
-    return MCP_SERVER_PRESETS[0]!;
+    return mcpPresets[0]!;
   })();
 
   const [name, setName] = useState(() => initialMcpPreset?.suggestedName ?? "");
@@ -339,41 +360,65 @@ function AddConnectionDialog({
             className="w-full text-sm border rounded px-2 py-1 bg-background"
             value={mcpPreset?.id ?? "custom"}
             onChange={(e) => {
-              const p = findMcpPreset(e.target.value);
+              const p = findMcpPreset(e.target.value, mcpPresets);
               if (p) applyMcpPreset(p);
             }}
           >
             <optgroup label="Local">
-              {MCP_SERVER_PRESETS.filter((p) => p.category === "local").map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label}
-                </option>
-              ))}
+              {mcpPresets
+                .filter((p) => p.category === "local" && p.source !== "remote")
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                  </option>
+                ))}
             </optgroup>
             <optgroup label="Cloud & data">
-              {MCP_SERVER_PRESETS.filter(
-                (p) => p.category === "cloud" || p.category === "data",
-              ).map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label}
-                </option>
-              ))}
+              {mcpPresets
+                .filter(
+                  (p) =>
+                    (p.category === "cloud" || p.category === "data") &&
+                    p.source !== "remote",
+                )
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                  </option>
+                ))}
             </optgroup>
             <optgroup label="Reasoning & remote">
-              {MCP_SERVER_PRESETS.filter(
-                (p) => p.category === "reasoning" || p.category === "remote",
-              ).map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label}
-                </option>
-              ))}
+              {mcpPresets
+                .filter(
+                  (p) =>
+                    (p.category === "reasoning" || p.category === "remote") &&
+                    p.source !== "remote",
+                )
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                  </option>
+                ))}
             </optgroup>
+            {mcpPresets.some((p) => p.source === "remote") && (
+              <optgroup label="Remote catalog">
+                {mcpPresets
+                  .filter((p) => p.source === "remote")
+                  .map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.label}
+                      {p.endorsed ? " ★" : ""}
+                    </option>
+                  ))}
+              </optgroup>
+            )}
             <optgroup label="Custom">
-              {MCP_SERVER_PRESETS.filter((p) => p.category === "custom").map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label}
-                </option>
-              ))}
+              {mcpPresets
+                .filter((p) => p.category === "custom")
+                .map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                  </option>
+                ))}
             </optgroup>
           </select>
           {mcpPreset && (
@@ -383,6 +428,11 @@ function AddConnectionDialog({
                 <Badge variant="outline" className="text-[10px] font-mono">
                   {mcpRuntimeLabel(mcpPreset.runtime)}
                 </Badge>
+                {mcpPreset.source === "remote" && (
+                  <Badge variant="outline" className="text-[10px]">
+                    remote
+                  </Badge>
+                )}
                 {mcpPreset.readyToCreate && (
                   <Badge variant="secondary" className="text-[10px]">
                     ready
@@ -967,12 +1017,130 @@ function ConnectionRow({
   );
 }
 
-function McpCatalogStrip({ onPick }: { onPick: (presetId: string) => void }) {
+function McpRemoteCatalogPanel() {
+  const qc = useQueryClient();
+  const settingsQuery = useQuery({
+    queryKey: ["mcp-preset-catalog-settings"],
+    queryFn: () => settingsApi.getMcpPresetCatalog(),
+  });
+  const [urlDraft, setUrlDraft] = useState("");
+  const [dirty, setDirty] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
+
+  const syncedURL = settingsQuery.data?.url ?? "";
+  const displayURL = dirty ? urlDraft : syncedURL;
+
+  const save = useMutation({
+    mutationFn: (url: string) => settingsApi.setMcpPresetCatalog(url),
+    onSuccess: () => {
+      setDirty(false);
+      setLocalError(null);
+      void qc.invalidateQueries({ queryKey: ["mcp-preset-catalog-settings"] });
+      void qc.invalidateQueries({ queryKey: ["mcp-presets"] });
+    },
+    onError: (err) => setLocalError(errorMessage(err)),
+  });
+
+  const refresh = useMutation({
+    mutationFn: () => mcpPresetsApi.refresh(),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["mcp-presets"] });
+      void qc.invalidateQueries({ queryKey: ["mcp-preset-catalog-settings"] });
+    },
+    onError: (err) => setLocalError(errorMessage(err)),
+  });
+
+  const example = settingsQuery.data?.example_goose_url ?? "";
+  const lastError = settingsQuery.data?.last_error || localError;
+  const count = settingsQuery.data?.preset_count ?? 0;
+
+  return (
+    <div className="space-y-2 rounded-md border border-dashed bg-background/60 p-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-medium">Remote catalog URL</p>
+        {count > 0 && (
+          <Badge variant="secondary" className="text-[10px]">
+            {count} remote
+          </Badge>
+        )}
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        Point at a Goose-compatible <code className="font-mono">servers.json</code> or a
+        Nomi preset index to expand the catalog beyond built-ins.
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        <Input
+          value={displayURL}
+          onChange={(e) => {
+            setUrlDraft(e.target.value);
+            setDirty(true);
+          }}
+          placeholder="https://…/servers.json"
+          className="h-7 flex-1 min-w-[200px] text-xs font-mono"
+        />
+        <Button
+          type="button"
+          size="sm"
+          className="h-7"
+          disabled={save.isPending || (!dirty && displayURL === syncedURL)}
+          onClick={() => save.mutate(displayURL.trim())}
+        >
+          Save
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-7"
+          disabled={!syncedURL || refresh.isPending}
+          onClick={() => refresh.mutate()}
+        >
+          <RefreshCw className={`w-3 h-3 mr-1 ${refresh.isPending ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
+      </div>
+      <div className="flex flex-wrap gap-2 text-[11px]">
+        {example && (
+          <button
+            type="button"
+            className="underline text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              setUrlDraft(example);
+              setDirty(true);
+            }}
+          >
+            Use Goose catalog
+          </button>
+        )}
+        {syncedURL && (
+          <button
+            type="button"
+            className="underline text-muted-foreground hover:text-foreground"
+            onClick={() => save.mutate("")}
+          >
+            Clear
+          </button>
+        )}
+      </div>
+      {lastError && (
+        <p className="text-[11px] text-destructive">{lastError}</p>
+      )}
+    </div>
+  );
+}
+
+function McpCatalogStrip({
+  onPick,
+  presets,
+}: {
+  onPick: (presetId: string) => void;
+  presets: McpServerPreset[];
+}) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<McpPresetCategory | "all">("all");
   const filtered = useMemo(
-    () => filterMcpPresets(query, category, { includeCustom: false }),
-    [query, category],
+    () => filterMcpPresets(query, category, { includeCustom: false, presets }),
+    [query, category, presets],
   );
 
   return (
@@ -986,6 +1154,7 @@ function McpCatalogStrip({ onPick }: { onPick: (presetId: string) => void }) {
           className="h-7 max-w-[180px] text-xs"
         />
       </div>
+      <McpRemoteCatalogPanel />
       <div className="flex flex-wrap gap-1">
         {MCP_PRESET_CATEGORIES.map((c) => (
           <Button
@@ -1016,6 +1185,11 @@ function McpCatalogStrip({ onPick }: { onPick: (presetId: string) => void }) {
                 <Badge variant="outline" className="text-[10px] font-mono">
                   {mcpRuntimeLabel(p.runtime)}
                 </Badge>
+                {p.source === "remote" && (
+                  <Badge variant="outline" className="text-[10px]">
+                    remote
+                  </Badge>
+                )}
                 {p.readyToCreate && (
                   <Badge variant="secondary" className="text-[10px]">
                     ready
@@ -1037,6 +1211,7 @@ function PluginCard({ plugin }: { plugin: Plugin }) {
   const [adding, setAdding] = useState(false);
   const [mcpPresetId, setMcpPresetId] = useState<string | undefined>(undefined);
   const isMcp = plugin.manifest.id === MCP_PLUGIN_ID;
+  const { presets: mcpPresets } = useMergedMcpPresets();
 
   const openAdd = (presetId?: string) => {
     setMcpPresetId(presetId);
@@ -1289,7 +1464,7 @@ function PluginCard({ plugin }: { plugin: Plugin }) {
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {MCP_EMPTY_STATE_PRESET_IDS.map((id) => {
-                    const p = findMcpPreset(id);
+                    const p = findMcpPreset(id, mcpPresets);
                     if (!p) return null;
                     return (
                       <Button
@@ -1321,7 +1496,12 @@ function PluginCard({ plugin }: { plugin: Plugin }) {
             <>
               {!adding ? (
                 <div className="space-y-2">
-                  {isMcp && <McpCatalogStrip onPick={(id) => openAdd(id)} />}
+                  {isMcp && (
+                    <McpCatalogStrip
+                      onPick={(id) => openAdd(id)}
+                      presets={mcpPresets}
+                    />
+                  )}
                   <Button size="sm" variant="outline" onClick={() => openAdd(isMcp ? "custom" : undefined)}>
                     <Plus className="w-4 h-4 mr-1" /> Add connection
                   </Button>
@@ -1331,6 +1511,7 @@ function PluginCard({ plugin }: { plugin: Plugin }) {
                   plugin={plugin}
                   onClose={closeAdd}
                   initialMcpPresetId={mcpPresetId}
+                  mcpPresets={mcpPresets}
                 />
               )}
             </>
