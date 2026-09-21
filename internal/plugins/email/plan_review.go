@@ -127,7 +127,7 @@ func (p *Plugin) onPlanProposed(_ context.Context, evt *domain.Event) {
 	}
 
 	if err := transport.SendEmail(cfg, []string{to}, subject, text, replyTo, refs); err != nil {
-		log.Printf("[email plugin] post plan prompt failed: %v", err)
+		log.Printf("[email plugin] post plan prompt failed")
 		return
 	}
 
@@ -344,7 +344,7 @@ func (p *Plugin) tryHandlePlanReply(ctx context.Context, connID string, cfg tran
 			return true
 		}
 		if err := p.rt.ApprovePlan(ctx, runID); err != nil {
-			log.Printf("[email plugin] ApprovePlan failed: %v", err)
+			log.Printf("[email plugin] ApprovePlan failed")
 			_ = transport.SendEmail(cfg, []string{senderAddr}, subject,
 				"Could not approve plan (it may already be resolved).", replyTo, refs)
 			return true
@@ -353,7 +353,7 @@ func (p *Plugin) tryHandlePlanReply(ctx context.Context, connID string, cfg tran
 			"Plan approved — executing.", replyTo, refs)
 	} else {
 		if err := p.rt.CancelRun(ctx, runID); err != nil {
-			log.Printf("[email plugin] CancelRun failed: %v", err)
+			log.Printf("[email plugin] CancelRun failed")
 			_ = transport.SendEmail(cfg, []string{senderAddr}, subject,
 				"Could not deny plan (it may already be resolved).", replyTo, refs)
 			return true
