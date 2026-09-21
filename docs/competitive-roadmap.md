@@ -58,7 +58,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - Desktop OS notification on `plan.proposed` — #73
 - Extension plan toast for untracked / channel plans — #74
 - Docs comparison honesty (Cline / Claude Code + version kickers) — #75
-- CLI `nomi status` pending plan/approval counts — this PR
+- CLI `nomi status` pending plan/approval counts — #76
+- CLI `nomi replan` (Fix this with the agent over SSH) — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -68,7 +69,7 @@ per-tool capabilities, sandbox, and hash-chained audit.
 | OpenClaw | Matrix / Teams / Signal / iMessage / Beeper (not one-PR each) |
 | Goose | Remote/synced marketplace catalog (local browse shipped) |
 | Cline | (closed) DiffPreview + Cancel/Pause + auto-open plan + approval toast + live status step |
-| Claude Code | Full TUI deferred; CLI review/approve/deny/cancel/pause/resume/watch + live progress; extension Cancel/Pause/Resume |
+| Claude Code | Full TUI deferred; CLI review/approve/deny/cancel/pause/resume/watch/replan + live progress; extension Cancel/Pause/Resume |
 | Hermes | Pocket-first mobile UX (schedules/skills now inspectable from CLI + UI) |
 
 ## Next moves (priority)
