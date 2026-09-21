@@ -116,13 +116,19 @@ export async function renderDiffPreviewHtml(
       </div>`);
     }
     fileBits.push(`<div class="file-block">
-      <div class="file-label">${escapeHtml(block.fileLabel)}</div>
+      <button type="button" class="file-label" data-open-path="${escapeHtml(block.fileLabel)}" title="Open in editor">${escapeHtml(block.fileLabel)}</button>
       ${hunkBits.join("")}
     </div>`);
   }
+  const fileLinks = files
+    .map(
+      (f) =>
+        `<button type="button" class="file-chip" data-open-path="${escapeHtml(f)}" title="Open in editor">${escapeHtml(f)}</button>`,
+    )
+    .join(" ");
   return `<div class="diff-preview">
     <div class="diff-summary">
-      <span class="files">${escapeHtml(files.join(", ") || "patch")}</span>
+      <span class="files">${fileLinks || escapeHtml("patch")}</span>
       <span class="pm add">+${added}</span>
       <span class="pm rem">−${removed}</span>
     </div>
@@ -147,15 +153,35 @@ export const DIFF_PREVIEW_CSS = `
   background: var(--vscode-editorWidget-background, transparent);
   font-family: var(--vscode-editor-font-family, monospace);
 }
-.diff-summary .files { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.diff-summary .files { flex: 1; min-width: 0; overflow: hidden; display: flex; flex-wrap: wrap; gap: 4px; }
+.file-label, .file-chip {
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: var(--vscode-textLink-foreground, #4daafc);
+  cursor: pointer;
+  font: inherit;
+  font-family: var(--vscode-editor-font-family, monospace);
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.file-label:hover, .file-chip:hover { opacity: 0.85; }
+.file-label {
+  display: block;
+  padding: 3px 8px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.file-chip { font-size: 11px; }
 .pm.add { color: var(--vscode-gitDecoration-addedResourceForeground, #3fb950); }
 .pm.rem { color: var(--vscode-gitDecoration-deletedResourceForeground, #f85149); }
 .file-block { border-top: 1px solid var(--vscode-widget-border, #444); }
-.file-label {
-  padding: 3px 8px;
-  opacity: 0.75;
-  font-family: var(--vscode-editor-font-family, monospace);
-}
 .hunk-block { border-top: 1px solid var(--vscode-widget-border, #333); }
 .hunk-hdr {
   display: flex;

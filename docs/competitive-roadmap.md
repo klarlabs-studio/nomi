@@ -39,7 +39,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - Extension keybindings (Ask Nomi / Review / Approve / Deny) — #54
 - Extension Shiki + side-by-side DiffPreview chrome — #55
 - Email channel plan Approve/Deny (reply APPROVE/DENY) — #56
-- CLI live step progress during `nomi run` — this PR
+- CLI live step progress during `nomi run` — #57
+- Extension open path from Plan Review DiffPreview — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -48,7 +49,7 @@ per-tool capabilities, sandbox, and hash-chained audit.
 |---|---|
 | OpenClaw | Matrix / Teams / Signal / iMessage / Beeper (not one-PR each) |
 | Goose | Remote/synced marketplace catalog (local browse shipped) |
-| Cline | (closed) editor DiffPreview chrome + keybindings shipped |
+| Cline | (closed) DiffPreview chrome + keybindings + open-from-diff |
 | Claude Code | Full TUI deferred; CLI now shows live step progress |
 | Hermes | Pocket-first mobile UX (schedules/skills now inspectable from CLI + UI) |
 

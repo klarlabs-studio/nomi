@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import type { NomiClient, Plan, PlanStep, Run } from "./client";
 import { listHunks, type HunkListItem } from "./diff_hunks";
 import { DIFF_PREVIEW_CSS, renderDiffPreviewHtml } from "./diff_render";
+import { openPathFromPlanReview } from "./open_path";
 import {
   applyHunkSkips,
   formatPlanReview,
@@ -20,6 +21,7 @@ export type PlanReviewCallbacks = {
 type EditMessage = {
   type?: string;
   keep?: number[];
+  path?: string;
   /** Unchecked hunk keys → skip (desktop DiffPreview parity). */
   skippedHunks?: Record<string, string[]>;
 };
@@ -76,6 +78,10 @@ export async function openPlanReview(
         vscode.window.showInformationMessage("Nomi: plan denied (run cancelled)");
         panel.dispose();
         await callbacks.onResolved();
+      } else if (msg.type === "openPath") {
+        if (typeof msg.path === "string" && msg.path) {
+          await openPathFromPlanReview(msg.path);
+        }
       } else if (msg.type === "edit") {
         if (!plan || plan.steps.length === 0) {
           vscode.window.showWarningMessage("Nomi: nothing to edit");
@@ -148,15 +154,19 @@ async function stepExtrasHtml(s: PlanStep, preferDark: boolean): Promise<string>
     const path = typeof args.path === "string" ? args.path : "";
     const content = typeof args.content === "string" ? args.content : "";
     const bits: string[] = [];
-    if (path) bits.push(`write: ${path}`);
-    if (content) {
-      for (const l of truncateLines(content, 20).split("\n")) {
-        bits.push(`| ${l}`);
-      }
+    if (path) {
+      bits.push(
+        `<button type="button" class="file-chip" data-open-path="${escapeHtml(path)}" title="Open in editor">${escapeHtml(path)}</button>`,
+      );
     }
-    return bits.length > 0
-      ? `<pre class="step-args">${escapeHtml(bits.join("\n"))}</pre>`
-      : "";
+    if (content) {
+      const lines = truncateLines(content, 20)
+        .split("\n")
+        .map((l) => escapeHtml(`| ${l}`))
+        .join("\n");
+      bits.push(`<pre class="step-args">${lines}</pre>`);
+    }
+    return bits.length > 0 ? `<div class="write-preview">${bits.join("")}</div>` : "";
   }
   if (tool === "command.exec") {
     const cmd =
@@ -348,6 +358,10 @@ function renderHtml(
       margin: 4px 0 0 22px;
       opacity: 0.9;
     }
+    .write-preview {
+      margin: 4px 0 0 22px;
+    }
+    .write-preview .file-chip { margin-bottom: 4px; }
     ${DIFF_PREVIEW_CSS}
   </style>
 </head>
@@ -380,6 +394,14 @@ function renderHtml(
     });
     document.getElementById('approve').addEventListener('click', () => vscode.postMessage({ type: 'approve' }));
     document.getElementById('deny').addEventListener('click', () => vscode.postMessage({ type: 'deny' }));
+    document.body.addEventListener('click', (ev) => {
+      const t = ev.target;
+      if (!(t instanceof Element)) return;
+      const btn = t.closest('[data-open-path]');
+      if (!btn) return;
+      const p = btn.getAttribute('data-open-path');
+      if (p) vscode.postMessage({ type: 'openPath', path: p });
+    });
     document.getElementById('edit').addEventListener('click', () => {
       const keep = [];
       document.querySelectorAll('input.keep').forEach((el) => {
