@@ -49,7 +49,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - Extension Cancel active run (Ask Nomi / Plan Review Stop) — #64
 - Extension auto-open Plan Review on `plan.proposed` — #65
 - CLI `nomi pause` / `nomi resume` — #66
-- Extension Pause / Resume active run — this PR
+- Extension Pause / Resume active run — #67
+- Extension approval toast (Approve / Deny on `approval.requested`) — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose

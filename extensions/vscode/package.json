@@ -56,6 +56,11 @@
           "type": "boolean",
           "default": true,
           "description": "When Ask Nomi / Review tracks a run, automatically open the Plan Review panel on the first plan.proposed event."
+        },
+        "nomi.approvalToast": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show an Approve / Deny toast when a tool approval is requested (approval.requested)."
         }
       }
     },
@@ -169,7 +174,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "tsc -p ./ --noEmit",
-    "test": "npm run compile && node --test out/discovery.test.js out/editor_context.test.js out/event_stream.test.js out/plan_fmt.test.js out/diff_hunks.test.js out/highlighter.test.js out/diff_render.test.js out/open_path.test.js out/step_progress.test.js out/cancel_run.test.js out/auto_open_plan.test.js out/pause_run.test.js",
+    "test": "npm run compile && node --test out/discovery.test.js out/editor_context.test.js out/event_stream.test.js out/plan_fmt.test.js out/diff_hunks.test.js out/highlighter.test.js out/diff_render.test.js out/open_path.test.js out/step_progress.test.js out/cancel_run.test.js out/auto_open_plan.test.js out/pause_run.test.js out/approval_toast.test.js",
     "vscode:prepublish": "npm run compile"
   },
   "devDependencies": {

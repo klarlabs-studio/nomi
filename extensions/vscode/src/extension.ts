@@ -1,4 +1,9 @@
 import * as vscode from "vscode";
+import {
+  formatApprovalToastMessage,
+  parseApprovalRequested,
+  shouldShowApprovalToast,
+} from "./approval_toast";
 import { shouldAutoOpenPlanReview } from "./auto_open_plan";
 import { isCancelableStatus, preferCancelCandidates } from "./cancel_run";
 import { NomiClient, pendingCount, type Approval, type PendingSnapshot, type Run } from "./client";
@@ -27,6 +32,9 @@ const trackedRuns = new Set<string>();
 /** Runs whose Plan Review panel was already auto-opened this session. */
 const autoOpenedPlans = new Set<string>();
 const autoOpenInflight = new Set<string>();
+/** Approval ids already toasted this session (avoid duplicate banners). */
+const toastedApprovals = new Set<string>();
+const toastInflight = new Set<string>();
 
 function trackRun(runId: string): void {
   if (runId) trackedRuns.add(runId);
@@ -69,6 +77,44 @@ async function maybeAutoOpenPlanReview(ev: NomiStreamEvent): Promise<void> {
     );
   } finally {
     autoOpenInflight.delete(runId);
+  }
+}
+
+async function maybeApprovalToast(ev: NomiStreamEvent): Promise<void> {
+  const info = parseApprovalRequested(ev);
+  if (!info) return;
+  const cfg = vscode.workspace.getConfiguration("nomi");
+  const enabled = cfg.get<boolean>("approvalToast") ?? true;
+  if (!shouldShowApprovalToast(enabled, info.approvalId, toastedApprovals)) {
+    return;
+  }
+  if (toastInflight.has(info.approvalId)) return;
+  toastedApprovals.add(info.approvalId);
+  toastInflight.add(info.approvalId);
+  try {
+    const runNote = info.runId ? info.runId.slice(0, 8) : "?";
+    appendProgress(`⏸ [${runNote}] approval: ${info.capability}`, true);
+    const choice = await vscode.window.showInformationMessage(
+      formatApprovalToastMessage(info),
+      "Approve",
+      "Deny",
+    );
+    if (!choice) return;
+    const client = buildClient();
+    await client.resolveApproval(info.approvalId, choice === "Approve");
+    vscode.window.showInformationMessage(
+      choice === "Approve"
+        ? `Nomi: approved ${info.capability}`
+        : `Nomi: denied ${info.capability}`,
+    );
+    await refreshBadge(true);
+  } catch (err) {
+    toastedApprovals.delete(info.approvalId);
+    vscode.window.showErrorMessage(
+      `Nomi: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  } finally {
+    toastInflight.delete(info.approvalId);
   }
 }
 
@@ -151,6 +197,9 @@ function startEventStream(): void {
         }
         if (ev.type === "plan.proposed") {
           void maybeAutoOpenPlanReview(ev);
+        }
+        if (ev.type === "approval.requested") {
+          void maybeApprovalToast(ev);
         }
       },
       onConnect: () => {
