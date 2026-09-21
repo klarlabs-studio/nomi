@@ -6,6 +6,11 @@ import { isBadgeEvent } from "./badge_events";
 import { NomiEventStream } from "./event_stream";
 import { warmHighlighter } from "./highlighter";
 import { openPlanReview } from "./plan_review";
+import {
+  isProgressEvent,
+  shouldRevealProgress,
+  StepProgressFormatter,
+} from "./step_progress";
 
 let statusItem: vscode.StatusBarItem | undefined;
 let pollTimer: ReturnType<typeof setInterval> | undefined;
@@ -13,6 +18,21 @@ let eventStream: NomiEventStream | undefined;
 let refreshDebounce: ReturnType<typeof setTimeout> | undefined;
 let lastSnapshot: PendingSnapshot = { approvals: [], plans: [] };
 let liveConnected = false;
+let progressChannel: vscode.OutputChannel | undefined;
+const progressFormatter = new StepProgressFormatter();
+const trackedRuns = new Set<string>();
+
+function trackRun(runId: string): void {
+  if (runId) trackedRuns.add(runId);
+}
+
+function appendProgress(line: string, reveal: boolean): void {
+  if (!progressChannel) return;
+  progressChannel.appendLine(line);
+  if (reveal) {
+    progressChannel.show(true); // preserveFocus
+  }
+}
 
 type PendingItem =
   | { itemKind: "approval"; label: string; description: string; approval: Approval }
@@ -76,6 +96,20 @@ function startEventStream(): void {
     eventStream = new NomiEventStream(discovered.url, discovered.token, {
       onEvent: (ev) => {
         if (isBadgeEvent(ev.type)) scheduleBadgeRefresh();
+        if (isProgressEvent(ev.type)) {
+          const line = progressFormatter.format(ev);
+          if (line) {
+            appendProgress(line, shouldRevealProgress(ev, trackedRuns));
+          }
+          if (
+            ev.run_id &&
+            (ev.type === "run.completed" ||
+              ev.type === "run.failed" ||
+              ev.type === "run.cancelled")
+          ) {
+            trackedRuns.delete(ev.run_id);
+          }
+        }
       },
       onConnect: () => {
         liveConnected = true;
@@ -137,7 +171,13 @@ async function approveSelected(): Promise<void> {
     return;
   }
   // Plans always open the review panel (no blind approve for write/patch).
-  await openPlanReview(client, item.run, { onResolved: () => refreshBadge(true) });
+  trackRun(item.run.id);
+  await openPlanReview(client, item.run, {
+    onResolved: () => {
+      trackRun(item.run.id);
+      return refreshBadge(true);
+    },
+  });
 }
 
 async function denySelected(): Promise<void> {
@@ -159,7 +199,13 @@ async function showPending(): Promise<void> {
   if (!item) return;
   if (item.itemKind === "plan") {
     const client = buildClient();
-    await openPlanReview(client, item.run, { onResolved: () => refreshBadge(true) });
+    trackRun(item.run.id);
+    await openPlanReview(client, item.run, {
+      onResolved: () => {
+        trackRun(item.run.id);
+        return refreshBadge(true);
+      },
+    });
     return;
   }
   const choice = await vscode.window.showQuickPick(
@@ -200,7 +246,13 @@ async function reviewPlanCommand(): Promise<void> {
     run = picked.run;
   }
   const client = buildClient();
-  await openPlanReview(client, run, { onResolved: () => refreshBadge(true) });
+  trackRun(run.id);
+  await openPlanReview(client, run, {
+    onResolved: () => {
+      trackRun(run.id);
+      return refreshBadge(true);
+    },
+  });
 }
 
 async function openStatus(): Promise<void> {
@@ -288,10 +340,13 @@ async function runWithEditorContext(): Promise<void> {
     if (!assistantId) return;
     const editorContext = gatherEditorContext();
     const run = await client.createRun(goal.trim(), assistantId, editorContext);
+    trackRun(run.id);
     const ctxNote = editorContext
       ? ` (tabs=${editorContext.open_tabs?.length ?? 0}, selection=${editorContext.active?.selection ? "yes" : "no"})`
       : " (no editor context)";
     vscode.window.showInformationMessage(`Nomi: run ${run.id.slice(0, 8)} created${ctxNote}`);
+    progressChannel?.appendLine(`▶ [${run.id.slice(0, 8)}] Ask Nomi — ${goal.trim().slice(0, 80)}`);
+    progressChannel?.show(true);
     await refreshBadge(true);
   } catch (err) {
     vscode.window.showErrorMessage(`Nomi: ${err instanceof Error ? err.message : String(err)}`);
@@ -305,6 +360,9 @@ export function activate(context: vscode.ExtensionContext): void {
   statusItem.show();
   context.subscriptions.push(statusItem);
 
+  progressChannel = vscode.window.createOutputChannel("Nomi");
+  context.subscriptions.push(progressChannel);
+
   context.subscriptions.push(
     vscode.commands.registerCommand("nomi.refresh", () => refreshBadge(false)),
     vscode.commands.registerCommand("nomi.showPending", () => showPending()),
@@ -313,6 +371,9 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("nomi.openStatus", () => openStatus()),
     vscode.commands.registerCommand("nomi.runWithEditorContext", () => runWithEditorContext()),
     vscode.commands.registerCommand("nomi.reviewPlan", () => reviewPlanCommand()),
+    vscode.commands.registerCommand("nomi.showProgress", () => {
+      progressChannel?.show(true);
+    }),
   );
 
   warmHighlighter();
