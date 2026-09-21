@@ -4,6 +4,16 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.33] - 2026-09-21 — Compete: desktop DiffPreview open path
+
+Extension Plan Review already opens file labels (#58); the Tauri
+DiffPreview still rendered them as plain text. Click a file label (or
+summary chip) to open it in the OS default app via `plugin-shell`.
+
+### Added
+- **`open-path`** helper + clickable DiffPreview file labels.
+- Tauri capability **`shell:allow-open`**.
+
 ## [0.2.32] - 2026-09-21 — Compete: CLI nomi approve / deny
 
 `nomi review` attaches to pending plans; tool approval cards were still

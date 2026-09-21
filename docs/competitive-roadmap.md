@@ -43,7 +43,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - Extension open path from Plan Review DiffPreview — #58
 - Extension live step progress (OutputChannel via SSE) — #59
 - CLI `nomi review` attach to pending plan_review — #60
-- CLI `nomi approve` / `nomi deny` for tool approvals — this PR
+- CLI `nomi approve` / `nomi deny` for tool approvals — #61
+- Desktop DiffPreview click-to-open path — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -52,7 +53,7 @@ per-tool capabilities, sandbox, and hash-chained audit.
 |---|---|
 | OpenClaw | Matrix / Teams / Signal / iMessage / Beeper (not one-PR each) |
 | Goose | Remote/synced marketplace catalog (local browse shipped) |
-| Cline | (closed) DiffPreview + keybindings + open-from-diff + live progress |
+| Cline | (closed) DiffPreview chrome + open-from-diff (extension + desktop) |
 | Claude Code | Full TUI deferred; CLI review + approve/deny + live progress shipped |
 | Hermes | Pocket-first mobile UX (schedules/skills now inspectable from CLI + UI) |
 
