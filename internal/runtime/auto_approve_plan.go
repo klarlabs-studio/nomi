@@ -17,6 +17,7 @@ var messagingChannelPlugins = map[string]bool{
 	"com.nomi.discord":  true,
 	"com.nomi.whatsapp": true,
 	"com.nomi.email":    true,
+	"com.nomi.matrix":   true,
 }
 
 // maybeAutoApproveSafeChannelPlan approves a plan that does not need

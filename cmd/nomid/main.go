@@ -35,6 +35,7 @@ import (
 	calendarplugin "go.klarlabs.de/nomi/internal/plugins/calendar"
 	"go.klarlabs.de/nomi/internal/plugins/devloader"
 	discordplugin "go.klarlabs.de/nomi/internal/plugins/discord"
+	matrixplugin "go.klarlabs.de/nomi/internal/plugins/matrix"
 	emailplugin "go.klarlabs.de/nomi/internal/plugins/email"
 	githubplugin "go.klarlabs.de/nomi/internal/plugins/github"
 	gmailplugin "go.klarlabs.de/nomi/internal/plugins/gmail"
@@ -300,6 +301,17 @@ func main() {
 		log.Fatalf("Failed to register WhatsApp plugin: %v", err)
 	}
 
+	// Matrix plugin — Client-Server API /sync. User pastes homeserver URL
+	// + access token; DMs and room messages create runs. Plan review via
+	// APPROVE/DENY reply or ✅/❌ reaction (OpenClaw long-tail wedge).
+	matrixPlugin := matrixplugin.NewPlugin(
+		rt, connectionRepo, bindingRepo, conversationRepo, identityRepo,
+		db.NewRunRepository(database), secretStore, eventBus,
+	)
+	if err := pluginRegistry.Register(matrixPlugin); err != nil {
+		log.Fatalf("Failed to register Matrix plugin: %v", err)
+	}
+
 	// Scout plugin — browser automation via MCP. Spawns the `scout`
 	// binary as a stdio subprocess (or talks to a remote HTTP+SSE
 	// scout instance) and exposes navigate / observe / click / type /
@@ -462,7 +474,8 @@ func main() {
 	// Project plugin-contributed tools into the shared tools.Registry so
 	// the runtime's executor can dispatch them alongside system tools
 	// (filesystem.read, command.exec, llm.chat). Without this, tools like
-	// email.send / slack.post_message / discord.post_message wouldn't
+	// email.send / slack.post_message / discord.post_message /
+	// matrix.post_message wouldn't
 	// resolve at plan-execution time even though they're declared on
 	// their plugin manifests.
 	if err := pluginRegistry.RegisterToolsInto(toolRegistry); err != nil {
