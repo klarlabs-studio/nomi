@@ -8,9 +8,9 @@ plans and tool calls from the editor without rebuilding the desktop UI.
 - Status-bar badge with pending **tool approvals** + **plan_review** runs
 - **Live SSE** on `/events/stream` — badge refreshes on `approval.*` /
   `plan.*` / `run.cancelled` (15s poll fallback when the stream drops)
-- **Plan Review panel** — steps + unified diffs / write excerpts; uncheck
-  steps to drop via `/plan/edit` (CLI `--review` [E]dit parity); Approve /
-  Deny without leaving the editor
+- **Plan Review panel** — steps + Shiki-highlighted DiffPreview (unified /
+  side-by-side toggle); uncheck steps or hunks to edit via `/plan/edit`
+  (CLI `--review` [E]dit parity); Approve / Deny without leaving the editor
 - Quick Pick for tool approvals (plan deny = cancel, same as tray/channels)
 - **Ask Nomi** — editor context menu + command palette +
   `Ctrl/Cmd+Shift+Alt+N`; starts a run with open tabs + active selection
@@ -58,6 +58,10 @@ npm run compile
 
 Remap under Keyboard Shortcuts if they collide with other extensions.
 
-## Out of scope (v1)
+## DiffPreview chrome
 
-Shiki highlighting / side-by-side — use the Tauri desktop DiffPreview.
+Plan Review highlights patch hunks with **Shiki** in the extension host
+(injected HTML — webview CSP cannot load WASM) and offers a **Side-by-side**
+toolbar toggle (preference sticky via `webview.setState`). Write / shell
+steps still show plain excerpts; open the Tauri app for the full chat
+surface.

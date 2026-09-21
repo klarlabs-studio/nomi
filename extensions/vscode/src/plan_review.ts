@@ -1,13 +1,16 @@
 import * as vscode from "vscode";
 import type { NomiClient, Plan, PlanStep, Run } from "./client";
 import { listHunks, type HunkListItem } from "./diff_hunks";
+import { DIFF_PREVIEW_CSS, renderDiffPreviewHtml } from "./diff_render";
 import {
   applyHunkSkips,
   formatPlanReview,
   keepPlanSteps,
   planRequiresCaution,
+  summarizeDiff,
   toEditPlanSteps,
   truncateChars,
+  truncateLines,
 } from "./plan_fmt";
 
 export type PlanReviewCallbacks = {
@@ -21,9 +24,17 @@ type EditMessage = {
   skippedHunks?: Record<string, string[]>;
 };
 
+function preferDarkTheme(): boolean {
+  const kind = vscode.window.activeColorTheme.kind;
+  return (
+    kind === vscode.ColorThemeKind.Dark ||
+    kind === vscode.ColorThemeKind.HighContrast
+  );
+}
+
 /**
- * Plan+diff review panel: drop steps and skip patch hunks via /plan/edit.
- * Shiki / side-by-side stay on the desktop DiffPreview.
+ * Plan+diff review panel: drop steps, skip patch hunks, Shiki highlight,
+ * and side-by-side DiffPreview chrome (host-side tokens → webview HTML).
  */
 export async function openPlanReview(
   client: NomiClient,
@@ -41,13 +52,17 @@ export async function openPlanReview(
     { enableScripts: true, retainContextWhenHidden: true },
   );
 
-  const render = (): void => {
+  const render = async (): Promise<void> => {
     const caution = planRequiresCaution(plan);
-    const body = formatPlanReview(goal, plan);
+    const dark = preferDarkTheme();
+    const stepsHtml = await Promise.all(
+      (plan?.steps ?? []).map((s, i) => stepCheckboxRow(s, i, dark)),
+    );
+    const summary = formatPlanReviewSummary(goal, plan);
     const nonce = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    panel.webview.html = renderHtml(panel.webview, body, caution, plan?.steps ?? [], nonce);
+    panel.webview.html = renderHtml(panel.webview, summary, caution, stepsHtml, nonce);
   };
-  render();
+  await render();
 
   const sub = panel.webview.onDidReceiveMessage(async (msg: EditMessage) => {
     try {
@@ -91,7 +106,7 @@ export async function openPlanReview(
         if (stepsDropped) parts.push(`${nextPlan.steps.length} step(s) kept`);
         if (hunksChanged) parts.push("hunks updated");
         vscode.window.showInformationMessage(`Nomi: plan updated — ${parts.join(", ")}`);
-        render();
+        await render();
       }
     } catch (err) {
       vscode.window.showErrorMessage(
@@ -110,10 +125,70 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
-function stepCheckboxRow(s: PlanStep, index: number): string {
+/** Compact goal + non-diff step meta (diffs render as DiffPreview chrome). */
+function formatPlanReviewSummary(goal: string, plan: Plan | null | undefined): string {
+  if (!plan) return escapeHtml(formatPlanReview(goal, plan));
+  const lines: string[] = ["▶ Plan ready for review"];
+  if (goal) lines.push(`  Goal: ${truncateChars(goal, 200)}`);
+  return `<pre class="summary">${escapeHtml(lines.join("\n"))}</pre>`;
+}
+
+async function stepExtrasHtml(s: PlanStep, preferDark: boolean): Promise<string> {
+  const args = s.arguments;
+  if (!args) return "";
+  const tool = s.expected_tool ?? "";
+  if (tool === "filesystem.patch" && typeof args.diff === "string" && args.diff) {
+    const truncated =
+      args.diff.length > 64_000
+        ? `${args.diff.slice(0, 64_000)}\n… (truncated)`
+        : args.diff;
+    return await renderDiffPreviewHtml(truncated, preferDark);
+  }
+  if (tool === "filesystem.write") {
+    const path = typeof args.path === "string" ? args.path : "";
+    const content = typeof args.content === "string" ? args.content : "";
+    const bits: string[] = [];
+    if (path) bits.push(`write: ${path}`);
+    if (content) {
+      for (const l of truncateLines(content, 20).split("\n")) {
+        bits.push(`| ${l}`);
+      }
+    }
+    return bits.length > 0
+      ? `<pre class="step-args">${escapeHtml(bits.join("\n"))}</pre>`
+      : "";
+  }
+  if (tool === "command.exec") {
+    const cmd =
+      typeof args.command === "string"
+        ? args.command
+        : typeof args.input === "string"
+          ? args.input
+          : "";
+    return cmd
+      ? `<pre class="step-args">${escapeHtml(`$ ${truncateChars(cmd, 200)}`)}</pre>`
+      : "";
+  }
+  if (tool === "filesystem.read" && typeof args.path === "string") {
+    return `<pre class="step-args">${escapeHtml(`read: ${args.path}`)}</pre>`;
+  }
+  return "";
+}
+
+async function stepCheckboxRow(
+  s: PlanStep,
+  index: number,
+  preferDark: boolean,
+): Promise<string> {
   const title = escapeHtml(truncateChars(s.title || s.expected_tool || "step", 80));
   const cap = escapeHtml(s.expected_capability || s.expected_tool || "");
   const stepId = escapeHtml(s.id || String(index));
+  const desc = s.description
+    ? `<div class="meta">${escapeHtml(truncateChars(s.description, 200))}</div>`
+    : "";
+  const why = s.why
+    ? `<div class="meta why">why: ${escapeHtml(truncateChars(s.why, 160))}</div>`
+    : "";
   let hunksHtml = "";
   if (s.expected_tool === "filesystem.patch" && typeof s.arguments?.diff === "string") {
     const hunks: HunkListItem[] = listHunks(s.arguments.diff);
@@ -128,20 +203,33 @@ function stepCheckboxRow(s: PlanStep, index: number): string {
         .join("")}</div>`;
     }
   }
+  const extras = await stepExtrasHtml(s, preferDark);
+  // summarizeDiff keeps a one-line badge when chrome is empty (degenerate diff)
+  let badge = "";
+  if (
+    s.expected_tool === "filesystem.patch" &&
+    typeof s.arguments?.diff === "string" &&
+    !extras.includes("diff-preview")
+  ) {
+    const { added, removed, files } = summarizeDiff(s.arguments.diff);
+    badge = `<div class="meta">diff: +${added} −${removed}${files.length ? ` in ${escapeHtml(files.join(", "))}` : ""}</div>`;
+  }
   return `<div class="step-block">
     <label class="step">
       <input type="checkbox" class="keep" data-idx="${index}" checked />
       <span><strong>${index + 1}.</strong> ${title}${cap ? ` <code>${cap}</code>` : ""}</span>
     </label>
+    ${desc}${why}${badge}
     ${hunksHtml}
+    ${extras}
   </div>`;
 }
 
 function renderHtml(
   webview: vscode.Webview,
-  body: string,
+  summaryHtml: string,
   caution: boolean,
-  steps: PlanStep[],
+  stepsHtml: string[],
   nonce: string,
 ): string {
   const csp = [
@@ -150,8 +238,8 @@ function renderHtml(
     `script-src 'nonce-${nonce}'`,
   ].join("; ");
   const stepList =
-    steps.length > 0
-      ? `<div class="steps">${steps.map((s, i) => stepCheckboxRow(s, i)).join("")}</div>
+    stepsHtml.length > 0
+      ? `<div class="steps">${stepsHtml.join("")}</div>
          <p class="edit-hint">Uncheck steps to drop, or uncheck hunks to skip — then Apply edit.</p>`
       : "";
   return `<!DOCTYPE html>
@@ -193,7 +281,7 @@ function renderHtml(
       background: var(--vscode-button-background);
       color: var(--vscode-button-foreground);
     }
-    button.deny, button.edit {
+    button.deny, button.edit, button.toggle-view {
       background: var(--vscode-button-secondaryBackground);
       color: var(--vscode-button-secondaryForeground);
     }
@@ -237,19 +325,30 @@ function renderHtml(
       font-size: 11px;
       opacity: 0.8;
     }
+    .meta {
+      margin: 2px 0 0 28px;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    .meta.why { opacity: 0.7; font-style: italic; }
     .edit-hint {
       font-size: 12px;
       opacity: 0.75;
       margin: 0 0 12px;
     }
-    pre {
+    pre.summary, pre.step-args {
       white-space: pre-wrap;
       word-break: break-word;
       font-family: var(--vscode-editor-font-family, monospace);
       font-size: var(--vscode-editor-font-size, 12px);
       line-height: 1.45;
-      margin: 0;
+      margin: 0 0 12px;
     }
+    pre.step-args {
+      margin: 4px 0 0 22px;
+      opacity: 0.9;
+    }
+    ${DIFF_PREVIEW_CSS}
   </style>
 </head>
 <body>
@@ -257,13 +356,28 @@ function renderHtml(
     <button class="approve" id="approve">Approve plan</button>
     <button class="edit" id="edit">Apply edit</button>
     <button class="deny" id="deny">Deny</button>
-    <span class="hint">Shiki / side-by-side → desktop</span>
+    <button class="toggle-view" id="toggle-view" title="Toggle unified / side-by-side">Side-by-side</button>
+    <span class="hint" id="view-hint">Unified view</span>
   </div>
   ${caution ? `<div class="caution">This plan writes files or runs shell/mutating tools. Review the diff before approving.</div>` : ""}
+  ${summaryHtml}
   ${stepList}
-  <pre>${escapeHtml(body)}</pre>
   <script nonce="${nonce}">
     const vscode = acquireVsCodeApi();
+    const state = vscode.getState() || { split: false };
+    function applyView() {
+      document.body.classList.toggle('diff-split', !!state.split);
+      const btn = document.getElementById('toggle-view');
+      const hint = document.getElementById('view-hint');
+      if (btn) btn.textContent = state.split ? 'Unified' : 'Side-by-side';
+      if (hint) hint.textContent = state.split ? 'Side-by-side view' : 'Unified view';
+    }
+    applyView();
+    document.getElementById('toggle-view').addEventListener('click', () => {
+      state.split = !state.split;
+      vscode.setState(state);
+      applyView();
+    });
     document.getElementById('approve').addEventListener('click', () => vscode.postMessage({ type: 'approve' }));
     document.getElementById('deny').addEventListener('click', () => vscode.postMessage({ type: 'deny' }));
     document.getElementById('edit').addEventListener('click', () => {

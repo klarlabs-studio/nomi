@@ -36,28 +36,28 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - In-editor hunk skip on Plan Review (`filesystem.patch`) — #51
 - CLI `--review` hunk skip via `/plan/edit` — #52
 - Opt-in auto-approve for safe messaging plans — #53
-- Extension keybindings (Ask Nomi / Review / Approve / Deny) — this PR
+- Extension keybindings (Ask Nomi / Review / Approve / Deny) — #54
+- Extension Shiki + side-by-side DiffPreview chrome — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
 
 | Competitor | Gap |
 |---|---|
-| OpenClaw | Messaging long-tail (safe-plan auto-approve is opt-in) |
+| OpenClaw | Messaging long-tail (Matrix / Teams / Signal / iMessage — not one-PR) |
 | Goose | Remote/synced marketplace catalog (local browse shipped) |
-| Cline | Shiki / side-by-side DiffPreview polish (hunk skip + keybindings shipped) |
+| Cline | (closed) editor DiffPreview chrome + keybindings shipped |
 | Claude Code | Full TUI (CLI can drop steps + skip hunks; rich TUI deferred) |
 | Hermes | Pocket-first mobile UX (schedules/skills now inspectable from CLI + UI) |
 
 ## Next moves (priority)
 
 1. **OpenClaw long-tail connectors** — only if channel demand justifies
-2. **Shiki / side-by-side in extension** (stretch) — optional polish
+   a dedicated connector (Matrix / Teams / Signal / iMessage / Beeper)
 
 ## Defer
 
 OpenClaw connector long-tail, hosted Mnemos, cross-device sync, native
 mobile apps, Pi-style companion, micro-VM isolation race,
 remote/synced Goose-style MCP marketplace,
-full in-editor DiffPreview chrome (Shiki / side-by-side),
 full Claude Code TUI.

@@ -4,6 +4,19 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.26] - 2026-09-21 — Compete: extension DiffPreview chrome
+
+Cline’s editor diffs are the bar. Plan Review now highlights patch hunks
+with host-side Shiki and offers a side-by-side toggle — no need to bounce
+to the Tauri DiffPreview for read/skip/approve.
+
+### Added
+- **`highlighter`** — lazy Shiki singleton in the extension host (webview
+  CSP cannot load WASM); tokens injected as HTML.
+- **`diff_render`** — unified + split DiffPreview markup; toolbar toggle
+  persists via `webview.setState`.
+- Plan Review step chrome uses DiffPreview instead of a monochrome `<pre>`.
+
 ## [0.2.25] - 2026-09-21 — Compete: extension keybindings
 
 Cline wins on muscle memory. Ask Nomi, Review plan, Show pending,
