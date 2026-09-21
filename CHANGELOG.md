@@ -4,6 +4,16 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.37] - 2026-09-21 — Compete: CLI nomi pause / resume
+
+Desktop already Pause/Resume; SSH after cancel still could not soft-stop
+without killing the run. `nomi pause` / `nomi resume` hit the existing
+`POST /runs/:id/pause|resume` endpoints (sole match / id / `--list`).
+
+### Added
+- **`nomi pause [run-id]`** — executing / awaiting_approval.
+- **`nomi resume [run-id]`** — paused → executing.
+
 ## [0.2.36] - 2026-09-21 — Compete: extension auto-open Plan Review
 
 Ask Nomi tracked progress in the OutputChannel but still required
