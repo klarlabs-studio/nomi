@@ -39,6 +39,7 @@ import (
 	githubplugin "go.klarlabs.de/nomi/internal/plugins/github"
 	gmailplugin "go.klarlabs.de/nomi/internal/plugins/gmail"
 	"go.klarlabs.de/nomi/internal/plugins/hub"
+	imessageplugin "go.klarlabs.de/nomi/internal/plugins/imessage"
 	matrixplugin "go.klarlabs.de/nomi/internal/plugins/matrix"
 	mcpbridge "go.klarlabs.de/nomi/internal/plugins/mcpbridge"
 	mediaplugin "go.klarlabs.de/nomi/internal/plugins/media"
@@ -333,6 +334,16 @@ func main() {
 	)
 	if err := pluginRegistry.Register(signalPlugin); err != nil {
 		log.Fatalf("Failed to register Signal plugin: %v", err)
+	}
+
+	// iMessage plugin — BlueBubbles Server on macOS. Polls message/query;
+	// plan review via APPROVE/DENY (last OpenClaw messaging long-tail).
+	imessagePlugin := imessageplugin.NewPlugin(
+		rt, connectionRepo, bindingRepo, conversationRepo, identityRepo,
+		db.NewRunRepository(database), secretStore, eventBus,
+	)
+	if err := pluginRegistry.Register(imessagePlugin); err != nil {
+		log.Fatalf("Failed to register iMessage plugin: %v", err)
 	}
 
 	// Scout plugin — browser automation via MCP. Spawns the `scout`

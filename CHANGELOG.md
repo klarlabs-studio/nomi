@@ -4,6 +4,18 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.53] - 2026-09-21 — OpenClaw long-tail: iMessage (BlueBubbles)
+
+Last OpenClaw messaging long-tail slice. **`com.nomi.imessage`** talks
+to a [BlueBubbles](https://bluebubbles.app/) Server on macOS
+(`api_base_url` + password), polls `/api/v1/message/query`, and gates
+plan review with **APPROVE/DENY**. Writes still force desktop
+DiffPreview.
+
+### Added
+- iMessage plugin: channel + `imessage.post_message` + plan review.
+- `imessage.*` first-party confirm default; safe-plan auto-approve allowlist.
+
 ## [0.2.52] - 2026-09-21 — OpenClaw long-tail: Signal channel
 
 ADR stretch connector. **`com.nomi.signal`** talks to a local
