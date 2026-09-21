@@ -13,6 +13,7 @@ import { isBadgeEvent, type NomiStreamEvent } from "./badge_events";
 import { NomiEventStream } from "./event_stream";
 import { warmHighlighter } from "./highlighter";
 import { isPausableStatus, isPausedStatus } from "./pause_run";
+import { formatPlanToastMessage, shouldShowPlanToast } from "./plan_toast";
 import { openPlanReview } from "./plan_review";
 import {
   isProgressEvent,
@@ -43,6 +44,9 @@ const autoOpenInflight = new Set<string>();
 /** Approval ids already toasted this session (avoid duplicate banners). */
 const toastedApprovals = new Set<string>();
 const toastInflight = new Set<string>();
+/** Plan run ids already toasted (channel / untracked plans). */
+const toastedPlans = new Set<string>();
+const planToastInflight = new Set<string>();
 
 function trackRun(runId: string): void {
   if (runId) trackedRuns.add(runId);
@@ -123,6 +127,55 @@ async function maybeApprovalToast(ev: NomiStreamEvent): Promise<void> {
     );
   } finally {
     toastInflight.delete(info.approvalId);
+  }
+}
+
+async function maybePlanToast(ev: NomiStreamEvent): Promise<void> {
+  const cfg = vscode.workspace.getConfiguration("nomi");
+  const enabled = cfg.get<boolean>("planToast") ?? true;
+  const autoOpenEnabled = cfg.get<boolean>("autoOpenPlanReview") ?? true;
+  if (
+    !shouldShowPlanToast(ev, {
+      enabled,
+      trackedIds: trackedRuns,
+      autoOpenEnabled,
+      alreadyToasted: toastedPlans,
+    })
+  ) {
+    return;
+  }
+  const runId = ev.run_id!;
+  if (planToastInflight.has(runId)) return;
+  toastedPlans.add(runId);
+  planToastInflight.add(runId);
+  try {
+    appendProgress(`▶ [${runId.slice(0, 8)}] plan ready for review`, true);
+    const choice = await vscode.window.showInformationMessage(
+      formatPlanToastMessage(runId),
+      "Review",
+    );
+    if (choice !== "Review") return;
+    const client = buildClient();
+    const detail = await client.getRun(runId);
+    if (detail.run.status !== "plan_review") {
+      vscode.window.showInformationMessage("Nomi: plan is no longer awaiting review.");
+      return;
+    }
+    trackRun(runId);
+    await openPlanReview(client, detail.run, {
+      onResolved: () => {
+        trackRun(runId);
+        return refreshBadge(true);
+      },
+    });
+    await refreshBadge(true);
+  } catch (err) {
+    toastedPlans.delete(runId);
+    vscode.window.showErrorMessage(
+      `Nomi: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  } finally {
+    planToastInflight.delete(runId);
   }
 }
 
@@ -224,10 +277,12 @@ function startEventStream(): void {
           ) {
             trackedRuns.delete(ev.run_id);
             autoOpenedPlans.delete(ev.run_id);
+            toastedPlans.delete(ev.run_id);
           }
         }
         if (ev.type === "plan.proposed") {
           void maybeAutoOpenPlanReview(ev);
+          void maybePlanToast(ev);
         }
         if (ev.type === "approval.requested") {
           void maybeApprovalToast(ev);
