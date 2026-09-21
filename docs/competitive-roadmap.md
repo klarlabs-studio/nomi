@@ -37,14 +37,15 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - CLI `--review` hunk skip via `/plan/edit` — #52
 - Opt-in auto-approve for safe messaging plans — #53
 - Extension keybindings (Ask Nomi / Review / Approve / Deny) — #54
-- Extension Shiki + side-by-side DiffPreview chrome — this PR
+- Extension Shiki + side-by-side DiffPreview chrome — #55
+- Email channel plan Approve/Deny (reply APPROVE/DENY) — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
 
 | Competitor | Gap |
 |---|---|
-| OpenClaw | Messaging long-tail (Matrix / Teams / Signal / iMessage — not one-PR) |
+| OpenClaw | Matrix / Teams / Signal / iMessage / Beeper (not one-PR each) |
 | Goose | Remote/synced marketplace catalog (local browse shipped) |
 | Cline | (closed) editor DiffPreview chrome + keybindings shipped |
 | Claude Code | Full TUI (CLI can drop steps + skip hunks; rich TUI deferred) |
@@ -54,10 +55,11 @@ per-tool capabilities, sandbox, and hash-chained audit.
 
 1. **OpenClaw long-tail connectors** — only if channel demand justifies
    a dedicated connector (Matrix / Teams / Signal / iMessage / Beeper)
+2. **CLI live step progress** — narrow Claude Code without a full TUI
 
 ## Defer
 
-OpenClaw connector long-tail, hosted Mnemos, cross-device sync, native
-mobile apps, Pi-style companion, micro-VM isolation race,
-remote/synced Goose-style MCP marketplace,
+OpenClaw connector long-tail (Matrix/Teams/Signal/iMessage/Beeper),
+hosted Mnemos, cross-device sync, native mobile apps, Pi-style companion,
+micro-VM isolation race, remote/synced Goose-style MCP marketplace,
 full Claude Code TUI.

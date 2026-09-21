@@ -161,7 +161,7 @@ function SafePlanAutoApproveSection() {
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          When on, Telegram, Slack, Discord, and WhatsApp skip the Approve tap for plans that
+          When on, Telegram, Slack, Discord, WhatsApp, and Email skip the Approve tap for plans that
           only read, chat, or run reversible commands. Writes, patches, irreversible shell, and
           mutating MCP tools still require review. Off by default. Desktop and CLI runs are unchanged.
         </p>

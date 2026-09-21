@@ -50,6 +50,8 @@ type Plugin struct {
 	cancelPerConn map[string]context.CancelFunc
 	uidWatermark  map[string]uint32 // connection_id -> highest UID processed
 	healthPerConn map[string]*plugins.ConnectionHealth
+	planMsg       map[string]planMsgRef // runID -> outbound plan prompt
+	planByConv    map[string]string     // conversationID -> runID awaiting reply
 }
 
 // NewPlugin constructs the Email plugin with its required repository
@@ -73,6 +75,11 @@ func NewPlugin(
 		triggerRules:  triggerRepo,
 		secrets:       secrets,
 		eventBus:      eventBus,
+		cancelPerConn: map[string]context.CancelFunc{},
+		uidWatermark:  map[string]uint32{},
+		healthPerConn: map[string]*plugins.ConnectionHealth{},
+		planMsg:       map[string]planMsgRef{},
+		planByConv:    map[string]string{},
 	}
 }
 
@@ -191,6 +198,9 @@ func (p *Plugin) Start(ctx context.Context) error {
 			continue
 		}
 		p.startConnection(ctx, conn)
+	}
+	if p.eventBus != nil && p.rt != nil {
+		go p.subscribePlanReview(ctx)
 	}
 	return nil
 }
@@ -423,6 +433,11 @@ func (p *Plugin) handleMessage(ctx context.Context, connID string, cfg transport
 			conversationID = conv.ID
 			_ = p.conversations.Touch(conv.ID, p.eventBus)
 		}
+	}
+
+	// APPROVE / DENY replies for a pending plan_review — do not spawn a new run.
+	if p.tryHandlePlanReply(ctx, connID, cfg, m, conversationID, senderAddr) {
+		return
 	}
 
 	goal := m.Subject
