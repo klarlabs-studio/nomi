@@ -4,6 +4,16 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.44] - 2026-09-21 — Compete: plan.proposed OS notification
+
+Tool approvals already OS-notified (#71); plans only updated the tray.
+On the initial `plan.proposed`, fire a notification; click opens the
+chat for that run (edits/replans stay quiet).
+
+### Added
+- **`notifyPlanProposed`** + `extra.nomi=plan` deep-link to Chats.
+- Safety settings copy covers plans + approvals.
+
 ## [0.2.43] - 2026-09-21 — Compete: status-bar plan click → Plan Review
 
 `#69` showed `$(list-tree) Nomi plan` but every live click still opened

@@ -188,16 +188,17 @@ function NotificationsSection() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Approval notifications</CardTitle>
+        <CardTitle className="text-base">OS notifications</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          When an assistant pauses for approval, Nomi fires an OS notification so you can
-          respond without keeping the window focused. Permission is requested once on the
-          first approval.
+          When an assistant proposes a plan or pauses for a tool approval, Nomi
+          fires an OS notification so you can respond without keeping the window
+          focused. Click opens Approvals or the chat. Permission is requested once
+          on the first event.
         </p>
         <label className="flex items-center justify-between gap-3 text-sm">
-          <span>OS notifications when approval is needed</span>
+          <span>OS notifications for plans and approvals</span>
           <ToggleSwitch checked={enabled} onChange={toggle} />
         </label>
       </CardContent>

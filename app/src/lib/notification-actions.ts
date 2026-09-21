@@ -1,14 +1,32 @@
-/** Extra payload stamped on approval OS notifications. */
+/** Extra payload stamped on OS notifications. */
 export const APPROVAL_NOTIF_EXTRA = { nomi: "approvals" } as const;
+export const PLAN_NOTIF_EXTRA = { nomi: "plan" } as const;
+
+export type NotificationActionKind = "approvals" | "plan";
 
 /**
- * Whether a Tauri notification `onAction` payload should open the
- * Approvals tab. Matches our stamped `extra.nomi` or any click when
- * we only send approval notifications through this helper.
+ * Classify a Tauri notification `onAction` / Web click payload.
+ * Requires an explicit `extra.nomi` (or `action`) stamp.
  */
-export function isApprovalNotificationAction(extra: Record<string, unknown> | undefined): boolean {
-  if (!extra) return true; // our only sendNotification path is approvals
-  if (extra.nomi === "approvals") return true;
-  if (extra.action === "approvals") return true;
-  return false;
+export function notificationActionKind(
+  extra: Record<string, unknown> | undefined,
+): NotificationActionKind | null {
+  if (!extra) return null;
+  if (extra.nomi === "approvals" || extra.action === "approvals") return "approvals";
+  if (extra.nomi === "plan" || extra.action === "plan") return "plan";
+  return null;
+}
+
+/** @deprecated Prefer `notificationActionKind` — kept for call-site clarity. */
+export function isApprovalNotificationAction(
+  extra: Record<string, unknown> | undefined,
+): boolean {
+  return notificationActionKind(extra) === "approvals";
+}
+
+/** Whether `plan.proposed` should fire an OS notification (initial only). */
+export function shouldNotifyPlanProposed(payload: Record<string, unknown> | undefined): boolean {
+  if (!payload) return true;
+  if (payload.edited === true || payload.replan === true) return false;
+  return true;
 }

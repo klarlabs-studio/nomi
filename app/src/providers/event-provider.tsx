@@ -2,7 +2,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, useState } from "react";
 import { hasTauriBridge, useTauriEvents } from "@/hooks/use-tauri-events";
 import { queryKeys } from "@/lib/query-keys";
-import { notifyApprovalRequested } from "@/lib/notifications";
+import { notifyApprovalRequested, notifyPlanProposed } from "@/lib/notifications";
+import { shouldNotifyPlanProposed } from "@/lib/notification-actions";
 import { appendStreamDelta, clearStreamDelta, dropStream } from "@/lib/streaming";
 import type { Event as NomiEvent } from "@/types/api";
 
@@ -157,6 +158,12 @@ function handleEventInvalidations(
     // List too — tray plan-approve keys off plan_review rows in runs.list.
     qc.invalidateQueries({ queryKey: queryKeys.runs.list() });
     qc.invalidateQueries({ queryKey: queryKeys.runs.detail(ev.run_id) });
+    if (ev.type === "plan.proposed" && shouldNotifyPlanProposed(ev.payload)) {
+      void notifyPlanProposed({
+        runID: ev.run_id,
+        goal: typeof ev.payload?.goal === "string" ? ev.payload.goal : undefined,
+      });
+    }
     return;
   }
 

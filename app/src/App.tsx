@@ -299,10 +299,15 @@ function App() {
     };
   }, [queryClient]);
 
-  // OS notification click → Approvals tab (matches "Click to review" copy).
+  // OS notification click → Approvals or the plan's chat.
   useEffect(() => {
-    return subscribeNotificationClicks(() => {
-      setMainTab("approvals");
+    return subscribeNotificationClicks((payload) => {
+      if (payload.kind === "plan") {
+        setMainTab("chats");
+        if (payload.runId) setDeepLinkChatId(payload.runId);
+      } else {
+        setMainTab("approvals");
+      }
       void (async () => {
         try {
           const { getCurrentWindow } = await import("@tauri-apps/api/window");
@@ -313,7 +318,7 @@ function App() {
           try {
             window.focus();
           } catch {
-            // Web / headless: Approvals tab switch is enough.
+            // Web / headless: tab switch is enough.
           }
         }
       })();
