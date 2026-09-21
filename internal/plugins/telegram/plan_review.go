@@ -97,6 +97,12 @@ func (p *Plugin) onPlanProposed(ctx context.Context, evt *domain.Event) {
 
 	text := formatPlanReviewText(run.Goal, plan)
 	requiresDesktop := planRequiresDesktopReview(plan)
+	if auto, _ := evt.Payload["auto_approved"].(bool); auto {
+		if _, err := p.sendPlanNotice(ctx, token, conv.ExternalConversationID, "Safe plan auto-approved — executing."); err != nil {
+			log.Printf("[telegram plugin] auto-approve notice failed")
+		}
+		return
+	}
 
 	p.mu.Lock()
 	ref, haveRef := p.planMsg[run.ID]
@@ -190,66 +196,8 @@ func formatPlanReviewText(goal string, plan *domain.Plan) string {
 	return b.String()
 }
 
-// planRequiresDesktopReview mirrors tray gating: write/patch/irreversible
-// shell and mutate-shaped MCP tools force in-app Review so DiffPreview
-// stays in the loop.
 func planRequiresDesktopReview(plan *domain.Plan) bool {
-	if plan == nil {
-		return false
-	}
-	for _, s := range plan.Steps {
-		cap := s.ExpectedCapability
-		tool := s.ExpectedTool
-		if cap == "filesystem.write" || tool == "filesystem.write" || tool == "filesystem.patch" {
-			return true
-		}
-		if (cap == "command.exec" || tool == "command.exec") && isIrreversibleCommand(stepCommand(s)) {
-			return true
-		}
-		name := tool
-		if name == "" {
-			name = cap
-		}
-		if (strings.HasPrefix(cap, "mcp.") || strings.HasPrefix(tool, "mcp.")) && isMutatingToolName(name) {
-			return true
-		}
-	}
-	return false
-}
-
-func stepCommand(s domain.StepDefinition) string {
-	if s.Arguments == nil {
-		return ""
-	}
-	if cmd, ok := s.Arguments["command"].(string); ok {
-		return cmd
-	}
-	if cmd, ok := s.Arguments["input"].(string); ok {
-		return cmd
-	}
-	return ""
-}
-
-func isIrreversibleCommand(cmd string) bool {
-	lower := strings.ToLower(cmd)
-	return strings.Contains(lower, "rm -rf") ||
-		strings.HasPrefix(lower, "rm ") ||
-		strings.Contains(lower, "mkfs") ||
-		strings.Contains(lower, "dd if=")
-}
-
-func isMutatingToolName(name string) bool {
-	n := strings.ToLower(name)
-	for _, needle := range []string{
-		"write", "delete", "remove", "create", "update", "patch",
-		"put", "send", "post", "exec", "run", "destroy", "drop",
-		"insert", "mutate",
-	} {
-		if strings.Contains(n, needle) {
-			return true
-		}
-	}
-	return false
+	return domain.PlanRequiresDesktopReview(plan)
 }
 
 func escapeTelegramMarkdown(s string) string {
@@ -269,6 +217,45 @@ func truncateRunes(s string, max int) string {
 		return s
 	}
 	return string(r[:max]) + "…"
+}
+
+func (p *Plugin) sendPlanNotice(ctx context.Context, token, chatID, text string) (int, error) {
+	payload := map[string]interface{}{
+		"chat_id":    chatID,
+		"text":       text,
+		"parse_mode": "Markdown",
+	}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return 0, err
+	}
+	url := fmt.Sprintf("%s/bot%s/sendMessage", p.apiBase, token)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
+	if err != nil {
+		return 0, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		return 0, fmt.Errorf("telegram sendMessage returned %d", resp.StatusCode)
+	}
+	var parsed struct {
+		OK     bool `json:"ok"`
+		Result struct {
+			MessageID int `json:"message_id"`
+		} `json:"result"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&parsed); err != nil {
+		return 0, err
+	}
+	if !parsed.OK {
+		return 0, fmt.Errorf("telegram sendMessage not ok")
+	}
+	return parsed.Result.MessageID, nil
 }
 
 func (p *Plugin) sendPlanPrompt(ctx context.Context, token, chatID, text, runID string, requiresDesktop bool) (int, error) {

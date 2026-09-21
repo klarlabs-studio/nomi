@@ -45,20 +45,21 @@ import (
 
 // Runtime orchestrates runs, steps, and tool execution.
 type Runtime struct {
-	db             *db.DB
-	runRepo        *db.RunRepository
-	stepRepo       *db.StepRepository
-	planRepo       *db.PlanRepository
-	assistantRepo  *db.AssistantRepository
-	settingsRepo   *db.AppSettingsRepository
-	attachmentRepo *db.RunAttachmentRepository
-	enrichment     *EnrichmentService
-	eventBus       *events.EventBus
-	permEngine     *permissions.Engine
-	approvalMgr    *permissions.Manager
-	toolExecutor   *tools.Executor
-	memClient      memstore.Client
-	maxRetries     int
+	db               *db.DB
+	runRepo          *db.RunRepository
+	stepRepo         *db.StepRepository
+	planRepo         *db.PlanRepository
+	assistantRepo    *db.AssistantRepository
+	settingsRepo     *db.AppSettingsRepository
+	conversationRepo *db.ConversationRepository
+	attachmentRepo   *db.RunAttachmentRepository
+	enrichment       *EnrichmentService
+	eventBus         *events.EventBus
+	permEngine       *permissions.Engine
+	approvalMgr      *permissions.Manager
+	toolExecutor     *tools.Executor
+	memClient        memstore.Client
+	maxRetries       int
 
 	// executorRegistry resolves a per-assistant subprocess execution
 	// backend. The default backend (local) is pre-registered; future
@@ -300,6 +301,7 @@ func NewRuntime(
 		planRepo:         db.NewPlanRepository(database),
 		assistantRepo:    db.NewAssistantRepository(database),
 		settingsRepo:     db.NewAppSettingsRepository(database),
+		conversationRepo: db.NewConversationRepository(database),
 		attachmentRepo:   attachmentRepo,
 		eventBus:         eventBus,
 		permEngine:       permEngine,

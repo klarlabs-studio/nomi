@@ -124,7 +124,58 @@ export function SafetySettings() {
       </Card>
 
       <NotificationsSection />
+      <SafePlanAutoApproveSection />
     </div>
+  );
+}
+
+function SafePlanAutoApproveSection() {
+  const [enabled, setEnabled] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void settingsApi
+      .getAutoApproveSafePlans()
+      .then((data) => setEnabled(data.enabled))
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const toggle = async (next: boolean) => {
+    setEnabled(next);
+    setError(null);
+    try {
+      const data = await settingsApi.setAutoApproveSafePlans(next);
+      setEnabled(data.enabled);
+    } catch (err) {
+      setEnabled(!next);
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Safe plans on messaging</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          When on, Telegram, Slack, Discord, and WhatsApp skip the Approve tap for plans that
+          only read, chat, or run reversible commands. Writes, patches, irreversible shell, and
+          mutating MCP tools still require review. Off by default. Desktop and CLI runs are unchanged.
+        </p>
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : (
+          <label className="flex items-center justify-between gap-3 text-sm">
+            <span>Auto-approve safe channel plans</span>
+            <ToggleSwitch checked={enabled} onChange={(next) => void toggle(next)} />
+          </label>
+        )}
+        {error && <p className="text-sm text-destructive">{error}</p>}
+      </CardContent>
+    </Card>
   );
 }
 
