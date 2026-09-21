@@ -4,6 +4,16 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.28] - 2026-09-21 — Compete: CLI live step progress
+
+Claude Code shows each tool as it runs; `nomi run` was silent between
+2s polls after Approve. Status transitions now print on stderr
+(`→` / `✓` / `✗` / `↻` / `⏸`) with optional `expected_tool` labels.
+Stdout still only gets final step outputs on success.
+
+### Added
+- **`printStepProgress`** in `nomi run` / `nomi run --review` poll loop.
+
 ## [0.2.27] - 2026-09-21 — Compete: Email channel plan Approve/Deny
 
 Email already created conversation-linked runs but left `plan_review`
