@@ -207,18 +207,18 @@ func printStepProgress(w io.Writer, steps []stepProgressRow, plan *planPayload, 
 		}
 		switch s.Status {
 		case "running":
-			fmt.Fprintf(w, "→ %s\n", label)
+			_, _ = fmt.Fprintf(w, "→ %s\n", label)
 		case "retrying":
-			fmt.Fprintf(w, "↻ %s (retry)\n", label)
+			_, _ = fmt.Fprintf(w, "↻ %s (retry)\n", label)
 		case "blocked":
-			fmt.Fprintf(w, "⏸ %s (blocked)\n", label)
+			_, _ = fmt.Fprintf(w, "⏸ %s (blocked)\n", label)
 		case "done":
-			fmt.Fprintf(w, "✓ %s\n", label)
+			_, _ = fmt.Fprintf(w, "✓ %s\n", label)
 		case "failed":
 			if s.Error != "" {
-				fmt.Fprintf(w, "✗ %s: %s\n", label, s.Error)
+				_, _ = fmt.Fprintf(w, "✗ %s: %s\n", label, s.Error)
 			} else {
-				fmt.Fprintf(w, "✗ %s\n", label)
+				_, _ = fmt.Fprintf(w, "✗ %s\n", label)
 			}
 		}
 	}
