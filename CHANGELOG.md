@@ -4,6 +4,19 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.54] - 2026-09-21 — Recipe YAML import / share
+
+Cross-machine recipe sync lite: export already returned YAML, but
+nothing could ingest it. **`POST /recipes/import`** upserts a parsed
+manifest as `source=imported`; CLI `nomi recipes import|export` and the
+Recipes tab paste/download close the loop without E2E sync infra.
+
+### Added
+- `POST /recipes/import` + `yaml` on `GET /recipes/:id`.
+- `nomi recipes import <file>` / `nomi recipes export <assistant-id>`.
+- `nomi list recipes`.
+- Recipes UI import paste + per-card YAML download; assistant export Download.
+
 ## [0.2.53] - 2026-09-21 — OpenClaw long-tail: iMessage (BlueBubbles)
 
 Last OpenClaw messaging long-tail slice. **`com.nomi.imessage`** talks

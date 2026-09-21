@@ -61,6 +61,9 @@ SUBCOMMANDS
     list memory            Show stored memory entries.
     list schedules         Show cron schedules (next/last fire, last run, errors).
     list skills            Show induced skill suggestions from run history.
+    list recipes           Show built-in + imported/exported recipes.
+    recipes import <yaml>  Import a shareable recipe.yaml into the catalog.
+    recipes export <id>    Export an assistant as recipe YAML (-o file).
     status                 Show daemon health + version + schedule summary
                            + pending plan reviews / tool approvals.
     seed <path>            Apply a seed.yaml manifest against the running
@@ -136,6 +139,8 @@ func main() {
 		os.Exit(tailCmd(common, args))
 	case "list", "ls":
 		os.Exit(listCmd(common, args))
+	case "recipes", "recipe":
+		os.Exit(recipesCmd(common, args))
 	case "status":
 		os.Exit(statusCmd(common, args))
 	case "seed":

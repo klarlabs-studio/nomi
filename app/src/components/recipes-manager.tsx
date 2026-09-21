@@ -27,6 +27,8 @@ export function RecipesManager({
   const [installing, setInstalling] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [installedRecipeID, setInstalledRecipeID] = useState<string | null>(null);
+  const [importYAML, setImportYAML] = useState("");
+  const [importing, setImporting] = useState(false);
 
   // Skill induction state. Suggestions are fetched lazily — the panel
   // collapses by default so cold loads don't always scan the run history.
@@ -136,6 +138,49 @@ export function RecipesManager({
     }
   };
 
+  const refreshRecipes = async () => {
+    const data = await recipesApi.list();
+    setItems(data.recipes);
+  };
+
+  const importRecipe = async () => {
+    if (!importYAML.trim()) {
+      setError("Paste a recipe YAML before importing.");
+      return;
+    }
+    setImporting(true);
+    setError(null);
+    try {
+      const result = await recipesApi.import(importYAML);
+      setInstalledRecipeID(result.recipe.id);
+      setImportYAML("");
+      await refreshRecipes();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const downloadYAML = async (entry: RecipeCatalogEntry) => {
+    try {
+      const data = await recipesApi.get(entry.id);
+      if (!data.yaml) {
+        setError("Recipe YAML unavailable for download.");
+        return;
+      }
+      const blob = new Blob([data.yaml], { type: "text/yaml" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${entry.id}.yaml`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
   if (loading) return <div className="p-4 text-sm text-muted-foreground">Loading recipes…</div>;
 
   return (
@@ -160,6 +205,38 @@ export function RecipesManager({
           Assistants tab to see your new assistant.
         </div>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Import recipe YAML</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Paste a recipe exported from another Nomi machine (or{" "}
+            <code className="font-mono">nomi recipes export</code>) to add it to this catalog.
+            Install it afterwards to create an assistant.
+          </p>
+          <textarea
+            className="min-h-[120px] w-full rounded-md border bg-background p-2 font-mono text-xs"
+            placeholder={"schema_version: 1\nid: my.recipe\n…"}
+            value={importYAML}
+            onChange={(e) => setImportYAML(e.target.value)}
+          />
+          <div className="flex justify-end gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={!importYAML.trim()}
+              onClick={() => setImportYAML("")}
+            >
+              Clear
+            </Button>
+            <Button size="sm" disabled={importing || !importYAML.trim()} onClick={() => void importRecipe()}>
+              {importing ? "Importing…" : "Import"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Suggested skills — derived from past successful runs. Collapsed
           by default; clicking the toggle triggers a fresh induction
@@ -343,13 +420,18 @@ export function RecipesManager({
                     sha256:{entry.sha256.slice(0, 12)}…
                   </code>
                 )}
-                <Button
-                  size="sm"
-                  onClick={() => install(entry)}
-                  disabled={installing === entry.id}
-                >
-                  {installing === entry.id ? "Installing…" : "Install"}
-                </Button>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => void downloadYAML(entry)}>
+                    YAML
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => install(entry)}
+                    disabled={installing === entry.id}
+                  >
+                    {installing === entry.id ? "Installing…" : "Install"}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

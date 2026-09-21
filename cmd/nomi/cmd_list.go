@@ -19,7 +19,7 @@ import (
 //	nomi list memory
 func listCmd(common *commonFlags, args []string) int {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "nomi list: target required (runs, assistants, providers, approvals, memory, schedules, skills)")
+		fmt.Fprintln(os.Stderr, "nomi list: target required (runs, assistants, providers, approvals, memory, schedules, skills, recipes)")
 		return 2
 	}
 	target := args[0]
@@ -49,6 +49,8 @@ func listCmd(common *commonFlags, args []string) int {
 		return listSchedules(cli, common, *limit)
 	case "skills":
 		return listSkills(cli, common, *limit)
+	case "recipes":
+		return listRecipes(cli, common, *limit)
 	default:
 		fmt.Fprintf(os.Stderr, "nomi list: unknown target %q\n", target)
 		return 2
@@ -284,6 +286,35 @@ func listSkills(cli *Client, c *commonFlags, n int) int {
 		}
 		_, _ = fmt.Fprintf(w, "%s\t%d\t%d\t%s\t%s\n",
 			short(s.ID), s.Size, len(s.SourceRunIDs), trunc(tokens, 24), trunc(s.RepresentativeGoal, 50))
+	}
+	return doFlush(w)
+}
+
+func listRecipes(cli *Client, c *commonFlags, n int) int {
+	var resp struct {
+		Recipes []struct {
+			ID      string `json:"id"`
+			Name    string `json:"name"`
+			Version string `json:"version"`
+			Source  string `json:"source"`
+			SHA256  string `json:"sha256"`
+		} `json:"recipes"`
+	}
+	if err := cli.Get("/recipes", &resp); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	if c.JSON {
+		printJSON(resp)
+		return 0
+	}
+	w := newTab()
+	_, _ = fmt.Fprintln(w, "ID\tSOURCE\tVERSION\tNAME")
+	for i, r := range resp.Recipes {
+		if i >= n {
+			break
+		}
+		_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", trunc(r.ID, 28), r.Source, r.Version, trunc(r.Name, 40))
 	}
 	return doFlush(w)
 }

@@ -1212,6 +1212,22 @@ function AssistantForm({
                 type="button"
                 size="sm"
                 variant="outline"
+                onClick={() => {
+                  const blob = new Blob([exportedYAML], { type: "text/yaml" });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "recipe.yaml";
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+              >
+                Download
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
                 onClick={() => setExportedYAML(null)}
               >
                 Close
