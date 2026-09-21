@@ -431,7 +431,7 @@ over MCP, signed Recipe registry with built-in catalog, scheduled
 runs with natural-language cron, auto-extracted preference learning
 loop, skill induction with embedding clustering + LLM synthesis,
 four messaging channels (Telegram + Slack + Discord + WhatsApp +
-Matrix),
+Matrix + Teams),
 Gmail / Calendar / GitHub / Obsidian / Mnemos plugins, markdown
 chat rendering with Shiki per-hunk diff highlighting, OS push
 notifications for pending approvals, macOS menu bar integration
@@ -440,11 +440,11 @@ Prometheus `/metrics` for plan / step / executor / replan
 attribution per provider, `make eval-live-providers` matrix
 against real LLM providers.
 
-Backlog (post-v0.2.50, in priority order — not committed):
+Backlog (post-v0.2.51, in priority order — not committed):
 
-- OpenClaw long-tail connectors (Teams / Signal / iMessage /
-  Beeper) — only if channel demand justifies a dedicated connector
-  (Matrix shipped; Beeper can ride Matrix bridges later).
+- OpenClaw long-tail connectors (Signal / iMessage) — only if channel
+  demand justifies a dedicated connector (Matrix + Teams shipped;
+  Beeper rides Matrix bridges).
 - Cross-machine recipe sync (opt-in, end-to-end-encrypted).
 - Hosted Mnemos for visibility-scoped team memory.
 - Approval delegation across devices.

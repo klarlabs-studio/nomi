@@ -48,6 +48,7 @@ import (
 	"go.klarlabs.de/nomi/internal/plugins/signing"
 	slackplugin "go.klarlabs.de/nomi/internal/plugins/slack"
 	"go.klarlabs.de/nomi/internal/plugins/store"
+	teamsplugin "go.klarlabs.de/nomi/internal/plugins/teams"
 	telegramplugin "go.klarlabs.de/nomi/internal/plugins/telegram"
 	"go.klarlabs.de/nomi/internal/plugins/update"
 	"go.klarlabs.de/nomi/internal/plugins/wasmhost"
@@ -310,6 +311,17 @@ func main() {
 	)
 	if err := pluginRegistry.Register(matrixPlugin); err != nil {
 		log.Fatalf("Failed to register Matrix plugin: %v", err)
+	}
+
+	// Teams plugin — Bot Framework Activity webhooks. Azure Bot messaging
+	// endpoint → /webhooks/com.nomi.teams/:connection_id. Plan review via
+	// Adaptive Card Approve/Deny (OpenClaw long-tail).
+	teamsPlugin := teamsplugin.NewPlugin(
+		rt, connectionRepo, bindingRepo, conversationRepo, identityRepo,
+		db.NewRunRepository(database), eventBus, secretStore,
+	)
+	if err := pluginRegistry.Register(teamsPlugin); err != nil {
+		log.Fatalf("Failed to register Teams plugin: %v", err)
 	}
 
 	// Scout plugin — browser automation via MCP. Spawns the `scout`

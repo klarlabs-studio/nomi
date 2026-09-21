@@ -4,6 +4,19 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.51] - 2026-09-21 — OpenClaw long-tail: Microsoft Teams
+
+Second messaging long-tail slice after Matrix. **`com.nomi.teams`**
+accepts Bot Framework Activity webhooks at
+`/webhooks/com.nomi.teams/:connection_id` (JWT audience = Microsoft App
+ID), replies via Bot Connector, and surfaces plan review as Adaptive
+Card Approve/Deny (writes still force desktop DiffPreview).
+
+### Added
+- Teams plugin: channel + `teams.post_message` + Adaptive Card plan review.
+- Bot Framework JWT webhook verifier (`teamsVerifier`).
+- `teams.*` first-party confirm default; safe-plan auto-approve allowlist.
+
 ## [0.2.50] - 2026-09-21 — OpenClaw long-tail: Matrix channel
 
 First OpenClaw messaging long-tail slice. **`com.nomi.matrix`** talks

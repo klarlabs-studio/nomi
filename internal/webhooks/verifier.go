@@ -50,6 +50,8 @@ func chooseVerifier(pluginID string) Verifier {
 		return &slackVerifier{}
 	case strings.Contains(pluginID, "whatsapp"):
 		return &whatsappVerifier{}
+	case strings.Contains(pluginID, "teams"):
+		return &teamsVerifier{}
 	default:
 		return &genericHMACVerifier{}
 	}
