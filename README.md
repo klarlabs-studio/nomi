@@ -404,7 +404,16 @@ every release ships against — is in
 
 ## Roadmap
 
-**v0.2.4 (current) — "Generic MCP + tray quick-approve."**
+**v0.2.45 (current) — compete polish on top of v0.2.4 MCP + tray.**
+Editor parity (VS Code / Cursor thin client: Ask Nomi, Plan Review with
+Shiki DiffPreview, auto-open, Approve/Deny + plan toasts, Cancel/Pause/
+Resume, live status-bar step), SSH attach (`nomi review` / `watch` /
+`approve` / `deny` / `pause` / `cancel`), desktop OS notifications for
+plans and approvals with click deep-links. See
+[`docs/competitive-roadmap.md`](docs/competitive-roadmap.md) and
+[`docs/comparison.md`](docs/comparison.md).
+
+**v0.2.4 — "Generic MCP + tray quick-approve."**
 Shipped on top of v0.2.3: connect any MCP server as a Nomi tool
 (`com.nomi.mcp`, stdio or HTTP+SSE, discovered tools gated by
 `mcp.tools` and plan review), tray-menu Approve/Deny without opening
@@ -430,14 +439,17 @@ Prometheus `/metrics` for plan / step / executor / replan
 attribution per provider, `make eval-live-providers` matrix
 against real LLM providers.
 
-Backlog (post-v0.2.4, in priority order — not committed):
+Backlog (post-v0.2.45, in priority order — not committed):
 
+- OpenClaw long-tail connectors (Matrix / Teams / Signal / iMessage /
+  Beeper) — only if channel demand justifies a dedicated connector.
 - Cross-machine recipe sync (opt-in, end-to-end-encrypted).
 - Hosted Mnemos for visibility-scoped team memory.
 - Approval delegation across devices.
 - WASM plugin marketplace catalog growth (signing + verification
   already shipped).
-
+- Full Claude Code–style TUI (`nomi tui`) — CLI attach already covers
+  the SSH loop.
 Live spec, plan, and task state in [`.roady/`](.roady/) (142
 features, 267 tasks closed at release). Ideas and bug reports on
 the [issues page](https://github.com/klarlabs-studio/nomi/issues).

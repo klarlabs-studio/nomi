@@ -3,7 +3,7 @@
 How Nomi differs from other agent platforms. Facts only — every column
 maps to behavior shipped today, not roadmap claims.
 
-> **Disclosure:** rows describe Nomi as of v0.2.11 and competitor projects
+> **Disclosure:** rows describe Nomi as of v0.2.45 and competitor projects
 > as of early 2026. Competitor capabilities evolve quickly; if a row is
 > stale, please open an issue.
 
@@ -39,13 +39,15 @@ differences worth your attention:
 - **How approvals work.** Claude Code prompts in the terminal at the
   moment a tool runs. Nomi's `plan_review` state lets you see (and
   edit) the whole plan before any step executes, and approval cards
-  surface in a desktop UI that you can return to later — useful when
-  the plan was kicked off from another device or a non-interactive
-  context.
+  surface in a desktop UI, tray, channels, Email, the VS Code / Cursor
+  extension, and SSH (`nomi review` / `approve` / `deny` / `watch` /
+  `pause` / `cancel`) — useful when the plan was kicked off from
+  another device or a non-interactive context.
 
 When Claude Code wins: you live in the terminal, you're already paying
 for Claude, you don't want a separate process. When Nomi wins: you
-want to swap the model freely and you want a UI surface for approvals.
+want to swap the model freely and you want a UI (or SSH) surface for
+approvals that outlives the creating client.
 
 ### Nomi vs **Cline**
 
@@ -56,18 +58,20 @@ on the plan-review axis. Two structural differences:
   daemon (`nomid`) plus a Tauri shell. The daemon also runs headless on
   a homelab box, a VPS, or a Kubernetes pod, and the same approvals
   surface in the desktop client over REST + SSE. A thin VS Code /
-  Cursor extension (`extensions/vscode`) covers the pending badge +
-  Approve/Deny loop so you are not forced out of the editor for routine
-  reviews. **Run with editor context** attaches open tabs and the active
-  selection to `POST /runs` so the planner sees what you are looking at
-  (still gated by plan review).
+  Cursor extension (`extensions/vscode`) covers Ask Nomi (editor
+  context), live SSE progress + status-bar step text, in-editor Plan
+  Review (Shiki DiffPreview, step/hunk skip), auto-open on
+  `plan.proposed`, Approve/Deny toasts, Cancel/Pause/Resume, and
+  Review toasts for channel-started plans — so the editor control loop
+  matches Cline without giving up the daemon.
 - **What the audit trail looks like.** Cline keeps a session/editor
   history. Nomi persists every event (run, plan, step, approval, tool
-  call) to SQLite, queryable via `/events` and streamable via SSE.
+  call) to SQLite, queryable via `/events` and streamable via SSE,
+  with hash-chained `/audit/verify`.
 
-When Cline wins: you live in VSCode and want zero context switch. When
-Nomi wins: you want the agent to run on a machine you don't have an
-editor open on.
+When Cline wins: you want the agent *only* as an editor plugin with no
+separate process. When Nomi wins: you want the same editor presence
+*and* a daemon you can leave running on a machine without VS Code.
 
 ### Nomi vs **Goose**
 
