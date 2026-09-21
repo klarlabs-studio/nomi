@@ -51,6 +51,11 @@
           "type": "string",
           "default": "",
           "description": "Assistant ID used by Nomi: Run with editor context. Leave empty to pick from a Quick Pick."
+        },
+        "nomi.autoOpenPlanReview": {
+          "type": "boolean",
+          "default": true,
+          "description": "When Ask Nomi / Review tracks a run, automatically open the Plan Review panel on the first plan.proposed event."
         }
       }
     },
@@ -146,7 +151,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "tsc -p ./ --noEmit",
-    "test": "npm run compile && node --test out/discovery.test.js out/editor_context.test.js out/event_stream.test.js out/plan_fmt.test.js out/diff_hunks.test.js out/highlighter.test.js out/diff_render.test.js out/open_path.test.js out/step_progress.test.js out/cancel_run.test.js",
+    "test": "npm run compile && node --test out/discovery.test.js out/editor_context.test.js out/event_stream.test.js out/plan_fmt.test.js out/diff_hunks.test.js out/highlighter.test.js out/diff_render.test.js out/open_path.test.js out/step_progress.test.js out/cancel_run.test.js out/auto_open_plan.test.js",
     "vscode:prepublish": "npm run compile"
   },
   "devDependencies": {
