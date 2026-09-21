@@ -4,6 +4,16 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.41] - 2026-09-21 — Compete: CLI nomi watch
+
+`nomi review` only attaches in `plan_review`; once a run is executing /
+awaiting_approval / paused (desktop, extension, channels), SSH was stuck
+with raw `nomi tail` JSON. `nomi watch` reuses `driveRun` for live step
+progress + approval prompts on any non-terminal run.
+
+### Added
+- **`nomi watch [run-id]`** with `--list`, `--review`, `--auto-approve`.
+
 ## [0.2.40] - 2026-09-21 — Compete: extension status-bar live step
 
 After approval toasts (#68), an idle execute still showed static
