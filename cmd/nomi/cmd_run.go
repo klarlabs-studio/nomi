@@ -58,10 +58,25 @@ func runCmd(common *commonFlags, args []string) int {
 	}
 	fmt.Fprintf(os.Stderr, "▶ run %s submitted to %s\n", created.ID[:8], asName)
 
-	deadline := time.Now().Add(*timeout)
-	stdin := bufio.NewReader(os.Stdin)
+	return driveRun(cli, created.ID, driveOpts{
+		Review:      *review,
+		AutoApprove: *autoApprove,
+		Timeout:     *timeout,
+	}, bufio.NewReader(os.Stdin))
+}
+
+type driveOpts struct {
+	Review      bool
+	AutoApprove bool
+	Timeout     time.Duration
+}
+
+// driveRun polls a run through plan_review / approvals / terminal states.
+// Shared by `nomi run` (after create) and `nomi review` (attach existing).
+func driveRun(cli *Client, runID string, opts driveOpts, stdin *bufio.Reader) int {
+	deadline := time.Now().Add(opts.Timeout)
 	planHandled := false
-	seenSteps := map[string]string{} // step ID → last printed status
+	seenSteps := map[string]string{}
 	for time.Now().Before(deadline) {
 		var detail struct {
 			Run struct {
@@ -72,7 +87,7 @@ func runCmd(common *commonFlags, args []string) int {
 			Plan  *planPayload      `json:"plan"`
 			Steps []stepProgressRow `json:"steps"`
 		}
-		if err := cli.Get("/runs/"+created.ID, &detail); err != nil {
+		if err := cli.Get("/runs/"+runID, &detail); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return 1
 		}
@@ -85,7 +100,7 @@ func runCmd(common *commonFlags, args []string) int {
 				time.Sleep(500 * time.Millisecond)
 				continue
 			}
-			if *review {
+			if opts.Review {
 				for {
 					fmt.Fprint(os.Stderr, formatPlanReview(detail.Run.Goal, detail.Plan))
 					decision, err := promptPlanDecision(stdin)
@@ -96,7 +111,7 @@ func runCmd(common *commonFlags, args []string) int {
 					switch decision {
 					case planDecisionDeny:
 						fmt.Fprintln(os.Stderr, "▶ denying plan (cancelling run)")
-						if err := cli.Post("/runs/"+created.ID+"/cancel", map[string]any{}, nil); err != nil {
+						if err := cli.Post("/runs/"+runID+"/cancel", map[string]any{}, nil); err != nil {
 							fmt.Fprintln(os.Stderr, err)
 							return 1
 						}
@@ -114,11 +129,11 @@ func runCmd(common *commonFlags, args []string) int {
 						for _, n := range notes {
 							fmt.Fprintln(os.Stderr, n)
 						}
-						if err := cli.Post("/runs/"+created.ID+"/plan/edit", editPlanBody(edited), nil); err != nil {
+						if err := cli.Post("/runs/"+runID+"/plan/edit", editPlanBody(edited), nil); err != nil {
 							fmt.Fprintln(os.Stderr, err)
 							return 1
 						}
-						if err := cli.Get("/runs/"+created.ID, &detail); err != nil {
+						if err := cli.Get("/runs/"+runID, &detail); err != nil {
 							fmt.Fprintln(os.Stderr, err)
 							return 1
 						}
@@ -126,7 +141,7 @@ func runCmd(common *commonFlags, args []string) int {
 						continue
 					default: // approve
 						fmt.Fprintln(os.Stderr, "▶ approving plan")
-						if err := cli.Post("/runs/"+created.ID+"/plan/approve", map[string]any{}, nil); err != nil {
+						if err := cli.Post("/runs/"+runID+"/plan/approve", map[string]any{}, nil); err != nil {
 							fmt.Fprintln(os.Stderr, err)
 							return 1
 						}
@@ -136,14 +151,14 @@ func runCmd(common *commonFlags, args []string) int {
 				}
 			} else {
 				fmt.Fprintln(os.Stderr, "▶ plan ready, approving")
-				if err := cli.Post("/runs/"+created.ID+"/plan/approve", map[string]any{}, nil); err != nil {
+				if err := cli.Post("/runs/"+runID+"/plan/approve", map[string]any{}, nil); err != nil {
 					fmt.Fprintln(os.Stderr, err)
 					return 1
 				}
 				planHandled = true
 			}
 		case "awaiting_approval":
-			if !handleApproval(cli, created.ID, *autoApprove, stdin) {
+			if !handleApproval(cli, runID, opts.AutoApprove, stdin) {
 				return 1
 			}
 		case "completed":
@@ -155,7 +170,6 @@ func runCmd(common *commonFlags, args []string) int {
 			fmt.Fprintln(os.Stderr, "✓ done")
 			return 0
 		case "failed":
-			// Per-step errors already printed by printStepProgress.
 			fmt.Fprintln(os.Stderr, "✗ failed")
 			return 1
 		case "cancelled":
@@ -164,7 +178,7 @@ func runCmd(common *commonFlags, args []string) int {
 		}
 		time.Sleep(2 * time.Second)
 	}
-	fmt.Fprintf(os.Stderr, "✗ timed out after %s\n", *timeout)
+	fmt.Fprintf(os.Stderr, "✗ timed out after %s\n", opts.Timeout)
 	return 1
 }
 
