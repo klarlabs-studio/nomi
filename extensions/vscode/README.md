@@ -7,7 +7,9 @@ plans and tool calls from the editor without rebuilding the desktop UI.
 
 - Status-bar badge with pending **tool approvals** + **plan_review** runs
 - **Live SSE** on `/events/stream` — badge refreshes on `approval.*` /
-  `plan.*` / `run.cancelled` (15s poll fallback when the stream drops)
+  `plan.*` / `run.cancelled`; **Nomi** OutputChannel shows live step
+  progress (`→` / `✓` / `✗`) for Ask Nomi / Plan Review runs (15s poll
+  fallback when the stream drops)
 - **Plan Review panel** — steps + Shiki-highlighted DiffPreview (unified /
   side-by-side toggle); uncheck steps or hunks to edit via `/plan/edit`
   (CLI `--review` [E]dit parity); Approve / Deny without leaving the editor

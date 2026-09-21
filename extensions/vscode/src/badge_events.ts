@@ -11,5 +11,6 @@ export type NomiStreamEvent = {
   id?: string;
   type: string;
   run_id?: string;
+  step_id?: string;
   payload?: Record<string, unknown>;
 };

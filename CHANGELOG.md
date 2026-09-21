@@ -4,6 +4,17 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.30] - 2026-09-21 — Compete: extension live step progress
+
+CLI `#57` prints tools as they run; the editor was still silent after
+Plan Review Approve. SSE `step.*` / run terminal events now append to a
+**Nomi** OutputChannel (`→` / `✓` / `✗` / `↻`), auto-revealed for runs
+started via Ask Nomi or opened from Plan Review.
+
+### Added
+- **`step_progress`** formatter + OutputChannel wiring on `/events/stream`.
+- **`Nomi: Show run progress`** command.
+
 ## [0.2.29] - 2026-09-21 — Compete: open path from Plan Review
 
 Cline jumps from the diff to the file. Plan Review DiffPreview file

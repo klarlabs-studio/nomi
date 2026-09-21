@@ -83,6 +83,10 @@
       {
         "command": "nomi.reviewPlan",
         "title": "Nomi: Review pending plan"
+      },
+      {
+        "command": "nomi.showProgress",
+        "title": "Nomi: Show run progress"
       }
     ],
     "menus": {
@@ -133,7 +137,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "tsc -p ./ --noEmit",
-    "test": "npm run compile && node --test out/discovery.test.js out/editor_context.test.js out/event_stream.test.js out/plan_fmt.test.js out/diff_hunks.test.js out/highlighter.test.js out/diff_render.test.js out/open_path.test.js",
+    "test": "npm run compile && node --test out/discovery.test.js out/editor_context.test.js out/event_stream.test.js out/plan_fmt.test.js out/diff_hunks.test.js out/highlighter.test.js out/diff_render.test.js out/open_path.test.js out/step_progress.test.js",
     "vscode:prepublish": "npm run compile"
   },
   "devDependencies": {
