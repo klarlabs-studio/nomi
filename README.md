@@ -430,7 +430,8 @@ party plugin via [Scout](https://github.com/klarlabs-studio/scout)
 over MCP, signed Recipe registry with built-in catalog, scheduled
 runs with natural-language cron, auto-extracted preference learning
 loop, skill induction with embedding clustering + LLM synthesis,
-four messaging channels (Telegram + Slack + Discord + WhatsApp),
+four messaging channels (Telegram + Slack + Discord + WhatsApp +
+Matrix),
 Gmail / Calendar / GitHub / Obsidian / Mnemos plugins, markdown
 chat rendering with Shiki per-hunk diff highlighting, OS push
 notifications for pending approvals, macOS menu bar integration
@@ -439,10 +440,11 @@ Prometheus `/metrics` for plan / step / executor / replan
 attribution per provider, `make eval-live-providers` matrix
 against real LLM providers.
 
-Backlog (post-v0.2.46, in priority order — not committed):
+Backlog (post-v0.2.50, in priority order — not committed):
 
-- OpenClaw long-tail connectors (Matrix / Teams / Signal / iMessage /
-  Beeper) — only if channel demand justifies a dedicated connector.
+- OpenClaw long-tail connectors (Teams / Signal / iMessage /
+  Beeper) — only if channel demand justifies a dedicated connector
+  (Matrix shipped; Beeper can ride Matrix bridges later).
 - Cross-machine recipe sync (opt-in, end-to-end-encrypted).
 - Hosted Mnemos for visibility-scoped team memory.
 - Approval delegation across devices.

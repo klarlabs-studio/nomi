@@ -4,6 +4,17 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.50] - 2026-09-21 — OpenClaw long-tail: Matrix channel
+
+First OpenClaw messaging long-tail slice. **`com.nomi.matrix`** talks
+Client-Server API `/sync` with homeserver URL + access token — DMs and
+room messages create runs; safe plans approve via **APPROVE/DENY**
+reply or **✅/❌** reaction (writes still force desktop DiffPreview).
+
+### Added
+- Matrix plugin: channel + `matrix.post_message` tool + plan review.
+- `matrix.*` first-party confirm default; safe-plan auto-approve allowlist.
+
 ## [0.2.49] - 2026-09-21 — Compete: extension Replan failed run
 
 CLI `#78` and desktop already Fix-with-agent; the editor could Cancel/
