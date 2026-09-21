@@ -4,6 +4,15 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.29] - 2026-09-21 — Compete: open path from Plan Review
+
+Cline jumps from the diff to the file. Plan Review DiffPreview file
+labels (and write paths) are now clickable — host opens the path in
+the editor beside the review panel.
+
+### Added
+- **`open_path`** resolver + webview `data-open-path` → `openTextDocument`.
+
 ## [0.2.28] - 2026-09-21 — Compete: CLI live step progress
 
 Claude Code shows each tool as it runs; `nomi run` was silent between

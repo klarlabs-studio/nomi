@@ -32,9 +32,10 @@ describe("diff_render", () => {
     assert.match(html, /<span style=/);
   });
 
-  it("falls back to plain pre for empty/unparseable diff", async () => {
-    const html = await renderDiffPreviewHtml("not a real diff", false);
-    assert.match(html, /plain/);
-    assert.match(html, /not a real diff/);
+  it("renders clickable file labels for openPath", async () => {
+    const html = await renderDiffPreviewHtml(SAMPLE, false);
+    assert.match(html, /data-open-path="hello\.go"/);
+    assert.match(html, /class="file-label"/);
+    assert.match(html, /class="file-chip"/);
   });
 });

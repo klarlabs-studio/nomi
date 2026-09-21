@@ -62,6 +62,6 @@ Remap under Keyboard Shortcuts if they collide with other extensions.
 
 Plan Review highlights patch hunks with **Shiki** in the extension host
 (injected HTML — webview CSP cannot load WASM) and offers a **Side-by-side**
-toolbar toggle (preference sticky via `webview.setState`). Write / shell
-steps still show plain excerpts; open the Tauri app for the full chat
-surface.
+toolbar toggle (preference sticky via `webview.setState`). Click a file
+label to open it in the editor. Write / shell steps still show plain
+excerpts; open the Tauri app for the full chat surface.
