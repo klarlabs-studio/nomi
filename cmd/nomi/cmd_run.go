@@ -24,7 +24,7 @@ func runCmd(common *commonFlags, args []string) int {
 	bindCommonFlags(fs, common)
 	assistant := fs.String("assistant", "", "assistant name (default: first configured)")
 	autoApprove := fs.Bool("auto-approve", false, "auto-approve confirm-mode capabilities (DANGEROUS)")
-	review := fs.Bool("review", false, "interactive plan review: print plan + diffs, Approve/Deny/Edit (drop steps)")
+	review := fs.Bool("review", false, "interactive plan review: print plan + diffs, Approve/Deny/Edit (drop steps / skip hunks)")
 	timeout := fs.Duration("timeout", 5*time.Minute, "give up after this long if the run doesn't reach a terminal state")
 	_ = fs.Parse(args)
 
@@ -103,24 +103,22 @@ func runCmd(common *commonFlags, args []string) int {
 						}
 						planHandled = true
 					case planDecisionEdit:
-						nums, err := promptDropSteps(stdin, detail.Plan)
+						edited, notes, err := interactivePlanEdit(stdin, detail.Plan)
 						if err != nil {
 							fmt.Fprintln(os.Stderr, err)
 							continue
 						}
-						edited, err := dropPlanSteps(detail.Plan, nums)
-						if err != nil {
-							fmt.Fprintf(os.Stderr, "  edit failed: %v\n", err)
+						if edited == nil {
+							fmt.Fprintln(os.Stderr, "  (no changes)")
 							continue
 						}
-						fmt.Fprintf(os.Stderr, "▶ dropping %d step(s), keeping %d\n",
-							len(detail.Plan.Steps)-len(edited.Steps), len(edited.Steps))
+						for _, n := range notes {
+							fmt.Fprintln(os.Stderr, n)
+						}
 						if err := cli.Post("/runs/"+created.ID+"/plan/edit", editPlanBody(edited), nil); err != nil {
 							fmt.Fprintln(os.Stderr, err)
 							return 1
 						}
-						// Re-fetch so the next loop iteration shows the
-						// edited plan (version bumped server-side).
 						if err := cli.Get("/runs/"+created.ID, &detail); err != nil {
 							fmt.Fprintln(os.Stderr, err)
 							return 1
@@ -182,7 +180,7 @@ const (
 )
 
 func promptPlanDecision(stdin *bufio.Reader) (planDecision, error) {
-	fmt.Fprint(os.Stderr, "? [A]pprove / [D]eny / [E]dit (drop steps): ")
+	fmt.Fprint(os.Stderr, "? [A]pprove / [D]eny / [E]dit (drop steps / skip hunks): ")
 	line, err := stdin.ReadString('\n')
 	if err != nil {
 		return planDecisionDeny, err
@@ -201,20 +199,60 @@ func promptPlanDecision(stdin *bufio.Reader) (planDecision, error) {
 	}
 }
 
+// interactivePlanEdit prompts for step drops and patch hunk skips.
+// Returns nil plan when the user made no changes.
+func interactivePlanEdit(stdin *bufio.Reader, plan *planPayload) (*planPayload, []string, error) {
+	if plan == nil || len(plan.Steps) == 0 {
+		return nil, nil, fmt.Errorf("plan has no steps to edit")
+	}
+	var notes []string
+	working := plan
+
+	nums, err := promptDropSteps(stdin, working)
+	if err != nil {
+		return nil, nil, err
+	}
+	stepsDropped := false
+	if len(nums) > 0 {
+		edited, err := dropPlanSteps(working, nums)
+		if err != nil {
+			return nil, nil, err
+		}
+		notes = append(notes, fmt.Sprintf("▶ dropping %d step(s), keeping %d",
+			len(working.Steps)-len(edited.Steps), len(edited.Steps)))
+		working = edited
+		stepsDropped = true
+	}
+
+	skippedByStep, err := promptSkipHunks(stdin, working)
+	if err != nil {
+		return nil, nil, err
+	}
+	hunksChanged := applyHunkSkipsToPlan(working, skippedByStep)
+	if hunksChanged {
+		notes = append(notes, "▶ skipped patch hunks")
+	}
+	if !stepsDropped && !hunksChanged {
+		return nil, nil, nil
+	}
+	return working, notes, nil
+}
+
 // promptDropSteps asks which 1-based step numbers to remove.
+// Empty input keeps all steps (proceed to hunk skip).
 func promptDropSteps(stdin *bufio.Reader, plan *planPayload) ([]int, error) {
 	n := 0
 	if plan != nil {
 		n = len(plan.Steps)
 	}
-	fmt.Fprintf(os.Stderr, "? Drop which steps (1–%d, comma-separated; empty cancels): ", n)
+	fmt.Fprintf(os.Stderr, "? Drop which steps (1–%d, comma-separated; empty = keep all): ", n)
 	line, err := stdin.ReadString('\n')
 	if err != nil {
 		return nil, err
 	}
 	line = strings.TrimSpace(line)
 	if line == "" {
-		return nil, fmt.Errorf("edit cancelled")
+		return nil, nil
 	}
 	parts := strings.FieldsFunc(line, func(r rune) bool {
 		return r == ',' || r == ' ' || r == ';'
@@ -232,8 +270,73 @@ func promptDropSteps(stdin *bufio.Reader, plan *planPayload) ([]int, error) {
 		seen[v] = true
 		out = append(out, v)
 	}
-	if len(out) == 0 {
-		return nil, fmt.Errorf("edit cancelled")
+	return out, nil
+}
+
+// promptSkipHunks lists hunks for each filesystem.patch step and asks
+// which 1-based hunk numbers to skip. Returns stepID → hunk keys.
+func promptSkipHunks(stdin *bufio.Reader, plan *planPayload) (map[string][]string, error) {
+	out := make(map[string][]string)
+	if plan == nil {
+		return out, nil
+	}
+	for si, s := range plan.Steps {
+		if s.ExpectedTool != "filesystem.patch" || s.Arguments == nil {
+			continue
+		}
+		diff, _ := s.Arguments["diff"].(string)
+		if diff == "" {
+			continue
+		}
+		hunks := listHunks(diff)
+		if len(hunks) == 0 {
+			continue
+		}
+		title := s.Title
+		if title == "" {
+			title = s.ExpectedTool
+		}
+		fmt.Fprintf(os.Stderr, "  Step %d (%s) hunks:\n", si+1, truncateRunes(title, 40))
+		for i, h := range hunks {
+			fmt.Fprintf(os.Stderr, "    %d. %s  +%d −%d  %s\n",
+				i+1, h.fileLabel, h.added, h.removed, truncateRunes(h.header, 50))
+		}
+		fmt.Fprintf(os.Stderr, "? Skip which hunks for step %d (comma-separated; empty = keep all): ", si+1)
+		line, err := stdin.ReadString('\n')
+		if err != nil {
+			return nil, err
+		}
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		parts := strings.FieldsFunc(line, func(r rune) bool {
+			return r == ',' || r == ' ' || r == ';'
+		})
+		var keys []string
+		seen := make(map[int]bool)
+		for _, p := range parts {
+			var v int
+			if _, err := fmt.Sscanf(p, "%d", &v); err != nil {
+				return nil, fmt.Errorf("invalid hunk number %q", p)
+			}
+			if v < 1 || v > len(hunks) {
+				return nil, fmt.Errorf("hunk %d out of range (1–%d)", v, len(hunks))
+			}
+			if seen[v] {
+				continue
+			}
+			seen[v] = true
+			keys = append(keys, hunks[v-1].key)
+		}
+		if len(keys) == 0 {
+			continue
+		}
+		id := s.ID
+		if id == "" {
+			id = fmt.Sprintf("%d", si)
+		}
+		out[id] = keys
 	}
 	return out, nil
 }
