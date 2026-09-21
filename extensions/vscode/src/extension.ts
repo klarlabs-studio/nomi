@@ -15,6 +15,7 @@ import { warmHighlighter } from "./highlighter";
 import { isPausableStatus, isPausedStatus } from "./pause_run";
 import { formatPlanToastMessage, shouldShowPlanToast } from "./plan_toast";
 import { openPlanReview } from "./plan_review";
+import { isReplanableStatus } from "./replan_run";
 import {
   isProgressEvent,
   shouldRevealProgress,
@@ -657,6 +658,31 @@ async function resumeRunCommand(): Promise<void> {
   }
 }
 
+async function replanRunCommand(): Promise<void> {
+  try {
+    const run = await pickRunByStatus(
+      isReplanableStatus,
+      "Nomi: no failed/cancelled runs to replan.",
+      "Replan which failed run?",
+    );
+    if (!run) return;
+    const client = buildClient();
+    const result = await client.replanRun(run.id);
+    trackRun(run.id);
+    const short = run.id.slice(0, 8);
+    appendProgress(
+      `▶ [${short}] replanned (${result.step_count} step(s))`,
+      true,
+    );
+    vscode.window.showInformationMessage(
+      `Nomi: replanned ${short} (${result.step_count} step(s))`,
+    );
+    await refreshBadge(true);
+  } catch (err) {
+    vscode.window.showErrorMessage(`Nomi: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
 export function activate(context: vscode.ExtensionContext): void {
   statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
   statusItem.command = "nomi.showPending";
@@ -679,6 +705,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("nomi.cancelRun", () => cancelRunCommand()),
     vscode.commands.registerCommand("nomi.pauseRun", () => pauseRunCommand()),
     vscode.commands.registerCommand("nomi.resumeRun", () => resumeRunCommand()),
+    vscode.commands.registerCommand("nomi.replanRun", () => replanRunCommand()),
     vscode.commands.registerCommand("nomi.showProgress", () => {
       progressChannel?.show(true);
     }),

@@ -204,6 +204,12 @@ export class NomiClient {
   async resumeRun(runId: string): Promise<void> {
     await this.request("POST", `/runs/${encodeURIComponent(runId)}/resume`);
   }
+
+  /** Corrective plan on a failed run (CLI `nomi replan` / desktop Fix). */
+  async replanRun(runId: string): Promise<{ status: string; step_count: number }> {
+    const res = await this.request("POST", `/runs/${encodeURIComponent(runId)}/replan`);
+    return (await res.json()) as { status: string; step_count: number };
+  }
 }
 
 export function pendingCount(snap: PendingSnapshot): number {

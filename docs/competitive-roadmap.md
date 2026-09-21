@@ -59,7 +59,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - Extension plan toast for untracked / channel plans — #74
 - Docs comparison honesty (Cline / Claude Code + version kickers) — #75
 - CLI `nomi status` pending plan/approval counts — #76
-- CLI `nomi replan` (Fix this with the agent over SSH) — this PR
+- CLI `nomi replan` (Fix this with the agent over SSH) — #78
+- Extension Replan failed run — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose

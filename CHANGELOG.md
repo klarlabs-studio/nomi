@@ -4,6 +4,17 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.49] - 2026-09-21 — Compete: extension Replan failed run
+
+CLI `#78` and desktop already Fix-with-agent; the editor could Cancel/
+Pause but not recover a failed Ask Nomi run. **Nomi: Replan failed run**
+(`Ctrl/Cmd+Shift+Alt+F`) posts `POST /runs/:id/replan` and re-tracks
+the run for progress / auto-open Plan Review.
+
+### Added
+- Extension command **`nomi.replanRun`** + keybinding.
+- Client **`replanRun`**.
+
 ## [0.2.48] - 2026-09-21 — Compete: CLI nomi replan
 
 Desktop "Fix this with the agent" already hits `POST /runs/:id/replan`

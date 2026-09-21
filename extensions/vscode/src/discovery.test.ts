@@ -199,4 +199,19 @@ describe("NomiClient", () => {
     await client.resumeRun("r1");
     assert.deepEqual(calls, ["POST /runs/r1/pause", "POST /runs/r1/resume"]);
   });
+
+  it("replans via replanRun", async () => {
+    const calls: string[] = [];
+    const fetchImpl: typeof fetch = async (input, init) => {
+      const path = String(input).replace("https://nomi.test", "");
+      calls.push(`${init?.method ?? "GET"} ${path}`);
+      return new Response(JSON.stringify({ status: "replanned", step_count: 2 }), {
+        status: 200,
+      });
+    };
+    const client = new NomiClient("https://nomi.test", "tok", fetchImpl);
+    const out = await client.replanRun("r1");
+    assert.equal(out.step_count, 2);
+    assert.deepEqual(calls, ["POST /runs/r1/replan"]);
+  });
 });
