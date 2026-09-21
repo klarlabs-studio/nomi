@@ -160,4 +160,30 @@ describe("NomiClient", () => {
     );
     assert.deepEqual(JSON.parse(posts[2]!.body!), { approved: true, remember: false });
   });
+
+  it("lists runs and cancels via cancelRun", async () => {
+    const calls: string[] = [];
+    const fetchImpl: typeof fetch = async (input, init) => {
+      const url = String(input);
+      const path = url.replace("https://nomi.test", "");
+      calls.push(`${init?.method ?? "GET"} ${path}`);
+      if (path === "/runs" && (!init?.method || init.method === "GET")) {
+        return new Response(
+          JSON.stringify({
+            runs: [
+              { id: "r1", goal: "go", status: "executing", assistant_id: "a", created_at: "", updated_at: "" },
+              { id: "r2", goal: "done", status: "completed", assistant_id: "a", created_at: "", updated_at: "" },
+            ],
+          }),
+          { status: 200 },
+        );
+      }
+      return new Response("{}", { status: 200 });
+    };
+    const client = new NomiClient("https://nomi.test", "tok", fetchImpl);
+    const runs = await client.listRuns();
+    assert.equal(runs.length, 2);
+    await client.cancelRun("r1");
+    assert.deepEqual(calls, ["GET /runs", "POST /runs/r1/cancel"]);
+  });
 });

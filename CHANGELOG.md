@@ -4,6 +4,17 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.35] - 2026-09-21 — Compete: extension Cancel active run
+
+CLI `#63` can stop a runaway from SSH; the editor could start Ask Nomi
+and watch OutputChannel progress but had no Stop. **Nomi: Cancel active
+run** (`Ctrl/Cmd+Shift+Alt+C`) posts `POST /runs/:id/cancel`, preferring
+tracked Ask Nomi / Plan Review runs.
+
+### Added
+- Extension command **`nomi.cancelRun`** + keybinding.
+- Client **`listRuns` / `cancelRun`** (denyPlan reuses cancel).
+
 ## [0.2.34] - 2026-09-21 — Compete: CLI nomi cancel + Ctrl+C
 
 SSH could approve plans and tools but not stop a runaway run without

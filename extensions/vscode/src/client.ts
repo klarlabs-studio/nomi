@@ -181,6 +181,17 @@ export class NomiClient {
 
   /** Deny a plan = cancel the run (same semantics as tray / channels). */
   async denyPlan(runId: string): Promise<void> {
+    await this.cancelRun(runId);
+  }
+
+  async listRuns(): Promise<Run[]> {
+    const res = await this.request("GET", "/runs");
+    const data = (await res.json()) as { runs?: Run[] };
+    return data.runs ?? [];
+  }
+
+  /** Stop an active run (CLI `nomi cancel` / Ctrl+C parity). */
+  async cancelRun(runId: string): Promise<void> {
     await this.request("POST", `/runs/${encodeURIComponent(runId)}/cancel`);
   }
 }
