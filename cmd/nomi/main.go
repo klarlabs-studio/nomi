@@ -31,6 +31,10 @@ SUBCOMMANDS
                            Pass --review for interactive Plan→Diff→Approve
                            (print plan + diffs, then [A]pprove / [D]eny /
                            [E]dit to drop steps or skip patch hunks).
+    review [run-id]        Attach to a pending plan_review run (from
+                           channels / email / etc) without creating a new
+                           one. Omit id when only one is pending; --list
+                           prints pending reviews.
     tail                   Follow the server-sent event stream live.
     list runs              Show the most recent runs.
     list assistants        Show every configured assistant.
@@ -60,6 +64,8 @@ FLAGS (apply to every subcommand)
 EXAMPLES
     nomi run "summarize notes.md in one sentence"
     nomi run --review "fix the flaky test in foo_test.go"
+    nomi review            # attach to the sole pending plan_review
+    nomi review --list
     nomi list runs
     nomi tail
     NOMI_TOKEN=$(ssh server 'docker exec nomi cat /data/auth.token') \
@@ -84,6 +90,8 @@ func main() {
 	switch sub {
 	case "run":
 		os.Exit(runCmd(common, args))
+	case "review":
+		os.Exit(reviewCmd(common, args))
 	case "tail":
 		os.Exit(tailCmd(common, args))
 	case "list", "ls":

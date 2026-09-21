@@ -4,6 +4,17 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.31] - 2026-09-21 — Compete: CLI nomi review attach
+
+Channels and Email leave runs in `plan_review`; SSH users had no way to
+resolve them without `nomi run --review` creating a new goal. `nomi review`
+attaches to a pending plan_review (sole pending, id/prefix, or `--list`)
+and reuses the Plan→Diff→Approve + live step progress loop.
+
+### Added
+- **`nomi review [run-id]`** + `--list` / `--timeout` / `--auto-approve`.
+- Extracted **`driveRun`** shared by `run` and `review`.
+
 ## [0.2.30] - 2026-09-21 — Compete: extension live step progress
 
 CLI `#57` prints tools as they run; the editor was still silent after
