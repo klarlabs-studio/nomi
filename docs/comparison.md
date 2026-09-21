@@ -87,6 +87,9 @@ Goose ships a desktop client and a strong MCP story. Differences:
   tool that still goes through plan review. The Plugins tab ships
   one-click presets (Filesystem, Memory, Fetch, Git, …) so setup
   matches Goose’s catalog feel without hand-writing `npx`/`uvx`.
+  A configurable remote catalog URL also accepts Goose’s
+  `servers.json` (or a Nomi preset envelope) so the marketplace can
+  grow without a Nomi release.
 
 When Goose wins: you want MCP-first interop with no extra daemon.
 When Nomi wins: you want MCP *and* signed-WASM isolation, with

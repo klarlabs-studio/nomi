@@ -69,6 +69,10 @@ export interface McpServerPreset {
   readyToCreate: boolean;
   /** Secret env vars for stdio servers (PAT, DATABASE_URL, …). */
   envCredentials?: McpEnvCredential[];
+  /** builtin = shipped with the app; remote = from catalog URL. */
+  source?: "builtin" | "remote";
+  endorsed?: boolean;
+  catalogOrigin?: string;
 }
 
 export const MCP_SERVER_PRESETS: McpServerPreset[] = [
@@ -272,15 +276,17 @@ export function mcpPresetCreateBlockedReason(
 export function filterMcpPresets(
   query: string,
   category: McpPresetCategory | "all" = "all",
-  opts?: { includeCustom?: boolean },
+  opts?: { includeCustom?: boolean; presets?: McpServerPreset[] },
 ): McpServerPreset[] {
   const q = query.trim().toLowerCase();
   const includeCustom = opts?.includeCustom ?? false;
-  return MCP_SERVER_PRESETS.filter((p) => {
+  const list = opts?.presets ?? MCP_SERVER_PRESETS;
+  return list.filter((p) => {
     if (!includeCustom && p.id === "custom") return false;
     if (category !== "all" && p.category !== category) return false;
     if (!q) return true;
-    const hay = `${p.label} ${p.description} ${p.runtime} ${p.category} ${p.setupNote}`.toLowerCase();
+    const hay =
+      `${p.label} ${p.description} ${p.runtime} ${p.category} ${p.setupNote} ${p.source ?? ""} ${p.catalogOrigin ?? ""}`.toLowerCase();
     return hay.includes(q);
   });
 }
@@ -308,8 +314,95 @@ export function applyMcpPresetConfig(
   return next;
 }
 
-export function findMcpPreset(id: string): McpServerPreset | undefined {
-  return MCP_SERVER_PRESETS.find((p) => p.id === id);
+export function findMcpPreset(
+  id: string,
+  presets: McpServerPreset[] = MCP_SERVER_PRESETS,
+): McpServerPreset | undefined {
+  return presets.find((p) => p.id === id);
+}
+
+/**
+ * Merge built-in + remote catalogs. Built-ins win on id collision so a
+ * hostile/mistaken remote index cannot shadow Filesystem / Memory / etc.
+ * Remote presets with colliding ids are kept under `remote:<id>`.
+ */
+export function mergeMcpPresets(
+  builtins: McpServerPreset[],
+  remote: McpServerPreset[],
+): McpServerPreset[] {
+  const builtinIDs = new Set(builtins.map((p) => p.id));
+  const out: McpServerPreset[] = builtins.map((p) => ({
+    ...p,
+    source: p.source ?? "builtin",
+  }));
+  for (const r of remote) {
+    const base = { ...r, source: "remote" as const };
+    if (builtinIDs.has(r.id)) {
+      out.push({ ...base, id: `remote:${r.id}` });
+    } else {
+      out.push(base);
+    }
+  }
+  return out;
+}
+
+/** Map API snake_case preset rows into the UI shape. */
+export function mapRemoteMcpPreset(row: {
+  id: string;
+  label: string;
+  description: string;
+  suggested_name: string;
+  transport: string;
+  category: string;
+  runtime: string;
+  command?: string;
+  args?: string;
+  endpoint?: string;
+  setup_note: string;
+  doc_url: string;
+  ready_to_create: boolean;
+  env_credentials?: { key: string; label: string; required: boolean; description?: string }[];
+  source?: string;
+  endorsed?: boolean;
+  catalog_origin?: string;
+}): McpServerPreset {
+  const transport: McpTransport = row.transport === "http" ? "http" : "stdio";
+  const runtime = (["npx", "uvx", "docker", "http", "manual"].includes(row.runtime)
+    ? row.runtime
+    : transport === "http"
+      ? "http"
+      : "manual") as McpRuntime;
+  const category = (
+    ["local", "cloud", "data", "reasoning", "remote", "custom"].includes(row.category)
+      ? row.category
+      : transport === "http"
+        ? "remote"
+        : "cloud"
+  ) as McpPresetCategory;
+  return {
+    id: row.id,
+    label: row.label,
+    description: row.description,
+    suggestedName: row.suggested_name || row.label,
+    transport,
+    category,
+    runtime,
+    command: row.command,
+    args: row.args,
+    endpoint: row.endpoint,
+    setupNote: row.setup_note,
+    docURL: row.doc_url,
+    readyToCreate: row.ready_to_create,
+    envCredentials: row.env_credentials?.map((c) => ({
+      key: c.key,
+      label: c.label,
+      required: c.required,
+      description: c.description,
+    })),
+    source: "remote",
+    endorsed: row.endorsed,
+    catalogOrigin: row.catalog_origin,
+  };
 }
 
 /** Parse KEY=value lines into a config.env object for the API. */

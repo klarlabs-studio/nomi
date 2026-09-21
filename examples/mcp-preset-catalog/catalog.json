@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "presets": [
+    {
+      "id": "neon",
+      "label": "Neon",
+      "description": "Serverless Postgres via Neon MCP",
+      "suggested_name": "Neon",
+      "transport": "http",
+      "category": "remote",
+      "runtime": "http",
+      "endpoint": "https://mcp.neon.tech/mcp",
+      "setup_note": "Paste a Neon API key as the connection bearer credential.",
+      "doc_url": "https://neon.tech/docs/ai/neon-mcp-server",
+      "ready_to_create": false
+    },
+    {
+      "id": "sqlite-npx",
+      "label": "SQLite",
+      "description": "Query a local SQLite database",
+      "suggested_name": "SQLite",
+      "transport": "stdio",
+      "category": "data",
+      "runtime": "npx",
+      "command": "npx",
+      "args": "-y mcp-server-sqlite --db-path /path/to/db.sqlite",
+      "setup_note": "Replace /path/to/db.sqlite before creating.",
+      "doc_url": "https://github.com/modelcontextprotocol/servers",
+      "ready_to_create": false
+    }
+  ]
+}

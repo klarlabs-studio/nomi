@@ -4,6 +4,20 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.55] - 2026-09-21 — Compete: remote MCP preset catalog URL
+
+Goose wins when the MCP catalog is a URL you can point at, not a
+hardcoded chip list. Nomi now fetches a remote preset index (Goose
+`servers.json` or a Nomi envelope), caches it for 6h, and merges it
+into Settings → Plugins → MCP — built-ins still win on id collisions.
+
+### Added
+- `GET /mcp/presets` + `POST /mcp/presets/refresh`
+- `GET/PUT /settings/mcp-preset-catalog` (`mcp_preset_catalog_url`)
+- Goose `servers.json` + Nomi `{schema_version,presets}` parsers
+- Plugins UI: remote catalog URL field, “Use Goose catalog”, refresh,
+  remote badges; `examples/mcp-preset-catalog/`
+
 ## [0.2.54] - 2026-09-21 — Recipe YAML import / share
 
 Cross-machine recipe sync lite: export already returned YAML, but

@@ -440,7 +440,7 @@ Prometheus `/metrics` for plan / step / executor / replan
 attribution per provider, `make eval-live-providers` matrix
 against real LLM providers.
 
-Backlog (post-v0.2.54, in priority order — not committed):
+Backlog (post-v0.2.55, in priority order — not committed):
 
 - Cross-machine recipe sync (opt-in, end-to-end-encrypted) — YAML
   import/export shipped; full device pairing deferred.
@@ -450,7 +450,6 @@ Backlog (post-v0.2.54, in priority order — not committed):
   already shipped).
 - Full Claude Code–style TUI (`nomi tui`) — CLI attach already covers
   the SSH loop.
-- Goose-style remote/synced MCP marketplace (local browse shipped).
 - Dedicated Beeper plugin (use Matrix + bridge today).
 Live spec, plan, and task state in [`.roady/`](.roady/) (142
 features, 267 tasks closed at release). Ideas and bug reports on

@@ -1027,6 +1027,62 @@ export const settingsApi = {
       method: "PUT",
       body: JSON.stringify({ enabled }),
     }),
+
+  getMcpPresetCatalog: () =>
+    fetchApi<McpPresetCatalogSettings>("/settings/mcp-preset-catalog"),
+
+  setMcpPresetCatalog: (url: string) =>
+    fetchApi<McpPresetCatalogSettings>("/settings/mcp-preset-catalog", {
+      method: "PUT",
+      body: JSON.stringify({ url }),
+    }),
+};
+
+/** Remote MCP preset catalog (Goose-style marketplace URL). */
+export interface McpPresetCatalogSettings {
+  url: string;
+  example_goose_url: string;
+  preset_count: number;
+  fetched_at?: string;
+  last_error?: string;
+  stale: boolean;
+}
+
+export interface McpRemotePresetRow {
+  id: string;
+  label: string;
+  description: string;
+  suggested_name: string;
+  transport: string;
+  category: string;
+  runtime: string;
+  command?: string;
+  args?: string;
+  endpoint?: string;
+  setup_note: string;
+  doc_url: string;
+  ready_to_create: boolean;
+  env_credentials?: {
+    key: string;
+    label: string;
+    required: boolean;
+    description?: string;
+  }[];
+  source?: string;
+  endorsed?: boolean;
+  catalog_origin?: string;
+}
+
+export const mcpPresetsApi = {
+  list: () =>
+    fetchApi<{ presets: McpRemotePresetRow[]; catalog: McpPresetCatalogSettings }>(
+      "/mcp/presets",
+    ),
+  refresh: () =>
+    fetchApi<{ presets: McpRemotePresetRow[]; catalog: McpPresetCatalogSettings }>(
+      "/mcp/presets/refresh",
+      { method: "POST" },
+    ),
 };
 
 // Health check
