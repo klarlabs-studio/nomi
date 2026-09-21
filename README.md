@@ -431,7 +431,7 @@ over MCP, signed Recipe registry with built-in catalog, scheduled
 runs with natural-language cron, auto-extracted preference learning
 loop, skill induction with embedding clustering + LLM synthesis,
 four messaging channels (Telegram + Slack + Discord + WhatsApp +
-Matrix + Teams + Signal),
+Matrix + Teams + Signal + iMessage),
 Gmail / Calendar / GitHub / Obsidian / Mnemos plugins, markdown
 chat rendering with Shiki per-hunk diff highlighting, OS push
 notifications for pending approvals, macOS menu bar integration
@@ -440,11 +440,8 @@ Prometheus `/metrics` for plan / step / executor / replan
 attribution per provider, `make eval-live-providers` matrix
 against real LLM providers.
 
-Backlog (post-v0.2.52, in priority order — not committed):
+Backlog (post-v0.2.53, in priority order — not committed):
 
-- OpenClaw long-tail connector (iMessage) — only if macOS demand
-  justifies (Signal + Matrix + Teams shipped; Beeper rides Matrix
-  bridges).
 - Cross-machine recipe sync (opt-in, end-to-end-encrypted).
 - Hosted Mnemos for visibility-scoped team memory.
 - Approval delegation across devices.
@@ -452,6 +449,8 @@ Backlog (post-v0.2.52, in priority order — not committed):
   already shipped).
 - Full Claude Code–style TUI (`nomi tui`) — CLI attach already covers
   the SSH loop.
+- Goose-style remote/synced MCP marketplace (local browse shipped).
+- Dedicated Beeper plugin (use Matrix + bridge today).
 Live spec, plan, and task state in [`.roady/`](.roady/) (142
 features, 267 tasks closed at release). Ideas and bug reports on
 the [issues page](https://github.com/klarlabs-studio/nomi/issues).
