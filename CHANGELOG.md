@@ -4,6 +4,17 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.39] - 2026-09-21 — Compete: extension approval toast
+
+Plans auto-open (#65); mid-run tool approvals still only bumped the
+badge. On `approval.requested`, show an Approve / Deny toast (desktop
+OS-notification parity) and resolve via the same API as Quick Pick.
+Disable with `nomi.approvalToast: false`.
+
+### Added
+- SSE → **approval toast** with Approve / Deny actions.
+- Setting **`nomi.approvalToast`** (default `true`).
+
 ## [0.2.38] - 2026-09-21 — Compete: extension Pause / Resume
 
 CLI `#66` soft-stops from SSH; the editor could Cancel but not Pause.
