@@ -35,7 +35,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - Ask Nomi editor context menu — #50
 - In-editor hunk skip on Plan Review (`filesystem.patch`) — #51
 - CLI `--review` hunk skip via `/plan/edit` — #52
-- Opt-in auto-approve for safe messaging plans — this PR
+- Opt-in auto-approve for safe messaging plans — #53
+- Extension keybindings (Ask Nomi / Review / Approve / Deny) — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -44,14 +45,14 @@ per-tool capabilities, sandbox, and hash-chained audit.
 |---|---|
 | OpenClaw | Messaging long-tail (safe-plan auto-approve is opt-in) |
 | Goose | Remote/synced marketplace catalog (local browse shipped) |
-| Cline | Shiki / side-by-side DiffPreview polish (hunk skip shipped) |
+| Cline | Shiki / side-by-side DiffPreview polish (hunk skip + keybindings shipped) |
 | Claude Code | Full TUI (CLI can drop steps + skip hunks; rich TUI deferred) |
 | Hermes | Pocket-first mobile UX (schedules/skills now inspectable from CLI + UI) |
 
 ## Next moves (priority)
 
-1. **Extension keybindings** — Cline muscle memory for Ask Nomi / Review
-2. **OpenClaw long-tail connectors** — only if channel demand justifies
+1. **OpenClaw long-tail connectors** — only if channel demand justifies
+2. **Shiki / side-by-side in extension** (stretch) — optional polish
 
 ## Defer
 

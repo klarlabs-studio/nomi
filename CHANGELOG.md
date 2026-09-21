@@ -4,6 +4,15 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.25] - 2026-09-21 — Compete: extension keybindings
+
+Cline wins on muscle memory. Ask Nomi, Review plan, Show pending,
+Approve, and Deny now ship default shortcuts (`Ctrl/Cmd+Shift+Alt+N/R/P/Y/D`).
+
+### Added
+- **`contributes.keybindings`** for the five review/run commands (Ask Nomi
+  gated on `editorTextFocus`).
+
 ## [0.2.24] - 2026-09-21 — Compete: auto-approve safe channel plans
 
 OpenClaw acts immediately; Nomi still reviews writes. Opt-in setting

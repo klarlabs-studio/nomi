@@ -99,7 +99,35 @@
           "when": "true"
         }
       ]
-    }
+    },
+    "keybindings": [
+      {
+        "command": "nomi.runWithEditorContext",
+        "key": "ctrl+shift+alt+n",
+        "mac": "cmd+shift+alt+n",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "nomi.reviewPlan",
+        "key": "ctrl+shift+alt+r",
+        "mac": "cmd+shift+alt+r"
+      },
+      {
+        "command": "nomi.showPending",
+        "key": "ctrl+shift+alt+p",
+        "mac": "cmd+shift+alt+p"
+      },
+      {
+        "command": "nomi.approveSelected",
+        "key": "ctrl+shift+alt+y",
+        "mac": "cmd+shift+alt+y"
+      },
+      {
+        "command": "nomi.denySelected",
+        "key": "ctrl+shift+alt+d",
+        "mac": "cmd+shift+alt+d"
+      }
+    ]
   },
   "scripts": {
     "compile": "tsc -p ./",
