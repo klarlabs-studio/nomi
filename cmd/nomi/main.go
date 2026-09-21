@@ -35,6 +35,9 @@ SUBCOMMANDS
                            channels / email / etc) without creating a new
                            one. Omit id when only one is pending; --list
                            prints pending reviews.
+    approve [id]           Resolve a pending tool approval (omit id when
+                           only one is pending; --list to print).
+    deny [id]              Deny a pending tool approval (same id rules).
     tail                   Follow the server-sent event stream live.
     list runs              Show the most recent runs.
     list assistants        Show every configured assistant.
@@ -66,6 +69,8 @@ EXAMPLES
     nomi run --review "fix the flaky test in foo_test.go"
     nomi review            # attach to the sole pending plan_review
     nomi review --list
+    nomi approve           # sole pending tool approval
+    nomi deny <id>
     nomi list runs
     nomi tail
     NOMI_TOKEN=$(ssh server 'docker exec nomi cat /data/auth.token') \
@@ -92,6 +97,10 @@ func main() {
 		os.Exit(runCmd(common, args))
 	case "review":
 		os.Exit(reviewCmd(common, args))
+	case "approve":
+		os.Exit(approveCmd(common, args))
+	case "deny":
+		os.Exit(denyCmd(common, args))
 	case "tail":
 		os.Exit(tailCmd(common, args))
 	case "list", "ls":
