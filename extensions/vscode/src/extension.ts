@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { isCancelableStatus, preferCancelCandidates } from "./cancel_run";
 import { NomiClient, pendingCount, type Approval, type PendingSnapshot, type Run } from "./client";
 import { discoverConnection } from "./discovery";
 import { buildEditorContext, type EditorContextPayload } from "./editor_context";
@@ -353,6 +354,40 @@ async function runWithEditorContext(): Promise<void> {
   }
 }
 
+async function cancelRunCommand(): Promise<void> {
+  try {
+    const client = buildClient();
+    const runs = await client.listRuns();
+    const cancelable = runs.filter((r) => isCancelableStatus(r.status));
+    const candidates = preferCancelCandidates(cancelable, trackedRuns);
+    if (candidates.length === 0) {
+      vscode.window.showInformationMessage("Nomi: no active runs to cancel.");
+      return;
+    }
+    let run = candidates[0]!;
+    if (candidates.length > 1) {
+      const picked = await vscode.window.showQuickPick(
+        candidates.map((r) => ({
+          label: r.goal.length > 80 ? `${r.goal.slice(0, 77)}…` : r.goal || "(no goal)",
+          description: `${r.status} · ${r.id.slice(0, 8)}`,
+          run: r,
+        })),
+        { placeHolder: "Cancel which run?" },
+      );
+      if (!picked) return;
+      run = picked.run;
+    }
+    await client.cancelRun(run.id);
+    trackedRuns.delete(run.id);
+    const short = run.id.slice(0, 8);
+    appendProgress(`✗ [${short}] cancel requested`, true);
+    vscode.window.showInformationMessage(`Nomi: cancelled ${short}`);
+    await refreshBadge(true);
+  } catch (err) {
+    vscode.window.showErrorMessage(`Nomi: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
 export function activate(context: vscode.ExtensionContext): void {
   statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
   statusItem.command = "nomi.showPending";
@@ -371,6 +406,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("nomi.openStatus", () => openStatus()),
     vscode.commands.registerCommand("nomi.runWithEditorContext", () => runWithEditorContext()),
     vscode.commands.registerCommand("nomi.reviewPlan", () => reviewPlanCommand()),
+    vscode.commands.registerCommand("nomi.cancelRun", () => cancelRunCommand()),
     vscode.commands.registerCommand("nomi.showProgress", () => {
       progressChannel?.show(true);
     }),

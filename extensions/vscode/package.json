@@ -87,6 +87,10 @@
       {
         "command": "nomi.showProgress",
         "title": "Nomi: Show run progress"
+      },
+      {
+        "command": "nomi.cancelRun",
+        "title": "Nomi: Cancel active run"
       }
     ],
     "menus": {
@@ -130,6 +134,11 @@
         "command": "nomi.denySelected",
         "key": "ctrl+shift+alt+d",
         "mac": "cmd+shift+alt+d"
+      },
+      {
+        "command": "nomi.cancelRun",
+        "key": "ctrl+shift+alt+c",
+        "mac": "cmd+shift+alt+c"
       }
     ]
   },
@@ -137,7 +146,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "tsc -p ./ --noEmit",
-    "test": "npm run compile && node --test out/discovery.test.js out/editor_context.test.js out/event_stream.test.js out/plan_fmt.test.js out/diff_hunks.test.js out/highlighter.test.js out/diff_render.test.js out/open_path.test.js out/step_progress.test.js",
+    "test": "npm run compile && node --test out/discovery.test.js out/editor_context.test.js out/event_stream.test.js out/plan_fmt.test.js out/diff_hunks.test.js out/highlighter.test.js out/diff_render.test.js out/open_path.test.js out/step_progress.test.js out/cancel_run.test.js",
     "vscode:prepublish": "npm run compile"
   },
   "devDependencies": {

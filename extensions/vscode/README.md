@@ -17,8 +17,11 @@ plans and tool calls from the editor without rebuilding the desktop UI.
 - **Ask Nomi** — editor context menu + command palette +
   `Ctrl/Cmd+Shift+Alt+N`; starts a run with open tabs + active selection
   attached (paths only; secrets filtered; selection ≤ 4 KiB)
-- Keyboard shortcuts for Review plan, Show pending, Approve, Deny
-  (`…+R` / `…+P` / `…+Y` / `…+D`)
+- Keyboard shortcuts for Review plan, Show pending, Approve, Deny, Cancel
+  (`…+R` / `…+P` / `…+Y` / `…+D` / `…+C`)
+- **Cancel active run** — stops Ask Nomi / Plan Review tracked runs
+  (or Quick Pick among cancelable), same `POST /runs/:id/cancel` as
+  `nomi cancel` / Ctrl+C
 - Auto-discovers `auth.token` + `api.endpoint` from the Nomi data dir
   (same paths as `nomi` CLI / Tauri)
 
@@ -57,6 +60,7 @@ npm run compile
 | `Ctrl/Cmd+Shift+Alt+P` | Show pending approvals & plans |
 | `Ctrl/Cmd+Shift+Alt+Y` | Approve selected |
 | `Ctrl/Cmd+Shift+Alt+D` | Deny selected |
+| `Ctrl/Cmd+Shift+Alt+C` | Cancel active run |
 
 Remap under Keyboard Shortcuts if they collide with other extensions.
 
