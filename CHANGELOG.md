@@ -4,6 +4,17 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.43] - 2026-09-21 — Compete: status-bar plan click → Plan Review
+
+`#69` showed `$(list-tree) Nomi plan` but every live click still opened
+the OutputChannel — and the numeric pending badge hid the plan chrome.
+Plan-ready now keeps the plan label (even with pending > 0) and opens
+Plan Review; paused click resumes.
+
+### Fixed
+- Status-bar **plan** → `nomi.openStatusPlan` (Plan Review for the live run).
+- Status-bar **paused** → `nomi.resumeRun`.
+
 ## [0.2.42] - 2026-09-21 — Compete: notification click → Approvals
 
 Approval OS notifications said "Click to review" but Tauri

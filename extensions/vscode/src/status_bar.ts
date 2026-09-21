@@ -60,6 +60,11 @@ export function updateLiveStep(
 }
 
 export function formatStatusBarText(pending: number, live: LiveStep | null): string {
+  // Plan-ready chrome wins over the numeric pending badge so the click
+  // target matches what the user sees (Cline zero context-switch).
+  if (live?.kind === "plan") {
+    return `$(list-tree) Nomi plan`;
+  }
   if (pending > 0) {
     return `$(shield) Nomi ${pending}`;
   }
@@ -72,15 +77,20 @@ export function formatStatusBarText(pending: number, live: LiveStep | null): str
         return `$(sync~spin) Nomi ↻ ${title}`;
       case "paused":
         return `$(debug-pause) Nomi paused`;
-      case "plan":
-        return `$(list-tree) Nomi plan`;
+      default:
+        return "$(shield) Nomi";
     }
   }
   return "$(shield) Nomi";
 }
 
-/** Click target: pending → showPending; live step → showProgress. */
+/**
+ * Click target: plan → Plan Review; paused → Resume; pending →
+ * showPending; other live → showProgress.
+ */
 export function statusBarCommand(pending: number, live: LiveStep | null): string {
+  if (live?.kind === "plan") return "nomi.openStatusPlan";
+  if (live?.kind === "paused") return "nomi.resumeRun";
   if (pending > 0) return "nomi.showPending";
   if (live) return "nomi.showProgress";
   return "nomi.showPending";

@@ -67,7 +67,14 @@ describe("updateLiveStep", () => {
 });
 
 describe("formatStatusBarText", () => {
-  it("prefers pending count over live step", () => {
+  it("prefers plan chrome over pending count", () => {
+    assert.equal(
+      formatStatusBarText(2, { runId: "r", title: "plan ready", kind: "plan" }),
+      "$(list-tree) Nomi plan",
+    );
+  });
+
+  it("prefers pending count over running step", () => {
     assert.equal(
       formatStatusBarText(2, { runId: "r", title: "Patch", kind: "running" }),
       "$(shield) Nomi 2",
@@ -84,7 +91,18 @@ describe("formatStatusBarText", () => {
 });
 
 describe("statusBarCommand", () => {
-  it("routes to pending or progress", () => {
+  it("routes plan to Plan Review and paused to Resume", () => {
+    assert.equal(
+      statusBarCommand(1, { runId: "r", title: "plan ready", kind: "plan" }),
+      "nomi.openStatusPlan",
+    );
+    assert.equal(
+      statusBarCommand(0, { runId: "r", title: "paused", kind: "paused" }),
+      "nomi.resumeRun",
+    );
+  });
+
+  it("routes pending or progress otherwise", () => {
     assert.equal(statusBarCommand(1, null), "nomi.showPending");
     assert.equal(
       statusBarCommand(0, { runId: "r", title: "x", kind: "running" }),

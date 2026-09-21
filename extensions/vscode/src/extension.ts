@@ -146,9 +146,15 @@ function applyStatusBar(clientUrl?: string): void {
   statusItem.text = formatStatusBarText(n, liveStep);
   statusItem.command = statusBarCommand(n, liveStep);
   const conn = liveConnected ? " · live" : " · polling";
-  if (n > 0) {
+  if (liveStep?.kind === "plan") {
+    statusItem.tooltip = `Plan ready for review (${liveStep.runId.slice(0, 8)}) — click to open${conn}`;
+    statusItem.backgroundColor = new vscode.ThemeColor("statusBarItem.warningBackground");
+  } else if (n > 0) {
     statusItem.tooltip = `${lastSnapshot.approvals.length} tool approval(s), ${lastSnapshot.plans.length} plan(s) awaiting review${conn}`;
     statusItem.backgroundColor = new vscode.ThemeColor("statusBarItem.warningBackground");
+  } else if (liveStep?.kind === "paused") {
+    statusItem.tooltip = `Paused (${liveStep.runId.slice(0, 8)}) — click to resume${conn}`;
+    statusItem.backgroundColor = undefined;
   } else if (liveStep) {
     statusItem.tooltip = `Running: ${liveStep.title} (${liveStep.runId.slice(0, 8)})${conn}`;
     statusItem.backgroundColor = undefined;
@@ -373,6 +379,33 @@ async function reviewPlanCommand(): Promise<void> {
   });
 }
 
+/** Status-bar plan click: open the live tracked plan without a Quick Pick. */
+async function openStatusPlanCommand(): Promise<void> {
+  if (liveStep?.kind === "plan" && liveStep.runId) {
+    try {
+      const client = buildClient();
+      const detail = await client.getRun(liveStep.runId);
+      if (detail.run.status === "plan_review") {
+        trackRun(detail.run.id);
+        await openPlanReview(client, detail.run, {
+          onResolved: () => {
+            trackRun(detail.run.id);
+            liveStep = null;
+            return refreshBadge(true);
+          },
+        });
+        return;
+      }
+    } catch (err) {
+      vscode.window.showErrorMessage(
+        `Nomi: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      return;
+    }
+  }
+  await reviewPlanCommand();
+}
+
 async function openStatus(): Promise<void> {
   try {
     const client = buildClient();
@@ -587,6 +620,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("nomi.openStatus", () => openStatus()),
     vscode.commands.registerCommand("nomi.runWithEditorContext", () => runWithEditorContext()),
     vscode.commands.registerCommand("nomi.reviewPlan", () => reviewPlanCommand()),
+    vscode.commands.registerCommand("nomi.openStatusPlan", () => openStatusPlanCommand()),
     vscode.commands.registerCommand("nomi.cancelRun", () => cancelRunCommand()),
     vscode.commands.registerCommand("nomi.pauseRun", () => pauseRunCommand()),
     vscode.commands.registerCommand("nomi.resumeRun", () => resumeRunCommand()),
