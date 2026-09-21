@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Eye, EyeOff, Columns2, Rows2 } from "lucide-react";
 import { langFromPath, highlightLines, type BundledLang } from "@/lib/highlighter";
+import { openPathInDesktop } from "@/lib/open-path";
 
 interface DiffPreviewProps {
   diff: string;
@@ -9,6 +10,9 @@ interface DiffPreviewProps {
   // ultimately gets applied matches what the user reviewed. Optional
   // because the read-only audit log surface uses the same component.
   onDiffChange?: (newDiff: string) => void;
+  // Optional workspace root for resolving relative diff paths when
+  // clicking a file label (parity with the VS Code extension).
+  workspaceRoot?: string;
 }
 
 interface DiffSummary {
@@ -138,7 +142,7 @@ function rebuildDiff(blocks: ParsedFileBlock[], skipped: Set<string>): string {
  *    isn't bundled or Shiki hasn't finished initialising.
  *  - Color-coded `@@` hunk headers, +/- lines.
  */
-export function DiffPreview({ diff, onDiffChange }: DiffPreviewProps) {
+export function DiffPreview({ diff, onDiffChange, workspaceRoot }: DiffPreviewProps) {
   const [expanded, setExpanded] = useState(true);
   const [skipped, setSkipped] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"unified" | "split">(() => {
@@ -175,21 +179,38 @@ export function DiffPreview({ diff, onDiffChange }: DiffPreviewProps) {
   return (
     <div className="mt-2 rounded border border-muted-foreground/20 bg-background overflow-hidden">
       <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 text-[11px] font-mono bg-muted/30">
-        <button
-          type="button"
-          onClick={() => setExpanded((v) => !v)}
-          className="flex items-center gap-1 min-w-0 hover:bg-muted/60 rounded px-1"
-          aria-expanded={expanded}
-        >
-          {expanded ? (
-            <ChevronDown className="w-3 h-3 flex-shrink-0" />
-          ) : (
-            <ChevronRight className="w-3 h-3 flex-shrink-0" />
-          )}
-          <span className="truncate">
-            {summary.files.length > 0 ? summary.files.join(", ") : "patch"}
+        <div className="flex items-center gap-1 min-w-0">
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="p-1 hover:bg-muted/60 rounded flex-shrink-0"
+            aria-expanded={expanded}
+            aria-label={expanded ? "Collapse diff" : "Expand diff"}
+          >
+            {expanded ? (
+              <ChevronDown className="w-3 h-3" />
+            ) : (
+              <ChevronRight className="w-3 h-3" />
+            )}
+          </button>
+          <span className="truncate min-w-0">
+            {summary.files.length > 0
+              ? summary.files.map((f, i) => (
+                  <span key={f}>
+                    {i > 0 ? ", " : ""}
+                    <button
+                      type="button"
+                      className="hover:underline text-left"
+                      title="Open in default app"
+                      onClick={() => void openPathInDesktop(f, workspaceRoot)}
+                    >
+                      {f}
+                    </button>
+                  </span>
+                ))
+              : "patch"}
           </span>
-        </button>
+        </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <span className="text-emerald-600 dark:text-emerald-400">+{summary.added}</span>
           <span className="text-rose-600 dark:text-rose-400">−{summary.removed}</span>
@@ -211,9 +232,14 @@ export function DiffPreview({ diff, onDiffChange }: DiffPreviewProps) {
             const fileLang = langFromPath(block.fileLabel);
             return (
             <div key={bi} className="space-y-1">
-              <div className="text-[11px] text-muted-foreground font-mono">
+              <button
+                type="button"
+                className="text-[11px] text-muted-foreground font-mono hover:underline text-left truncate max-w-full"
+                title="Open in default app"
+                onClick={() => void openPathInDesktop(block.fileLabel, workspaceRoot)}
+              >
                 {block.fileLabel}
-              </div>
+              </button>
               {block.hunks.map((hunk, hi) => {
                 const key = `${block.fileLabel}#${hi}`;
                 const isSkipped = skipped.has(key);
