@@ -52,7 +52,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - Extension Pause / Resume active run — #67
 - Extension approval toast (Approve / Deny on `approval.requested`) — #68
 - Extension status-bar live step text — #69
-- CLI `nomi watch` attach to in-flight runs — this PR
+- CLI `nomi watch` attach to in-flight runs — #70
+- Desktop notification click → Approvals deep-link — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose

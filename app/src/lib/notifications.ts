@@ -4,23 +4,36 @@
 //
 // Tauri (desktop): uses @tauri-apps/plugin-notification, which routes
 // through the host OS's Notification Center (macOS), org.freedesktop
-// notifications (Linux), or toast (Windows).
+// notifications (Linux), or toast (Windows). Click → Approvals via
+// `onAction` + stamped `extra` (tray already deep-links the same tab).
 //
 // Web (vite dev, Playwright, Scout): falls back to the Notification
 // Web API. Permission is requested lazily on the first event so a
 // fresh tab doesn't get a permission popup before any agent activity.
 
+import type { PluginListener } from "@tauri-apps/api/core";
 import {
   isPermissionGranted as tauriIsGranted,
+  onAction as tauriOnAction,
   requestPermission as tauriRequest,
   sendNotification as tauriSend,
 } from "@tauri-apps/plugin-notification";
+import {
+  APPROVAL_NOTIF_EXTRA,
+  isApprovalNotificationAction,
+} from "./notification-actions";
 
 let permissionState: "default" | "granted" | "denied" = "default";
 let permissionPromise: Promise<"granted" | "denied"> | null = null;
 let userDisabled = false;
 
 const STORAGE_KEY = "nomi.notifications.disabled";
+
+export type NotificationClickHandler = () => void;
+
+let clickHandler: NotificationClickHandler | null = null;
+let actionListener: PluginListener | null = null;
+let actionListenPromise: Promise<void> | null = null;
 
 if (typeof window !== "undefined") {
   try {
@@ -93,6 +106,34 @@ async function ensurePermission(): Promise<"granted" | "denied"> {
   return permissionPromise;
 }
 
+async function ensureActionListener(): Promise<void> {
+  if (!inTauri() || actionListener) return;
+  if (actionListenPromise) return actionListenPromise;
+  actionListenPromise = (async () => {
+    try {
+      actionListener = await tauriOnAction((notification) => {
+        if (!isApprovalNotificationAction(notification.extra)) return;
+        clickHandler?.();
+      });
+    } catch {
+      // Plugin unavailable (tests / stripped builds).
+    }
+  })();
+  await actionListenPromise;
+}
+
+/**
+ * Register the Approvals deep-link for notification clicks (Tauri
+ * `onAction` + Web Notification `onclick`). Call once from App mount.
+ */
+export function subscribeNotificationClicks(handler: NotificationClickHandler): () => void {
+  clickHandler = handler;
+  void ensureActionListener();
+  return () => {
+    if (clickHandler === handler) clickHandler = null;
+  };
+}
+
 export interface ApprovalNotificationInput {
   capability: string;
   approvalID?: string;
@@ -114,18 +155,25 @@ export async function notifyApprovalRequested(input: ApprovalNotificationInput):
 
   try {
     if (inTauri()) {
-      await tauriSend({ title, body });
+      await ensureActionListener();
+      tauriSend({
+        title,
+        body,
+        extra: {
+          ...APPROVAL_NOTIF_EXTRA,
+          approval_id: input.approvalID ?? "",
+          run_id: input.runID ?? "",
+        },
+      });
     } else if (typeof Notification !== "undefined") {
       const n = new Notification(title, { body, tag: input.approvalID ?? "nomi-approval" });
-      // Focus the window when the user clicks the notification; the
-      // Approvals tab is the in-app continuation.
       n.onclick = () => {
         try {
           window.focus();
         } catch {
-          // headless / cross-origin: nothing we can do; the in-app
-          // Approvals badge still shows the pending count.
+          // headless / cross-origin
         }
+        clickHandler?.();
       };
     }
   } catch {

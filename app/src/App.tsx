@@ -20,6 +20,7 @@ import { OnboardingWizard } from "@/components/onboarding/wizard";
 import { EventProvider } from "@/providers/event-provider";
 import { warmHighlighter } from "@/lib/highlighter";
 import { approvalsApi, assistantsApi, healthApi, runsApi, settingsApi } from "@/lib/api";
+import { subscribeNotificationClicks } from "@/lib/notifications";
 import { approvalCopy } from "@/lib/approval-copy";
 import { planTrayCopy } from "@/lib/plan-tray-copy";
 import { queryKeys } from "@/lib/query-keys";
@@ -297,6 +298,27 @@ function App() {
       }
     };
   }, [queryClient]);
+
+  // OS notification click → Approvals tab (matches "Click to review" copy).
+  useEffect(() => {
+    return subscribeNotificationClicks(() => {
+      setMainTab("approvals");
+      void (async () => {
+        try {
+          const { getCurrentWindow } = await import("@tauri-apps/api/window");
+          const win = getCurrentWindow();
+          await win.show();
+          await win.setFocus();
+        } catch {
+          try {
+            window.focus();
+          } catch {
+            // Web / headless: Approvals tab switch is enough.
+          }
+        }
+      })();
+    });
+  }, []);
 
   // Tray badge + status icon. We piggy-back on React Query — EventProvider
   // already invalidates approvals.list and runs.list on every approval.* /
