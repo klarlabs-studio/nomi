@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -60,6 +61,7 @@ func runCmd(common *commonFlags, args []string) int {
 	deadline := time.Now().Add(*timeout)
 	stdin := bufio.NewReader(os.Stdin)
 	planHandled := false
+	seenSteps := map[string]string{} // step ID → last printed status
 	for time.Now().Before(deadline) {
 		var detail struct {
 			Run struct {
@@ -67,18 +69,15 @@ func runCmd(common *commonFlags, args []string) int {
 				Goal   string `json:"goal"`
 				Status string `json:"status"`
 			} `json:"run"`
-			Plan  *planPayload `json:"plan"`
-			Steps []struct {
-				Title  string `json:"title"`
-				Status string `json:"status"`
-				Output string `json:"output,omitempty"`
-				Error  string `json:"error,omitempty"`
-			} `json:"steps"`
+			Plan  *planPayload      `json:"plan"`
+			Steps []stepProgressRow `json:"steps"`
 		}
 		if err := cli.Get("/runs/"+created.ID, &detail); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return 1
 		}
+
+		printStepProgress(os.Stderr, detail.Steps, detail.Plan, seenSteps)
 
 		switch detail.Run.Status {
 		case "plan_review":
@@ -123,6 +122,7 @@ func runCmd(common *commonFlags, args []string) int {
 							fmt.Fprintln(os.Stderr, err)
 							return 1
 						}
+						printStepProgress(os.Stderr, detail.Steps, detail.Plan, seenSteps)
 						continue
 					default: // approve
 						fmt.Fprintln(os.Stderr, "▶ approving plan")
@@ -155,11 +155,8 @@ func runCmd(common *commonFlags, args []string) int {
 			fmt.Fprintln(os.Stderr, "✓ done")
 			return 0
 		case "failed":
-			for _, s := range detail.Steps {
-				if s.Error != "" {
-					fmt.Fprintf(os.Stderr, "✗ %s: %s\n", s.Title, s.Error)
-				}
-			}
+			// Per-step errors already printed by printStepProgress.
+			fmt.Fprintln(os.Stderr, "✗ failed")
 			return 1
 		case "cancelled":
 			fmt.Fprintln(os.Stderr, "✗ cancelled")
@@ -169,6 +166,62 @@ func runCmd(common *commonFlags, args []string) int {
 	}
 	fmt.Fprintf(os.Stderr, "✗ timed out after %s\n", *timeout)
 	return 1
+}
+
+// stepProgressRow is the subset of a run step used for live progress.
+type stepProgressRow struct {
+	ID     string `json:"id"`
+	Title  string `json:"title"`
+	Status string `json:"status"`
+	Output string `json:"output,omitempty"`
+	Error  string `json:"error,omitempty"`
+}
+
+// printStepProgress writes one stderr line per step status change so
+// `nomi run` isn't silent between the 2s polls (Claude Code parity).
+// Tool name is appended when the plan still carries expected_tool.
+func printStepProgress(w io.Writer, steps []stepProgressRow, plan *planPayload, seen map[string]string) {
+	toolByID := map[string]string{}
+	if plan != nil {
+		for _, ps := range plan.Steps {
+			if ps.ID != "" && ps.ExpectedTool != "" {
+				toolByID[ps.ID] = ps.ExpectedTool
+			}
+		}
+	}
+	for i, s := range steps {
+		key := s.ID
+		if key == "" {
+			key = fmt.Sprintf("#%d", i)
+		}
+		if seen[key] == s.Status {
+			continue
+		}
+		seen[key] = s.Status
+		label := strings.TrimSpace(s.Title)
+		if label == "" {
+			label = "step"
+		}
+		if tool := toolByID[s.ID]; tool != "" && tool != label {
+			label = fmt.Sprintf("%s (%s)", label, tool)
+		}
+		switch s.Status {
+		case "running":
+			fmt.Fprintf(w, "→ %s\n", label)
+		case "retrying":
+			fmt.Fprintf(w, "↻ %s (retry)\n", label)
+		case "blocked":
+			fmt.Fprintf(w, "⏸ %s (blocked)\n", label)
+		case "done":
+			fmt.Fprintf(w, "✓ %s\n", label)
+		case "failed":
+			if s.Error != "" {
+				fmt.Fprintf(w, "✗ %s: %s\n", label, s.Error)
+			} else {
+				fmt.Fprintf(w, "✗ %s\n", label)
+			}
+		}
+	}
 }
 
 type planDecision int
