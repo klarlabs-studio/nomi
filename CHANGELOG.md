@@ -4,6 +4,17 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.34] - 2026-09-21 — Compete: CLI nomi cancel + Ctrl+C
+
+SSH could approve plans and tools but not stop a runaway run without
+curl. `nomi cancel` targets an active run (sole / id / `--list`), and
+Ctrl+C during `nomi run` / `nomi review` posts `POST /runs/:id/cancel`
+so the daemon stops too.
+
+### Added
+- **`nomi cancel [run-id]`** with `--list`.
+- **SIGINT/SIGTERM** handler in shared `driveRun` (exit 130).
+
 ## [0.2.33] - 2026-09-21 — Compete: desktop DiffPreview open path
 
 Extension Plan Review already opens file labels (#58); the Tauri

@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -73,11 +75,33 @@ type driveOpts struct {
 
 // driveRun polls a run through plan_review / approvals / terminal states.
 // Shared by `nomi run` (after create) and `nomi review` (attach existing).
+// Ctrl+C / SIGTERM posts POST /runs/:id/cancel so the daemon stops too.
 func driveRun(cli *Client, runID string, opts driveOpts, stdin *bufio.Reader) int {
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(sigCh)
+
+	interrupted := make(chan struct{})
+	go func() {
+		<-sigCh
+		fmt.Fprintln(os.Stderr, "▶ cancelling run (interrupt)")
+		if err := cli.Post("/runs/"+runID+"/cancel", map[string]any{}, nil); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+		close(interrupted)
+	}()
+
 	deadline := time.Now().Add(opts.Timeout)
 	planHandled := false
 	seenSteps := map[string]string{}
 	for time.Now().Before(deadline) {
+		select {
+		case <-interrupted:
+			fmt.Fprintln(os.Stderr, "✗ cancelled")
+			return 130
+		default:
+		}
+
 		var detail struct {
 			Run struct {
 				ID     string `json:"id"`
@@ -97,16 +121,32 @@ func driveRun(cli *Client, runID string, opts driveOpts, stdin *bufio.Reader) in
 		switch detail.Run.Status {
 		case "plan_review":
 			if planHandled {
-				time.Sleep(500 * time.Millisecond)
+				if !sleepOrInterrupt(500*time.Millisecond, interrupted) {
+					fmt.Fprintln(os.Stderr, "✗ cancelled")
+					return 130
+				}
 				continue
 			}
 			if opts.Review {
 				for {
+					select {
+					case <-interrupted:
+						fmt.Fprintln(os.Stderr, "✗ cancelled")
+						return 130
+					default:
+					}
 					fmt.Fprint(os.Stderr, formatPlanReview(detail.Run.Goal, detail.Plan))
 					decision, err := promptPlanDecision(stdin)
 					if err != nil {
-						fmt.Fprintln(os.Stderr, err)
-						return 1
+						// Likely interrupted mid-prompt.
+						select {
+						case <-interrupted:
+							fmt.Fprintln(os.Stderr, "✗ cancelled")
+							return 130
+						default:
+							fmt.Fprintln(os.Stderr, err)
+							return 1
+						}
 					}
 					switch decision {
 					case planDecisionDeny:
@@ -159,7 +199,13 @@ func driveRun(cli *Client, runID string, opts driveOpts, stdin *bufio.Reader) in
 			}
 		case "awaiting_approval":
 			if !handleApproval(cli, runID, opts.AutoApprove, stdin) {
-				return 1
+				select {
+				case <-interrupted:
+					fmt.Fprintln(os.Stderr, "✗ cancelled")
+					return 130
+				default:
+					return 1
+				}
 			}
 		case "completed":
 			for _, s := range detail.Steps {
@@ -176,10 +222,25 @@ func driveRun(cli *Client, runID string, opts driveOpts, stdin *bufio.Reader) in
 			fmt.Fprintln(os.Stderr, "✗ cancelled")
 			return 1
 		}
-		time.Sleep(2 * time.Second)
+		if !sleepOrInterrupt(2*time.Second, interrupted) {
+			fmt.Fprintln(os.Stderr, "✗ cancelled")
+			return 130
+		}
 	}
 	fmt.Fprintf(os.Stderr, "✗ timed out after %s\n", opts.Timeout)
 	return 1
+}
+
+// sleepOrInterrupt waits for d or returns false if interrupted.
+func sleepOrInterrupt(d time.Duration, interrupted <-chan struct{}) bool {
+	t := time.NewTimer(d)
+	defer t.Stop()
+	select {
+	case <-interrupted:
+		return false
+	case <-t.C:
+		return true
+	}
 }
 
 // stepProgressRow is the subset of a run step used for live progress.
