@@ -30,7 +30,7 @@ SUBCOMMANDS
                            confirm-mode capabilities, print the output.
                            Pass --review for interactive Plan→Diff→Approve
                            (print plan + diffs, then [A]pprove / [D]eny /
-                           [E]dit to drop steps via /plan/edit).
+                           [E]dit to drop steps or skip patch hunks).
     tail                   Follow the server-sent event stream live.
     list runs              Show the most recent runs.
     list assistants        Show every configured assistant.

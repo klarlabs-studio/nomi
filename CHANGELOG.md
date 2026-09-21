@@ -4,6 +4,18 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.23] - 2026-09-21 — Compete: CLI --review hunk skip
+
+Extension Plan Review can skip patch hunks; `nomi run --review` [E]dit
+now matches — list hunks per `filesystem.patch` step, skip by number,
+rebuild `arguments.diff` via `/plan/edit`.
+
+### Added
+- **`diff_hunks`** Go helpers (parse/rebuild — same algorithm as the
+  extension / desktop DiffPreview).
+- **Hunk skip prompts** after optional step-drop in the `--review`
+  Edit flow (empty step list = keep all, then hunk prompts).
+
 ## [0.2.22] - 2026-09-20 — Compete: in-editor hunk skip
 
 Desktop DiffPreview can skip hunks before Approve. The VS Code Plan
