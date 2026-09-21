@@ -50,6 +50,9 @@ SUBCOMMANDS
                            approvals. Omit id when only one is active;
                            --list to print. --review for interactive
                            plan review on replan.
+    replan [run-id]        Ask the planner for a corrective plan on a
+                           failed/cancelled run (desktop "Fix this with
+                           the agent"). --list / --watch / --review.
     tail                   Follow the server-sent event stream live.
     list runs              Show the most recent runs.
     list assistants        Show every configured assistant.
@@ -88,6 +91,7 @@ EXAMPLES
     nomi pause             # sole executing / awaiting_approval run
     nomi resume <id>
     nomi watch             # sole active run — live progress + approvals
+    nomi replan --watch    # fix a failed run and attach
     nomi list runs
     nomi tail
     NOMI_TOKEN=$(ssh server 'docker exec nomi cat /data/auth.token') \
@@ -126,6 +130,8 @@ func main() {
 		os.Exit(resumeCmd(common, args))
 	case "watch":
 		os.Exit(watchCmd(common, args))
+	case "replan":
+		os.Exit(replanCmd(common, args))
 	case "tail":
 		os.Exit(tailCmd(common, args))
 	case "list", "ls":

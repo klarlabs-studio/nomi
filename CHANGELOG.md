@@ -4,6 +4,16 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.48] - 2026-09-21 — Compete: CLI nomi replan
+
+Desktop "Fix this with the agent" already hits `POST /runs/:id/replan`
+on failed runs; SSH still needed curl. `nomi replan` mirrors cancel/
+pause (sole / id / `--list`) and optional `--watch` attaches via
+`driveRun`.
+
+### Added
+- **`nomi replan [run-id]`** with `--list`, `--watch`, `--review`.
+
 ## [0.2.47] - 2026-09-21 — Compete: nomi status pending counts
 
 SSH users had to run `nomi review --list` / `nomi approve --list` to see
