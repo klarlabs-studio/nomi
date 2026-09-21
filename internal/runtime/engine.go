@@ -50,8 +50,9 @@ type Runtime struct {
 	stepRepo       *db.StepRepository
 	planRepo       *db.PlanRepository
 	assistantRepo  *db.AssistantRepository
-	settingsRepo   *db.AppSettingsRepository
-	attachmentRepo *db.RunAttachmentRepository
+	settingsRepo     *db.AppSettingsRepository
+	conversationRepo *db.ConversationRepository
+	attachmentRepo   *db.RunAttachmentRepository
 	enrichment     *EnrichmentService
 	eventBus       *events.EventBus
 	permEngine     *permissions.Engine
@@ -300,6 +301,7 @@ func NewRuntime(
 		planRepo:         db.NewPlanRepository(database),
 		assistantRepo:    db.NewAssistantRepository(database),
 		settingsRepo:     db.NewAppSettingsRepository(database),
+		conversationRepo: db.NewConversationRepository(database),
 		attachmentRepo:   attachmentRepo,
 		eventBus:         eventBus,
 		permEngine:       permEngine,

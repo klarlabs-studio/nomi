@@ -1008,6 +1008,15 @@ export const settingsApi = {
       method: "PUT",
       body: JSON.stringify({ profile }),
     }),
+
+  getAutoApproveSafePlans: () =>
+    fetchApi<{ enabled: boolean }>("/settings/auto-approve-safe-plans"),
+
+  setAutoApproveSafePlans: (enabled: boolean) =>
+    fetchApi<{ enabled: boolean }>("/settings/auto-approve-safe-plans", {
+      method: "PUT",
+      body: JSON.stringify({ enabled }),
+    }),
 };
 
 // Health check

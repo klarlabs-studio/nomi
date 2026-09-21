@@ -4,6 +4,21 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.24] - 2026-09-21 — Compete: auto-approve safe channel plans
+
+OpenClaw acts immediately; Nomi still reviews writes. Opt-in setting
+lets Telegram, Slack, Discord, and WhatsApp skip the Approve tap when
+the plan is read-only / reversible. Writes, patches, irreversible
+shell, and mutating MCP still require review. Default off. Desktop
+and CLI are unchanged.
+
+### Added
+- **`auto_approve_safe_plans`** setting + Safety tab toggle.
+- Runtime auto-approve after `plan_review` for messaging conversations
+  when the plan does not need desktop DiffPreview.
+- Channel notice “Safe plan auto-approved — executing.” (no buttons).
+- Shared `domain.PlanRequiresDesktopReview` used by all four channels.
+
 ## [0.2.23] - 2026-09-21 — Compete: CLI --review hunk skip
 
 Extension Plan Review can skip patch hunks; `nomi run --review` [E]dit

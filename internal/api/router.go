@@ -374,6 +374,8 @@ func NewRouter(cfg RouterConfig) *gin.Engine {
 		settings.PUT("/onboarding-complete", providerServer.SetOnboardingComplete)
 		settings.GET("/safety-profile", providerServer.GetSafetyProfile)
 		settings.PUT("/safety-profile", providerServer.SetSafetyProfile)
+		settings.GET("/auto-approve-safe-plans", providerServer.GetAutoApproveSafePlans)
+		settings.PUT("/auto-approve-safe-plans", providerServer.SetAutoApproveSafePlans)
 	}
 
 	auditServer := NewAuditServer(cfg.DB, cfg.AuthToken)

@@ -139,19 +139,27 @@ func (r *Runtime) executePlanningPhase(ctx context.Context, run *domain.Run, ass
 		return nil, fmt.Errorf("failed to update run plan version: %w", err)
 	}
 
-	// Publish plan proposed event
-	_, _ = r.eventBus.Publish(ctx, domain.EventPlanProposed, run.ID, nil, map[string]interface{}{
-		"plan_id":      plan.ID,
-		"plan_version": plan.Version,
-		"step_count":   len(plan.Steps),
-	})
-
-	// Transition to plan_review — wait for user approval
+	// Transition to plan_review before publishing so channel auto-approve
+	// (opt-in, safe plans only) can call ApprovePlan without racing the
+	// status flip. The event carries auto_approved when that happens.
 	if err := r.transitionRun(ctx, run, domain.RunPlanReview); err != nil {
 		slog.Error("plan review transition failed", "run_id", run.ID, "error", err)
 		return nil, fmt.Errorf("plan review transition failed: %w", err)
 	}
-	slog.Info("plan review: waiting for approval", "run_id", run.ID, "plan_id", plan.ID)
+
+	autoApproved := r.maybeAutoApproveSafeChannelPlan(ctx, run, plan)
+	payload := map[string]interface{}{
+		"plan_id":      plan.ID,
+		"plan_version": plan.Version,
+		"step_count":   len(plan.Steps),
+	}
+	if autoApproved {
+		payload["auto_approved"] = true
+		slog.Info("plan review: safe channel plan auto-approved", "run_id", run.ID, "plan_id", plan.ID)
+	} else {
+		slog.Info("plan review: waiting for approval", "run_id", run.ID, "plan_id", plan.ID)
+	}
+	_, _ = r.eventBus.Publish(ctx, domain.EventPlanProposed, run.ID, nil, payload)
 
 	approvalSignal := r.registerPlanApproval(run.ID)
 	defer r.unregisterPlanApproval(run.ID, approvalSignal)

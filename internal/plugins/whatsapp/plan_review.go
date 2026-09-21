@@ -106,6 +106,18 @@ func (p *Plugin) onPlanProposed(ctx context.Context, evt *domain.Event) {
 	text := formatPlanReviewText(run.Goal, plan)
 	requiresDesktop := planRequiresDesktopReview(plan)
 	client := &http.Client{Timeout: 15 * time.Second}
+	if auto, _ := evt.Payload["auto_approved"].(bool); auto {
+		_, err = SendText(ctx, client, SendTextOptions{
+			PhoneNumberID: creds.phoneNumberID,
+			AccessToken:   creds.accessToken,
+			To:            conv.ExternalConversationID,
+			Body:          "Safe plan auto-approved — executing.",
+		})
+		if err != nil {
+			log.Printf("[whatsapp plugin] auto-approve notice failed")
+		}
+		return
+	}
 
 	_, err = SendInteractiveButtons(ctx, client, SendInteractiveOptions{
 		PhoneNumberID: creds.phoneNumberID,
@@ -238,62 +250,7 @@ func planReviewButtons(runID string, requiresDesktop bool) []InteractiveButton {
 }
 
 func planRequiresDesktopReview(plan *domain.Plan) bool {
-	if plan == nil {
-		return false
-	}
-	for _, s := range plan.Steps {
-		cap := s.ExpectedCapability
-		tool := s.ExpectedTool
-		if cap == "filesystem.write" || tool == "filesystem.write" || tool == "filesystem.patch" {
-			return true
-		}
-		if (cap == "command.exec" || tool == "command.exec") && isIrreversibleCommand(stepCommand(s)) {
-			return true
-		}
-		name := tool
-		if name == "" {
-			name = cap
-		}
-		if (strings.HasPrefix(cap, "mcp.") || strings.HasPrefix(tool, "mcp.")) && isMutatingToolName(name) {
-			return true
-		}
-	}
-	return false
-}
-
-func stepCommand(s domain.StepDefinition) string {
-	if s.Arguments == nil {
-		return ""
-	}
-	if cmd, ok := s.Arguments["command"].(string); ok {
-		return cmd
-	}
-	if cmd, ok := s.Arguments["input"].(string); ok {
-		return cmd
-	}
-	return ""
-}
-
-func isIrreversibleCommand(cmd string) bool {
-	lower := strings.ToLower(cmd)
-	return strings.Contains(lower, "rm -rf") ||
-		strings.HasPrefix(lower, "rm ") ||
-		strings.Contains(lower, "mkfs") ||
-		strings.Contains(lower, "dd if=")
-}
-
-func isMutatingToolName(name string) bool {
-	n := strings.ToLower(name)
-	for _, needle := range []string{
-		"write", "delete", "remove", "create", "update", "patch",
-		"put", "send", "post", "exec", "run", "destroy", "drop",
-		"insert", "mutate",
-	} {
-		if strings.Contains(n, needle) {
-			return true
-		}
-	}
-	return false
+	return domain.PlanRequiresDesktopReview(plan)
 }
 
 func truncateRunes(s string, max int) string {

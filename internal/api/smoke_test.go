@@ -889,6 +889,28 @@ func TestSafetyProfileSettings(t *testing.T) {
 	}
 }
 
+func TestAutoApproveSafePlansSetting(t *testing.T) {
+	h := newHarness(t)
+
+	getW := h.do(http.MethodGet, "/settings/auto-approve-safe-plans", nil)
+	if getW.Code != http.StatusOK {
+		t.Fatalf("get auto-approve: %d", getW.Code)
+	}
+	if !strings.Contains(getW.Body.String(), `"enabled":false`) {
+		t.Fatalf("expected default off: %s", getW.Body.String())
+	}
+
+	setW := h.do(http.MethodPut, "/settings/auto-approve-safe-plans", map[string]any{"enabled": true})
+	if setW.Code != http.StatusOK {
+		t.Fatalf("set auto-approve: %d %s", setW.Code, setW.Body.String())
+	}
+
+	getW2 := h.do(http.MethodGet, "/settings/auto-approve-safe-plans", nil)
+	if !strings.Contains(getW2.Body.String(), `"enabled":true`) {
+		t.Fatalf("expected enabled after set: %s", getW2.Body.String())
+	}
+}
+
 func TestCreateAssistantUsesSafetyProfileDefaults(t *testing.T) {
 	h := newHarness(t)
 

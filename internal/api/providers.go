@@ -404,3 +404,36 @@ func (s *ProviderServer) SetSafetyProfile(c *gin.Context) {
 
 	c.JSON(http.StatusOK, safetyProfileResponse(req))
 }
+
+type autoApproveSafePlansResponse struct {
+	Enabled bool `json:"enabled"`
+}
+
+type setAutoApproveSafePlansRequest struct {
+	Enabled bool `json:"enabled"`
+}
+
+// GetAutoApproveSafePlans reports whether messaging channels may skip
+// the Approve tap for plans that do not need desktop DiffPreview.
+func (s *ProviderServer) GetAutoApproveSafePlans(c *gin.Context) {
+	enabled := s.appSettingsRepo.GetOrDefault("auto_approve_safe_plans", "false") == "true"
+	c.JSON(http.StatusOK, autoApproveSafePlansResponse{Enabled: enabled})
+}
+
+// SetAutoApproveSafePlans toggles channel auto-approve for safe plans.
+func (s *ProviderServer) SetAutoApproveSafePlans(c *gin.Context) {
+	var req setAutoApproveSafePlansRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		respondValidationError(c, err.Error())
+		return
+	}
+	value := "false"
+	if req.Enabled {
+		value = "true"
+	}
+	if err := s.appSettingsRepo.Set("auto_approve_safe_plans", value); err != nil {
+		respondInternal(c, "failed to set auto-approve safe plans", err)
+		return
+	}
+	c.JSON(http.StatusOK, autoApproveSafePlansResponse{Enabled: req.Enabled})
+}
