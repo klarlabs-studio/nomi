@@ -4,6 +4,7 @@ import { discoverConnection } from "./discovery";
 import { buildEditorContext, type EditorContextPayload } from "./editor_context";
 import { isBadgeEvent } from "./badge_events";
 import { NomiEventStream } from "./event_stream";
+import { warmHighlighter } from "./highlighter";
 import { openPlanReview } from "./plan_review";
 
 let statusItem: vscode.StatusBarItem | undefined;
@@ -314,6 +315,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("nomi.reviewPlan", () => reviewPlanCommand()),
   );
 
+  warmHighlighter();
   void refreshBadge(true);
   startEventStream();
   const cfg = vscode.workspace.getConfiguration("nomi");
