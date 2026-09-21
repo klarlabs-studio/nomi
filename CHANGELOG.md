@@ -4,6 +4,16 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.32] - 2026-09-21 — Compete: CLI nomi approve / deny
+
+`nomi review` attaches to pending plans; tool approval cards were still
+list-only from SSH. `nomi approve` / `nomi deny` resolve a pending
+capability card (sole pending, id/prefix, or `--list`) via
+`POST /approvals/:id/resolve`.
+
+### Added
+- **`nomi approve [id]`** / **`nomi deny [id]`** with `--list`.
+
 ## [0.2.31] - 2026-09-21 — Compete: CLI nomi review attach
 
 Channels and Email leave runs in `plan_review`; SSH users had no way to
