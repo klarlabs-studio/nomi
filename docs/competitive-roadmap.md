@@ -62,14 +62,15 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - CLI `nomi replan` (Fix this with the agent over SSH) — #78
 - Extension Replan failed run — #79
 - Matrix channel plugin (`com.nomi.matrix`) + plan review — #80
-- Microsoft Teams channel plugin (`com.nomi.teams`) + Adaptive Card plan review — this PR
+- Microsoft Teams channel plugin (`com.nomi.teams`) + Adaptive Card plan review — #81
+- Signal channel plugin (`com.nomi.signal`) via signal-cli-rest-api — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
 
 | Competitor | Gap |
 |---|---|
-| OpenClaw | Signal / iMessage / Beeper (Matrix + Teams shipped; Beeper via Matrix bridges) |
+| OpenClaw | iMessage (macOS/BlueBubbles); Beeper via Matrix bridges |
 | Goose | Remote/synced marketplace catalog (local browse shipped) |
 | Cline | (closed) DiffPreview + Cancel/Pause + auto-open plan + approval toast + live status step |
 | Claude Code | Full TUI deferred; CLI review/approve/deny/cancel/pause/resume/watch/replan + live progress; extension Cancel/Pause/Resume |
@@ -77,12 +78,12 @@ per-tool capabilities, sandbox, and hash-chained audit.
 
 ## Next moves (priority)
 
-1. **OpenClaw long-tail** — Signal / iMessage only if demand justifies
-   (Beeper: use Matrix + bridge; Teams shipped)
+1. **OpenClaw long-tail** — iMessage only if macOS demand justifies
+   (Signal/Matrix/Teams shipped; Beeper = Matrix + bridge)
 
 ## Defer
 
-OpenClaw connector long-tail (Signal/iMessage),
+OpenClaw connector long-tail (iMessage),
 hosted Mnemos, cross-device sync, native mobile apps, Pi-style companion,
 micro-VM isolation race, remote/synced Goose-style MCP marketplace,
 full Claude Code TUI.

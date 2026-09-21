@@ -45,6 +45,7 @@ import (
 	mnemosplugin "go.klarlabs.de/nomi/internal/plugins/mnemos"
 	obsidianplugin "go.klarlabs.de/nomi/internal/plugins/obsidian"
 	scoutplugin "go.klarlabs.de/nomi/internal/plugins/scout"
+	signalplugin "go.klarlabs.de/nomi/internal/plugins/signal"
 	"go.klarlabs.de/nomi/internal/plugins/signing"
 	slackplugin "go.klarlabs.de/nomi/internal/plugins/slack"
 	"go.klarlabs.de/nomi/internal/plugins/store"
@@ -322,6 +323,16 @@ func main() {
 	)
 	if err := pluginRegistry.Register(teamsPlugin); err != nil {
 		log.Fatalf("Failed to register Teams plugin: %v", err)
+	}
+
+	// Signal plugin — signal-cli-rest-api sidecar. Polls /v1/receive;
+	// plan review via APPROVE/DENY (OpenClaw long-tail stretch).
+	signalPlugin := signalplugin.NewPlugin(
+		rt, connectionRepo, bindingRepo, conversationRepo, identityRepo,
+		db.NewRunRepository(database), secretStore, eventBus,
+	)
+	if err := pluginRegistry.Register(signalPlugin); err != nil {
+		log.Fatalf("Failed to register Signal plugin: %v", err)
 	}
 
 	// Scout plugin — browser automation via MCP. Spawns the `scout`

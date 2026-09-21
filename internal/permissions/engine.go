@@ -56,6 +56,7 @@ var PluginConfirmPrefixes = []string{
 	"whatsapp.",
 	"matrix.",
 	"teams.",
+	"signal.",
 	"media.",
 	"mnemos.",
 	"echo.", // example WASM plugin
