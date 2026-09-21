@@ -5,7 +5,9 @@ plans and tool calls from the editor without rebuilding the desktop UI.
 
 ## What it does
 
-- Status-bar badge with pending **tool approvals** + **plan_review** runs
+- Status-bar badge with pending **tool approvals** + **plan_review** runs;
+  while a tracked Ask Nomi run executes, the badge shows the live step
+  (`→ Apply patch`) with a spinner (click opens the OutputChannel)
 - **Live SSE** on `/events/stream` — badge refreshes on `approval.*` /
   `plan.*` / `run.cancelled`; **Nomi** OutputChannel shows live step
   progress (`→` / `✓` / `✗`) for Ask Nomi / Plan Review runs (15s poll
