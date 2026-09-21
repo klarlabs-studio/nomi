@@ -180,10 +180,11 @@ func NewRouter(cfg RouterConfig) *gin.Engine {
 		recipesGroup := r.Group("/recipes")
 		{
 			recipesGroup.GET("", recipeServer.ListRecipes)
-			recipesGroup.GET("/:id", recipeServer.GetRecipe)
-			recipesGroup.GET("/:id/preview", recipeServer.PreviewInstall)
+			recipesGroup.POST("/import", recipeServer.ImportRecipe)
 			recipesGroup.POST("/install", recipeServer.InstallRecipe)
 			recipesGroup.POST("/export", recipeServer.ExportRecipe)
+			recipesGroup.GET("/:id", recipeServer.GetRecipe)
+			recipesGroup.GET("/:id/preview", recipeServer.PreviewInstall)
 		}
 	}
 

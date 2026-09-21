@@ -82,6 +82,7 @@ func (s *RecipeServer) GetRecipe(c *gin.Context) {
 			"recipe": r,
 			"sha256": hash,
 			"source": "builtin",
+			"yaml":   string(mustYAML(r)),
 		})
 		return
 	}
@@ -99,6 +100,74 @@ func (s *RecipeServer) GetRecipe(c *gin.Context) {
 		"recipe": r,
 		"sha256": row.SHA256,
 		"source": row.Source,
+		"yaml":   row.YAML,
+	})
+}
+
+func mustYAML(r *recipes.Recipe) []byte {
+	b, err := recipes.Marshal(r)
+	if err != nil {
+		return nil
+	}
+	return b
+}
+
+// importRequest carries raw recipe YAML from another machine (or a
+// pasted export). URL fetch is intentionally omitted in v1 to avoid
+// SSRF surface — CLI/UI read local files and POST the bytes.
+type importRequest struct {
+	YAML string `json:"yaml" binding:"required"`
+}
+
+// ImportRecipe parses YAML, validates, hashes, and Upserts into the
+// recipes table with source=imported so ListRecipes surfaces it.
+func (s *RecipeServer) ImportRecipe(c *gin.Context) {
+	var req importRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		respondValidationError(c, err.Error())
+		return
+	}
+	raw := []byte(req.YAML)
+	if len(raw) == 0 || len(raw) > 1<<20 {
+		respondValidationError(c, "yaml must be non-empty and under 1 MiB")
+		return
+	}
+	r, err := recipes.Parse(raw)
+	if err != nil {
+		respondValidationError(c, err.Error())
+		return
+	}
+	canonical, err := recipes.Marshal(r)
+	if err != nil {
+		respondInternal(c, "failed to marshal recipe", err)
+		return
+	}
+	hash, err := r.Hash()
+	if err != nil {
+		respondInternal(c, "failed to hash recipe", err)
+		return
+	}
+	row := &db.RecipeRow{
+		ID:          r.ID,
+		Name:        r.Name,
+		Version:     r.Version,
+		Author:      r.Author,
+		Description: r.Description,
+		Tags:        r.Tags,
+		YAML:        string(canonical),
+		SHA256:      hash,
+		Source:      "imported",
+		CreatedAt:   time.Now().UTC(),
+	}
+	if err := s.repo.Upsert(row); err != nil {
+		respondInternal(c, "failed to persist imported recipe", err)
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{
+		"recipe": r,
+		"sha256": hash,
+		"source": "imported",
+		"yaml":   string(canonical),
 	})
 }
 

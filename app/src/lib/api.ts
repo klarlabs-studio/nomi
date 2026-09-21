@@ -440,7 +440,9 @@ export interface RecipeDocument {
 export const recipesApi = {
   list: () => fetchApi<{ recipes: RecipeCatalogEntry[] }>("/recipes"),
   get: (id: string) =>
-    fetchApi<{ recipe: RecipeDocument; sha256: string; source: string }>(`/recipes/${id}`),
+    fetchApi<{ recipe: RecipeDocument; sha256: string; source: string; yaml?: string }>(
+      `/recipes/${id}`,
+    ),
   preview: (id: string) =>
     fetchApi<{
       recipe: RecipeDocument;
@@ -458,6 +460,14 @@ export const recipesApi = {
       {
         method: "POST",
         body: JSON.stringify({ id, version }),
+      },
+    ),
+  import: (yaml: string) =>
+    fetchApi<{ recipe: RecipeDocument; sha256: string; source: string; yaml: string }>(
+      "/recipes/import",
+      {
+        method: "POST",
+        body: JSON.stringify({ yaml }),
       },
     ),
 };
