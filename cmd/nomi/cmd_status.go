@@ -9,7 +9,8 @@ import (
 // statusCmd: one-shot health + version + active default. Useful as the
 // first command after deploying the daemon — confirms reachability,
 // build version, and that an LLM is wired. Also surfaces schedule
-// health so headless users can answer "is my automation broken?".
+// health and pending plan_review / tool-approval counts so SSH users
+// see what needs `nomi review` / `nomi approve` without listing first.
 //
 //	nomi status
 func statusCmd(common *commonFlags, args []string) int {
@@ -45,6 +46,7 @@ func statusCmd(common *commonFlags, args []string) int {
 	_ = cli.Get("/settings/safety-profile", &safety)
 
 	schedSummary := loadScheduleSummary(cli)
+	pending := loadPendingSummary(cli)
 
 	if common.JSON {
 		printJSON(map[string]any{
@@ -54,6 +56,7 @@ func statusCmd(common *commonFlags, args []string) int {
 			"llm_default": defaults,
 			"safety":      safety.Profile,
 			"schedules":   schedSummary,
+			"pending":     pending,
 		})
 		return 0
 	}
@@ -73,6 +76,15 @@ func statusCmd(common *commonFlags, args []string) int {
 		fmt.Printf(", %d with errors", schedSummary.WithError)
 	}
 	fmt.Println()
+	fmt.Printf("Pending:       %d plan review(s), %d tool approval(s)",
+		pending.PlanReviews, pending.ToolApprovals)
+	if pending.ActiveRuns > 0 {
+		fmt.Printf(", %d active run(s)", pending.ActiveRuns)
+	}
+	fmt.Println()
+	if pending.PlanReviews > 0 || pending.ToolApprovals > 0 {
+		fmt.Fprintln(os.Stderr, "  tip: nomi review / nomi approve --list")
+	}
 	return 0
 }
 
@@ -80,6 +92,12 @@ type scheduleSummary struct {
 	Total     int `json:"total"`
 	Enabled   int `json:"enabled"`
 	WithError int `json:"with_error"`
+}
+
+type pendingSummary struct {
+	PlanReviews   int `json:"plan_reviews"`
+	ToolApprovals int `json:"tool_approvals"`
+	ActiveRuns    int `json:"active_runs"`
 }
 
 func loadScheduleSummary(cli *Client) scheduleSummary {
@@ -100,6 +118,23 @@ func loadScheduleSummary(cli *Client) scheduleSummary {
 		if s.LastError != "" {
 			out.WithError++
 		}
+	}
+	return out
+}
+
+func loadPendingSummary(cli *Client) pendingSummary {
+	out := pendingSummary{}
+	plans, err := listPlanReviewRuns(cli)
+	if err == nil {
+		out.PlanReviews = len(plans)
+	}
+	approvals, err := listPendingApprovals(cli)
+	if err == nil {
+		out.ToolApprovals = len(approvals)
+	}
+	active, err := listCancelableRuns(cli)
+	if err == nil {
+		out.ActiveRuns = len(active)
 	}
 	return out
 }
