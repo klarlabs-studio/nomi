@@ -4,6 +4,17 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.38] - 2026-09-21 — Compete: extension Pause / Resume
+
+CLI `#66` soft-stops from SSH; the editor could Cancel but not Pause.
+**Nomi: Pause / Resume** (`Ctrl/Cmd+Shift+Alt+U` / `…+G`) hit the same
+`POST /runs/:id/pause|resume` endpoints, preferring tracked runs.
+OutputChannel logs `⏸` / `▶` on `run.paused` / `run.resumed`.
+
+### Added
+- Extension commands **`nomi.pauseRun`** / **`nomi.resumeRun`** + keys.
+- Client **`pauseRun` / `resumeRun`**; progress events for pause/resume.
+
 ## [0.2.37] - 2026-09-21 — Compete: CLI nomi pause / resume
 
 Desktop already Pause/Resume; SSH after cancel still could not soft-stop

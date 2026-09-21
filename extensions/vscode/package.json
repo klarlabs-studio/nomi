@@ -96,6 +96,14 @@
       {
         "command": "nomi.cancelRun",
         "title": "Nomi: Cancel active run"
+      },
+      {
+        "command": "nomi.pauseRun",
+        "title": "Nomi: Pause active run"
+      },
+      {
+        "command": "nomi.resumeRun",
+        "title": "Nomi: Resume paused run"
       }
     ],
     "menus": {
@@ -144,6 +152,16 @@
         "command": "nomi.cancelRun",
         "key": "ctrl+shift+alt+c",
         "mac": "cmd+shift+alt+c"
+      },
+      {
+        "command": "nomi.pauseRun",
+        "key": "ctrl+shift+alt+u",
+        "mac": "cmd+shift+alt+u"
+      },
+      {
+        "command": "nomi.resumeRun",
+        "key": "ctrl+shift+alt+g",
+        "mac": "cmd+shift+alt+g"
       }
     ]
   },
@@ -151,7 +169,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "tsc -p ./ --noEmit",
-    "test": "npm run compile && node --test out/discovery.test.js out/editor_context.test.js out/event_stream.test.js out/plan_fmt.test.js out/diff_hunks.test.js out/highlighter.test.js out/diff_render.test.js out/open_path.test.js out/step_progress.test.js out/cancel_run.test.js out/auto_open_plan.test.js",
+    "test": "npm run compile && node --test out/discovery.test.js out/editor_context.test.js out/event_stream.test.js out/plan_fmt.test.js out/diff_hunks.test.js out/highlighter.test.js out/diff_render.test.js out/open_path.test.js out/step_progress.test.js out/cancel_run.test.js out/auto_open_plan.test.js out/pause_run.test.js",
     "vscode:prepublish": "npm run compile"
   },
   "devDependencies": {

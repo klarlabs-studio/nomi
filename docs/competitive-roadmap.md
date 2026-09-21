@@ -48,7 +48,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - CLI `nomi cancel` + Ctrl+C cancels active run — #63
 - Extension Cancel active run (Ask Nomi / Plan Review Stop) — #64
 - Extension auto-open Plan Review on `plan.proposed` — #65
-- CLI `nomi pause` / `nomi resume` — this PR
+- CLI `nomi pause` / `nomi resume` — #66
+- Extension Pause / Resume active run — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -57,8 +58,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 |---|---|
 | OpenClaw | Matrix / Teams / Signal / iMessage / Beeper (not one-PR each) |
 | Goose | Remote/synced marketplace catalog (local browse shipped) |
-| Cline | (closed) DiffPreview + Cancel + auto-open Plan Review |
-| Claude Code | Full TUI deferred; CLI review/approve/deny/cancel/pause/resume + live progress; extension Cancel |
+| Cline | (closed) DiffPreview + Cancel + Pause/Resume + auto-open Plan Review |
+| Claude Code | Full TUI deferred; CLI review/approve/deny/cancel/pause/resume + live progress; extension Cancel/Pause/Resume |
 | Hermes | Pocket-first mobile UX (schedules/skills now inspectable from CLI + UI) |
 
 ## Next moves (priority)

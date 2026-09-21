@@ -194,6 +194,16 @@ export class NomiClient {
   async cancelRun(runId: string): Promise<void> {
     await this.request("POST", `/runs/${encodeURIComponent(runId)}/cancel`);
   }
+
+  /** Soft-pause (CLI `nomi pause` / desktop Pause). */
+  async pauseRun(runId: string): Promise<void> {
+    await this.request("POST", `/runs/${encodeURIComponent(runId)}/pause`);
+  }
+
+  /** Resume a paused run (CLI `nomi resume`). */
+  async resumeRun(runId: string): Promise<void> {
+    await this.request("POST", `/runs/${encodeURIComponent(runId)}/resume`);
+  }
 }
 
 export function pendingCount(snap: PendingSnapshot): number {

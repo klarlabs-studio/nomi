@@ -7,6 +7,7 @@ import { buildEditorContext, type EditorContextPayload } from "./editor_context"
 import { isBadgeEvent, type NomiStreamEvent } from "./badge_events";
 import { NomiEventStream } from "./event_stream";
 import { warmHighlighter } from "./highlighter";
+import { isPausableStatus, isPausedStatus } from "./pause_run";
 import { openPlanReview } from "./plan_review";
 import {
   isProgressEvent,
@@ -428,6 +429,70 @@ async function cancelRunCommand(): Promise<void> {
   }
 }
 
+async function pickRunByStatus(
+  match: (status: string) => boolean,
+  emptyMsg: string,
+  placeHolder: string,
+): Promise<Run | undefined> {
+  const client = buildClient();
+  const runs = await client.listRuns();
+  const matching = runs.filter((r) => match(r.status));
+  const candidates = preferCancelCandidates(matching, trackedRuns);
+  if (candidates.length === 0) {
+    vscode.window.showInformationMessage(emptyMsg);
+    return undefined;
+  }
+  if (candidates.length === 1) return candidates[0];
+  const picked = await vscode.window.showQuickPick(
+    candidates.map((r) => ({
+      label: r.goal.length > 80 ? `${r.goal.slice(0, 77)}…` : r.goal || "(no goal)",
+      description: `${r.status} · ${r.id.slice(0, 8)}`,
+      run: r,
+    })),
+    { placeHolder },
+  );
+  return picked?.run;
+}
+
+async function pauseRunCommand(): Promise<void> {
+  try {
+    const run = await pickRunByStatus(
+      isPausableStatus,
+      "Nomi: no pausable runs (need executing / awaiting_approval).",
+      "Pause which run?",
+    );
+    if (!run) return;
+    const client = buildClient();
+    await client.pauseRun(run.id);
+    const short = run.id.slice(0, 8);
+    appendProgress(`⏸ [${short}] pause requested`, true);
+    vscode.window.showInformationMessage(`Nomi: paused ${short}`);
+    await refreshBadge(true);
+  } catch (err) {
+    vscode.window.showErrorMessage(`Nomi: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+async function resumeRunCommand(): Promise<void> {
+  try {
+    const run = await pickRunByStatus(
+      isPausedStatus,
+      "Nomi: no paused runs to resume.",
+      "Resume which run?",
+    );
+    if (!run) return;
+    const client = buildClient();
+    await client.resumeRun(run.id);
+    trackRun(run.id);
+    const short = run.id.slice(0, 8);
+    appendProgress(`▶ [${short}] resume requested`, true);
+    vscode.window.showInformationMessage(`Nomi: resumed ${short}`);
+    await refreshBadge(true);
+  } catch (err) {
+    vscode.window.showErrorMessage(`Nomi: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
 export function activate(context: vscode.ExtensionContext): void {
   statusItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
   statusItem.command = "nomi.showPending";
@@ -447,6 +512,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand("nomi.runWithEditorContext", () => runWithEditorContext()),
     vscode.commands.registerCommand("nomi.reviewPlan", () => reviewPlanCommand()),
     vscode.commands.registerCommand("nomi.cancelRun", () => cancelRunCommand()),
+    vscode.commands.registerCommand("nomi.pauseRun", () => pauseRunCommand()),
+    vscode.commands.registerCommand("nomi.resumeRun", () => resumeRunCommand()),
     vscode.commands.registerCommand("nomi.showProgress", () => {
       progressChannel?.show(true);
     }),

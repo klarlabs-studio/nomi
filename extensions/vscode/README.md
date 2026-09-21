@@ -24,6 +24,9 @@ plans and tool calls from the editor without rebuilding the desktop UI.
 - **Cancel active run** — stops Ask Nomi / Plan Review tracked runs
   (or Quick Pick among cancelable), same `POST /runs/:id/cancel` as
   `nomi cancel` / Ctrl+C
+- **Pause / Resume** — soft-stop (`…+U` / `…+G`) for executing /
+  awaiting_approval and paused runs (`nomi pause` / `nomi resume` parity);
+  OutputChannel shows `⏸` / `▶` on `run.paused` / `run.resumed`
 - Auto-discovers `auth.token` + `api.endpoint` from the Nomi data dir
   (same paths as `nomi` CLI / Tauri)
 
@@ -64,6 +67,8 @@ npm run compile
 | `Ctrl/Cmd+Shift+Alt+Y` | Approve selected |
 | `Ctrl/Cmd+Shift+Alt+D` | Deny selected |
 | `Ctrl/Cmd+Shift+Alt+C` | Cancel active run |
+| `Ctrl/Cmd+Shift+Alt+U` | Pause active run |
+| `Ctrl/Cmd+Shift+Alt+G` | Resume paused run |
 
 Remap under Keyboard Shortcuts if they collide with other extensions.
 

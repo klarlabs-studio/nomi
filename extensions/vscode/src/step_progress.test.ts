@@ -14,6 +14,8 @@ describe("isProgressEvent", () => {
     assert.equal(isProgressEvent("step.retrying"), true);
     assert.equal(isProgressEvent("plan.proposed"), true);
     assert.equal(isProgressEvent("run.completed"), true);
+    assert.equal(isProgressEvent("run.paused"), true);
+    assert.equal(isProgressEvent("run.resumed"), true);
   });
 
   it("ignores streaming and approval noise", () => {
@@ -78,6 +80,14 @@ describe("StepProgressFormatter", () => {
     assert.equal(
       f.format({ type: "plan.proposed", run_id: "abc" }),
       "▶ [abc] plan ready for review",
+    );
+    assert.equal(
+      f.format({ type: "run.paused", run_id: "abc" }),
+      "⏸ [abc] paused",
+    );
+    assert.equal(
+      f.format({ type: "run.resumed", run_id: "abc" }),
+      "▶ [abc] resumed",
     );
     assert.equal(
       f.format({ type: "run.completed", run_id: "abc" }),

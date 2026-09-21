@@ -186,4 +186,17 @@ describe("NomiClient", () => {
     await client.cancelRun("r1");
     assert.deepEqual(calls, ["GET /runs", "POST /runs/r1/cancel"]);
   });
+
+  it("pauses and resumes via pauseRun / resumeRun", async () => {
+    const calls: string[] = [];
+    const fetchImpl: typeof fetch = async (input, init) => {
+      const path = String(input).replace("https://nomi.test", "");
+      calls.push(`${init?.method ?? "GET"} ${path}`);
+      return new Response("{}", { status: 200 });
+    };
+    const client = new NomiClient("https://nomi.test", "tok", fetchImpl);
+    await client.pauseRun("r1");
+    await client.resumeRun("r1");
+    assert.deepEqual(calls, ["POST /runs/r1/pause", "POST /runs/r1/resume"]);
+  });
 });
