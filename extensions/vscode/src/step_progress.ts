@@ -10,7 +10,9 @@ export function isProgressEvent(type: string): boolean {
     type === "plan.proposed" ||
     type === "run.completed" ||
     type === "run.failed" ||
-    type === "run.cancelled"
+    type === "run.cancelled" ||
+    type === "run.paused" ||
+    type === "run.resumed"
   );
 }
 
@@ -61,6 +63,10 @@ export class StepProgressFormatter {
       case "run.cancelled":
         this.clearRun(ev.run_id);
         return `✗ [${run}] cancelled`;
+      case "run.paused":
+        return `⏸ [${run}] paused`;
+      case "run.resumed":
+        return `▶ [${run}] resumed`;
       default:
         return null;
     }
@@ -86,6 +92,8 @@ export function shouldRevealProgress(
     ev.type === "plan.proposed" ||
     ev.type === "run.completed" ||
     ev.type === "run.failed" ||
-    ev.type === "run.cancelled"
+    ev.type === "run.cancelled" ||
+    ev.type === "run.paused" ||
+    ev.type === "run.resumed"
   );
 }

@@ -22,10 +22,10 @@ export interface CancelCandidate {
  * Prefer Ask Nomi / Plan Review tracked runs when they are still
  * cancelable; otherwise fall back to every cancelable run from the API.
  */
-export function preferCancelCandidates(
-  cancelable: CancelCandidate[],
+export function preferCancelCandidates<T extends { id: string }>(
+  cancelable: T[],
   trackedIds: Iterable<string>,
-): CancelCandidate[] {
+): T[] {
   const tracked = new Set(trackedIds);
   if (tracked.size === 0) return cancelable;
   const preferred = cancelable.filter((r) => tracked.has(r.id));
