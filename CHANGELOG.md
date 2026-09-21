@@ -4,14 +4,14 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
-## [0.2.45] - 2026-09-21 — Docs: comparison honesty post compete sprint
+## [0.2.46] - 2026-09-21 — Docs: comparison honesty post compete sprint
 
 Public comparison still disclosed v0.2.11 and described the VS Code
 extension as badge + Approve/Deny only. Refresh Cline / Claude Code
 detail + version kickers to match shipped editor/SSH/desktop parity.
 
 ### Changed
-- **`docs/comparison.md`** — v0.2.45 disclosure; Cline + Claude Code detail.
+- **`docs/comparison.md`** — v0.2.46 disclosure; Cline + Claude Code detail.
 - **`README.md`** / **`docs/index.html`** — current version + roadmap kickers.
 
 ## [0.2.45] - 2026-09-21 — Compete: extension plan toast for untracked runs

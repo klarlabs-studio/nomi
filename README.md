@@ -404,7 +404,7 @@ every release ships against — is in
 
 ## Roadmap
 
-**v0.2.45 (current) — compete polish on top of v0.2.4 MCP + tray.**
+**v0.2.46 (current) — compete polish on top of v0.2.4 MCP + tray.**
 Editor parity (VS Code / Cursor thin client: Ask Nomi, Plan Review with
 Shiki DiffPreview, auto-open, Approve/Deny + plan toasts, Cancel/Pause/
 Resume, live status-bar step), SSH attach (`nomi review` / `watch` /
@@ -439,7 +439,7 @@ Prometheus `/metrics` for plan / step / executor / replan
 attribution per provider, `make eval-live-providers` matrix
 against real LLM providers.
 
-Backlog (post-v0.2.45, in priority order — not committed):
+Backlog (post-v0.2.46, in priority order — not committed):
 
 - OpenClaw long-tail connectors (Matrix / Teams / Signal / iMessage /
   Beeper) — only if channel demand justifies a dedicated connector.
