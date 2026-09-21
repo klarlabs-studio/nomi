@@ -95,6 +95,10 @@
         "title": "Nomi: Review pending plan"
       },
       {
+        "command": "nomi.openStatusPlan",
+        "title": "Nomi: Open plan from status bar"
+      },
+      {
         "command": "nomi.showProgress",
         "title": "Nomi: Show run progress"
       },
