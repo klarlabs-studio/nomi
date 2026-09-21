@@ -54,7 +54,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - Extension status-bar live step text — #69
 - CLI `nomi watch` attach to in-flight runs — #70
 - Desktop notification click → Approvals deep-link — #71
-- Extension status-bar plan click → Plan Review — this PR
+- Extension status-bar plan click → Plan Review — #72
+- Desktop OS notification on `plan.proposed` — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose

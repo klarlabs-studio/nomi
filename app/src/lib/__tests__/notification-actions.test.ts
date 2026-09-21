@@ -1,14 +1,36 @@
 import { describe, expect, it } from "vitest";
-import { isApprovalNotificationAction } from "../notification-actions";
+import {
+  isApprovalNotificationAction,
+  notificationActionKind,
+  shouldNotifyPlanProposed,
+} from "../notification-actions";
 
-describe("isApprovalNotificationAction", () => {
-  it("matches stamped extra and empty payload", () => {
-    expect(isApprovalNotificationAction(undefined)).toBe(true);
-    expect(isApprovalNotificationAction({ nomi: "approvals" })).toBe(true);
-    expect(isApprovalNotificationAction({ action: "approvals" })).toBe(true);
+describe("notificationActionKind", () => {
+  it("classifies stamped extras", () => {
+    expect(notificationActionKind(undefined)).toBe(null);
+    expect(notificationActionKind({ nomi: "approvals" })).toBe("approvals");
+    expect(notificationActionKind({ nomi: "plan" })).toBe("plan");
+    expect(notificationActionKind({ action: "plan" })).toBe("plan");
   });
 
   it("rejects unrelated extras", () => {
-    expect(isApprovalNotificationAction({ nomi: "other" })).toBe(false);
+    expect(notificationActionKind({ nomi: "other" })).toBe(null);
+  });
+});
+
+describe("isApprovalNotificationAction", () => {
+  it("matches only approvals stamps", () => {
+    expect(isApprovalNotificationAction({ nomi: "approvals" })).toBe(true);
+    expect(isApprovalNotificationAction({ nomi: "plan" })).toBe(false);
+    expect(isApprovalNotificationAction(undefined)).toBe(false);
+  });
+});
+
+describe("shouldNotifyPlanProposed", () => {
+  it("skips edits and replans", () => {
+    expect(shouldNotifyPlanProposed(undefined)).toBe(true);
+    expect(shouldNotifyPlanProposed({})).toBe(true);
+    expect(shouldNotifyPlanProposed({ edited: true })).toBe(false);
+    expect(shouldNotifyPlanProposed({ replan: true })).toBe(false);
   });
 });
