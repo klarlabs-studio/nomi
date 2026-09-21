@@ -4,6 +4,17 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.27] - 2026-09-21 — Compete: Email channel plan Approve/Deny
+
+Email already created conversation-linked runs but left `plan_review`
+silent. Reply `APPROVE` / `DENY` in-thread (same desktop gate as the
+other messaging channels). Opt-in safe-plan auto-approve includes Email.
+
+### Added
+- **`email/plan_review.go`** — SMTP plan prompt on `plan.proposed`;
+  inbound `APPROVE`/`DENY` short-circuit before spawning a new run.
+- Email added to `messagingChannelPlugins` for `auto_approve_safe_plans`.
+
 ## [0.2.26] - 2026-09-21 — Compete: extension DiffPreview chrome
 
 Cline’s editor diffs are the bar. Plan Review now highlights patch hunks
