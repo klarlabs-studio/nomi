@@ -435,5 +435,5 @@ func (s *ProviderServer) SetAutoApproveSafePlans(c *gin.Context) {
 		respondInternal(c, "failed to set auto-approve safe plans", err)
 		return
 	}
-	c.JSON(http.StatusOK, autoApproveSafePlansResponse{Enabled: req.Enabled})
+	c.JSON(http.StatusOK, autoApproveSafePlansResponse(req))
 }
