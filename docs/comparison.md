@@ -161,7 +161,7 @@ companion only, no workflow execution.
 | Scheduled runs | ✅ Cron + NL-to-cron via LLM | ✕ | ✕ | ✅ NL cron | n/a |
 | Recipe registry | ✅ Signed (SHA-256) shareable YAML bundles + install/export | ✕ | ✕ | ◐ Skills (different shape) | n/a |
 | Skill induction | ✅ Heuristic clustering + LLM synthesis from run history | ✕ | ✕ | ✅ Self-improving (opaque) | n/a |
-| Connector breadth (shipped) | Telegram, Slack, Discord, WhatsApp, Matrix, Email, Gmail, GitHub, Obsidian, Calendar + generic MCP | 20+ messaging apps + email | 13+ (WhatsApp, Telegram, Slack, Teams, Gmail, iMessage, Matrix, GitHub, Linear, …) | Telegram-primary + others | n/a |
+| Connector breadth (shipped) | Telegram, Slack, Discord, WhatsApp, Matrix, Teams, Email, Gmail, GitHub, Obsidian, Calendar + generic MCP | 20+ messaging apps + email | 13+ (WhatsApp, Telegram, Slack, Teams, Gmail, iMessage, Matrix, GitHub, Linear, …) | Telegram-primary + others | n/a |
 | Tray / channel approve | ✅ Tray + Telegram/Slack/Discord/WhatsApp/Email plan approve (safe plans); write/patch force desktop Review | ✕ | ✕ | ✕ | n/a |
 | Model strategy | ✅ BYO any (Ollama, Anthropic, OpenAI, OpenAI-compatible) | ✅ BYO API key | ◐ Anthropic Agents SDK bias | ✅ 300+ via OpenRouter + direct | ✕ Inflection 2.5 only |
 | License | Apache-2.0 | Apache-2.0 (non-profit stewardship) | MIT | Open source | Proprietary |
@@ -189,9 +189,9 @@ OpenClaw is the breadth-of-integrations comparison and the most likely
   capability surface, signed supply chain.
 - **Connector breadth today.** OpenClaw still leads on raw messaging
   app count. Nomi ships Telegram, Slack, Discord, WhatsApp, Matrix,
-  Email, Gmail, GitHub, Obsidian, Calendar, plus a generic MCP plugin
-  so any MCP server (filesystem, postgres, github, browser, …) is a
-  capability-gated tool without writing a Nomi plugin.
+  Teams, Email, Gmail, GitHub, Obsidian, Calendar, plus a generic MCP
+  plugin so any MCP server (filesystem, postgres, github, browser, …)
+  is a capability-gated tool without writing a Nomi plugin.
 
 When OpenClaw wins: you want maximum connector coverage now and you
 trust the agent broadly. When Nomi wins: you want to inspect a plan
@@ -216,7 +216,7 @@ seriously about agent safety. Different layers of the threat model:
   state. Nomi does.
 - **Connectors today.** NanoClaw ships ~13 messaging connectors out of
   the box. Nomi ships Telegram, Slack, Discord, WhatsApp, Matrix,
-  Email, Gmail, GitHub, Obsidian, Calendar, and generic MCP.
+  Teams, Email, Gmail, GitHub, Obsidian, Calendar, and generic MCP.
 
 When NanoClaw wins: you need container-grade isolation today, you're
 comfortable on Anthropic models, you want the connector breadth now.
@@ -276,10 +276,10 @@ the actions you saw and approved.
 To keep the comparisons honest:
 
 - **OpenClaw still leads on raw messaging-app count.** Nomi ships
-  Telegram, Slack, Discord, WhatsApp, Matrix, Email, plus Gmail /
-  GitHub / Obsidian / Calendar plugins and generic MCP. The long tail
-  of iMessage / Teams / Signal / Beeper / 20+ chat apps is still
-  OpenClaw's.
+  Telegram, Slack, Discord, WhatsApp, Matrix, Teams, Email, plus
+  Gmail / GitHub / Obsidian / Calendar plugins and generic MCP. The
+  long tail of iMessage / Signal / Beeper / 20+ chat apps is still
+  OpenClaw's (Beeper can use Nomi's Matrix plugin via bridges).
 - **No multi-tenant / team mode.** Nomi runs as a single-user local
   daemon. Cross-device sync (E2E-encrypted) is on the post-V1
   roadmap, not shipped.

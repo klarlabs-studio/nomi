@@ -9,6 +9,7 @@ require (
 	github.com/cilium/ebpf v0.22.0
 	github.com/emersion/go-imap/v2 v2.0.0-beta.8
 	github.com/gin-gonic/gin v1.12.0
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/google/uuid v1.6.0
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51

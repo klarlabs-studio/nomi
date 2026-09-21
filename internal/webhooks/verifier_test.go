@@ -117,6 +117,9 @@ func TestChooseVerifier(t *testing.T) {
 	if _, ok := chooseVerifier("com.nomi.whatsapp").(*whatsappVerifier); !ok {
 		t.Fatal("whatsapp")
 	}
+	if _, ok := chooseVerifier("com.nomi.teams").(*teamsVerifier); !ok {
+		t.Fatal("teams")
+	}
 	if _, ok := chooseVerifier("com.nomi.email").(*genericHMACVerifier); !ok {
 		t.Fatal("generic")
 	}
