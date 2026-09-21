@@ -19,6 +19,12 @@ import {
   shouldRevealProgress,
   StepProgressFormatter,
 } from "./step_progress";
+import {
+  formatStatusBarText,
+  statusBarCommand,
+  updateLiveStep,
+  type LiveStep,
+} from "./status_bar";
 
 let statusItem: vscode.StatusBarItem | undefined;
 let pollTimer: ReturnType<typeof setInterval> | undefined;
@@ -29,6 +35,8 @@ let liveConnected = false;
 let progressChannel: vscode.OutputChannel | undefined;
 const progressFormatter = new StepProgressFormatter();
 const trackedRuns = new Set<string>();
+/** Ambient “what’s running” for the status bar (tracked runs only). */
+let liveStep: LiveStep | null = null;
 /** Runs whose Plan Review panel was already auto-opened this session. */
 const autoOpenedPlans = new Set<string>();
 const autoOpenInflight = new Set<string>();
@@ -132,21 +140,31 @@ function buildClient(): NomiClient {
   return new NomiClient(discovered.url, discovered.token);
 }
 
+function applyStatusBar(clientUrl?: string): void {
+  if (!statusItem) return;
+  const n = pendingCount(lastSnapshot);
+  statusItem.text = formatStatusBarText(n, liveStep);
+  statusItem.command = statusBarCommand(n, liveStep);
+  const conn = liveConnected ? " · live" : " · polling";
+  if (n > 0) {
+    statusItem.tooltip = `${lastSnapshot.approvals.length} tool approval(s), ${lastSnapshot.plans.length} plan(s) awaiting review${conn}`;
+    statusItem.backgroundColor = new vscode.ThemeColor("statusBarItem.warningBackground");
+  } else if (liveStep) {
+    statusItem.tooltip = `Running: ${liveStep.title} (${liveStep.runId.slice(0, 8)})${conn}`;
+    statusItem.backgroundColor = undefined;
+  } else {
+    statusItem.tooltip = clientUrl
+      ? `Connected to ${clientUrl} — no pending reviews${conn}`
+      : `Nomi${conn}`;
+    statusItem.backgroundColor = undefined;
+  }
+}
+
 async function refreshBadge(silent = false): Promise<void> {
   try {
     const client = buildClient();
     lastSnapshot = await client.snapshot();
-    const n = pendingCount(lastSnapshot);
-    if (statusItem) {
-      statusItem.text = n > 0 ? `$(shield) Nomi ${n}` : "$(shield) Nomi";
-      const live = liveConnected ? " · live" : " · polling";
-      statusItem.tooltip =
-        n > 0
-          ? `${lastSnapshot.approvals.length} tool approval(s), ${lastSnapshot.plans.length} plan(s) awaiting review${live}`
-          : `Connected to ${client.url} — no pending reviews${live}`;
-      statusItem.backgroundColor =
-        n > 0 ? new vscode.ThemeColor("statusBarItem.warningBackground") : undefined;
-    }
+    applyStatusBar(client.url);
   } catch (err) {
     if (statusItem) {
       statusItem.text = "$(shield) Nomi $(warning)";
@@ -185,6 +203,13 @@ function startEventStream(): void {
           if (line) {
             appendProgress(line, shouldRevealProgress(ev, trackedRuns));
           }
+          liveStep = updateLiveStep(
+            ev,
+            trackedRuns,
+            liveStep,
+            progressFormatter.titleSnapshot(),
+          );
+          applyStatusBar();
           if (
             ev.run_id &&
             (ev.type === "run.completed" ||
@@ -204,10 +229,12 @@ function startEventStream(): void {
       },
       onConnect: () => {
         liveConnected = true;
+        applyStatusBar();
         void refreshBadge(true);
       },
       onDisconnect: () => {
         liveConnected = false;
+        applyStatusBar();
         void refreshBadge(true);
       },
     });

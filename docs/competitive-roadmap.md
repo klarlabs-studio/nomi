@@ -50,7 +50,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - Extension auto-open Plan Review on `plan.proposed` — #65
 - CLI `nomi pause` / `nomi resume` — #66
 - Extension Pause / Resume active run — #67
-- Extension approval toast (Approve / Deny on `approval.requested`) — this PR
+- Extension approval toast (Approve / Deny on `approval.requested`) — #68
+- Extension status-bar live step text — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -59,7 +60,7 @@ per-tool capabilities, sandbox, and hash-chained audit.
 |---|---|
 | OpenClaw | Matrix / Teams / Signal / iMessage / Beeper (not one-PR each) |
 | Goose | Remote/synced marketplace catalog (local browse shipped) |
-| Cline | (closed) DiffPreview + Cancel + Pause/Resume + auto-open Plan Review |
+| Cline | (closed) DiffPreview + Cancel/Pause + auto-open plan + approval toast + live status step |
 | Claude Code | Full TUI deferred; CLI review/approve/deny/cancel/pause/resume + live progress; extension Cancel/Pause/Resume |
 | Hermes | Pocket-first mobile UX (schedules/skills now inspectable from CLI + UI) |
 

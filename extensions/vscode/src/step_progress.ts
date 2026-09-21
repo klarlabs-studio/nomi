@@ -23,6 +23,16 @@ export function isProgressEvent(type: string): boolean {
 export class StepProgressFormatter {
   private readonly titles = new Map<string, string>();
 
+  /** Step titles remembered from `step.started` (for status-bar / retry). */
+  rememberedTitle(stepId: string): string | undefined {
+    return this.titles.get(stepId);
+  }
+
+  /** Snapshot of remembered titles (status-bar live step). */
+  titleSnapshot(): ReadonlyMap<string, string> {
+    return this.titles;
+  }
+
   format(ev: NomiStreamEvent): string | null {
     if (!isProgressEvent(ev.type)) return null;
     const run = (ev.run_id ?? "?").slice(0, 8);

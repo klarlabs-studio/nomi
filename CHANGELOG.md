@@ -4,6 +4,17 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.40] - 2026-09-21 — Compete: extension status-bar live step
+
+After approval toasts (#68), an idle execute still showed static
+`$(shield) Nomi` — progress lived only in the OutputChannel. The badge
+now shows the current tracked step (`$(sync~spin) Nomi → Apply patch`);
+pending approvals still win. Click opens Progress when live.
+
+### Added
+- Status-bar **live step text** from SSE `step.*` / pause / plan events.
+- Click routes to **Show run progress** while a step is active.
+
 ## [0.2.39] - 2026-09-21 — Compete: extension approval toast
 
 Plans auto-open (#65); mid-run tool approvals still only bumped the
