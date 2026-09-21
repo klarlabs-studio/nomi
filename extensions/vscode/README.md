@@ -35,6 +35,8 @@ plans and tool calls from the editor without rebuilding the desktop UI.
 - **Pause / Resume** — soft-stop (`…+U` / `…+G`) for executing /
   awaiting_approval and paused runs (`nomi pause` / `nomi resume` parity);
   OutputChannel shows `⏸` / `▶` on `run.paused` / `run.resumed`
+- **Replan failed run** (`…+F`) — desktop “Fix this with the agent” /
+  `nomi replan` for failed/cancelled Ask Nomi runs
 - Auto-discovers `auth.token` + `api.endpoint` from the Nomi data dir
   (same paths as `nomi` CLI / Tauri)
 
@@ -79,6 +81,7 @@ npm run compile
 | `Ctrl/Cmd+Shift+Alt+C` | Cancel active run |
 | `Ctrl/Cmd+Shift+Alt+U` | Pause active run |
 | `Ctrl/Cmd+Shift+Alt+G` | Resume paused run |
+| `Ctrl/Cmd+Shift+Alt+F` | Replan failed run |
 
 Remap under Keyboard Shortcuts if they collide with other extensions.
 
