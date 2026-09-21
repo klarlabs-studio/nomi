@@ -41,6 +41,9 @@ SUBCOMMANDS
     cancel [run-id]        Cancel an active run (omit id when only one is
                            active; --list to print). Ctrl+C during
                            nomi run / nomi review also cancels.
+    pause [run-id]         Soft-pause an executing / awaiting_approval
+                           run (omit id when only one matches; --list).
+    resume [run-id]        Resume a paused run (same id rules).
     tail                   Follow the server-sent event stream live.
     list runs              Show the most recent runs.
     list assistants        Show every configured assistant.
@@ -75,6 +78,8 @@ EXAMPLES
     nomi approve           # sole pending tool approval
     nomi deny <id>
     nomi cancel            # sole active run
+    nomi pause             # sole executing / awaiting_approval run
+    nomi resume <id>
     nomi list runs
     nomi tail
     NOMI_TOKEN=$(ssh server 'docker exec nomi cat /data/auth.token') \
@@ -107,6 +112,10 @@ func main() {
 		os.Exit(denyCmd(common, args))
 	case "cancel":
 		os.Exit(cancelCmd(common, args))
+	case "pause":
+		os.Exit(pauseCmd(common, args))
+	case "resume":
+		os.Exit(resumeCmd(common, args))
 	case "tail":
 		os.Exit(tailCmd(common, args))
 	case "list", "ls":
