@@ -64,6 +64,10 @@ type RouterConfig struct {
 	// GET /plugins/marketplace (lifecycle-09). nil disables the
 	// endpoint without affecting install/uninstall.
 	CatalogProvider func(ctx context.Context) (*hub.Catalog, error)
+	// MarketplaceCatalog is the cached provider behind CatalogProvider
+	// when marketplace is enabled. Optional — settings endpoints degrade
+	// to configured=false when nil.
+	MarketplaceCatalog *hub.CachedProvider
 	// PluginUpdater backs POST /plugins/:id/update (lifecycle-10).
 	// nil disables the endpoint.
 	PluginUpdater func(ctx context.Context, pluginID string) (*domain.PluginState, error)
@@ -304,6 +308,16 @@ func NewRouter(cfg RouterConfig) *gin.Engine {
 		{
 			pluginGroup.GET("", pluginServer.ListPlugins)
 			pluginGroup.GET("/marketplace", pluginServer.MarketplaceCatalog)
+			pluginGroup.POST("/marketplace/refresh", func(c *gin.Context) {
+				if cfg.MarketplaceCatalog == nil {
+					c.JSON(http.StatusServiceUnavailable, gin.H{
+						"error": "marketplace not configured — set NOMI_MARKETPLACE_ROOT_KEY",
+					})
+					return
+				}
+				NewMarketplaceCatalogServer(cfg.MarketplaceCatalog, db.NewAppSettingsRepository(cfg.DB)).
+					RefreshMarketplaceCatalog(c)
+			})
 			pluginGroup.POST("/install", pluginServer.InstallPlugin)
 			pluginGroup.GET("/:id", pluginServer.GetPlugin)
 			pluginGroup.POST("/:id/update", pluginServer.UpdatePlugin)
@@ -382,6 +396,14 @@ func NewRouter(cfg RouterConfig) *gin.Engine {
 		settings.PUT("/safety-profile", providerServer.SetSafetyProfile)
 		settings.GET("/auto-approve-safe-plans", providerServer.GetAutoApproveSafePlans)
 		settings.PUT("/auto-approve-safe-plans", providerServer.SetAutoApproveSafePlans)
+	}
+
+	// Marketplace catalog URL settings (WASM NomiHub index). Works
+	// even when marketplace is disabled — Get returns configured=false.
+	if cfg.DB != nil {
+		mktSettings := NewMarketplaceCatalogServer(cfg.MarketplaceCatalog, db.NewAppSettingsRepository(cfg.DB))
+		settings.GET("/marketplace-catalog", mktSettings.GetMarketplaceCatalogSettings)
+		settings.PUT("/marketplace-catalog", mktSettings.SetMarketplaceCatalogSettings)
 	}
 
 	// Remote MCP preset catalog (Goose-style marketplace URL). Built-in

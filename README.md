@@ -440,14 +440,14 @@ Prometheus `/metrics` for plan / step / executor / replan
 attribution per provider, `make eval-live-providers` matrix
 against real LLM providers.
 
-Backlog (post-v0.2.56, in priority order — not committed):
+Backlog (post-v0.2.57, in priority order — not committed):
 
 - Cross-machine recipe sync (opt-in, end-to-end-encrypted) — YAML
   import/export shipped; full device pairing deferred.
 - Hosted Mnemos for visibility-scoped team memory.
 - Approval delegation across devices.
-- WASM plugin marketplace catalog growth (signing + verification
-  already shipped).
+- Live hub.nomi.ai catalog ops (signed install + configurable catalog
+  URL + local example generator shipped).
 - Richer Claude Code–style TUI (thin `nomi tui` dashboard shipped;
   CLI attach already covers the SSH loop).
 - Dedicated Beeper plugin (use Matrix + bridge today).

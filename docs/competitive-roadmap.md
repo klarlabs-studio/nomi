@@ -67,7 +67,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - iMessage channel plugin (`com.nomi.imessage`) via BlueBubbles — #83
 - Recipe YAML import / share (`POST /recipes/import`, CLI, UI) — #84
 - Remote MCP preset catalog URL (Goose `servers.json` + Nomi envelope) — #85
-- Thin `nomi tui` (Bubble Tea runs/approvals/reviews dashboard) — this PR
+- Thin `nomi tui` (Bubble Tea runs/approvals/reviews dashboard) — #86
+- WASM marketplace catalog URL + example echo catalog generator — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose

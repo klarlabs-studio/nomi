@@ -15,7 +15,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -569,8 +568,9 @@ func main() {
 	wasmLoader := wasmhost.NewLoader(context.Background())
 
 	var (
-		pluginVerifier  *signing.Verifier
-		catalogProvider func(ctx context.Context) (*hub.Catalog, error)
+		pluginVerifier     *signing.Verifier
+		catalogProvider    func(ctx context.Context) (*hub.Catalog, error)
+		marketplaceCatalog *hub.CachedProvider
 	)
 	if rootKeyB64 := os.Getenv("NOMI_MARKETPLACE_ROOT_KEY"); rootKeyB64 != "" {
 		raw, decErr := base64.StdEncoding.DecodeString(rootKeyB64)
@@ -581,36 +581,20 @@ func main() {
 		} else {
 			pluginVerifier = v
 			log.Printf("Marketplace install enabled (store at %s)", pluginStoreRoot)
-			// Catalog provider — bound to the same root pubkey as the
-			// install verifier. Fetch-on-demand with a 1h in-process
-			// cache so the marketplace endpoint isn't a per-request
-			// HTTP hop. Lifecycle-10 swaps this for a daily polling
-			// loop that persists the catalog to disk.
-			catalogURL := settingsRepo.GetOrDefault("marketplace_catalog_url", "https://hub.nomi.ai/index.json")
+			catalogURL := settingsRepo.GetOrDefault(hub.SettingKey, hub.DefaultCatalogURL)
 			hubClient, hubErr := hub.NewClient(ed25519.PublicKey(raw), nil)
 			if hubErr != nil {
 				log.Printf("WARN: hub client init: %v", hubErr)
 			} else {
-				var (
-					mu       sync.Mutex
-					cached   *hub.Catalog
-					cachedAt time.Time
-				)
-				const ttl = 1 * time.Hour
-				catalogProvider = func(ctx context.Context) (*hub.Catalog, error) {
-					mu.Lock()
-					defer mu.Unlock()
-					if cached != nil && time.Since(cachedAt) < ttl {
-						return cached, nil
+				marketplaceCatalog = hub.NewCachedProvider(hubClient, catalogURL)
+				catalogProvider = marketplaceCatalog.ProviderFunc()
+				go func() {
+					ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+					defer cancel()
+					if _, err := marketplaceCatalog.Refresh(ctx); err != nil {
+						log.Printf("marketplace catalog warm: %v", err)
 					}
-					cat, err := hubClient.Fetch(ctx, catalogURL)
-					if err != nil {
-						return nil, err
-					}
-					cached = cat
-					cachedAt = time.Now()
-					return cat, nil
-				}
+				}()
 			}
 		}
 	} else {
@@ -815,29 +799,30 @@ func main() {
 	// expose the daemon (which can execute arbitrary commands) to the local
 	// network, so this is a hard default, not a setting.
 	router := api.NewRouter(api.RouterConfig{
-		Runtime:         rt,
-		DB:              database,
-		EventBus:        eventBus,
-		Approvals:       approvalMgr,
-		Memory:          memManager,
-		MemoryClient:    memClient,
-		Tools:           toolRegistry,
-		Connectors:      connRegistry,
-		Plugins:         pluginRegistry,
-		Secrets:         secretStore,
-		AuthToken:       authToken,
-		AuthTokenStore:  api.NewTokenStore(authToken, tokenPath),
-		Tunnel:          tunnelAdapter,
-		PluginStore:     pluginStore,
-		PluginVerifier:  pluginVerifier,
-		WASMLoader:      wasmLoader,
-		CatalogProvider: catalogProvider,
-		PluginUpdater:   buildPluginUpdater(pluginRegistry, db.NewPluginStateRepository(database), pluginStore, pluginVerifier, wasmLoader, eventBus, catalogProvider),
-		RemoteTemplates: db.NewRemoteTemplateRepository(database),
-		ScheduleRepo:    scheduleRepo,
-		Scheduler:       sched,
-		LLMResolver:     llmResolver,
-		MCPCatalog:      mcpCatalogClient,
+		Runtime:            rt,
+		DB:                 database,
+		EventBus:           eventBus,
+		Approvals:          approvalMgr,
+		Memory:             memManager,
+		MemoryClient:       memClient,
+		Tools:              toolRegistry,
+		Connectors:         connRegistry,
+		Plugins:            pluginRegistry,
+		Secrets:            secretStore,
+		AuthToken:          authToken,
+		AuthTokenStore:     api.NewTokenStore(authToken, tokenPath),
+		Tunnel:             tunnelAdapter,
+		PluginStore:        pluginStore,
+		PluginVerifier:     pluginVerifier,
+		WASMLoader:         wasmLoader,
+		CatalogProvider:    catalogProvider,
+		MarketplaceCatalog: marketplaceCatalog,
+		PluginUpdater:      buildPluginUpdater(pluginRegistry, db.NewPluginStateRepository(database), pluginStore, pluginVerifier, wasmLoader, eventBus, catalogProvider),
+		RemoteTemplates:    db.NewRemoteTemplateRepository(database),
+		ScheduleRepo:       scheduleRepo,
+		Scheduler:          sched,
+		LLMResolver:        llmResolver,
+		MCPCatalog:         mcpCatalogClient,
 	})
 
 	// Publish the endpoint so non-Go clients (the Tauri shell, e2e
