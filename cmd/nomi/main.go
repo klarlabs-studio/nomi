@@ -7,9 +7,8 @@
 // REST call against the same surface the desktop UI consumes. Adding a
 // new subcommand is one HTTP request plus a printer.
 //
-// Future work: a `nomi tui` subcommand backed by bubbletea for users
-// who want a richer interactive shell. The current CLI design separates
-// transport (client.go) from rendering (cmd_*.go) so that swap is cheap.
+// `nomi tui` is a Bubble Tea dashboard over that same client — live
+// runs / approvals / plan reviews with one-key actions for SSH sessions.
 package main
 
 import (
@@ -64,6 +63,8 @@ SUBCOMMANDS
     list recipes           Show built-in + imported/exported recipes.
     recipes import <yaml>  Import a shareable recipe.yaml into the catalog.
     recipes export <id>    Export an assistant as recipe YAML (-o file).
+    tui                    Live dashboard: runs / approvals / plan reviews
+                           with one-key approve, deny, cancel, pause, resume.
     status                 Show daemon health + version + schedule summary
                            + pending plan reviews / tool approvals.
     seed <path>            Apply a seed.yaml manifest against the running
@@ -95,6 +96,7 @@ EXAMPLES
     nomi resume <id>
     nomi watch             # sole active run — live progress + approvals
     nomi replan --watch    # fix a failed run and attach
+    nomi tui               # live runs / approvals / reviews dashboard
     nomi list runs
     nomi tail
     NOMI_TOKEN=$(ssh server 'docker exec nomi cat /data/auth.token') \
@@ -141,6 +143,8 @@ func main() {
 		os.Exit(listCmd(common, args))
 	case "recipes", "recipe":
 		os.Exit(recipesCmd(common, args))
+	case "tui":
+		os.Exit(tuiCmd(common, args))
 	case "status":
 		os.Exit(statusCmd(common, args))
 	case "seed":
