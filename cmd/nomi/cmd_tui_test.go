@@ -27,7 +27,7 @@ func TestPrioritizeRuns(t *testing.T) {
 }
 
 func TestTUIModel_TabAndCursor(t *testing.T) {
-	m := newTUIModel(&Client{URL: "http://example"})
+	m := newTUIModel(&Client{URL: "https://example.invalid"})
 	m.snap.Runs = []runListRow{{ID: "a"}, {ID: "b"}, {ID: "c"}}
 	m.snap.Approvals = []approvalRow{{ID: "x"}, {ID: "y"}}
 	m.snap.Reviews = []runListRow{{ID: "r1"}}
@@ -134,11 +134,11 @@ func TestTUIModel_ApproveApproval(t *testing.T) {
 }
 
 func TestTUIViewContainsChrome(t *testing.T) {
-	m := newTUIModel(&Client{URL: "http://127.0.0.1:8080"})
+	m := newTUIModel(&Client{URL: "https://127.0.0.1:8080"})
 	m.snap.Health = "ok"
 	m.snap.Version = "9.9.9"
 	view := m.View()
-	for _, want := range []string{"nomi tui", "http://127.0.0.1:8080", "1:Runs", "q quit"} {
+	for _, want := range []string{"nomi tui", "https://127.0.0.1:8080", "1:Runs", "q quit"} {
 		if !containsString(view, want) {
 			t.Fatalf("view missing %q:\n%s", want, view)
 		}

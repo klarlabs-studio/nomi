@@ -154,7 +154,9 @@ func prioritizeRuns(in []runListRow, limit int) []runListRow {
 			rest = append(rest, r)
 		}
 	}
-	out := append(active, rest...)
+	out := make([]runListRow, 0, len(active)+len(rest))
+	out = append(out, active...)
+	out = append(out, rest...)
 	if len(out) > limit {
 		out = out[:limit]
 	}
@@ -395,19 +397,20 @@ func (m tuiModel) View() string {
 	b.WriteString("\n")
 
 	health := m.snap.Health
-	if health == "ok" || health == "healthy" {
+	switch health {
+	case "ok", "healthy":
 		b.WriteString(styleOK.Render("● " + health))
-	} else if health == "unreachable" {
+	case "unreachable":
 		b.WriteString(styleErr.Render("● " + health))
-	} else {
+	default:
 		b.WriteString(styleWarn.Render("● " + health))
 	}
 	if m.snap.Version != "" {
 		b.WriteString(styleMuted.Render("  v" + m.snap.Version))
 	}
 	p := m.snap.Pending
-	b.WriteString(fmt.Sprintf("  reviews:%d  approvals:%d  active:%d",
-		p.PlanReviews, p.ToolApprovals, p.ActiveRuns))
+	_, _ = fmt.Fprintf(&b, "  reviews:%d  approvals:%d  active:%d",
+		p.PlanReviews, p.ToolApprovals, p.ActiveRuns)
 	if !m.snap.At.IsZero() {
 		b.WriteString(styleMuted.Render("  · " + m.snap.At.Format("15:04:05")))
 	}
