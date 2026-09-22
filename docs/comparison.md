@@ -40,9 +40,9 @@ differences worth your attention:
   moment a tool runs. Nomi's `plan_review` state lets you see (and
   edit) the whole plan before any step executes, and approval cards
   surface in a desktop UI, tray, channels, Email, the VS Code / Cursor
-  extension, and SSH (`nomi review` / `approve` / `deny` / `watch` /
-  `pause` / `cancel`) — useful when the plan was kicked off from
-  another device or a non-interactive context.
+  extension, and SSH (`nomi tui`, plus `review` / `approve` / `deny` /
+  `watch` / `pause` / `cancel`) — useful when the plan was kicked off
+  from another device or a non-interactive context.
 
 When Claude Code wins: you live in the terminal, you're already paying
 for Claude, you don't want a separate process. When Nomi wins: you

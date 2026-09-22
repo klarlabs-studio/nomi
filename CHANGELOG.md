@@ -4,6 +4,18 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.56] - 2026-09-22 — Compete: thin `nomi tui`
+
+Claude Code wins on SSH when the control loop is a live screen, not a
+pile of one-shot commands. **`nomi tui`** is a Bubble Tea dashboard over
+the existing CLI client — runs / approvals / plan reviews, 2s refresh,
+one-key approve · deny · cancel · pause · resume. Full plan edit still
+uses `nomi review`.
+
+### Added
+- `nomi tui` (charmbracelet/bubbletea + lipgloss)
+- Tabs: Runs, Approvals, Reviews; keys documented in-footer
+
 ## [0.2.55] - 2026-09-21 — Compete: remote MCP preset catalog URL
 
 Goose wins when the MCP catalog is a URL you can point at, not a

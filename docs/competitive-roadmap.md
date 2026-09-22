@@ -66,7 +66,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - Signal channel plugin (`com.nomi.signal`) via signal-cli-rest-api — #82
 - iMessage channel plugin (`com.nomi.imessage`) via BlueBubbles — #83
 - Recipe YAML import / share (`POST /recipes/import`, CLI, UI) — #84
-- Remote MCP preset catalog URL (Goose `servers.json` + Nomi envelope) — this PR
+- Remote MCP preset catalog URL (Goose `servers.json` + Nomi envelope) — #85
+- Thin `nomi tui` (Bubble Tea runs/approvals/reviews dashboard) — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -76,16 +77,16 @@ per-tool capabilities, sandbox, and hash-chained audit.
 | OpenClaw | Raw app-count lead; Beeper via Matrix bridges (dedicated Beeper plugin deferred) |
 | Goose | (closed) Remote MCP marketplace URL + local browse + recipe YAML share |
 | Cline | (closed) DiffPreview + Cancel/Pause + auto-open plan + approval toast + live status step |
-| Claude Code | Full TUI deferred; CLI review/approve/deny/cancel/pause/resume/watch/replan + live progress; extension Cancel/Pause/Resume |
+| Claude Code | (closed thin) `nomi tui` dashboard + CLI review/approve/deny/cancel/pause/resume/watch/replan; full rich TUI still deferred |
 | Hermes | Pocket-first mobile UX (schedules/skills now inspectable from CLI + UI) |
 
 ## Next moves (priority)
 
-1. **Deferred product bets** — hosted Mnemos, E2E cross-device sync, full
-   `nomi tui`
+1. **Deferred product bets** — hosted Mnemos, E2E cross-device sync
+   (thin `nomi tui` shipped; full rich TUI still deferred)
 
 ## Defer
 
 Hosted Mnemos, E2E cross-device sync, native mobile apps, Pi-style companion,
-micro-VM isolation race, full Claude Code TUI, dedicated Beeper plugin
-(use Matrix + bridge).
+micro-VM isolation race, full rich Claude Code TUI (thin `nomi tui` shipped),
+dedicated Beeper plugin (use Matrix + bridge).
