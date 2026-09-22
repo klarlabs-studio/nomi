@@ -4,6 +4,19 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.57] - 2026-09-22 — Compete: WASM marketplace catalog URL
+
+NomiHub’s install/verify path worked, but the catalog URL was boot-only
+and empty by default. **Configurable marketplace catalog URL** (like
+MCP presets) + a local example generator close the “no plugins in the
+catalog” gap without standing up live hub.nomi.ai.
+
+### Added
+- `hub.CachedProvider` with SetURL / Refresh (replaces inline main.go cache)
+- `GET/PUT /settings/marketplace-catalog` + `POST /plugins/marketplace/refresh`
+- Browse-marketplace UI: catalog URL field, Save / Refresh / Reset
+- `examples/wasm-marketplace-catalog/` (`go run ./…/gen` → signed echo index)
+
 ## [0.2.56] - 2026-09-22 — Compete: thin `nomi tui`
 
 Claude Code wins on SSH when the control loop is a live screen, not a

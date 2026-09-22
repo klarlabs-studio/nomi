@@ -862,6 +862,11 @@ export const pluginsApi = {
   // catalog from the daemon's in-memory cache.
   marketplace: () => fetchApi<MarketplaceCatalog>("/plugins/marketplace"),
 
+  refreshMarketplace: () =>
+    fetchApi<MarketplaceCatalogSettings>("/plugins/marketplace/refresh", {
+      method: "POST",
+    }),
+
   // Update an installed plugin to the catalog's latest version
   // (lifecycle-10). Synchronous: response holds the new state row
   // once the swap completes.
@@ -1036,7 +1041,28 @@ export const settingsApi = {
       method: "PUT",
       body: JSON.stringify({ url }),
     }),
+
+  getMarketplaceCatalog: () =>
+    fetchApi<MarketplaceCatalogSettings>("/settings/marketplace-catalog"),
+
+  setMarketplaceCatalog: (url: string) =>
+    fetchApi<MarketplaceCatalogSettings>("/settings/marketplace-catalog", {
+      method: "PUT",
+      body: JSON.stringify({ url }),
+    }),
 };
+
+/** WASM NomiHub marketplace catalog URL settings. */
+export interface MarketplaceCatalogSettings {
+  url: string;
+  effective_url: string;
+  default_url: string;
+  entry_count: number;
+  fetched_at?: string;
+  last_error?: string;
+  stale: boolean;
+  configured: boolean;
+}
 
 /** Remote MCP preset catalog (Goose-style marketplace URL). */
 export interface McpPresetCatalogSettings {
