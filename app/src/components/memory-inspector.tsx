@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,12 +9,17 @@ import { memoryApi } from "@/lib/api";
 import { errorMessage } from "@/lib/utils";
 import { queryKeys } from "@/lib/query-keys";
 import type { Memory } from "@/types/api";
+import { Download, Upload } from "lucide-react";
 
 export function MemoryInspector() {
   const qc = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [newContent, setNewContent] = useState("");
   const [newScope, setNewScope] = useState("workspace");
+  const [exportScope, setExportScope] = useState("workspace");
+  const [ioStatus, setIoStatus] = useState<string | null>(null);
+  const [ioError, setIoError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const params = searchQuery ? { q: searchQuery } : undefined;
 
@@ -41,6 +46,40 @@ export function MemoryInspector() {
     onSettled: () => qc.invalidateQueries({ queryKey: queryKeys.memory.all }),
   });
 
+  const exportMutation = useMutation({
+    mutationFn: (scope: string) => memoryApi.export({ scope }),
+    onSuccess: (text, scope) => {
+      setIoError(null);
+      const blob = new Blob([text], { type: "application/x-ndjson" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `mnemos-${scope}-${new Date().toISOString().slice(0, 10)}.jsonl`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setIoStatus(`Exported ${scope} memory as JSONL`);
+    },
+    onError: (err) => {
+      setIoStatus(null);
+      setIoError(errorMessage(err));
+    },
+  });
+
+  const importMutation = useMutation({
+    mutationFn: (jsonl: string) => memoryApi.import(jsonl),
+    onSuccess: (res) => {
+      setIoError(null);
+      setIoStatus(`Imported ${res.imported} entr${res.imported === 1 ? "y" : "ies"}`);
+      qc.invalidateQueries({ queryKey: queryKeys.memory.all });
+    },
+    onError: (err) => {
+      setIoStatus(null);
+      setIoError(errorMessage(err));
+    },
+  });
+
   const handleCreate = () => {
     if (!newContent.trim()) return;
     createMutation.mutate({ content: newContent, scope: newScope });
@@ -48,6 +87,20 @@ export function MemoryInspector() {
 
   const handleDelete = (id: string) => {
     deleteMutation.mutate(id);
+  };
+
+  const handleImportFile = async (file: File | null) => {
+    if (!file) return;
+    try {
+      const text = await file.text();
+      if (!text.trim()) {
+        setIoError("File is empty");
+        return;
+      }
+      importMutation.mutate(text);
+    } catch (err) {
+      setIoError(errorMessage(err));
+    }
   };
 
   // Error surface aggregates all three possible sources so the banner
@@ -76,9 +129,64 @@ export function MemoryInspector() {
 
   return (
     <div className="p-4 space-y-4 h-full flex flex-col">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <h2 className="text-lg font-semibold">Memory Inspector</h2>
+        <div className="flex items-center gap-2 flex-wrap">
+          <select
+            className="flex h-8 rounded-md border border-input bg-transparent px-2 py-1 text-xs shadow-sm"
+            value={exportScope}
+            onChange={(e) => setExportScope(e.target.value)}
+            aria-label="Export scope"
+          >
+            <option value="workspace">Workspace</option>
+            <option value="profile">Profile</option>
+            <option value="preferences">Preferences</option>
+          </select>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8"
+            disabled={exportMutation.isPending}
+            onClick={() => exportMutation.mutate(exportScope)}
+          >
+            <Download className="w-3.5 h-3.5 mr-1" />
+            {exportMutation.isPending ? "Exporting…" : "Export JSONL"}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8"
+            disabled={importMutation.isPending}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <Upload className="w-3.5 h-3.5 mr-1" />
+            {importMutation.isPending ? "Importing…" : "Import JSONL"}
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".jsonl,.ndjson,application/x-ndjson,text/plain"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0] ?? null;
+              e.target.value = "";
+              void handleImportFile(f);
+            }}
+          />
+        </div>
       </div>
+
+      {(ioStatus || ioError) && (
+        <div
+          className={
+            ioError
+              ? "bg-destructive/10 text-destructive p-2.5 rounded-md text-sm"
+              : "bg-muted text-muted-foreground p-2.5 rounded-md text-sm"
+          }
+        >
+          {ioError ?? ioStatus}
+        </div>
+      )}
 
       {error && (
         <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm">
@@ -130,7 +238,10 @@ export function MemoryInspector() {
       {memories.length === 0 ? (
         <div className="text-muted-foreground text-center py-8">
           <p>No memories stored yet.</p>
-          <p className="text-sm mt-1">Add a memory above or run an assistant to generate memories.</p>
+          <p className="text-sm mt-1">
+            Add a memory above, import a Mnemos JSONL file, or run an assistant to
+            generate memories.
+          </p>
         </div>
       ) : (
         <Tabs defaultValue="workspace" className="flex-1 flex flex-col min-h-0">

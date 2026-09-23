@@ -68,7 +68,8 @@ per-tool capabilities, sandbox, and hash-chained audit.
 - Recipe YAML import / share (`POST /recipes/import`, CLI, UI) — #84
 - Remote MCP preset catalog URL (Goose `servers.json` + Nomi envelope) — #85
 - Thin `nomi tui` (Bubble Tea runs/approvals/reviews dashboard) — #86
-- WASM marketplace catalog URL + example echo catalog generator — this PR
+- WASM marketplace catalog URL + example echo catalog generator — #87
+- Memory Inspector Mnemos JSONL export / import — this PR
 - Docker/gVisor + DNS/eBPF egress, signed WASM, Mnemos FTS5, `/audit/verify`
 
 ## Where we still lose
@@ -84,10 +85,11 @@ per-tool capabilities, sandbox, and hash-chained audit.
 ## Next moves (priority)
 
 1. **Deferred product bets** — hosted Mnemos, E2E cross-device sync
-   (thin `nomi tui` shipped; full rich TUI still deferred)
+   (JSONL export/import UI shipped as the local portability wedge)
 
 ## Defer
 
 Hosted Mnemos, E2E cross-device sync, native mobile apps, Pi-style companion,
 micro-VM isolation race, full rich Claude Code TUI (thin `nomi tui` shipped),
-dedicated Beeper plugin (use Matrix + bridge).
+dedicated Beeper plugin (use Matrix + bridge), live hub.nomi.ai catalog
+ops (local/example catalog path shipped).
