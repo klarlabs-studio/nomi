@@ -641,6 +641,23 @@ export const memoryApi = {
     fetchApi<{ status: string }>(`/memory/${id}`, {
       method: "DELETE",
     }),
+
+  /** Mnemos JSONL export (ADR 0004 §8). Streams as application/x-ndjson. */
+  export: (params?: { scope?: string; key?: string }) => {
+    const search = new URLSearchParams();
+    if (params?.scope) search.set("scope", params.scope);
+    if (params?.key) search.set("key", params.key);
+    const q = search.toString();
+    return fetchApiText(`/memory/export${q ? `?${q}` : ""}`);
+  },
+
+  /** Import a Mnemos JSONL body; returns how many entries were stored. */
+  import: (jsonl: string) =>
+    fetchApi<{ imported: number }>("/memory/import", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-ndjson" },
+      body: jsonl,
+    }),
 };
 
 // Tools API

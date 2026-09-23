@@ -4,6 +4,18 @@ All notable changes to Nomi are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/) and
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.58] - 2026-09-23 — Compete: Memory Inspector export / import
+
+Mnemos JSONL export/import already existed on the daemon and CLI
+(`GET/POST /memory/export|import`, `nomi memory export|import`). The
+desktop Memory tab could only list/create/delete. **Export JSONL** /
+**Import JSONL** close the Hermes portable-memory gap without hosted
+infra or device pairing.
+
+### Added
+- `memoryApi.export` / `memoryApi.import` in the desktop client
+- Memory Inspector scope picker + Export / Import buttons (download + file pick)
+
 ## [0.2.57] - 2026-09-22 — Compete: WASM marketplace catalog URL
 
 NomiHub’s install/verify path worked, but the catalog URL was boot-only

@@ -237,8 +237,10 @@ defining feature. Differences in what "memory" means:
 - **Inspectable vs self-improving.** Hermes's memory is opaque —
   "self-improving," learned from interactions, model-implicit. Mnemos
   is the opposite: workspace-scoped SQLite rows, queryable, editable,
-  exportable as JSONL. You can read what your agent remembers. You can
-  delete a single entry. You can ship the database to a new machine.
+  exportable as JSONL (CLI `nomi memory export|import` and the Memory
+  Inspector Export / Import buttons). You can read what your agent
+  remembers. You can delete a single entry. You can ship the dump to
+  a new machine.
 - **Inspection before execution.** Hermes acts; Nomi reviews then acts.
   Same axis as OpenClaw.
 - **Form factor.** Hermes optimizes for "AI in your pocket via
