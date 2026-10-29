@@ -28,7 +28,7 @@ on:
       mnemos-ref:
         description: 'Mnemos git ref to build against (branch / tag / SHA)'
         required: false
-        default: 'v0.19.0'
+        default: 'v0.132.1'
 
 permissions:
   contents: read
@@ -54,7 +54,7 @@ jobs:
           # `||` fallback inside the YAML expression keeps a single step
           # working across all three event types because `inputs` is
           # null on push but the expression coerces cleanly.
-          ref: ${{ github.event.inputs.mnemos-ref || 'v0.19.0' }}
+          ref: ${{ github.event.inputs.mnemos-ref || 'v0.132.1' }}
 
       - name: Setup Go
         uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
