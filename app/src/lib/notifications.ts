@@ -129,8 +129,8 @@ async function ensureActionListener(): Promise<void> {
   if (actionListenPromise) return actionListenPromise;
   actionListenPromise = (async () => {
     try {
-      actionListener = await tauriOnAction((notification) => {
-        dispatchClick(notification.extra);
+      actionListener = await tauriOnAction((event) => {
+        dispatchClick(event.notification?.extra);
       });
     } catch {
       // Plugin unavailable (tests / stripped builds).
