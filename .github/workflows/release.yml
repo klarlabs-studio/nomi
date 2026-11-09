@@ -41,7 +41,7 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Create or update draft release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           draft: true
           name: ${{ github.ref_name }}
@@ -380,7 +380,7 @@ jobs:
           cp app/src-tauri/target/release/bundle/nsis/*.exe.sig dist/ 2>/dev/null || true
 
       - name: Attach artifacts to draft release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           draft: true
           tag_name: ${{ github.ref_name }}
@@ -424,7 +424,7 @@ jobs:
             > SHA256SUMS
 
       - name: Attach SHA256SUMS to release
-        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           draft: true
           tag_name: ${{ github.ref_name }}
